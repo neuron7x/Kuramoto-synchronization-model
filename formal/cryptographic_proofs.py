@@ -157,7 +157,9 @@ class CryptographicProofReport:
         if not self.all_passed:
             lines.append("Failures:")
             for result in self.get_failures():
-                lines.append(f"  - {result.security_property.name}: {result.status.value}")
+                lines.append(
+                    f"  - {result.security_property.name}: {result.status.value}"
+                )
         return "\n".join(lines)
 
 
@@ -188,9 +190,7 @@ class CryptographicProver:
     ENTROPY_BITS_MINIMUM = 256  # For cryptographic random
     KEY_DERIVATION_ROUNDS = 100000  # PBKDF2 iterations
 
-    def __init__(
-        self, timeout_ms: int = 30000, verbose: bool = False
-    ) -> None:
+    def __init__(self, timeout_ms: int = 30000, verbose: bool = False) -> None:
         """Initialize the cryptographic prover.
 
         Args:
@@ -432,7 +432,8 @@ class CryptographicProver:
 
         # Security is minimum of the two bounds
         solver.add(
-            hmac_security_margin == z3.If(
+            hmac_security_margin
+            == z3.If(
                 collision_security < prf_security,
                 collision_security,
                 prf_security,
@@ -642,7 +643,8 @@ class CryptographicProver:
         # Combined with ECDLP: min(k - q_s_bits - q_h_bits, ecdlp_security)
         game_security = k_bits - q_s_bits - q_h_bits
         solver.add(
-            security_margin == z3.If(
+            security_margin
+            == z3.If(
                 game_security < ecdlp_security,
                 game_security,
                 ecdlp_security,
@@ -716,9 +718,7 @@ class CryptographicProver:
         solver.add(is_constant_time == True)  # noqa: E712
 
         # Leakage is 0 for constant-time, up to 8*n_bytes otherwise
-        solver.add(
-            leakage_bits == z3.If(is_constant_time, 0, 8 * n_bytes)
-        )
+        solver.add(leakage_bits == z3.If(is_constant_time, 0, 8 * n_bytes))
 
         # Check: can there be non-zero leakage?
         solver.add(leakage_bits > 0)

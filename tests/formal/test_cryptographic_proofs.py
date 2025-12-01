@@ -37,9 +37,7 @@ class TestCryptographicProver:
         assert prover.verbose is False
         assert prover._z3 is not None
 
-    def test_hash_collision_resistance_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_hash_collision_resistance_proof(self, prover: CryptographicProver) -> None:
         """Test hash collision resistance proof completes and passes."""
         result = prover.prove_hash_collision_resistance()
 
@@ -53,9 +51,7 @@ class TestCryptographicProver:
         assert "128-bit" in result.certificate
         assert result.details.get("security_bits") == 128
 
-    def test_hash_preimage_resistance_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_hash_preimage_resistance_proof(self, prover: CryptographicProver) -> None:
         """Test hash preimage resistance proof completes and passes."""
         result = prover.prove_hash_preimage_resistance()
 
@@ -85,9 +81,7 @@ class TestCryptographicProver:
         assert result.status == ProofStatus.PROVED
         assert result.passed is True
 
-    def test_key_derivation_entropy_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_key_derivation_entropy_proof(self, prover: CryptographicProver) -> None:
         """Test key derivation entropy preservation proof."""
         result = prover.prove_key_derivation_entropy()
 
@@ -97,9 +91,7 @@ class TestCryptographicProver:
         assert result.status == ProofStatus.PROVED
         assert result.passed is True
 
-    def test_signature_unforgeability_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_signature_unforgeability_proof(self, prover: CryptographicProver) -> None:
         """Test digital signature unforgeability proof."""
         result = prover.prove_signature_unforgeability()
 
@@ -110,9 +102,7 @@ class TestCryptographicProver:
         assert result.passed is True
         assert "EUF-CMA" in result.certificate
 
-    def test_timing_attack_resistance_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_timing_attack_resistance_proof(self, prover: CryptographicProver) -> None:
         """Test timing attack resistance proof."""
         result = prover.prove_timing_attack_resistance()
 
@@ -123,9 +113,7 @@ class TestCryptographicProver:
         assert result.passed is True
         assert "zero bits" in result.certificate
 
-    def test_entropy_accumulation_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_entropy_accumulation_proof(self, prover: CryptographicProver) -> None:
         """Test CSPRNG entropy accumulation proof."""
         result = prover.prove_entropy_accumulation()
 
@@ -135,9 +123,7 @@ class TestCryptographicProver:
         assert result.status == ProofStatus.PROVED
         assert result.passed is True
 
-    def test_checksum_integrity_proof(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_checksum_integrity_proof(self, prover: CryptographicProver) -> None:
         """Test checksum integrity soundness proof."""
         result = prover.prove_checksum_integrity()
 
@@ -157,9 +143,7 @@ class TestCryptographicProofReport:
         """Create a CryptographicProver instance."""
         return CryptographicProver(timeout_ms=60000)
 
-    def test_prove_all_generates_report(
-        self, prover: CryptographicProver
-    ) -> None:
+    def test_prove_all_generates_report(self, prover: CryptographicProver) -> None:
         """Test that prove_all generates a complete report."""
         report = prover.prove_all()
 

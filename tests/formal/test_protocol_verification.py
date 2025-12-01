@@ -30,16 +30,12 @@ class TestTLSProtocolVerifier:
         """Create a TLSProtocolVerifier instance."""
         return TLSProtocolVerifier(timeout_ms=60000)
 
-    def test_verifier_initialization(
-        self, verifier: TLSProtocolVerifier
-    ) -> None:
+    def test_verifier_initialization(self, verifier: TLSProtocolVerifier) -> None:
         """Test verifier initializes correctly."""
         assert verifier.timeout_ms == 60000
         assert verifier._z3 is not None
 
-    def test_key_exchange_security(
-        self, verifier: TLSProtocolVerifier
-    ) -> None:
+    def test_key_exchange_security(self, verifier: TLSProtocolVerifier) -> None:
         """Test key exchange security verification."""
         result = verifier.verify_key_exchange_security()
 
@@ -92,9 +88,7 @@ class TestProtocolVerificationReport:
         """Create a TLSProtocolVerifier instance."""
         return TLSProtocolVerifier(timeout_ms=60000)
 
-    def test_verify_all_generates_report(
-        self, verifier: TLSProtocolVerifier
-    ) -> None:
+    def test_verify_all_generates_report(self, verifier: TLSProtocolVerifier) -> None:
         """Test verify_all generates complete report."""
         report = verifier.verify_all()
 
@@ -103,9 +97,7 @@ class TestProtocolVerificationReport:
         assert len(report.results) == 5
         assert report.total_time_ms > 0
 
-    def test_all_properties_verified(
-        self, verifier: TLSProtocolVerifier
-    ) -> None:
+    def test_all_properties_verified(self, verifier: TLSProtocolVerifier) -> None:
         """Test all protocol properties are verified."""
         report = verifier.verify_all()
 
@@ -145,15 +137,11 @@ class TestHMACProtocolVerifier:
         """Create an HMACProtocolVerifier instance."""
         return HMACProtocolVerifier(timeout_ms=60000)
 
-    def test_verifier_initialization(
-        self, verifier: HMACProtocolVerifier
-    ) -> None:
+    def test_verifier_initialization(self, verifier: HMACProtocolVerifier) -> None:
         """Test verifier initializes correctly."""
         assert verifier.timeout_ms == 60000
 
-    def test_message_authentication(
-        self, verifier: HMACProtocolVerifier
-    ) -> None:
+    def test_message_authentication(self, verifier: HMACProtocolVerifier) -> None:
         """Test message authentication verification."""
         result = verifier.verify_message_authentication()
 

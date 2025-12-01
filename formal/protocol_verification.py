@@ -170,13 +170,13 @@ class TLSProtocolVerifier:
         solver.add(adv_key <= q * adv_ddh)
 
         # DDH is hard on P-256: Adv_DDH ≤ 2^-128
-        solver.add(adv_ddh <= 2**(-128))
+        solver.add(adv_ddh <= 2 ** (-128))
 
         # Bound number of sessions
         solver.add(q <= 2**40)
 
         # Check: can key advantage exceed negligible?
-        solver.add(adv_key > 2**(-64))
+        solver.add(adv_key > 2 ** (-64))
 
         status = solver.check()
 
@@ -227,9 +227,7 @@ class TLSProtocolVerifier:
 
         # TLS 1.3 property: session key requires ephemeral key
         # Even with LT key, need ephemeral for session key
-        solver.add(
-            session_key_recoverable == z3.And(lt_key_compromised, eph_key_known)
-        )
+        solver.add(session_key_recoverable == z3.And(lt_key_compromised, eph_key_known))
 
         # Ephemeral keys are deleted after handshake
         solver.add(z3.Not(eph_key_known))
@@ -284,9 +282,7 @@ class TLSProtocolVerifier:
         server_authentic = z3.Bool("server_authentic")
 
         # TLS 1.3: client accepts only if cert and signature valid
-        solver.add(
-            client_accepts == z3.And(has_valid_cert, valid_signature)
-        )
+        solver.add(client_accepts == z3.And(has_valid_cert, valid_signature))
 
         # If client accepts, server should be authentic (soundness)
         # We try to find case where client accepts non-authentic server
@@ -346,7 +342,7 @@ class TLSProtocolVerifier:
         solver.add(num_sessions <= 2**64)
 
         # Check: can collision probability be non-negligible?
-        solver.add(collision_prob > 2**(-64))
+        solver.add(collision_prob > 2 ** (-64))
 
         status = solver.check()
 
@@ -391,14 +387,15 @@ class TLSProtocolVerifier:
 
         # Key substitution requires hash collision
         solver.add(
-            attacker_can_substitute == z3.And(
+            attacker_can_substitute
+            == z3.And(
                 z3.Not(key_derived_from_transcript),
-                hash_collision_prob > 2**(-128),
+                hash_collision_prob > 2 ** (-128),
             )
         )
 
         # Hash collision bound
-        solver.add(hash_collision_prob <= 2**(-128))
+        solver.add(hash_collision_prob <= 2 ** (-128))
 
         # Check: can attacker substitute keys?
         solver.add(attacker_can_substitute)
@@ -559,7 +556,7 @@ class HMACProtocolVerifier:
         solver.add(num_queries <= 2**64)
 
         # Check: can forgery probability be significant?
-        solver.add(forgery_prob > 2**(-128))
+        solver.add(forgery_prob > 2 ** (-128))
 
         status = solver.check()
 
@@ -601,7 +598,8 @@ class HMACProtocolVerifier:
 
         # HKDF preserves entropy up to output length
         solver.add(
-            output_entropy == z3.If(
+            output_entropy
+            == z3.If(
                 ikm_entropy >= z3.ToReal(output_bits),
                 z3.ToReal(output_bits),
                 ikm_entropy,

@@ -18,12 +18,8 @@ from .proof_invariant import (
     HAS_Z3,
     MISSING_Z3_MESSAGE,
 )
-from .proof_invariant import (
-    ProofResult as InvariantProofResult,
-)
-from .proof_invariant import (
-    run_proof as run_invariant_proof,
-)
+from .proof_invariant import ProofResult as InvariantProofResult
+from .proof_invariant import run_proof as run_invariant_proof
 
 # Only export cryptographic proof classes if available
 try:
