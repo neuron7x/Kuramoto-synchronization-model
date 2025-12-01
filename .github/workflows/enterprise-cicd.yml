@@ -474,7 +474,7 @@ jobs:
 
       - name: Configure AWS credentials
         if: steps.resolve.outputs.deploy_enabled == 'true'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ steps.resolve.outputs.role }}
           role-session-name: TradePulseCanary${{ github.run_id }}
@@ -612,7 +612,7 @@ jobs:
 
       - name: Configure AWS credentials
         if: ${{ needs.deploy-canary.outputs.role != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ needs.deploy-canary.outputs.role }}
           role-session-name: TradePulseRollout${{ github.run_id }}
@@ -673,7 +673,7 @@ jobs:
 
       - name: Configure AWS credentials
         if: ${{ needs.deploy-canary.outputs.role != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ needs.deploy-canary.outputs.role }}
           role-session-name: TradePulseRollback${{ github.run_id }}

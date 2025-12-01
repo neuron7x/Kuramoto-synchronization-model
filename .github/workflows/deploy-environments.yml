@@ -172,7 +172,7 @@ jobs:
         id: configure_aws
         if: env.AWS_STAGING_ROLE_ARN != ''
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.AWS_STAGING_ROLE_ARN }}
           role-session-name: GitHubActions-Deploy-Staging-${{ github.run_id }}
@@ -381,7 +381,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.AWS_PRODUCTION_ROLE_ARN }}
           role-session-name: GitHubActions-Deploy-Production-${{ github.run_id }}
@@ -609,7 +609,7 @@ jobs:
           esac
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ steps.select_env.outputs.role }}
           role-session-name: GitHubActions-Rollback-${{ github.run_id }}

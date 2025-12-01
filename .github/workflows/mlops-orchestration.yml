@@ -268,7 +268,7 @@ jobs:
       - name: Configure AWS credentials
         id: aws-creds
         if: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID != '' && secrets.AWS_MLOPS_SECRET_ACCESS_KEY != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}

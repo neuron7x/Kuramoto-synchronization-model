@@ -169,7 +169,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -c constraints/security.txt -r requirements.txt
       - name: Configure cloud credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
