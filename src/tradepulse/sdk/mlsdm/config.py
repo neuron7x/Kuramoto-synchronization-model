@@ -81,7 +81,9 @@ class FHMCConfig:
     arousal: dict[str, Any] = field(default_factory=lambda: {"slope_gate": False})
     sleep: dict[str, Any] = field(default_factory=lambda: {"dgr_ratio": 0.25})
     explore: dict[str, Any] = field(default_factory=_default_explore_params)
-    fractional_update: dict[str, Any] = field(default_factory=_default_fractional_params)
+    fractional_update: dict[str, Any] = field(
+        default_factory=_default_fractional_params
+    )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to a dictionary suitable for FHMC initialization."""

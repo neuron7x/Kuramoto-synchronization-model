@@ -11,7 +11,6 @@ This script validates all the fixes made to the simplified serotonin controller:
 
 Can be run directly without pytest dependencies.
 """
-import importlib.util
 import sys
 import tempfile
 from pathlib import Path
@@ -21,20 +20,13 @@ import yaml
 
 def load_controller():
     """Load the serotonin controller module."""
-    controller_path = (
-        Path(__file__).parents[6]
-        / "src"
-        / "tradepulse"
-        / "core"
-        / "neuro"
-        / "serotonin"
-        / "serotonin_controller.py"
+    # Use proper package import instead of dynamic file loading
+    # This ensures relative imports work correctly
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController,
     )
-    spec = importlib.util.spec_from_file_location("serotonin_ctrl", controller_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["serotonin_ctrl"] = module  # Register module before execution
-    spec.loader.exec_module(module)
-    return module.SerotoninController
+
+    return SerotoninController
 
 
 def create_controller():

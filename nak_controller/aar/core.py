@@ -202,9 +202,7 @@ def compute_error(
         higher_is_better=False,  # Lower latency is better
     )
 
-    slippage_abs = absolute_error(
-        prediction.expected_slippage, outcome.actual_slippage
-    )
+    slippage_abs = absolute_error(prediction.expected_slippage, outcome.actual_slippage)
     slippage_rel = relative_error(
         prediction.expected_slippage, outcome.actual_slippage, slippage_scale
     )
@@ -216,9 +214,11 @@ def compute_error(
     )
 
     # Combined absolute error (weighted sum of absolute errors)
-    combined_abs = 0.6 * (pnl_abs / pnl_scale) + 0.2 * (
-        latency_abs / latency_scale
-    ) + 0.2 * (slippage_abs / slippage_scale)
+    combined_abs = (
+        0.6 * (pnl_abs / pnl_scale)
+        + 0.2 * (latency_abs / latency_scale)
+        + 0.2 * (slippage_abs / slippage_scale)
+    )
 
     # Combined normalized error (weighted average of normalized relative errors)
     # Convention: positive normalized_error = outcome better than expected

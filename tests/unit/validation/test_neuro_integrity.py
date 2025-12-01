@@ -247,7 +247,9 @@ class TestValidateState:
         )
         report = validator.validate_state(state)
         assert not report.is_valid
-        assert any("E/I ratio" in v and "excitation dominant" in v for v in report.violations)
+        assert any(
+            "E/I ratio" in v and "excitation dominant" in v for v in report.violations
+        )
 
     def test_low_ei_imbalance(self) -> None:
         config = NeuroIntegrityConfig(max_ei_imbalance=3.0)

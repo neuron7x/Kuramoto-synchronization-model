@@ -5,7 +5,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:

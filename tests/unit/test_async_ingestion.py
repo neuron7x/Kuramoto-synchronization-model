@@ -513,7 +513,7 @@ class TestBinanceWebSocketStream:
 
         from core.data.async_ingestion import BinanceWebSocketStream
 
-        stream = BinanceWebSocketStream("BTCUSDT")
+        _stream = BinanceWebSocketStream("BTCUSDT")  # noqa: F841
 
         # Remove websockets from sys.modules if present to simulate missing library
         ws_module = sys.modules.pop("websockets", None)

@@ -16,7 +16,7 @@ Available Implementations:
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Mapping, Sequence
 
@@ -196,9 +196,7 @@ class LocalRegimeClassifier(RegimeClassifierPort):
             distances[:, k] = np.linalg.norm(features - self._centroids[k], axis=1)
         return np.argmin(distances, axis=1)
 
-    def _compute_regime_stats(
-        self, returns: pd.DataFrame, labels: np.ndarray
-    ) -> None:
+    def _compute_regime_stats(self, returns: pd.DataFrame, labels: np.ndarray) -> None:
         """Compute statistics for each regime."""
         self._regime_stats = {}
         for k in range(self.n_regimes):
@@ -212,9 +210,7 @@ class LocalRegimeClassifier(RegimeClassifierPort):
                 "mean": float(regime_returns.mean().mean()),
                 "volatility": float(regime_returns.std().mean()),
                 "count": int(np.sum(mask)),
-                "duration_mean": float(
-                    self._compute_mean_duration(labels, k)
-                ),
+                "duration_mean": float(self._compute_mean_duration(labels, k)),
             }
 
     @staticmethod
@@ -303,9 +299,11 @@ class LocalFeatureExtractor(FeatureExtractionPort):
             corr_series = returns.rolling(min(21, len(returns))).corr()
             if isinstance(corr_series, pd.DataFrame):
                 mean_corr = corr_series.groupby(level=0).apply(
-                    lambda x: x.values[np.triu_indices(len(x), k=1)].mean()
-                    if len(x) > 1
-                    else 0.0
+                    lambda x: (
+                        x.values[np.triu_indices(len(x), k=1)].mean()
+                        if len(x) > 1
+                        else 0.0
+                    )
                 )
                 features["cross_correlation"] = mean_corr
                 self._feature_names.append("cross_correlation")
@@ -366,9 +364,9 @@ class LocalTransitionModel(TransitionModelPort):
 
         # Compute transition probabilities with smoothing
         row_sums = self._transition_counts.sum(axis=1, keepdims=True)
-        self._transition_matrix = (
-            self._transition_counts + self.smoothing
-        ) / (row_sums + self.smoothing * self._n_regimes)
+        self._transition_matrix = (self._transition_counts + self.smoothing) / (
+            row_sums + self.smoothing * self._n_regimes
+        )
 
         # Compute regime durations
         self._regime_durations = defaultdict(list)
@@ -535,7 +533,9 @@ class FileRegimePersistence(RegimePersistencePort):
         if isinstance(obj, (np.integer, np.floating)):
             return float(obj)
         if isinstance(obj, dict):
-            return {k: FileRegimePersistence._make_serializable(v) for k, v in obj.items()}
+            return {
+                k: FileRegimePersistence._make_serializable(v) for k, v in obj.items()
+            }
         if isinstance(obj, (list, tuple)):
             return [FileRegimePersistence._make_serializable(v) for v in obj]
         return obj

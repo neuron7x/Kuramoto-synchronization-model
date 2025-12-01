@@ -386,7 +386,10 @@ class TestCrossDomainConsistency:
         data = np.array([1.0, 1.0, 1.0, 1.0, 1.0])  # Very low CV
         state = SystemState(thermodynamic=thermo, data=data)
         report = integrator.validate(state)
-        assert any("Entropy-variability mismatch" in issue for issue in report.cross_domain_issues)
+        assert any(
+            "Entropy-variability mismatch" in issue
+            for issue in report.cross_domain_issues
+        )
 
     def test_neural_energy_mismatch(self) -> None:
         config = SystemValidationConfig(
@@ -405,7 +408,9 @@ class TestCrossDomainConsistency:
         )
         state = SystemState(thermodynamic=thermo, pathway=pathway)
         report = integrator.validate(state)
-        assert any("Neural-energy mismatch" in issue for issue in report.cross_domain_issues)
+        assert any(
+            "Neural-energy mismatch" in issue for issue in report.cross_domain_issues
+        )
 
     def test_coherence_quality_mismatch(self) -> None:
         config = SystemValidationConfig(
@@ -425,7 +430,10 @@ class TestCrossDomainConsistency:
         data = np.array([1.0, np.nan, np.nan, np.nan, 5.0])  # 60% NaN
         state = SystemState(pathway=pathway, data=data)
         report = integrator.validate(state)
-        assert any("Coherence-quality mismatch" in issue for issue in report.cross_domain_issues)
+        assert any(
+            "Coherence-quality mismatch" in issue
+            for issue in report.cross_domain_issues
+        )
 
     def test_no_cross_domain_when_disabled(self) -> None:
         config = SystemValidationConfig(cross_domain_checks=False)

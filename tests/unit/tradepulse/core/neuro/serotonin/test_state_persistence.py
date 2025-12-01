@@ -34,26 +34,14 @@ def _build_config(tmp_path: Path) -> Path:
 
 
 def _create_controller(tmp_path: Path):
-    module_path = (
-        Path(__file__).parents[6]
-        / "src"
-        / "tradepulse"
-        / "core"
-        / "neuro"
-        / "serotonin"
-        / "serotonin_controller.py"
+    # Use proper package import instead of dynamic file loading
+    # This ensures relative imports work correctly
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController,
     )
-    import importlib.util
-    import sys
-
-    spec = importlib.util.spec_from_file_location("serotonin_persistence", module_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["serotonin_persistence"] = module
-    spec.loader.exec_module(module)  # type: ignore[arg-type]
-    Controller = module.SerotoninController
 
     cfg_path = _build_config(tmp_path)
-    ctrl = Controller(str(cfg_path))
+    ctrl = SerotoninController(str(cfg_path))
     cfg_path.unlink(missing_ok=True)
     return ctrl
 

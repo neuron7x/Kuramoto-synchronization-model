@@ -191,7 +191,10 @@ def should_freeze_adaptation(
 
     # Check variance threshold
     if stats.std > config.freeze_variance_threshold:
-        return True, f"High error variance: {stats.std:.4f} > {config.freeze_variance_threshold}"
+        return (
+            True,
+            f"High error variance: {stats.std:.4f} > {config.freeze_variance_threshold}",
+        )
 
     # Check for dramatic mean shift (if we have historical baseline)
     if state.historical_std > 1e-6:
@@ -331,12 +334,8 @@ def update_adaptation_state(
     # Update historical baseline (exponential moving average)
     alpha = 0.1  # Smoothing factor
     if stats.count >= 10:
-        state.historical_mean = (
-            alpha * stats.mean + (1 - alpha) * state.historical_mean
-        )
-        state.historical_std = (
-            alpha * stats.std + (1 - alpha) * state.historical_std
-        )
+        state.historical_mean = alpha * stats.mean + (1 - alpha) * state.historical_mean
+        state.historical_std = alpha * stats.std + (1 - alpha) * state.historical_std
 
     # Track cumulative adjustments
     if not result.is_frozen:

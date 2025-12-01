@@ -27,7 +27,6 @@ import pandas as pd
 from scipy.stats import norm
 
 from analytics.fpma.src.ports.ports import (
-    DataRetrievalPort,
     OptimizationPort,
     PersistencePort,
     RiskModelPort,
@@ -85,10 +84,6 @@ class LocalRiskModel(RiskModelPort):
             trace_s = np.trace(sample_cov)
             mu = trace_s / p
             target = mu * np.eye(p)
-
-            # Compute optimal shrinkage intensity (simplified)
-            delta = sample_cov - target
-            delta_sq_sum = np.sum(delta**2)
 
             # Estimate shrinkage intensity
             alpha = min(1.0, self.shrinkage_target)
