@@ -86,7 +86,9 @@ class DataCenterManager:
                     old_primary = self._data_centers.get(self._primary_dc_id)
                     if old_primary:
                         old_primary.status = DataCenterStatus.STANDBY
-                        old_primary.config = old_primary.config.with_primary_status(False)
+                        old_primary.config = old_primary.config.with_primary_status(
+                            False
+                        )
                 self._primary_dc_id = config.id
 
             logger.info(
@@ -156,9 +158,7 @@ class DataCenterManager:
                 return self._data_centers.get(self._primary_dc_id)
             return None
 
-    def get_data_centers_by_region(
-        self, region: DataCenterRegion
-    ) -> List[DataCenter]:
+    def get_data_centers_by_region(self, region: DataCenterRegion) -> List[DataCenter]:
         """Get all data centers in a specific region.
 
         Args:
@@ -249,9 +249,7 @@ class DataCenterManager:
         ]
 
         if not candidates:
-            logger.error(
-                f"No available candidates for failover from {failing_dc.id}"
-            )
+            logger.error(f"No available candidates for failover from {failing_dc.id}")
             return None
 
         # Select candidate with best health score

@@ -199,7 +199,9 @@ class DataCenterHealthMonitor:
                     f"Data center {dc.id} marked as degraded after "
                     f"{failure_count} consecutive failures"
                 )
-        elif success_count >= self.config.recovery_threshold and not dc.health.is_healthy:
+        elif (
+            success_count >= self.config.recovery_threshold and not dc.health.is_healthy
+        ):
             dc.health.is_healthy = True
             if dc.status == DataCenterStatus.DEGRADED:
                 dc.status = DataCenterStatus.ACTIVE
@@ -238,9 +240,7 @@ class DataCenterHealthMonitor:
             now = datetime.now(timezone.utc)
             return now - last_check >= interval
 
-    def get_check_history(
-        self, dc_id: str, limit: int = 10
-    ) -> List[HealthCheckResult]:
+    def get_check_history(self, dc_id: str, limit: int = 10) -> List[HealthCheckResult]:
         """Get recent health check results for a data center.
 
         Args:

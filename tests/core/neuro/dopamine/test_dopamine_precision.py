@@ -145,9 +145,7 @@ class TestRPEComputationPrecision:
 class TestTemperatureCalculationStability:
     """Tests for temperature calculation stability."""
 
-    def test_temperature_bounds_respected(
-        self, controller: DopamineController
-    ) -> None:
+    def test_temperature_bounds_respected(self, controller: DopamineController) -> None:
         """Test temperature stays within configured bounds."""
         min_temp, max_temp = controller.temperature_bounds()
 
@@ -354,9 +352,7 @@ class TestDDMIntegrationPrecision:
 class TestAppetitiveStateComputation:
     """Tests for appetitive state computation precision."""
 
-    def test_appetitive_state_weights_sum(
-        self, controller: DopamineController
-    ) -> None:
+    def test_appetitive_state_weights_sum(self, controller: DopamineController) -> None:
         """Test appetitive state respects weight configuration."""
         cfg = controller.config
 
@@ -367,9 +363,7 @@ class TestAppetitiveStateComputation:
         expected_min = cfg["w_r"] + cfg["w_n"] + cfg["w_m"] + cfg["w_v"]
         assert appetitive >= expected_min
 
-    def test_appetitive_state_zero_inputs(
-        self, controller: DopamineController
-    ) -> None:
+    def test_appetitive_state_zero_inputs(self, controller: DopamineController) -> None:
         """Test appetitive state with zero inputs."""
         appetitive = controller.estimate_appetitive_state(0.0, 0.0, 0.0, 0.0)
         assert appetitive == 0.0
@@ -431,9 +425,7 @@ class TestValueEstimateUpdate:
 class TestMetaAdaptation:
     """Tests for meta-adaptation mechanism precision."""
 
-    def test_meta_adapt_good_performance(
-        self, controller: DopamineController
-    ) -> None:
+    def test_meta_adapt_good_performance(self, controller: DopamineController) -> None:
         """Test meta-adaptation with good performance."""
         initial_lr = controller.config["learning_rate_v"]
         initial_dg = controller.config["delta_gain"]
@@ -448,9 +440,7 @@ class TestMetaAdaptation:
         # Temperature should decrease
         assert controller.config["base_temperature"] < initial_temp
 
-    def test_meta_adapt_bad_performance(
-        self, controller: DopamineController
-    ) -> None:
+    def test_meta_adapt_bad_performance(self, controller: DopamineController) -> None:
         """Test meta-adaptation with bad performance."""
         initial_lr = controller.config["learning_rate_v"]
         controller._meta_cooldown_counter = 0  # Bypass cooldown
@@ -480,9 +470,7 @@ class TestMetaAdaptation:
 class TestDopamineSignalBounds:
     """Tests for dopamine signal bounds."""
 
-    def test_dopamine_signal_clamped_high(
-        self, controller: DopamineController
-    ) -> None:
+    def test_dopamine_signal_clamped_high(self, controller: DopamineController) -> None:
         """Test dopamine signal is clamped at upper bound."""
         # Very high appetitive state and positive RPE
         controller.compute_rpe(1000.0, 0.0, 0.0)
@@ -491,9 +479,7 @@ class TestDopamineSignalBounds:
         assert da <= 1.0
         assert da >= 0.0
 
-    def test_dopamine_signal_clamped_low(
-        self, controller: DopamineController
-    ) -> None:
+    def test_dopamine_signal_clamped_low(self, controller: DopamineController) -> None:
         """Test dopamine signal is clamped at lower bound."""
         # Very low appetitive state and negative RPE
         controller.compute_rpe(-1000.0, 100.0, 0.0)

@@ -23,6 +23,8 @@ Example usage::
     action = mlsdm.act(observation)
 """
 
+# Re-export MLSDM submodule for convenience
+from . import mlsdm
 from .contracts import (
     AuditEvent,
     ExecutionResult,
@@ -32,9 +34,6 @@ from .contracts import (
     SuggestedOrder,
 )
 from .engine import TradePulseSDK
-
-# Re-export MLSDM submodule for convenience
-from . import mlsdm
 
 __all__ = [
     # Trading SDK

@@ -157,8 +157,9 @@ class TestCreateOptimizer:
 
     def test_create_optimizer(self) -> None:
         """Optimizer creates successfully."""
+
         def objective(x: np.ndarray) -> float:
-            return float(np.sum(x ** 2))
+            return float(np.sum(x**2))
 
         optimizer = create_optimizer(
             objective=objective,

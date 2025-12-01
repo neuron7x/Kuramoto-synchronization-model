@@ -259,7 +259,7 @@ def _hilbert_phase(series: np.ndarray) -> np.ndarray:
             h[1:half_n] = 2.0
         else:
             h[0] = 1.0
-            h[1:(n + 1) // 2] = 2.0
+            h[1 : (n + 1) // 2] = 2.0
         analytic = np.fft.ifft(X * h)
     else:
         detrended = _signal.detrend(x)
@@ -282,8 +282,13 @@ class WaveletWindowSelector:
     """
 
     __slots__ = (
-        "min_window", "max_window", "wavelet", "levels",
-        "max_samples", "_fallback_window", "_widths_cache"
+        "min_window",
+        "max_window",
+        "wavelet",
+        "levels",
+        "max_samples",
+        "_fallback_window",
+        "_widths_cache",
     )
 
     def __init__(
@@ -351,7 +356,7 @@ class WaveletWindowSelector:
         if values.size == 0:
             raise ValueError("cannot select window from empty price series")
         if self.max_samples is not None and values.size > self.max_samples:
-            values = values[-self.max_samples:]
+            values = values[-self.max_samples :]
         if _signal is None:
             return self._fallback_window
 

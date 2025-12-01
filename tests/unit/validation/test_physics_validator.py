@@ -268,7 +268,9 @@ class TestValidateTransition:
         bounds = EnergyBounds(entropy_tolerance=1e-6)
         validator = PhysicsValidator(bounds)
         state_before = ThermodynamicState(free_energy=0.0, entropy=0.5)
-        state_after = ThermodynamicState(free_energy=0.0, entropy=0.4)  # Entropy decreased
+        state_after = ThermodynamicState(
+            free_energy=0.0, entropy=0.4
+        )  # Entropy decreased
         report = validator.validate_transition(state_before, state_after, dt=1.0)
         assert not report.is_valid
         assert any("Second Law violation" in v for v in report.violations)

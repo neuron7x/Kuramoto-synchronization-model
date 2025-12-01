@@ -11,32 +11,23 @@ Tests the new helper methods for real-world integration:
 - step_batch()
 - get_performance_stats()
 """
-import importlib.util
 import sys
 import tempfile
 from pathlib import Path
 
+import pytest
 import yaml
 
 
 def load_controller():
     """Load the serotonin controller module."""
-    controller_path = (
-        Path(__file__).parents[6]
-        / "src"
-        / "tradepulse"
-        / "core"
-        / "neuro"
-        / "serotonin"
-        / "serotonin_controller.py"
+    # Use proper package import instead of dynamic file loading
+    # This ensures relative imports work correctly
+    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController,
     )
-    spec = importlib.util.spec_from_file_location(
-        "serotonin_util_test", controller_path
-    )
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["serotonin_util_test"] = module
-    spec.loader.exec_module(module)
-    return module.SerotoninController
+
+    return SerotoninController
 
 
 def create_controller(enable_perf=False):

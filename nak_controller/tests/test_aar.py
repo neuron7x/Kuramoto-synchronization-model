@@ -558,9 +558,7 @@ class TestAARTracker:
         for i in range(10):
             action = create_action_event("trade", "momentum", action_id=str(i))
             tracker.record_action(action)
-            tracker.record_prediction(
-                Prediction(action_id=str(i), expected_pnl=100.0)
-            )
+            tracker.record_prediction(Prediction(action_id=str(i), expected_pnl=100.0))
             tracker.record_outcome(
                 Outcome(action_id=str(i), actual_pnl=90.0),
                 mode="GREEN",
@@ -675,9 +673,7 @@ class TestAARIntegration:
                 Prediction(action_id=action.action_id, expected_pnl=100.0)
             )
             # Outcome worse than expected
-            tracker.record_outcome(
-                Outcome(action_id=action.action_id, actual_pnl=50.0)
-            )
+            tracker.record_outcome(Outcome(action_id=action.action_id, actual_pnl=50.0))
 
         stats = tracker.get_strategy_stats("bad_strat")
         assert stats.negative_count == 10
@@ -695,17 +691,13 @@ class TestAARDopamineModulation:
         assert result == 0.0
 
     def test_positive_mean_increases_dopamine(self) -> None:
-        stats = AggregateStats(
-            count=20, mean=0.3, positive_count=15, negative_count=5
-        )
+        stats = AggregateStats(count=20, mean=0.3, positive_count=15, negative_count=5)
         config = AARAdaptationConfig(positive_threshold=0.1)
         result = aar_dopamine_modulation(stats, config)
         assert result > 0
 
     def test_negative_mean_no_dopamine(self) -> None:
-        stats = AggregateStats(
-            count=20, mean=-0.3, positive_count=5, negative_count=15
-        )
+        stats = AggregateStats(count=20, mean=-0.3, positive_count=5, negative_count=15)
         config = AARAdaptationConfig()
         result = aar_dopamine_modulation(stats, config)
         assert result == 0.0
@@ -727,17 +719,13 @@ class TestAARSerotoninModulation:
         assert result == 0.0
 
     def test_negative_mean_increases_serotonin(self) -> None:
-        stats = AggregateStats(
-            count=20, mean=-0.3, positive_count=5, negative_count=15
-        )
+        stats = AggregateStats(count=20, mean=-0.3, positive_count=5, negative_count=15)
         config = AARAdaptationConfig(negative_threshold=-0.1)
         result = aar_serotonin_modulation(stats, config)
         assert result > 0
 
     def test_positive_mean_no_serotonin(self) -> None:
-        stats = AggregateStats(
-            count=20, mean=0.3, positive_count=15, negative_count=5
-        )
+        stats = AggregateStats(count=20, mean=0.3, positive_count=15, negative_count=5)
         config = AARAdaptationConfig()
         result = aar_serotonin_modulation(stats, config)
         assert result == 0.0
@@ -949,9 +937,7 @@ class TestAARControllerIntegration:
             tracker.record_prediction(
                 Prediction(action_id=action.action_id, expected_pnl=100.0)
             )
-            tracker.record_outcome(
-                Outcome(action_id=action.action_id, actual_pnl=50.0)
-            )
+            tracker.record_outcome(Outcome(action_id=action.action_id, actual_pnl=50.0))
 
         stats = tracker.get_strategy_stats("strat2")
         result = compute_aar_adaptation(stats, state, config)
