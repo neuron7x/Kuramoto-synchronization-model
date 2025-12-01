@@ -1,0 +1,157 @@
+# Backtest Cost Model Configuration
+# ==================================
+# This file defines realistic transaction cost parameters for backtesting.
+# The goal is to make backtests more conservative and realistic.
+# When in doubt, use higher costs to avoid overfitting.
+
+# Default configuration used when no market-specific settings apply
+defaults:
+  # Commission settings
+  commission_model: fixed_bps
+  commission_params:
+    bps: 5.0  # 5 basis points per trade (0.05%)
+
+  # Spread model (half-spread added to buys, subtracted from sells)
+  spread_model: bps
+  spread_params:
+    bps: 2.5  # 2.5 bps half-spread
+
+  # Slippage model
+  slippage_model: square_root
+  slippage_params:
+    a: 0.0001  # Fixed component
+    b: 0.001   # Volume-dependent component
+
+  # Latency model (in bars)
+  latency:
+    signal_to_order: 1     # 1 bar delay from signal to order placement
+    order_to_execution: 0  # Instant order routing
+    execution_to_fill: 0   # Instant fill
+
+  # Financing/carry costs
+  financing_model: borrow
+  financing_params:
+    long_rate_bps: 50   # 50 bps annual cost for long positions
+    short_rate_bps: 100 # 100 bps annual cost for short positions
+    periods_per_year: 252
+
+# Market-specific overrides
+markets:
+  # US Equities
+  us_equities:
+    commission_model: percent
+    commission_params:
+      percent: 0.01  # 0.01% of notional
+
+    spread_model: bps
+    spread_params:
+      bps: 1.0  # 1 bp half-spread for liquid equities
+
+    slippage_model: square_root
+    slippage_params:
+      a: 0.00005
+      b: 0.0005
+
+    latency:
+      signal_to_order: 1
+      order_to_execution: 0
+      execution_to_fill: 0
+
+    financing_model: borrow
+    financing_params:
+      long_rate_bps: 25
+      short_rate_bps: 75
+      periods_per_year: 252
+
+  # Crypto spot markets
+  crypto_spot:
+    commission_model: fixed_bps
+    commission_params:
+      bps: 10.0  # 10 bps maker/taker
+
+    spread_model: bps
+    spread_params:
+      bps: 5.0  # 5 bps half-spread
+
+    slippage_model: square_root
+    slippage_params:
+      a: 0.0002
+      b: 0.002
+
+    latency:
+      signal_to_order: 1
+      order_to_execution: 0
+      execution_to_fill: 0
+
+    financing_model: borrow
+    financing_params:
+      long_rate_bps: 0
+      short_rate_bps: 200  # Higher borrowing cost for crypto
+      periods_per_year: 365
+
+  # Futures markets (E-mini S&P 500)
+  es_futures:
+    commission_model: per_unit
+    commission_params:
+      per_unit: 2.50  # $2.50 per contract round-trip
+
+    spread_model: fixed
+    spread_params:
+      value: 0.25  # 1 tick = $12.50 per contract
+
+    slippage_model: fixed
+    slippage_params:
+      value: 0.25  # 1 tick slippage
+
+    latency:
+      signal_to_order: 0  # Low latency environment
+      order_to_execution: 0
+      execution_to_fill: 0
+
+    financing_model: borrow
+    financing_params:
+      long_rate_bps: 10
+      short_rate_bps: 10
+      periods_per_year: 252
+
+  # Forex majors (EUR/USD, USD/JPY, etc.)
+  forex_majors:
+    commission_model: fixed_bps
+    commission_params:
+      bps: 0.5  # 0.5 bps commission
+
+    spread_model: bps
+    spread_params:
+      bps: 0.5  # 0.5 bps half-spread for majors
+
+    slippage_model: volume
+    slippage_params:
+      coefficient: 0.0001
+
+    latency:
+      signal_to_order: 0
+      order_to_execution: 0
+      execution_to_fill: 0
+
+    financing_model: borrow
+    financing_params:
+      long_rate_bps: 0  # Carry handled separately in FX
+      short_rate_bps: 0
+      periods_per_year: 252
+
+# Stress testing overrides
+# Use these for conservative backtests
+stress_test:
+  # Double all costs for stress testing
+  multipliers:
+    commission: 2.0
+    spread: 2.0
+    slippage: 2.0
+    latency: 2  # Add 2 extra bars latency
+
+  # Or use fixed high costs
+  fixed_high_costs:
+    commission_bps: 20.0
+    spread_bps: 10.0
+    slippage_bps: 10.0
+    latency_bars: 3
