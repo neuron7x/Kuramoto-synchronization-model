@@ -63,7 +63,7 @@ jobs:
         run: python -m coverage xml -i -o coverage-${{ matrix.shard }}.xml
 
       - name: Upload shard coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-data-${{ matrix.shard }}
           path: |
@@ -124,7 +124,7 @@ jobs:
             --coverage coverage.xml
 
       - name: Upload aggregated coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: combined-coverage
           path: |
@@ -215,7 +215,7 @@ jobs:
 
       - name: Upload mutation test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mutation-test-results
           path: |

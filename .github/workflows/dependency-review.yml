@@ -154,7 +154,7 @@ jobs:
 
       - name: Upload license reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: license-reports
           path: |

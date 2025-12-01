@@ -177,7 +177,7 @@ jobs:
           exit $go_exit_code
       - name: Upload Go coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: go-services-coverage
           path: reports/go/services.coverage.out
@@ -280,7 +280,7 @@ jobs:
           PY
       - name: Upload localization coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: localization-coverage
           path: reports/localization/coverage.json
@@ -518,7 +518,7 @@ jobs:
             _Updated automatically for the latest workflow run._
       - name: Upload JUnit test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: junit-test-results-${{ matrix.python-version }}
           path: |
@@ -527,7 +527,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload HTML test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pytest-html-reports-${{ matrix.python-version }}
           path: |
@@ -537,14 +537,14 @@ jobs:
           if-no-files-found: warn
       - name: Upload flaky manifest
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: flaky-tests-skipped-${{ matrix.python-version }}
           path: reports/flaky-tests-skipped.json
           if-no-files-found: warn
       - name: Upload test quality and performance reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-quality-performance-${{ matrix.python-version }}
           path: |
@@ -555,7 +555,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-reports-${{ matrix.python-version }}
           path: |
@@ -604,7 +604,7 @@ jobs:
         run: python -m tools.security.dast_probe --report reports/security/dast_report.json
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: security-reports
           path: |
@@ -633,7 +633,7 @@ jobs:
         run: python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
       - name: Upload trading engine mutation artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
@@ -674,7 +674,7 @@ jobs:
         run: npx playwright test
       - name: Upload Playwright artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dashboard-playwright-artifacts
           path: |
@@ -811,7 +811,7 @@ jobs:
           PY
       - name: Upload benchmark artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: benchmark-reports
           path: |
@@ -869,7 +869,7 @@ jobs:
           if [ -d prof ]; then cp -r prof/. reports/profiling/; fi
       - name: Upload profiling artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pytest-profiling
           path: reports/profiling
@@ -903,7 +903,7 @@ jobs:
         run: npx playwright test --config=playwright.config.ts --reporter=list --project="Desktop Chrome"
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: playwright-report
           path: apps/web/playwright-report
@@ -957,7 +957,7 @@ jobs:
           exit "$status"
       - name: Upload flaky test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: flaky-tests-artifacts
           path: |
