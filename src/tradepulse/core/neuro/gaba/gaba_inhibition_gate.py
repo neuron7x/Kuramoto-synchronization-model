@@ -1,4 +1,17 @@
-"""GABAergic inhibition gate moderating impulsive Go drives."""
+"""GABAergic inhibition gate moderating impulsive Go drives.
+
+This module implements GABA-inspired inhibition mechanisms that dampen
+impulsive trading decisions under high volatility or stress conditions.
+
+Public API
+----------
+GABAConfig : Configuration dataclass for the inhibition gate
+GABAInhibitionGate : Main inhibition gate class with update() interface
+
+The gate computes inhibition coefficients that reduce Go drives when
+impulsivity (measured by sequence intensity) exceeds threshold levels.
+STDP-like plasticity allows the gate to adapt based on prediction errors.
+"""
 
 from __future__ import annotations
 
@@ -8,9 +21,37 @@ from typing import Callable, Dict, Mapping, Optional
 
 import yaml
 
+from .._validation import ensure_bool, ensure_float
+
 
 @dataclass(frozen=True)
 class GABAConfig:
+    """Configuration container for :class:`GABAInhibitionGate`.
+
+    Attributes
+    ----------
+    impulse_decay : float
+        EMA decay rate for impulse trace [0, 1]
+    impulse_threshold : float
+        Threshold above which inhibition is triggered
+    inhibition_gain : float
+        Multiplier for converting impulse drive to inhibition
+    stress_gain : float
+        Additional inhibition gain under stress conditions
+    max_inhibition : float
+        Maximum inhibition level [0, 0.99]
+    stdp_lr : float
+        Learning rate for STDP-like weight updates
+    stdp_min : float
+        Minimum STDP weight [0.1, 1.0]
+    stdp_max : float
+        Maximum STDP weight [stdp_min, 2.0]
+    rpe_beta : float
+        EMA decay rate for RPE trace [0, 1]
+    plasticity : bool
+        Enable/disable STDP-like weight plasticity
+    """
+
     impulse_decay: float
     impulse_threshold: float
     inhibition_gain: float
@@ -23,6 +64,7 @@ class GABAConfig:
     plasticity: bool
 
     def to_dict(self) -> Dict[str, float | bool]:
+        """Convert configuration to dictionary representation."""
         return {
             "impulse_decay": self.impulse_decay,
             "impulse_threshold": self.impulse_threshold,
@@ -35,29 +77,6 @@ class GABAConfig:
             "rpe_beta": self.rpe_beta,
             "plasticity": self.plasticity,
         }
-
-
-def _ensure_float(
-    name: str,
-    value: object,
-    *,
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
-) -> float:
-    if not isinstance(value, (int, float)):
-        raise ValueError(f"{name} must be a number")
-    result = float(value)
-    if min_value is not None and result < min_value:
-        raise ValueError(f"{name} must be >= {min_value}")
-    if max_value is not None and result > max_value:
-        raise ValueError(f"{name} must be <= {max_value}")
-    return result
-
-
-def _ensure_bool(name: str, value: object) -> bool:
-    if not isinstance(value, bool):
-        raise ValueError(f"{name} must be a boolean")
-    return value
 
 
 class GABAInhibitionGate:
@@ -105,30 +124,30 @@ class GABAInhibitionGate:
         missing = required - set(raw.keys())
         if missing:
             raise ValueError(f"Missing GABA config keys: {sorted(missing)}")
-        impulse_decay = _ensure_float(
+        impulse_decay = ensure_float(
             "impulse_decay", raw["impulse_decay"], min_value=0.0, max_value=1.0
         )
-        impulse_threshold = _ensure_float(
+        impulse_threshold = ensure_float(
             "impulse_threshold", raw["impulse_threshold"], min_value=0.0
         )
-        inhibition_gain = _ensure_float(
+        inhibition_gain = ensure_float(
             "inhibition_gain", raw["inhibition_gain"], min_value=0.0
         )
-        stress_gain = _ensure_float("stress_gain", raw["stress_gain"], min_value=0.0)
-        max_inhibition = _ensure_float(
+        stress_gain = ensure_float("stress_gain", raw["stress_gain"], min_value=0.0)
+        max_inhibition = ensure_float(
             "max_inhibition", raw["max_inhibition"], min_value=0.0, max_value=0.99
         )
-        stdp_lr = _ensure_float("stdp_lr", raw["stdp_lr"], min_value=0.0)
-        stdp_min = _ensure_float(
+        stdp_lr = ensure_float("stdp_lr", raw["stdp_lr"], min_value=0.0)
+        stdp_min = ensure_float(
             "stdp_min", raw["stdp_min"], min_value=0.1, max_value=1.0
         )
-        stdp_max = _ensure_float(
+        stdp_max = ensure_float(
             "stdp_max", raw["stdp_max"], min_value=stdp_min, max_value=2.0
         )
-        rpe_beta = _ensure_float(
+        rpe_beta = ensure_float(
             "rpe_beta", raw["rpe_beta"], min_value=0.0, max_value=1.0
         )
-        plasticity = _ensure_bool("plasticity", raw["plasticity"])
+        plasticity = ensure_bool("plasticity", raw["plasticity"])
         return GABAConfig(
             impulse_decay=impulse_decay,
             impulse_threshold=impulse_threshold,

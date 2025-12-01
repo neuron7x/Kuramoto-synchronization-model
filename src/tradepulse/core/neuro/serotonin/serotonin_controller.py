@@ -1,4 +1,17 @@
-"""Serotonin tonic/phasic controller with hysteresis driven hold logic."""
+"""Serotonin tonic/phasic controller with hysteresis driven hold logic.
+
+This module implements the serotonin neuromodulator controller, which models
+chronic stress dynamics and produces hold decisions for the trading system.
+
+Public API
+----------
+SerotoninConfig : Configuration dataclass for the controller
+SerotoninController : Main controller class with step() interface
+
+See Also
+--------
+.observability : SRE observability components for monitoring
+"""
 
 from __future__ import annotations
 
@@ -9,10 +22,50 @@ from typing import Callable, Dict, Mapping, Optional
 
 import yaml
 
+from .._validation import ensure_float, ensure_int
+
 
 @dataclass(frozen=True)
 class SerotoninConfig:
-    """Configuration container for :class:`SerotoninController`."""
+    """Configuration container for :class:`SerotoninController`.
+
+    Attributes
+    ----------
+    tonic_beta : float
+        EMA decay rate for tonic (slow) serotonin integration [0, 1]
+    phasic_beta : float
+        EMA decay rate for phasic (fast) serotonin response [0, 1]
+    stress_gain : float
+        Multiplier for stress input contribution to tonic level
+    drawdown_gain : float
+        Multiplier for drawdown contribution to phasic level
+    novelty_gain : float
+        Multiplier for novelty contribution to phasic level
+    stress_threshold : float
+        Level above which hold state is entered [0, 1.5]
+    release_threshold : float
+        Level below which hold state is released [0, stress_threshold]
+    hysteresis : float
+        Hysteresis band for hold/release transitions [0, 1]
+    cooldown_ticks : int
+        Minimum ticks to remain in cooldown after exiting hold
+    chronic_window : int
+        Window for chronic stress accumulation
+    desensitization_rate : float
+        Rate of receptor desensitization under chronic stress
+    desensitization_decay : float
+        Decay rate for desensitization recovery [0, 1]
+    max_desensitization : float
+        Maximum desensitization level [0, 0.99]
+    floor_min : float
+        Minimum temperature floor [0, 1]
+    floor_max : float
+        Maximum temperature floor [floor_min, 1]
+    floor_gain : float
+        Gain for temperature floor scaling [0, 4]
+    cooldown_extension : int
+        Additional cooldown ticks under elevated stress
+    """
 
     tonic_beta: float
     phasic_beta: float
@@ -33,6 +86,7 @@ class SerotoninConfig:
     cooldown_extension: int
 
     def to_dict(self) -> Dict[str, float | int]:
+        """Convert configuration to dictionary representation."""
         return {
             "tonic_beta": self.tonic_beta,
             "phasic_beta": self.phasic_beta,
@@ -52,31 +106,6 @@ class SerotoninConfig:
             "floor_gain": self.floor_gain,
             "cooldown_extension": self.cooldown_extension,
         }
-
-
-def _ensure_float(
-    name: str,
-    value: object,
-    *,
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
-) -> float:
-    if not isinstance(value, (int, float)):
-        raise ValueError(f"{name} must be a number")
-    result = float(value)
-    if min_value is not None and result < min_value:
-        raise ValueError(f"{name} must be >= {min_value}")
-    if max_value is not None and result > max_value:
-        raise ValueError(f"{name} must be <= {max_value}")
-    return result
-
-
-def _ensure_int(name: str, value: object, *, min_value: Optional[int] = None) -> int:
-    if not isinstance(value, int):
-        raise ValueError(f"{name} must be an integer")
-    if min_value is not None and value < min_value:
-        raise ValueError(f"{name} must be >= {min_value}")
-    return value
 
 
 class SerotoninController:
@@ -144,60 +173,60 @@ class SerotoninController:
         missing = required_keys - set(raw.keys())
         if missing:
             raise ValueError(f"Missing serotonin config keys: {sorted(missing)}")
-        tonic_beta = _ensure_float(
+        tonic_beta = ensure_float(
             "tonic_beta", raw["tonic_beta"], min_value=0.0, max_value=1.0
         )
-        phasic_beta = _ensure_float(
+        phasic_beta = ensure_float(
             "phasic_beta", raw["phasic_beta"], min_value=0.0, max_value=1.0
         )
-        stress_gain = _ensure_float("stress_gain", raw["stress_gain"], min_value=0.0)
-        drawdown_gain = _ensure_float(
+        stress_gain = ensure_float("stress_gain", raw["stress_gain"], min_value=0.0)
+        drawdown_gain = ensure_float(
             "drawdown_gain", raw["drawdown_gain"], min_value=0.0
         )
-        novelty_gain = _ensure_float("novelty_gain", raw["novelty_gain"], min_value=0.0)
-        stress_threshold = _ensure_float(
+        novelty_gain = ensure_float("novelty_gain", raw["novelty_gain"], min_value=0.0)
+        stress_threshold = ensure_float(
             "stress_threshold", raw["stress_threshold"], min_value=0.0, max_value=1.5
         )
-        release_threshold = _ensure_float(
+        release_threshold = ensure_float(
             "release_threshold",
             raw["release_threshold"],
             min_value=0.0,
             max_value=stress_threshold,
         )
-        hysteresis = _ensure_float(
+        hysteresis = ensure_float(
             "hysteresis", raw["hysteresis"], min_value=0.0, max_value=1.0
         )
-        cooldown_ticks = _ensure_int(
+        cooldown_ticks = ensure_int(
             "cooldown_ticks", raw["cooldown_ticks"], min_value=0
         )
-        chronic_window = _ensure_int(
+        chronic_window = ensure_int(
             "chronic_window", raw["chronic_window"], min_value=1
         )
-        desensitization_rate = _ensure_float(
+        desensitization_rate = ensure_float(
             "desensitization_rate", raw["desensitization_rate"], min_value=0.0
         )
-        desensitization_decay = _ensure_float(
+        desensitization_decay = ensure_float(
             "desensitization_decay",
             raw["desensitization_decay"],
             min_value=0.0,
             max_value=1.0,
         )
-        max_desensitization = _ensure_float(
+        max_desensitization = ensure_float(
             "max_desensitization",
             raw["max_desensitization"],
             min_value=0.0,
             max_value=0.99,
         )
-        floor_min = _ensure_float(
+        floor_min = ensure_float(
             "floor_min", raw["floor_min"], min_value=0.0, max_value=1.0
         )
-        floor_max = _ensure_float(
+        floor_max = ensure_float(
             "floor_max", raw["floor_max"], min_value=floor_min, max_value=1.0
         )
-        floor_gain = _ensure_float(
+        floor_gain = ensure_float(
             "floor_gain", raw["floor_gain"], min_value=0.0, max_value=4.0
         )
-        cooldown_extension = _ensure_int(
+        cooldown_extension = ensure_int(
             "cooldown_extension", raw["cooldown_extension"], min_value=0
         )
         return SerotoninConfig(
@@ -618,7 +647,7 @@ class SerotoninController:
             raise ValueError(f"Missing state fields: {sorted(missing)}")
 
         def _as_float(name: str, value: object) -> float:
-            return _ensure_float(name, value)
+            return ensure_float(name, value)
 
         tonic_level = _as_float("tonic_level", state["tonic_level"])
         phasic_level = _as_float("phasic_level", state["phasic_level"])
@@ -634,7 +663,7 @@ class SerotoninController:
         else:
             raise ValueError("hold must be a boolean or numeric flag")
 
-        cooldown = _ensure_int("cooldown", state["cooldown"], min_value=0)
+        cooldown = ensure_int("cooldown", state["cooldown"], min_value=0)
 
         if not (0.0 <= level <= 1.5):
             raise ValueError("level must be within [0.0, 1.5]")
