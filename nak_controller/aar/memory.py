@@ -17,7 +17,7 @@ from typing import Any, Deque
 
 from .aggregators import ModeAggregator, StrategyAggregator
 from .core import compute_error
-from .types import AAREntry, ActionEvent, ErrorSignal, Outcome, Prediction
+from .types import AAREntry, ActionEvent, Outcome, Prediction
 
 
 @dataclass

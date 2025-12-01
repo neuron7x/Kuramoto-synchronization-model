@@ -11,7 +11,6 @@ This module tests the core AAR functionality:
 
 from __future__ import annotations
 
-import math
 import time
 
 import pytest
