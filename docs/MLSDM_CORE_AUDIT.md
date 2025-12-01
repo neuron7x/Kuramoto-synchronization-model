@@ -206,7 +206,7 @@ Each identified area includes a risk level (Critical/High/Medium/Low) and effort
 
 | Issue | Description | Risk | Effort |
 |-------|-------------|------|--------|
-| **Tail window fixed at 256** | May be too small for low-frequency trading (Risk: Low, Effort: S) |
+| **Tail window fixed at 256** | May be too small for low-frequency trading | Low | S |
 | **ES calculation assumes IID** | Expected Shortfall computed on raw rewards without windowing adjustment | Medium | M |
 | **No export format** | Metrics returned as dict, no standardized schema | Low | M |
 
