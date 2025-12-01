@@ -152,7 +152,7 @@ jobs:
 
       - name: Send failure email alert
         if: failure() && steps.alert-config.outputs.email == 'true'
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v6
         with:
           server_address: ${{ secrets.SMOKE_ALERT_EMAIL_SERVER }}
           server_port: ${{ secrets.SMOKE_ALERT_EMAIL_PORT }}
