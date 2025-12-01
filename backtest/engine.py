@@ -483,11 +483,14 @@ class WalkForwardEngine(BacktestEngine[Result]):
                             stacklevel=2,
                         )
                     # Adjust latency to enforce minimum delay
+                    # Ensure the adjusted signal_to_order is non-negative
+                    adjusted_signal_delay = max(
+                        0,
+                        latency_cfg.signal_to_order,
+                        leakage_cfg.minimum_signal_delay - latency_cfg.order_to_execution - latency_cfg.execution_to_fill
+                    )
                     latency_cfg = LatencyConfig(
-                        signal_to_order=max(
-                            latency_cfg.signal_to_order,
-                            leakage_cfg.minimum_signal_delay - latency_cfg.order_to_execution - latency_cfg.execution_to_fill
-                        ),
+                        signal_to_order=adjusted_signal_delay,
                         order_to_execution=latency_cfg.order_to_execution,
                         execution_to_fill=latency_cfg.execution_to_fill,
                     )

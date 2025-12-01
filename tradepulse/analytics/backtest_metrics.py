@@ -336,10 +336,15 @@ def _compute_sharpe_sortino(
     # Sortino ratio (downside deviation)
     sortino_ratio: float | None = None
     downside_returns = excess_returns[excess_returns < 0]
-    if len(downside_returns) > 0:
-        downside_vol = float(np.std(downside_returns, ddof=1)) if len(downside_returns) > 1 else float(np.std(downside_returns))
+    if len(downside_returns) > 1:
+        # Use sample standard deviation (ddof=1) when we have enough data
+        downside_vol = float(np.std(downside_returns, ddof=1))
         if downside_vol > 1e-12:
             sortino_ratio = (mean_excess / downside_vol) * annualization
+    elif len(downside_returns) == 1:
+        # With only one downside return, we can't compute a meaningful deviation
+        # Skip Sortino calculation in this case
+        pass
 
     return sharpe_ratio, sortino_ratio
 

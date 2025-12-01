@@ -135,6 +135,15 @@ class DataQualityReport:
         }
 
 
+# Default OHLC column mapping used by ValidationConfig
+_DEFAULT_OHLC_COLUMNS: Mapping[str, str] = {
+    "open": "open",
+    "high": "high",
+    "low": "low",
+    "close": "close",
+}
+
+
 @dataclass(slots=True)
 class ValidationConfig:
     """Configuration for data quality validation.
@@ -156,12 +165,7 @@ class ValidationConfig:
     timestep_tolerance_pct: float = 10.0
     price_columns: Sequence[str] = ("open", "high", "low", "close")
     ohlc_columns: Mapping[str, str] = field(
-        default_factory=lambda: {
-            "open": "open",
-            "high": "high",
-            "low": "low",
-            "close": "close",
-        }
+        default_factory=lambda: dict(_DEFAULT_OHLC_COLUMNS)
     )
 
 
