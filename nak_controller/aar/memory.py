@@ -15,7 +15,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Deque
 
-from .aggregators import ModeAggregator, StrategyAggregator
+from .aggregators import AggregateStats, ModeAggregator, StrategyAggregator
 from .core import compute_error
 from .types import AAREntry, ActionEvent, Outcome, Prediction
 
@@ -232,7 +232,7 @@ class AARTracker:
         """
         return [e for e in self._entries if e.outcome.timestamp >= timestamp]
 
-    def get_strategy_stats(self, strategy_id: str):
+    def get_strategy_stats(self, strategy_id: str) -> AggregateStats:
         """Get aggregated stats for a strategy.
 
         Args:
@@ -243,7 +243,7 @@ class AARTracker:
         """
         return self._strategy_aggregator.get_stats(strategy_id)
 
-    def get_mode_stats(self, mode: str):
+    def get_mode_stats(self, mode: str) -> AggregateStats:
         """Get aggregated stats for a mode.
 
         Args:
@@ -254,7 +254,7 @@ class AARTracker:
         """
         return self._mode_aggregator.get_stats(mode)
 
-    def get_all_strategy_stats(self):
+    def get_all_strategy_stats(self) -> dict[str, AggregateStats]:
         """Get aggregated stats for all strategies.
 
         Returns:
@@ -262,7 +262,7 @@ class AARTracker:
         """
         return self._strategy_aggregator.get_all_stats()
 
-    def get_all_mode_stats(self):
+    def get_all_mode_stats(self) -> dict[str, AggregateStats]:
         """Get aggregated stats for all modes.
 
         Returns:
