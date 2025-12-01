@@ -17,6 +17,8 @@ observability metrics expected by ``docs/quality_gates.md``.
   and operational dashboards documented in ``docs/monitoring.md``.
 * Emit telemetry through ``core.utils.metrics`` so governance scorecards can
   audit data quality, latency, and capital allocation decisions.
+* Validate data quality before running backtests to avoid unrealistic results.
+* Enforce anti-look-ahead bias through signal lag enforcement.
 
 **Integration points**
 
@@ -30,11 +32,13 @@ in ``docs/documentation_governance.md``.
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 
 from backtest.transaction_costs import (
@@ -44,6 +48,12 @@ from backtest.transaction_costs import (
 )
 from core.utils.metrics import get_metrics_collector
 from interfaces.backtest import BacktestEngine
+from tradepulse.data_quality import (
+    DataQualityError,
+    DataQualityReport,
+    ValidationConfig,
+    validate_historical_data,
+)
 
 from .performance import (
     PerformanceReport,
@@ -129,6 +139,38 @@ class PortfolioConstraints:
 
 
 @dataclass(slots=True)
+class DataValidationConfig:
+    """Configuration for data quality validation before backtesting.
+
+    Attributes:
+        enabled: Whether to validate data before running backtest.
+        allow_warnings: If True, backtests run with warnings but not errors.
+        validation_config: Optional custom validation configuration.
+        skip_validation: If True, completely skip validation (not recommended).
+    """
+
+    enabled: bool = True
+    allow_warnings: bool = True
+    validation_config: ValidationConfig | None = None
+    skip_validation: bool = False
+
+
+@dataclass(slots=True)
+class AntiLeakageConfig:
+    """Configuration to prevent look-ahead bias in backtesting.
+
+    Attributes:
+        enforce_signal_lag: If True, signals at time t can only use data up to t-1.
+        minimum_signal_delay: Minimum number of bars between signal and execution.
+        warn_on_potential_leakage: Emit warnings when potential leakage is detected.
+    """
+
+    enforce_signal_lag: bool = False  # Off by default for backward compatibility
+    minimum_signal_delay: int = 1
+    warn_on_potential_leakage: bool = True
+
+
+@dataclass(slots=True)
 class Result:
     pnl: float
     max_dd: float
@@ -141,6 +183,7 @@ class Result:
     financing_cost: float = 0.0
     performance: PerformanceReport | None = None
     report_path: Path | None = None
+    data_quality_report: DataQualityReport | None = None
 
 
 class _SimpleOrderBook:
@@ -326,6 +369,8 @@ class WalkForwardEngine(BacktestEngine[Result]):
         cost_model: TransactionCostModel | None = None,
         cost_config: str | Path | Mapping[str, Any] | None = None,
         constraints: PortfolioConstraints | None = None,
+        data_validation: DataValidationConfig | None = None,
+        anti_leakage: AntiLeakageConfig | None = None,
     ) -> Result:
         """Execute a vectorised walk-forward backtest.
 
@@ -352,6 +397,10 @@ class WalkForwardEngine(BacktestEngine[Result]):
                 :func:`load_market_costs` when ``market`` is provided.
             constraints: Optional :class:`PortfolioConstraints` limiting the target
                 positions, as suggested in ``docs/execution.md``.
+            data_validation: Optional :class:`DataValidationConfig` for data quality
+                validation before running the backtest.
+            anti_leakage: Optional :class:`AntiLeakageConfig` to prevent look-ahead
+                bias in signal generation.
 
         Returns:
             :class:`Result` dataclass containing realised PnL, drawdown, trade
@@ -360,6 +409,7 @@ class WalkForwardEngine(BacktestEngine[Result]):
         Raises:
             ValueError: If ``prices`` is not a 1-D vector of sufficient length, or
                 if ``signal_fn`` produces an array of incompatible shape.
+            DataQualityError: If data validation is enabled and fails.
 
         Examples:
             >>> prices = np.linspace(100, 101, 16)
@@ -378,9 +428,12 @@ class WalkForwardEngine(BacktestEngine[Result]):
               ``docs/runbook_live_trading.md``.
             - The generated :class:`PerformanceReport` is exported to disk for
               audit trails mandated in ``docs/documentation_governance.md``.
+            - Data quality validation runs before the backtest to catch issues.
+            - Anti-leakage protection ensures signals don't use future data.
         """
 
         metrics = get_metrics_collector()
+        data_quality_report: DataQualityReport | None = None
 
         with metrics.measure_backtest(strategy_name) as ctx:
             price_array = np.asarray(prices, dtype=float)
@@ -389,7 +442,56 @@ class WalkForwardEngine(BacktestEngine[Result]):
                     "prices must be a 1-D array with at least two observations"
                 )
 
+            # Data quality validation
+            validation_cfg = data_validation or DataValidationConfig()
+            if validation_cfg.enabled:
+                data_quality_report = validate_historical_data(
+                    pd.DataFrame({"close": price_array}),
+                    config=validation_cfg.validation_config,
+                    skip_validation=validation_cfg.skip_validation,
+                )
+                if not validation_cfg.skip_validation:
+                    if not data_quality_report.is_valid:
+                        raise DataQualityError(
+                            f"Data quality validation failed for strategy '{strategy_name}'. "
+                            f"Found {data_quality_report.errors_count} errors and "
+                            f"{data_quality_report.critical_count} critical issues. "
+                            "Use skip_validation=True to proceed at your own risk.",
+                            report=data_quality_report,
+                        )
+                    if data_quality_report.warnings_count > 0 and not validation_cfg.allow_warnings:
+                        raise DataQualityError(
+                            f"Data quality validation found {data_quality_report.warnings_count} warnings. "
+                            "Use allow_warnings=True to proceed.",
+                            report=data_quality_report,
+                        )
+
+            # Anti-leakage configuration
+            leakage_cfg = anti_leakage or AntiLeakageConfig()
             latency_cfg = latency or LatencyConfig()
+
+            # Enforce minimum signal delay if anti-leakage is enabled
+            if leakage_cfg.enforce_signal_lag:
+                effective_delay = latency_cfg.total_delay
+                if effective_delay < leakage_cfg.minimum_signal_delay:
+                    if leakage_cfg.warn_on_potential_leakage:
+                        warnings.warn(
+                            f"Latency ({effective_delay} bars) is less than minimum signal delay "
+                            f"({leakage_cfg.minimum_signal_delay} bars). Adjusting to prevent "
+                            "look-ahead bias. Set anti_leakage.enforce_signal_lag=False to disable.",
+                            UserWarning,
+                            stacklevel=2,
+                        )
+                    # Adjust latency to enforce minimum delay
+                    latency_cfg = LatencyConfig(
+                        signal_to_order=max(
+                            latency_cfg.signal_to_order,
+                            leakage_cfg.minimum_signal_delay - latency_cfg.order_to_execution - latency_cfg.execution_to_fill
+                        ),
+                        order_to_execution=latency_cfg.order_to_execution,
+                        execution_to_fill=latency_cfg.execution_to_fill,
+                    )
+
             order_book_cfg = order_book or OrderBookConfig()
             slippage_cfg = slippage or SlippageConfig()
 
@@ -540,6 +642,7 @@ class WalkForwardEngine(BacktestEngine[Result]):
             financing_cost=total_financing,
             performance=performance,
             report_path=report_path,
+            data_quality_report=data_quality_report,
         )
 
 
@@ -557,6 +660,8 @@ def walk_forward(
     cost_model: TransactionCostModel | None = None,
     cost_config: str | Path | Mapping[str, Any] | None = None,
     constraints: PortfolioConstraints | None = None,
+    data_validation: DataValidationConfig | None = None,
+    anti_leakage: AntiLeakageConfig | None = None,
 ) -> Result:
     """Compatibility wrapper delegating to :class:`WalkForwardEngine`.
 
@@ -578,4 +683,6 @@ def walk_forward(
         cost_model=cost_model,
         cost_config=cost_config,
         constraints=constraints,
+        data_validation=data_validation,
+        anti_leakage=anti_leakage,
     )
