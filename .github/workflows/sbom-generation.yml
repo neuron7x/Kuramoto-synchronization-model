@@ -202,7 +202,7 @@ jobs:
         id: attest_sbom
         continue-on-error: true
         if: hashFiles('sbom-cyclonedx.json') != ''
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@v3
         with:
           subject-path: 'sbom-cyclonedx.json'
           sbom-path: 'sbom-cyclonedx.json'
