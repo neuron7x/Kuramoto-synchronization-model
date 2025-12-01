@@ -21,6 +21,16 @@ from __future__ import annotations
 import math
 from typing import Optional
 
+__all__ = [
+    "ensure_float",
+    "ensure_int",
+    "ensure_bool",
+    "ensure_finite",
+    "clamp",
+    "validate_probability",
+    "validate_positive",
+]
+
 
 def ensure_float(
     name: str,
@@ -64,6 +74,11 @@ def ensure_int(
 ) -> int:
     """Validate and convert a value to int with optional bounds checking.
 
+    Note: Boolean values are explicitly rejected despite bool being a subclass
+    of int in Python. This is intentional because configuration values like
+    cooldown_ticks or chronic_window should never accept True/False as valid
+    inputs - they require explicit integer values.
+
     Args:
         name: Parameter name for error messages
         value: Value to validate and convert
@@ -74,7 +89,7 @@ def ensure_int(
         The validated int value
 
     Raises:
-        ValueError: If value is not an integer or outside specified bounds
+        ValueError: If value is not an integer (or is a boolean) or outside bounds
     """
     if not isinstance(value, int) or isinstance(value, bool):
         raise ValueError(f"{name} must be an integer")
