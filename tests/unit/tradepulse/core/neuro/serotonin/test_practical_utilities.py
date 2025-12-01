@@ -15,7 +15,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
 
 
@@ -23,7 +22,7 @@ def load_controller():
     """Load the serotonin controller module."""
     # Use proper package import instead of dynamic file loading
     # This ensures relative imports work correctly
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninController,
     )
 

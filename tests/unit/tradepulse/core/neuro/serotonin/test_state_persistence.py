@@ -36,7 +36,7 @@ def _build_config(tmp_path: Path) -> Path:
 def _create_controller(tmp_path: Path):
     # Use proper package import instead of dynamic file loading
     # This ensures relative imports work correctly
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninController,
     )
 

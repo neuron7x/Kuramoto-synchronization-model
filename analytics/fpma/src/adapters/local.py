@@ -85,11 +85,6 @@ class LocalRiskModel(RiskModelPort):
             mu = trace_s / p
             target = mu * np.eye(p)
 
-            # Compute optimal shrinkage intensity (simplified)
-            _ = (
-                sample_cov - target
-            )  # delta used for potential future shrinkage computation
-
             # Estimate shrinkage intensity
             alpha = min(1.0, self.shrinkage_target)
 
