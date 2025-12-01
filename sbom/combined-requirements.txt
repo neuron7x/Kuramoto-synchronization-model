@@ -120,7 +120,7 @@ pathspec==0.12.1
 pip-api==0.0.34
 pip-audit==2.9.0
 pip-requirements-parser==32.0.1
-pip-tools==7.5.1
+pip-tools==7.5.2
 pkginfo==1.10.0
 platformdirs==4.5.0
 pluggy==1.6.0
