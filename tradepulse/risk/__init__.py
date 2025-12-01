@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""TradePulse central risk engine and safety controls.
+
+This module provides the authoritative risk-management layer for TradePulse,
+implementing:
+- Unified environment modes (BACKTEST, PAPER, LIVE)
+- Central risk engine with configurable limits
+- Kill-switch and safe-mode mechanisms
+- Structured logging and metrics for risk decisions
+"""
+
+from .engine import (
+    CentralRiskEngine,
+    RiskDecision,
+    RiskStatus,
+)
+from .environment import (
+    EnvironmentMode,
+    EnvironmentConfig,
+    EnvironmentError,
+    validate_environment,
+    get_current_mode,
+    set_current_mode,
+    require_mode,
+    is_live_trading_allowed,
+)
+from .kill_switch import (
+    SafetyState,
+    SafetyController,
+    get_safety_controller,
+)
+from .config import (
+    RiskEngineConfig,
+    load_risk_config,
+)
+
+__all__ = [
+    # Environment
+    "EnvironmentMode",
+    "EnvironmentConfig",
+    "EnvironmentError",
+    "validate_environment",
+    "get_current_mode",
+    "set_current_mode",
+    "require_mode",
+    "is_live_trading_allowed",
+    # Risk Engine
+    "CentralRiskEngine",
+    "RiskDecision",
+    "RiskStatus",
+    # Safety
+    "SafetyState",
+    "SafetyController",
+    "get_safety_controller",
+    # Configuration
+    "RiskEngineConfig",
+    "load_risk_config",
+]

@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+#
+# TradePulse Central Risk Engine Configuration
+# =============================================
+#
+# This file configures the central risk engine that governs all trading
+# activity. Every order must pass through the risk engine before execution.
+#
+# Environment modes:
+#   - BACKTEST: Historical simulation, no external connections
+#   - PAPER: Simulated trading with real market data
+#   - LIVE: Real trading with actual order execution
+#
+# To override values via environment variables, use the prefix:
+#   TRADEPULSE_RISK_<SETTING_NAME>
+#
+# Example: TRADEPULSE_RISK_MAX_LEVERAGE=3.0
+
+# Position Limits
+# ---------------
+# Maximum position size per symbol (in units)
+max_position_size_default: 100.0
+
+# Maximum notional value per single order (in account currency)
+max_notional_per_order: 100000.0
+
+# Loss Limits
+# -----------
+# Maximum allowed daily loss (absolute value in account currency)
+max_daily_loss: 10000.0
+
+# Maximum allowed daily loss as percentage of peak equity (0.0 - 1.0)
+# Example: 0.05 = 5% maximum daily drawdown
+max_daily_loss_percent: 0.05
+
+# Exposure Limits
+# ---------------
+# Maximum total portfolio exposure (notional across all positions)
+max_total_exposure: 500000.0
+
+# Maximum leverage allowed (total exposure / equity)
+max_leverage: 5.0
+
+# Rate Limits
+# -----------
+# Maximum number of orders per minute
+max_orders_per_minute: 60
+
+# Maximum number of orders per hour
+max_orders_per_hour: 500
+
+# Kill-Switch Configuration
+# -------------------------
+# Absolute loss threshold that triggers automatic kill-switch
+kill_switch_loss_threshold: 25000.0
+
+# Number of consecutive losing trades that triggers kill-switch
+kill_switch_loss_streak: 5
+
+# Safe-Mode Configuration
+# -----------------------
+# Position size multiplier when in safe mode (0.0 - 1.0)
+# Example: 0.25 = reduce all positions to 25% of normal size
+safe_mode_position_multiplier: 0.25
+
+# Global Toggle
+# -------------
+# Whether risk checks are enabled (must be true for LIVE mode)
+enable_risk_checks: true
+
+# Per-Symbol Overrides
+# --------------------
+# Symbol-specific limits that override defaults
+symbol_limits:
+  # Example: Bitcoin has higher position limits
+  BTC/USD:
+    max_position_size: 10.0
+    max_notional: 500000.0
+    max_leverage: 3.0
+
+  # Example: Higher-volatility assets have tighter limits
+  DOGE/USD:
+    max_position_size: 100000.0
+    max_notional: 50000.0
+    max_leverage: 2.0
