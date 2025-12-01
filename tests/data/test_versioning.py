@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from src.data.versioning import (
@@ -11,6 +13,7 @@ from src.data.versioning import (
     LineageRecord,
     OperationalTag,
     SemanticVersion,
+    VersioningError,
     VersionRegistry,
 )
 
@@ -213,8 +216,6 @@ def test_semantic_version_invalid_parsing() -> None:
 
 def test_version_registry_duplicate_registration() -> None:
     """Test that duplicate version registration raises error."""
-    from src.data.versioning import VersioningError
-
     registry = VersionRegistry()
     contract = CompatibilityContract(
         name="test",
@@ -241,8 +242,6 @@ def test_version_registry_duplicate_registration() -> None:
 
 def test_version_registry_get_nonexistent_version() -> None:
     """Test that getting a nonexistent version raises error."""
-    from src.data.versioning import VersioningError
-
     registry = VersionRegistry()
 
     with pytest.raises(VersioningError, match="not registered"):
@@ -272,8 +271,6 @@ def test_operational_tag_hash_deterministic() -> None:
 
 def test_lineage_record_timezone_normalization() -> None:
     """Test that LineageRecord normalizes timezone to UTC."""
-    from datetime import datetime, timezone, timedelta
-
     # Create with naive datetime
     naive_dt = datetime(2024, 1, 15, 12, 0, 0)
     record1 = LineageRecord(

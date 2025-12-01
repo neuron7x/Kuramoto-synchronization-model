@@ -1,5 +1,6 @@
 """Tests for cryptographic integrity verification."""
 
+import io
 import json
 from pathlib import Path
 
@@ -210,8 +211,6 @@ class TestHMACVerifier:
 
     def test_compute_hmac_file_like_object(self, tmp_path):
         """Test computing HMAC for file-like objects."""
-        import io
-
         data = b"test data for file object"
         key = b"secret key"
 
