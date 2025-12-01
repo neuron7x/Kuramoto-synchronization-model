@@ -105,7 +105,7 @@ libcst==1.7.0
 license-expression==30.4.4
 linkify-it-py==2.0.3
 markdown-it-py==4.0.0
-maturin==1.9.6
+maturin==1.10.2
 mdit-py-plugins==0.5.0
 mdurl==0.1.2
 more-itertools==10.8.0
