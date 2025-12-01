@@ -30,6 +30,9 @@ __all__ = [
 
 LOGGER = logging.getLogger(__name__)
 
+# Maximum number of audit log entries to retain
+MAX_AUDIT_LOG_ENTRIES = 1000
+
 
 class KillSwitchTriggeredError(RuntimeError):
     """Raised when an operation is blocked by the kill-switch."""
@@ -454,9 +457,8 @@ class SafetyController:
         self._audit_log.append(entry)
 
         # Keep audit log bounded
-        max_entries = 1000
-        if len(self._audit_log) > max_entries:
-            self._audit_log = self._audit_log[-max_entries:]
+        if len(self._audit_log) > MAX_AUDIT_LOG_ENTRIES:
+            self._audit_log = self._audit_log[-MAX_AUDIT_LOG_ENTRIES:]
 
     def _persist(self) -> None:
         """Persist state to disk if configured."""

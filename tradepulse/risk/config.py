@@ -96,11 +96,11 @@ class RiskEngineConfig:
     enable_risk_checks: bool = True
 
     def __post_init__(self) -> None:
-        if self.max_daily_loss_percent <= 0 or self.max_daily_loss_percent > 1.0:
-            if self.max_daily_loss_percent > 1.0:
-                self.max_daily_loss_percent = 1.0
-            elif self.max_daily_loss_percent <= 0:
-                raise ValueError("max_daily_loss_percent must be positive")
+        # Validate and clamp max_daily_loss_percent to valid range
+        if self.max_daily_loss_percent <= 0:
+            raise ValueError("max_daily_loss_percent must be positive")
+        self.max_daily_loss_percent = min(1.0, self.max_daily_loss_percent)
+
         if self.max_orders_per_minute < 0:
             self.max_orders_per_minute = 0
         if self.max_orders_per_hour < 0:

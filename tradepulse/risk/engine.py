@@ -33,6 +33,11 @@ __all__ = [
 
 LOGGER = logging.getLogger(__name__)
 
+# Risk status thresholds as fraction of max daily loss percent
+CRITICAL_THRESHOLD_FACTOR = 0.8  # 80% of max = critical
+WARNING_THRESHOLD_FACTOR = 0.5  # 50% of max = warning
+SAFE_MODE_TRIGGER_FACTOR = 0.7  # 70% of max triggers safe mode
+
 
 class RiskViolation(str, Enum):
     """Types of risk violations that can occur."""
@@ -449,9 +454,9 @@ class CentralRiskEngine:
             drawdown = portfolio_state.get_drawdown()
             if self._safety.is_kill_switch_active():
                 return RiskStatus.HALTED
-            elif drawdown > self._config.max_daily_loss_percent * 0.8:
+            elif drawdown > self._config.max_daily_loss_percent * CRITICAL_THRESHOLD_FACTOR:
                 return RiskStatus.CRITICAL
-            elif drawdown > self._config.max_daily_loss_percent * 0.5:
+            elif drawdown > self._config.max_daily_loss_percent * WARNING_THRESHOLD_FACTOR:
                 return RiskStatus.WARNING
             return RiskStatus.OK
 
@@ -556,7 +561,7 @@ class CentralRiskEngine:
             return
 
         drawdown = portfolio_state.get_drawdown()
-        warning_threshold = self._config.max_daily_loss_percent * 0.7
+        warning_threshold = self._config.max_daily_loss_percent * SAFE_MODE_TRIGGER_FACTOR
 
         if drawdown > warning_threshold:
             self._safety.activate_safe_mode(
