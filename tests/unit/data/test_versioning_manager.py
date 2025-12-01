@@ -72,3 +72,63 @@ def test_snapshot_handles_artifacts_outside_repo(tmp_path: Path) -> None:
 
     assert "artifact_relative" not in info
     assert info["checksum"]
+
+
+def test_snapshot_directory_computes_checksum(tmp_path: Path) -> None:
+    """Test that directory artifacts compute a proper checksum."""
+    cfg = VersioningConfig(backend="none")
+    manager = DataVersionManager(cfg)
+
+    artifact_dir = tmp_path / "dataset"
+    artifact_dir.mkdir()
+    (artifact_dir / "file1.txt").write_text("content1", encoding="utf-8")
+    (artifact_dir / "file2.txt").write_text("content2", encoding="utf-8")
+    (artifact_dir / "subdir").mkdir()
+    (artifact_dir / "subdir" / "file3.txt").write_text("content3", encoding="utf-8")
+
+    info = manager.snapshot(artifact_dir)
+
+    # Checksum should be computed for directory
+    assert "checksum" in info
+    assert isinstance(info["checksum"], str)
+    assert len(info["checksum"]) == 64  # SHA-256 hex digest
+
+    # Checksum should be deterministic
+    info2 = manager.snapshot(artifact_dir)
+    assert info["checksum"] == info2["checksum"]
+
+
+def test_snapshot_directory_checksum_is_content_sensitive(tmp_path: Path) -> None:
+    """Test that directory checksum changes when file content changes."""
+    cfg = VersioningConfig(backend="none")
+    manager = DataVersionManager(cfg)
+
+    artifact_dir = tmp_path / "dataset"
+    artifact_dir.mkdir()
+    (artifact_dir / "file.txt").write_text("original", encoding="utf-8")
+
+    info1 = manager.snapshot(artifact_dir)
+
+    # Modify file content
+    (artifact_dir / "file.txt").write_text("modified", encoding="utf-8")
+
+    info2 = manager.snapshot(artifact_dir)
+
+    # Checksums should differ
+    assert info1["checksum"] != info2["checksum"]
+
+
+def test_snapshot_with_none_backend_skips_repo_resolution(tmp_path: Path) -> None:
+    """Test that backend='none' skips repo resolution."""
+    cfg = VersioningConfig(backend="none")
+    manager = DataVersionManager(cfg)
+
+    artifact = tmp_path / "data.csv"
+    artifact.write_text("values", encoding="utf-8")
+
+    info = manager.snapshot(artifact)
+
+    assert info["backend"] == "none"
+    assert "repo_path" not in info
+    assert "git" not in info
+    assert "checksum" in info

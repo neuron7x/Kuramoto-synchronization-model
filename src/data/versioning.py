@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Callable, Iterable, Mapping, MutableMapping
+from typing import Any, Callable, Iterable, Mapping
 
 __all__ = [
     "AccessDeniedError",
@@ -326,7 +326,7 @@ class VersionRegistry:
     """In-memory registry that captures model and dataset version metadata."""
 
     def __init__(self) -> None:
-        self._entries: MutableMapping[str, VersionEntry] = {}
+        self._entries: dict[str, VersionEntry] = {}
         self._catalog_index: dict[str, list[str]] = defaultdict(list)
         self._rollback_history: list[RollbackRecord] = []
 

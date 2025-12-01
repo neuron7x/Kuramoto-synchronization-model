@@ -1,5 +1,6 @@
 """Tests for cryptographic integrity verification."""
 
+import io
 import json
 from pathlib import Path
 
@@ -62,6 +63,14 @@ class TestIntegrityVerifier:
         with pytest.raises(FileNotFoundError):
             IntegrityVerifier.compute_file_checksum(Path("/nonexistent/file.txt"))
 
+    def test_directory_raises_integrity_error(self, tmp_path):
+        """Test that computing checksum on a directory raises IntegrityError."""
+        test_dir = tmp_path / "test_dir"
+        test_dir.mkdir()
+
+        with pytest.raises(IntegrityError, match="Path is not a file"):
+            IntegrityVerifier.compute_file_checksum(test_dir)
+
     def test_verify_file_checksum_success(self, tmp_path):
         """Test successful checksum verification."""
         test_file = tmp_path / "test.txt"
@@ -82,6 +91,22 @@ class TestIntegrityVerifier:
         wrong_checksum = "0" * 64
 
         assert not IntegrityVerifier.verify_file_checksum(test_file, wrong_checksum)
+
+    def test_verify_file_checksum_case_insensitive(self, tmp_path):
+        """Test checksum verification is case-insensitive."""
+        test_file = tmp_path / "test.txt"
+        test_file.write_bytes(b"test content")
+
+        expected_checksum = IntegrityVerifier.compute_file_checksum(test_file)
+
+        # Test with uppercase checksum
+        assert IntegrityVerifier.verify_file_checksum(
+            test_file, expected_checksum.upper()
+        )
+
+        # Test with mixed case
+        mixed_case = expected_checksum[:16].upper() + expected_checksum[16:].lower()
+        assert IntegrityVerifier.verify_file_checksum(test_file, mixed_case)
 
     def test_create_manifest(self, tmp_path):
         """Test manifest creation."""
@@ -184,6 +209,19 @@ class TestHMACVerifier:
         assert len(hmac_value) == 64  # SHA-256 HMAC
         assert all(c in "0123456789abcdef" for c in hmac_value)
 
+    def test_compute_hmac_file_like_object(self, tmp_path):
+        """Test computing HMAC for file-like objects."""
+        data = b"test data for file object"
+        key = b"secret key"
+
+        # Test with BytesIO
+        file_obj = io.BytesIO(data)
+        hmac_value = HMACVerifier.compute_hmac(file_obj, key)
+
+        # Should match the HMAC for raw bytes
+        expected_hmac = HMACVerifier.compute_hmac(data, key)
+        assert hmac_value == expected_hmac
+
     def test_compute_file_hmac(self, tmp_path):
         """Test computing HMAC for files."""
         test_file = tmp_path / "test.txt"
@@ -222,6 +260,30 @@ class TestHMACVerifier:
 
         expected_hmac = HMACVerifier.compute_file_hmac(test_file, key)
         assert HMACVerifier.verify_file_hmac(test_file, key, expected_hmac)
+
+    def test_verify_hmac_case_insensitive(self):
+        """Test HMAC verification is case-insensitive."""
+        data = b"test data"
+        key = b"secret key"
+
+        expected_hmac = HMACVerifier.compute_hmac(data, key)
+
+        # Test with uppercase
+        assert HMACVerifier.verify_hmac(data, key, expected_hmac.upper())
+
+        # Test with mixed case
+        mixed_case = expected_hmac[:16].upper() + expected_hmac[16:].lower()
+        assert HMACVerifier.verify_hmac(data, key, mixed_case)
+
+    def test_hmac_unsupported_algorithm(self):
+        """Test HMAC rejects unsupported algorithms."""
+        with pytest.raises(ValueError, match="Unsupported algorithm"):
+            HMACVerifier.compute_hmac(b"test", b"key", "md5")
+
+    def test_hmac_file_not_found(self):
+        """Test HMAC file verification with non-existent file."""
+        with pytest.raises(FileNotFoundError):
+            HMACVerifier.compute_file_hmac(Path("/nonexistent/file.txt"), b"key")
 
     def test_hmac_different_algorithms(self):
         """Test HMAC with different algorithms."""
