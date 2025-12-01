@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Set up uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v7
       - name: Create virtual environment
         run: uv venv
       - name: Install dependencies
