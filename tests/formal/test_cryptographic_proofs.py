@@ -189,7 +189,7 @@ class TestCryptographicProofReport:
     ) -> None:
         """Test saving proof certificate to file."""
         cert_path = tmp_path / "CRYPTO_CERT.txt"
-        _report = prover.prove_all(output_path=cert_path)
+        prover.prove_all(output_path=cert_path)
 
         assert cert_path.exists()
         content = cert_path.read_text(encoding="utf-8")

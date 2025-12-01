@@ -118,7 +118,7 @@ class TestProtocolVerificationReport:
     ) -> None:
         """Test saving protocol verification certificate."""
         cert_path = tmp_path / "PROTOCOL_CERT.txt"
-        _report = verifier.verify_all(output_path=cert_path)
+        verifier.verify_all(output_path=cert_path)
 
         assert cert_path.exists()
         content = cert_path.read_text(encoding="utf-8")
