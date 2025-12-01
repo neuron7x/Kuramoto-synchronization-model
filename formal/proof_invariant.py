@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-if TYPE_CHECKING:  # pragma: no cover - only for static analysers
+if TYPE_CHECKING:  # pragma: no cover - only for static analyzers
     pass
 
 

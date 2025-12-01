@@ -232,13 +232,13 @@ class TLSProtocolVerifier:
         )
 
         # Ephemeral keys are deleted after handshake
-        solver.add(eph_key_known == False)  # noqa: E712
+        solver.add(z3.Not(eph_key_known))
 
         # Long-term key is compromised (worst case)
-        solver.add(lt_key_compromised == True)  # noqa: E712
+        solver.add(lt_key_compromised)
 
         # Check: can session key be recovered?
-        solver.add(session_key_recoverable == True)  # noqa: E712
+        solver.add(session_key_recoverable)
 
         status = solver.check()
 
@@ -290,8 +290,8 @@ class TLSProtocolVerifier:
 
         # If client accepts, server should be authentic (soundness)
         # We try to find case where client accepts non-authentic server
-        solver.add(client_accepts == True)  # noqa: E712
-        solver.add(server_authentic == False)  # noqa: E712
+        solver.add(client_accepts)
+        solver.add(z3.Not(server_authentic))
 
         # Signature valid implies signer has private key
         # Attacker cannot forge without private key
@@ -385,7 +385,7 @@ class TLSProtocolVerifier:
         hash_collision_prob = z3.Real("hash_collision_prob")
 
         solver.add(transcript_hash_bits == 256)
-        solver.add(key_derived_from_transcript == True)  # noqa: E712
+        solver.add(key_derived_from_transcript)
         solver.add(hash_collision_prob >= 0)
         solver.add(hash_collision_prob <= 1)
 
@@ -401,7 +401,7 @@ class TLSProtocolVerifier:
         solver.add(hash_collision_prob <= 2**(-128))
 
         # Check: can attacker substitute keys?
-        solver.add(attacker_can_substitute == True)  # noqa: E712
+        solver.add(attacker_can_substitute)
 
         status = solver.check()
 
