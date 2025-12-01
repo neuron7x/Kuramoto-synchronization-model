@@ -161,8 +161,9 @@ class AARTracker:
         self._entries.append(entry)
         self._entries_by_action_id[action_id] = entry
 
-        # Clean up old entries from lookup dict
-        if len(self._entries_by_action_id) > self.max_entries:
+        # Clean up old entries from lookup dict less frequently
+        # Only cleanup when significantly over limit to avoid O(n) overhead
+        if len(self._entries_by_action_id) > self.max_entries * 1.2:
             # Remove entries not in the deque
             valid_ids = {e.action_id for e in self._entries}
             to_remove = [k for k in self._entries_by_action_id if k not in valid_ids]

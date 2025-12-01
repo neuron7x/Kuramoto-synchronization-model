@@ -102,7 +102,8 @@ class SlidingWindowAggregator:
         abs_errors_list = list(self._abs_errors)
 
         mean = sum(errors_list) / n
-        variance = sum((e - mean) ** 2 for e in errors_list) / n if n > 1 else 0.0
+        # Use sample variance (n-1) for unbiased estimation
+        variance = sum((e - mean) ** 2 for e in errors_list) / (n - 1) if n > 1 else 0.0
         std = math.sqrt(variance)
 
         min_err = min(errors_list)

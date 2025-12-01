@@ -194,7 +194,7 @@ def should_freeze_adaptation(
         return True, f"High error variance: {stats.std:.4f} > {config.freeze_variance_threshold}"
 
     # Check for dramatic mean shift (if we have historical baseline)
-    if state.historical_std > 0:
+    if state.historical_std > 1e-6:
         z_score = abs(stats.mean - state.historical_mean) / state.historical_std
         if z_score > 3.0:
             return True, f"Mean shift detected: z-score={z_score:.2f}"
