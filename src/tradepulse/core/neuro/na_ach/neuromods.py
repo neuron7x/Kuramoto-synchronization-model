@@ -1,4 +1,15 @@
-"""Noradrenaline (NA) and acetylcholine (ACh) neuromodulation utilities."""
+"""Noradrenaline (NA) and acetylcholine (ACh) neuromodulation utilities.
+
+This module implements NA/ACh neuromodulator controllers that model arousal
+and attention dynamics for the trading system. These modulators affect:
+- Risk tolerance (via arousal levels)
+- Exploration temperature (via attention levels)
+
+Public API
+----------
+NAACHConfig : Configuration dataclass for the neuromodulator
+NAACHNeuromodulator : Main neuromodulator class with update() interface
+"""
 
 from __future__ import annotations
 
@@ -8,9 +19,39 @@ from typing import Callable, Dict, Mapping, Optional
 
 import yaml
 
+from .._validation import ensure_float
+
 
 @dataclass(frozen=True)
 class NAACHConfig:
+    """Configuration container for :class:`NAACHNeuromodulator`.
+
+    Attributes
+    ----------
+    arousal_baseline : float
+        Baseline arousal level (NA component)
+    arousal_gain : float
+        Sensitivity of arousal to volatility changes
+    arousal_min : float
+        Minimum arousal level
+    arousal_max : float
+        Maximum arousal level
+    risk_min : float
+        Minimum risk multiplier
+    risk_max : float
+        Maximum risk multiplier
+    attention_baseline : float
+        Baseline attention level (ACh component)
+    attention_gain : float
+        Sensitivity of attention to novelty changes
+    attention_min : float
+        Minimum attention level
+    attention_max : float
+        Maximum attention level
+    temp_gain : float
+        Gain for temperature scaling from arousal [0, 3]
+    """
+
     arousal_baseline: float
     arousal_gain: float
     arousal_min: float
@@ -24,6 +65,7 @@ class NAACHConfig:
     temp_gain: float
 
     def to_dict(self) -> Dict[str, float]:
+        """Convert configuration to dictionary representation."""
         return {
             "arousal_baseline": self.arousal_baseline,
             "arousal_gain": self.arousal_gain,
@@ -37,23 +79,6 @@ class NAACHConfig:
             "attention_max": self.attention_max,
             "temp_gain": self.temp_gain,
         }
-
-
-def _ensure_float(
-    name: str,
-    value: object,
-    *,
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
-) -> float:
-    if not isinstance(value, (int, float)):
-        raise ValueError(f"{name} must be a number")
-    result = float(value)
-    if min_value is not None and result < min_value:
-        raise ValueError(f"{name} must be >= {min_value}")
-    if max_value is not None and result > max_value:
-        raise ValueError(f"{name} must be <= {max_value}")
-    return result
 
 
 class NAACHNeuromodulator:
@@ -98,29 +123,29 @@ class NAACHNeuromodulator:
         missing = required - set(raw.keys())
         if missing:
             raise ValueError(f"Missing NA/ACh config keys: {sorted(missing)}")
-        arousal_baseline = _ensure_float(
+        arousal_baseline = ensure_float(
             "arousal_baseline", raw["arousal_baseline"], min_value=0.0
         )
-        arousal_gain = _ensure_float("arousal_gain", raw["arousal_gain"], min_value=0.0)
-        arousal_min = _ensure_float("arousal_min", raw["arousal_min"], min_value=0.0)
-        arousal_max = _ensure_float(
+        arousal_gain = ensure_float("arousal_gain", raw["arousal_gain"], min_value=0.0)
+        arousal_min = ensure_float("arousal_min", raw["arousal_min"], min_value=0.0)
+        arousal_max = ensure_float(
             "arousal_max", raw["arousal_max"], min_value=arousal_min
         )
-        risk_min = _ensure_float("risk_min", raw["risk_min"], min_value=0.0)
-        risk_max = _ensure_float("risk_max", raw["risk_max"], min_value=risk_min)
-        attention_baseline = _ensure_float(
+        risk_min = ensure_float("risk_min", raw["risk_min"], min_value=0.0)
+        risk_max = ensure_float("risk_max", raw["risk_max"], min_value=risk_min)
+        attention_baseline = ensure_float(
             "attention_baseline", raw["attention_baseline"], min_value=0.0
         )
-        attention_gain = _ensure_float(
+        attention_gain = ensure_float(
             "attention_gain", raw["attention_gain"], min_value=0.0
         )
-        attention_min = _ensure_float(
+        attention_min = ensure_float(
             "attention_min", raw["attention_min"], min_value=0.0
         )
-        attention_max = _ensure_float(
+        attention_max = ensure_float(
             "attention_max", raw["attention_max"], min_value=attention_min
         )
-        temp_gain = _ensure_float(
+        temp_gain = ensure_float(
             "temp_gain", raw["temp_gain"], min_value=0.0, max_value=3.0
         )
         return NAACHConfig(

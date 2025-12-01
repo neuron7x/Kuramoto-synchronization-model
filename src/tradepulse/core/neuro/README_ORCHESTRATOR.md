@@ -4,6 +4,117 @@
 
 The Neuro-Orchestrator Agent is a biologically-inspired control architecture orchestrator that maps trading scenarios to module-level instructions for the TradePulse system. It implements a neuroscience-based approach to algorithmic trading strategy configuration and execution.
 
+## Module API Reference
+
+This section documents the public interfaces of all neuro submodules.
+
+### Core Package (`tradepulse.core.neuro`)
+
+```python
+from tradepulse.core.neuro import (
+    # Orchestrator
+    NeuroOrchestrator,
+    OrchestrationOutput,
+    TradingScenario,
+    ModuleInstruction,
+    RiskContour,
+    LearningLoop,
+    create_orchestration_from_scenario,
+    # Submodules
+    dopamine,
+    serotonin,
+    gaba,
+    na_ach,
+    nak,
+    desensitization,
+)
+```
+
+### Dopamine Module (`tradepulse.core.neuro.dopamine`)
+
+Appetitive reward signaling and action invigoration.
+
+```python
+from tradepulse.core.neuro.dopamine import (
+    DopamineController,    # TD(0) RPE computation, temperature modulation
+    ActionGate,            # Go/Hold/No-Go decision fusion
+    GateEvaluation,        # Decision gate output dataclass
+    DDMThresholds,         # DDM threshold container
+    DDMAdjustment,         # DDM adjustment container
+    StepResult,            # Step helper result
+    # Invariants
+    assert_no_nan_inf,     # NaN/Inf checker
+    check_monotonic_thresholds,  # Threshold ordering invariant
+    clamp,                 # Value clamping utility
+)
+```
+
+### Serotonin Module (`tradepulse.core.neuro.serotonin`)
+
+Chronic stress and hold-state management.
+
+```python
+from tradepulse.core.neuro.serotonin import (
+    SerotoninController,   # Hysteretic hold logic with desensitization
+    SerotoninConfig,       # Configuration dataclass
+    SerotoninMonitor,      # SRE observability monitor
+    Alert,                 # Alert definition
+    AlertSeverity,         # Alert severity levels
+    SLI, SLO,             # Service level indicators/objectives
+)
+```
+
+### GABA Module (`tradepulse.core.neuro.gaba`)
+
+Inhibitory impulse control.
+
+```python
+from tradepulse.core.neuro.gaba import (
+    GABAInhibitionGate,    # STDP-modulated impulse dampening
+    GABAConfig,            # Configuration dataclass
+)
+```
+
+### NA/ACh Module (`tradepulse.core.neuro.na_ach`)
+
+Arousal and attention modulation.
+
+```python
+from tradepulse.core.neuro.na_ach import (
+    NAACHNeuromodulator,   # Risk and temperature scaling
+    NAACHConfig,           # Configuration dataclass
+)
+```
+
+### NaK Module (`tradepulse.core.neuro.nak`)
+
+Homeostatic control with bio-inspired gating.
+
+```python
+from tradepulse.core.neuro.nak import (
+    NaKController,         # Homeostatic trading controller (alias)
+    NaKControllerV4_2,     # Homeostatic controller v4.2
+    NaKConfig,             # Configuration dataclass
+    NaKAdapter,            # Integration adapter
+    DesensitizationModule, # Lambda/scale adaptation
+)
+```
+
+### Desensitization Module (`tradepulse.core.neuro.desensitization`)
+
+Adaptive sensitivity management.
+
+```python
+from tradepulse.core.neuro.desensitization import (
+    DesensitizationManager,  # Coordinated reward/sensory/threat modulation
+    DesensitizationConfig,   # Configuration bundle
+    DesensitizationGate,     # Policy gate wrapper
+    RewardDesensitizer,      # Reward shaping
+    SensoryHabituation,      # Feature habituation
+    ThreatGate,              # Drawdown-based gating
+)
+```
+
 ## Architecture
 
 The orchestrator coordinates four key components:
