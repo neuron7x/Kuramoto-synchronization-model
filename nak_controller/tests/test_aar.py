@@ -6,6 +6,7 @@ This module tests the core AAR functionality:
 - Sign detection
 - Aggregation
 - Memory/tracker lifecycle
+- Integration with neuro-controllers
 """
 
 from __future__ import annotations
@@ -16,6 +17,9 @@ import time
 import pytest
 
 from nak_controller.aar import (
+    AARAdaptationConfig,
+    AARAdaptationResult,
+    AARAdaptationState,
     AARTracker,
     ActionEvent,
     AggregateStats,
@@ -25,12 +29,18 @@ from nak_controller.aar import (
     Prediction,
     SlidingWindowAggregator,
     StrategyAggregator,
+    aar_dopamine_modulation,
+    aar_serotonin_modulation,
     absolute_error,
+    compute_aar_adaptation,
     compute_error,
+    compute_risk_reduction,
     create_action_event,
     error_sign,
     normalize_error,
     relative_error,
+    should_freeze_adaptation,
+    update_adaptation_state,
 )
 
 
@@ -674,3 +684,280 @@ class TestAARIntegration:
         assert stats.negative_count == 10
         assert stats.positive_count == 0
         assert stats.mean < 0
+
+
+class TestAARDopamineModulation:
+    """Tests for aar_dopamine_modulation function."""
+
+    def test_no_modulation_below_min_samples(self) -> None:
+        stats = AggregateStats(count=5, mean=0.5, positive_count=5)
+        config = AARAdaptationConfig(min_samples=10)
+        result = aar_dopamine_modulation(stats, config)
+        assert result == 0.0
+
+    def test_positive_mean_increases_dopamine(self) -> None:
+        stats = AggregateStats(
+            count=20, mean=0.3, positive_count=15, negative_count=5
+        )
+        config = AARAdaptationConfig(positive_threshold=0.1)
+        result = aar_dopamine_modulation(stats, config)
+        assert result > 0
+
+    def test_negative_mean_no_dopamine(self) -> None:
+        stats = AggregateStats(
+            count=20, mean=-0.3, positive_count=5, negative_count=15
+        )
+        config = AARAdaptationConfig()
+        result = aar_dopamine_modulation(stats, config)
+        assert result == 0.0
+
+    def test_capped_at_max_step(self) -> None:
+        stats = AggregateStats(count=20, mean=0.9, positive_count=20)
+        config = AARAdaptationConfig(max_adaptation_step=0.1)
+        result = aar_dopamine_modulation(stats, config)
+        assert result <= 0.1
+
+
+class TestAARSerotoninModulation:
+    """Tests for aar_serotonin_modulation function."""
+
+    def test_no_modulation_below_min_samples(self) -> None:
+        stats = AggregateStats(count=5, mean=-0.5, negative_count=5)
+        config = AARAdaptationConfig(min_samples=10)
+        result = aar_serotonin_modulation(stats, config)
+        assert result == 0.0
+
+    def test_negative_mean_increases_serotonin(self) -> None:
+        stats = AggregateStats(
+            count=20, mean=-0.3, positive_count=5, negative_count=15
+        )
+        config = AARAdaptationConfig(negative_threshold=-0.1)
+        result = aar_serotonin_modulation(stats, config)
+        assert result > 0
+
+    def test_positive_mean_no_serotonin(self) -> None:
+        stats = AggregateStats(
+            count=20, mean=0.3, positive_count=15, negative_count=5
+        )
+        config = AARAdaptationConfig()
+        result = aar_serotonin_modulation(stats, config)
+        assert result == 0.0
+
+    def test_catastrophic_rate_increases_serotonin(self) -> None:
+        stats = AggregateStats(
+            count=20, mean=-0.1, catastrophic_rate=0.2, negative_count=10
+        )
+        config = AARAdaptationConfig()
+        result = aar_serotonin_modulation(stats, config)
+        assert result > 0
+
+    def test_always_non_negative(self) -> None:
+        stats = AggregateStats(count=20, mean=0.5, positive_count=20)
+        config = AARAdaptationConfig()
+        result = aar_serotonin_modulation(stats, config)
+        assert result >= 0
+
+
+class TestShouldFreezeAdaptation:
+    """Tests for should_freeze_adaptation function."""
+
+    def test_no_freeze_below_min_samples(self) -> None:
+        stats = AggregateStats(count=5, std=1.0)
+        state = AARAdaptationState()
+        config = AARAdaptationConfig(min_samples=10)
+        should_freeze, reason = should_freeze_adaptation(stats, state, config)
+        assert not should_freeze
+
+    def test_freeze_on_high_variance(self) -> None:
+        stats = AggregateStats(count=20, std=0.8)
+        state = AARAdaptationState()
+        config = AARAdaptationConfig(freeze_variance_threshold=0.5)
+        should_freeze, reason = should_freeze_adaptation(stats, state, config)
+        assert should_freeze
+        assert "variance" in reason.lower()
+
+    def test_freeze_on_mean_shift(self) -> None:
+        stats = AggregateStats(count=20, mean=0.5, std=0.1)
+        state = AARAdaptationState(historical_mean=0.0, historical_std=0.1)
+        config = AARAdaptationConfig()
+        should_freeze, reason = should_freeze_adaptation(stats, state, config)
+        assert should_freeze
+        assert "z-score" in reason.lower()
+
+    def test_freeze_on_high_catastrophic_rate(self) -> None:
+        stats = AggregateStats(count=20, catastrophic_rate=0.25)
+        state = AARAdaptationState()
+        config = AARAdaptationConfig()
+        should_freeze, reason = should_freeze_adaptation(stats, state, config)
+        assert should_freeze
+        assert "catastrophic" in reason.lower()
+
+
+class TestComputeRiskReduction:
+    """Tests for compute_risk_reduction function."""
+
+    def test_no_reduction_below_min_samples(self) -> None:
+        stats = AggregateStats(count=5, mean=-0.5)
+        config = AARAdaptationConfig(min_samples=10)
+        factor = compute_risk_reduction(stats, config)
+        assert factor == 1.0
+
+    def test_reduction_on_negative_mean(self) -> None:
+        stats = AggregateStats(count=20, mean=-0.3)
+        config = AARAdaptationConfig(negative_threshold=-0.1)
+        factor = compute_risk_reduction(stats, config)
+        assert factor < 1.0
+        assert factor >= 0.5
+
+    def test_further_reduction_on_catastrophic(self) -> None:
+        stats_no_cat = AggregateStats(count=20, mean=-0.3, catastrophic_rate=0.0)
+        stats_cat = AggregateStats(count=20, mean=-0.3, catastrophic_rate=0.15)
+        config = AARAdaptationConfig()
+        factor_no_cat = compute_risk_reduction(stats_no_cat, config)
+        factor_cat = compute_risk_reduction(stats_cat, config)
+        assert factor_cat < factor_no_cat
+
+    def test_never_below_minimum(self) -> None:
+        stats = AggregateStats(count=20, mean=-0.9, catastrophic_rate=0.5)
+        config = AARAdaptationConfig()
+        factor = compute_risk_reduction(stats, config)
+        assert factor >= 0.5
+
+
+class TestComputeAARAdaptation:
+    """Tests for compute_aar_adaptation function."""
+
+    def test_returns_adaptation_result(self) -> None:
+        stats = AggregateStats(count=20, mean=0.2, positive_count=15)
+        state = AARAdaptationState()
+        result = compute_aar_adaptation(stats, state)
+        assert isinstance(result, AARAdaptationResult)
+        assert "aar_error_mean" in result.metrics
+
+    def test_frozen_state_propagates(self) -> None:
+        stats = AggregateStats(count=20, std=0.8)  # High variance
+        state = AARAdaptationState()
+        config = AARAdaptationConfig(freeze_variance_threshold=0.5)
+        result = compute_aar_adaptation(stats, state, config)
+        assert result.is_frozen
+        assert result.freeze_reason != ""
+
+    def test_already_frozen_stays_frozen(self) -> None:
+        stats = AggregateStats(count=20, mean=0.2)
+        state = AARAdaptationState(is_frozen=True, freeze_reason="Manual freeze")
+        result = compute_aar_adaptation(stats, state)
+        assert result.is_frozen
+
+    def test_positive_stats_produce_dopamine(self) -> None:
+        stats = AggregateStats(count=20, mean=0.3, positive_count=18, negative_count=2)
+        state = AARAdaptationState()
+        result = compute_aar_adaptation(stats, state)
+        assert result.dopamine_adjustment > 0
+        assert result.serotonin_adjustment == 0.0
+
+    def test_negative_stats_produce_serotonin(self) -> None:
+        stats = AggregateStats(count=20, mean=-0.3, positive_count=2, negative_count=18)
+        state = AARAdaptationState()
+        result = compute_aar_adaptation(stats, state)
+        assert result.serotonin_adjustment > 0
+        assert result.should_reduce_risk
+
+
+class TestUpdateAdaptationState:
+    """Tests for update_adaptation_state function."""
+
+    def test_updates_historical_baseline(self) -> None:
+        state = AARAdaptationState(historical_mean=0.0, historical_std=0.0)
+        stats = AggregateStats(count=20, mean=0.5, std=0.2)
+        result = AARAdaptationResult(dopamine_adjustment=0.1)
+
+        update_adaptation_state(state, stats, result)
+
+        assert state.historical_mean > 0
+        assert state.historical_std > 0
+
+    def test_tracks_cumulative_adjustments(self) -> None:
+        state = AARAdaptationState()
+        stats = AggregateStats(count=20)
+        result = AARAdaptationResult(
+            dopamine_adjustment=0.1,
+            serotonin_adjustment=0.05,
+        )
+
+        update_adaptation_state(state, stats, result)
+
+        assert state.cumulative_dopamine_adjustment == 0.1
+        assert state.cumulative_serotonin_adjustment == 0.05
+        assert state.adaptation_count == 1
+
+    def test_no_tracking_when_frozen(self) -> None:
+        state = AARAdaptationState()
+        stats = AggregateStats(count=20)
+        result = AARAdaptationResult(
+            is_frozen=True,
+            dopamine_adjustment=0.1,
+        )
+
+        update_adaptation_state(state, stats, result)
+
+        assert state.cumulative_dopamine_adjustment == 0.0
+        assert state.adaptation_count == 0
+
+
+class TestAARControllerIntegration:
+    """Integration tests for AAR with controller-like scenarios."""
+
+    def test_full_adaptation_cycle(self) -> None:
+        """Test a complete cycle: track → aggregate → adapt → update."""
+        tracker = AARTracker()
+        config = AARAdaptationConfig(min_samples=5)
+        state = AARAdaptationState()
+
+        # Simulate 10 positive trades
+        for i in range(10):
+            action = create_action_event("trade", "strat1", action_id=f"pos-{i}")
+            tracker.record_action(action)
+            tracker.record_prediction(
+                Prediction(action_id=action.action_id, expected_pnl=100.0)
+            )
+            tracker.record_outcome(
+                Outcome(action_id=action.action_id, actual_pnl=120.0)
+            )
+
+        # Get stats and compute adaptation
+        stats = tracker.get_strategy_stats("strat1")
+        result = compute_aar_adaptation(stats, state, config)
+
+        # Should have positive dopamine, no serotonin
+        assert result.dopamine_adjustment > 0
+        assert result.serotonin_adjustment == 0.0
+        assert not result.should_reduce_risk
+
+        # Update state
+        update_adaptation_state(state, stats, result)
+        assert state.adaptation_count == 1
+
+    def test_degrading_performance_triggers_caution(self) -> None:
+        """Test that degrading performance triggers risk reduction."""
+        tracker = AARTracker()
+        config = AARAdaptationConfig(min_samples=5)
+        state = AARAdaptationState()
+
+        # Simulate 10 negative trades
+        for i in range(10):
+            action = create_action_event("trade", "strat2", action_id=f"neg-{i}")
+            tracker.record_action(action)
+            tracker.record_prediction(
+                Prediction(action_id=action.action_id, expected_pnl=100.0)
+            )
+            tracker.record_outcome(
+                Outcome(action_id=action.action_id, actual_pnl=50.0)
+            )
+
+        stats = tracker.get_strategy_stats("strat2")
+        result = compute_aar_adaptation(stats, state, config)
+
+        # Should have serotonin, risk reduction
+        assert result.serotonin_adjustment > 0
+        assert result.should_reduce_risk
+        assert result.risk_reduction_factor < 1.0

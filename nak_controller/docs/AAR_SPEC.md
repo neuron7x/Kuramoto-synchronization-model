@@ -188,19 +188,83 @@ Group errors by system mode (GREEN/AMBER/RED):
 ### Dopamine Controller
 Positive error signals (outcomes better than predicted) → increase dopamine → reinforce current behavior.
 
+The integration is implemented via `aar_dopamine_modulation()`:
+```python
+from nak_controller.aar import aar_dopamine_modulation, AARAdaptationConfig
+
+config = AARAdaptationConfig(
+    dopamine_sensitivity=0.5,
+    positive_threshold=0.1,
+)
+dopamine_adjustment = aar_dopamine_modulation(stats, config)
+# Apply: DA = DA + dopamine_adjustment
+```
+
 ### Serotonin Controller
 Negative error signals (outcomes worse than predicted) → trigger serotonin response → increase caution.
+
+The integration is implemented via `aar_serotonin_modulation()`:
+```python
+from nak_controller.aar import aar_serotonin_modulation
+
+serotonin_adjustment = aar_serotonin_modulation(stats, config)
+# Apply: 5HT = 5HT + serotonin_adjustment
+```
 
 ### Risk Management
 Series of negative errors → reduce risk-per-trade → engage safe-mode thresholds.
 
+The integration is implemented via `compute_risk_reduction()`:
+```python
+from nak_controller.aar import compute_risk_reduction
+
+risk_factor = compute_risk_reduction(stats, config)
+# Apply: risk_per_trade = risk_per_trade * risk_factor
+```
+
+### Comprehensive Integration
+For full integration, use `compute_aar_adaptation()`:
+```python
+from nak_controller.aar import (
+    compute_aar_adaptation,
+    update_adaptation_state,
+    AARAdaptationConfig,
+    AARAdaptationState,
+)
+
+config = AARAdaptationConfig()
+state = AARAdaptationState()
+
+# Get stats from tracker
+stats = tracker.get_strategy_stats("my_strategy")
+
+# Compute adaptation
+result = compute_aar_adaptation(stats, state, config)
+
+if not result.is_frozen:
+    # Apply modulations
+    DA += result.dopamine_adjustment
+    HT += result.serotonin_adjustment
+    if result.should_reduce_risk:
+        risk_per_trade *= result.risk_reduction_factor
+
+# Update state for next cycle
+update_adaptation_state(state, stats, result)
+```
+
 ## Observability
 
 ### Metrics
+The `AARAdaptationResult.metrics` dictionary provides:
 - `aar_error_mean`: Mean normalized error (gauge)
 - `aar_error_std`: Error standard deviation (gauge)
-- `aar_catastrophic_rate`: Rate of errors above threshold (counter)
-- `aar_prediction_latency_ms`: Time from prediction to outcome (histogram)
+- `aar_positive_rate`: Rate of positive errors (gauge)
+- `aar_negative_rate`: Rate of negative errors (gauge)
+- `aar_catastrophic_rate`: Rate of errors above threshold (gauge)
+- `aar_dopamine_adjustment`: Current dopamine adjustment (gauge)
+- `aar_serotonin_adjustment`: Current serotonin adjustment (gauge)
+- `aar_risk_factor`: Current risk reduction factor (gauge)
+- `aar_is_frozen`: Whether adaptation is frozen (gauge, 0/1)
 
 ### Logging
 Structured logs with fields:
@@ -216,14 +280,30 @@ Structured logs with fields:
 ### G1: Maximum Adaptation Step
 No single error signal can cause more than 10% change in controller parameters.
 
+Implemented via `AARAdaptationConfig.max_adaptation_step = 0.1`:
+```python
+config = AARAdaptationConfig(max_adaptation_step=0.1)
+```
+
 ### G2: Freeze Threshold
-If error variance exceeds 3σ from historical mean, freeze adaptation and collect statistics only.
+If error variance exceeds threshold, freeze adaptation and collect statistics only.
+
+Implemented via `should_freeze_adaptation()`:
+```python
+config = AARAdaptationConfig(freeze_variance_threshold=0.5)
+should_freeze, reason = should_freeze_adaptation(stats, state, config)
+```
 
 ### G3: Minimum Sample Size
 Aggregated statistics require minimum 10 samples before influencing controllers.
 
+Implemented via `AARAdaptationConfig.min_samples = 10`:
+```python
+config = AARAdaptationConfig(min_samples=10)
+```
+
 ### G4: Error Outlier Rejection
-Errors beyond 5σ are logged but excluded from adaptation calculations.
+Errors beyond catastrophic threshold are tracked separately and can trigger freeze.
 
 ## Usage Example
 

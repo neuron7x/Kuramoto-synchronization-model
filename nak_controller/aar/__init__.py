@@ -58,6 +58,17 @@ from .core import (
     normalize_error,
     relative_error,
 )
+from .integration import (
+    AARAdaptationConfig,
+    AARAdaptationResult,
+    AARAdaptationState,
+    aar_dopamine_modulation,
+    aar_serotonin_modulation,
+    compute_aar_adaptation,
+    compute_risk_reduction,
+    should_freeze_adaptation,
+    update_adaptation_state,
+)
 from .memory import AARTracker, create_action_event
 from .types import AAREntry, ActionEvent, ErrorSignal, Outcome, Prediction
 
@@ -79,6 +90,16 @@ __all__ = [
     "SlidingWindowAggregator",
     "StrategyAggregator",
     "ModeAggregator",
+    # Integration
+    "AARAdaptationConfig",
+    "AARAdaptationState",
+    "AARAdaptationResult",
+    "aar_dopamine_modulation",
+    "aar_serotonin_modulation",
+    "should_freeze_adaptation",
+    "compute_risk_reduction",
+    "compute_aar_adaptation",
+    "update_adaptation_state",
     # Memory/Tracker
     "AARTracker",
     "create_action_event",
