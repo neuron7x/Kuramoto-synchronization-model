@@ -459,12 +459,12 @@ class TestCostModelImpact:
             initial_capital=0.0,
         )
 
-        # Expected: position[1:] * price_changes[1:]
-        # positions = [0, 1, 1, 1, 1] (after shift for execution)
-        # price_moves = [2, -1, 4, -2]
-        # PnL = 1*(-1) + 1*4 + 1*(-2) = 1 (positions lag by 1)
-        # Actually: position at t affects PnL from t to t+1
-        # So PnL = sum of (position[t] * (price[t+1] - price[t]))
+        # Signal: [0, 1, 1, 1, 1] - enter long at bar 1
+        # Executed positions: [0, 1, 1, 1, 1] (with 0 latency)
+        # price_moves = [2, -1, 4, -2] (prices[i+1] - prices[i])
+        # PnL calculation uses positions[1:] * price_moves
+        # positions[1:] = [1, 1, 1, 1]
+        # PnL = 1*2 + 1*(-1) + 1*4 + 1*(-2) = 2 - 1 + 4 - 2 = 3
         assert result.pnl == pytest.approx(3.0, rel=1e-6)
         assert result.commission_cost == 0.0
 
@@ -572,7 +572,9 @@ class TestBacktestReportGeneration:
         )
 
         assert result.equity_curve is not None
+        # Equity curve has len(prices) - 1 elements because it tracks cumulative PnL
+        # from price changes, and there are n-1 price changes for n prices
         assert len(result.equity_curve) == len(prices) - 1
         assert np.all(np.isfinite(result.equity_curve))
-        # Equity curve should start at initial_capital + first PnL
+        # Equity curve values should be numeric
         assert result.equity_curve[0] is not None
