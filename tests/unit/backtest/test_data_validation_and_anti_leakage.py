@@ -354,3 +354,227 @@ class TestScenarioTests:
         assert result.pnl == pytest.approx(0.0, abs=1e-10)
         assert np.isfinite(result.max_dd)
         assert result.equity_curve is not None
+
+
+class TestAntiLeakageWithShuffledData:
+    """Tests verifying that look-ahead signals don't magically improve results."""
+
+    def test_shuffled_future_data_changes_results(self) -> None:
+        """Shuffling future price data should change backtest results.
+
+        If a strategy uses look-ahead data, it would perform consistently
+        well even with shuffled data. A proper strategy should produce
+        different (often worse) results when future data is randomized.
+        """
+        np.random.seed(42)
+        # Original data with clear trend
+        original_prices = np.linspace(100, 150, 100) + np.random.normal(0, 1, 100)
+
+        def trend_signal(p: np.ndarray) -> np.ndarray:
+            # Simple moving average crossover (no look-ahead)
+            short_ma = np.convolve(p, np.ones(5) / 5, mode="same")
+            long_ma = np.convolve(p, np.ones(20) / 20, mode="same")
+            return np.sign(short_ma - long_ma)
+
+        # Run with original data
+        result_original = walk_forward(
+            original_prices,
+            trend_signal,
+            fee=0.0,
+            initial_capital=1000.0,
+        )
+
+        # Shuffle the second half of prices (future data)
+        shuffled_prices = original_prices.copy()
+        shuffled_indices = np.arange(50, 100)
+        np.random.shuffle(shuffled_indices)
+        shuffled_prices[50:] = original_prices[shuffled_indices]
+
+        result_shuffled = walk_forward(
+            shuffled_prices,
+            trend_signal,
+            fee=0.0,
+            initial_capital=1000.0,
+        )
+
+        # Results should be different (shuffling future data changes outcome)
+        assert result_original.pnl != result_shuffled.pnl
+
+    def test_latency_changes_strategy_performance(self) -> None:
+        """Adding latency should change (typically degrade) strategy performance.
+
+        This tests that anti-leakage latency enforcement affects signal execution
+        by shifting when positions are taken.
+        """
+        # Create price data with a specific pattern
+        prices = np.array([100, 102, 104, 103, 101, 99, 98, 100, 102, 104], dtype=float)
+
+        def momentum_signal(p: np.ndarray) -> np.ndarray:
+            """Simple momentum signal based on prior price change."""
+            signals = np.zeros_like(p)
+            for i in range(1, len(p)):
+                # Use previous price change to set signal
+                signals[i] = 1.0 if p[i] > p[i - 1] else -1.0
+            return signals
+
+        # Without latency
+        result_no_latency = walk_forward(
+            prices,
+            momentum_signal,
+            fee=0.0,
+            latency=LatencyConfig(signal_to_order=0),
+        )
+
+        # With latency - signals are delayed
+        result_with_latency = walk_forward(
+            prices,
+            momentum_signal,
+            fee=0.0,
+            latency=LatencyConfig(signal_to_order=2),
+        )
+
+        # Results should differ due to latency
+        assert result_no_latency.pnl != result_with_latency.pnl
+        # Latency should be reflected in the result
+        assert result_with_latency.latency_steps == 2
+        assert result_no_latency.latency_steps == 0
+
+
+class TestCostModelImpact:
+    """Tests verifying that costs always reduce or equal performance."""
+
+    def test_pnl_without_costs_matches_expected(self) -> None:
+        """PnL without costs should exactly match position * price change."""
+        prices = np.array([100.0, 102.0, 101.0, 105.0, 103.0])
+
+        def buy_and_hold(p: np.ndarray) -> np.ndarray:
+            signal = np.zeros_like(p)
+            signal[1:] = 1.0  # Long from bar 1 onwards
+            return signal
+
+        result = walk_forward(
+            prices,
+            buy_and_hold,
+            fee=0.0,
+            initial_capital=0.0,
+        )
+
+        # Signal: [0, 1, 1, 1, 1] - enter long at bar 1
+        # Executed positions: [0, 1, 1, 1, 1] (with 0 latency)
+        # price_moves = [2, -1, 4, -2] (prices[i+1] - prices[i])
+        # PnL calculation uses positions[1:] * price_moves
+        # positions[1:] = [1, 1, 1, 1]
+        # PnL = 1*2 + 1*(-1) + 1*4 + 1*(-2) = 2 - 1 + 4 - 2 = 3
+        assert result.pnl == pytest.approx(3.0, rel=1e-6)
+        assert result.commission_cost == 0.0
+
+    def test_large_commission_dominates_pnl(self) -> None:
+        """With large commissions, PnL should be significantly reduced."""
+        prices = np.linspace(100, 110, 20)  # Uptrend
+
+        def entry_signal(p: np.ndarray) -> np.ndarray:
+            """Signal that enters long at bar 1."""
+            signals = np.zeros_like(p)
+            signals[1:] = 1.0  # Long from bar 1
+            return signals
+
+        # Without fees
+        result_no_fee = walk_forward(prices, entry_signal, fee=0.0)
+
+        # With very large fee (10% per trade)
+        result_high_fee = walk_forward(prices, entry_signal, fee=10.0)
+
+        # High fee should reduce PnL
+        assert result_no_fee.pnl > 0
+        assert result_high_fee.pnl < result_no_fee.pnl
+        assert result_high_fee.commission_cost > 0
+        # The fee should have been deducted
+        assert result_no_fee.pnl - result_high_fee.pnl == pytest.approx(
+            result_high_fee.commission_cost, rel=1e-6
+        )
+
+    def test_costs_make_flat_market_negative(self) -> None:
+        """In a flat market, any costs should result in negative PnL."""
+        # Perfectly flat market
+        prices = np.array([100.0] * 20)
+
+        def oscillating_signal(p: np.ndarray) -> np.ndarray:
+            return np.array([(-1) ** i for i in range(len(p))], dtype=float)
+
+        # Without costs - should be exactly zero
+        result_no_cost = walk_forward(prices, oscillating_signal, fee=0.0)
+        assert result_no_cost.pnl == pytest.approx(0.0, abs=1e-10)
+
+        # With costs - should be negative
+        result_with_cost = walk_forward(prices, oscillating_signal, fee=0.1)
+        assert result_with_cost.pnl < 0
+        assert result_with_cost.commission_cost > 0
+
+
+class TestBacktestReportGeneration:
+    """Tests ensuring backtest reports are always generated correctly."""
+
+    def test_performance_report_generated(self) -> None:
+        """Every backtest should generate a performance report."""
+        prices = np.linspace(100, 110, 50)
+
+        result = walk_forward(
+            prices,
+            lambda p: np.ones_like(p),
+            fee=0.001,
+            initial_capital=1000.0,
+        )
+
+        assert result.performance is not None
+        assert result.report_path is not None
+        assert result.performance.sharpe_ratio is not None or result.performance.cagr is not None
+
+    def test_report_includes_cost_breakdown(self) -> None:
+        """Report should include a breakdown of all costs."""
+        from backtest.engine import OrderBookConfig, SlippageConfig
+
+        prices = np.linspace(100, 110, 20)
+
+        def entry_signal(p: np.ndarray) -> np.ndarray:
+            """Signal that enters long at bar 1."""
+            signals = np.zeros_like(p)
+            signals[1:] = 1.0
+            return signals
+
+        result = walk_forward(
+            prices,
+            entry_signal,
+            fee=0.01,
+            order_book=OrderBookConfig(spread_bps=5.0),
+            slippage=SlippageConfig(per_unit_bps=2.0),
+        )
+
+        # All cost components should be tracked
+        assert result.commission_cost >= 0
+        assert result.spread_cost >= 0
+        assert result.slippage_cost >= 0
+
+        # Total cost should be sum of components (at least one should be > 0)
+        total_cost = result.commission_cost + result.spread_cost + result.slippage_cost
+        assert total_cost > 0
+        # There should be at least one trade
+        assert result.trades >= 1
+
+    def test_equity_curve_is_valid(self) -> None:
+        """Equity curve should be valid and finite."""
+        prices = np.linspace(100, 110, 100)
+
+        result = walk_forward(
+            prices,
+            lambda p: np.sin(np.linspace(0, 4 * np.pi, len(p))),
+            fee=0.001,
+            initial_capital=1000.0,
+        )
+
+        assert result.equity_curve is not None
+        # Equity curve has len(prices) - 1 elements because it tracks cumulative PnL
+        # from price changes, and there are n-1 price changes for n prices
+        assert len(result.equity_curve) == len(prices) - 1
+        assert np.all(np.isfinite(result.equity_curve))
+        # Equity curve values should be numeric
+        assert result.equity_curve[0] is not None
