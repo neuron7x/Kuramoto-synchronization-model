@@ -303,7 +303,7 @@ jobs:
           echo "image_ref=$image_ref" >>"$GITHUB_OUTPUT"
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.5.0
+        uses: sigstore/cosign-installer@v4.0.0
 
       - name: Sign container image (keyless)
         env:
