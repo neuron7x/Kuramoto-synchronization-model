@@ -15,12 +15,7 @@ from application.system import (
 from domain import Order, OrderSide, Signal, SignalAction
 from execution.connectors import BinanceConnector
 from execution.risk import RiskLimits
-from tradepulse.sdk import (
-    MarketState,
-    SDKConfig,
-    SuggestedOrder,
-    TradePulseSDK,
-)
+from tradepulse.sdk import MarketState, SDKConfig, SuggestedOrder, TradePulseSDK
 
 
 class _FakeLiveLoop:

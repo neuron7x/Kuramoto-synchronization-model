@@ -12,17 +12,11 @@ from typing import Any, Awaitable, Callable, Mapping, Sequence
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from application.api.authorization import (
-    get_authorization_gateway,
-    require_permission,
-)
+from application.api.authorization import get_authorization_gateway, require_permission
 from application.api.debug import install_debug_routes
 from application.api.errors import register_exception_handlers
 from application.api.middleware import AccessLogMiddleware
-from application.api.rate_limit import (
-    SlidingWindowRateLimiter,
-    build_rate_limiter,
-)
+from application.api.rate_limit import SlidingWindowRateLimiter, build_rate_limiter
 from application.api.security import verify_request_identity
 from application.security.rbac import AuthorizationGateway
 from application.settings import (

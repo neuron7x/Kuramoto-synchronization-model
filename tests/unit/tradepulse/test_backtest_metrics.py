@@ -3,14 +3,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import numpy as np
 import pytest
 
 from tradepulse.analytics.backtest_metrics import (
     BacktestReport,
-    DrawdownInfo,
     Trade,
     evaluate_backtest,
 )
@@ -200,7 +197,14 @@ class TestEvaluateBacktest:
     def test_consecutive_wins_losses(self) -> None:
         """Test consecutive wins/losses tracking."""
         trades = [
-            Trade(entry_time=i, exit_time=i + 1, entry_price=100.0, exit_price=100.0 + pnl, quantity=1.0, pnl=pnl)
+            Trade(
+                entry_time=i,
+                exit_time=i + 1,
+                entry_price=100.0,
+                exit_price=100.0 + pnl,
+                quantity=1.0,
+                pnl=pnl,
+            )
             for i, pnl in enumerate([5, 3, 2, -1, -2, -3, 4, 5])
         ]
 
@@ -354,7 +358,14 @@ class TestEdgeCases:
     def test_all_winning_trades(self) -> None:
         """Test with all winning trades."""
         trades = [
-            Trade(entry_time=i, exit_time=i + 1, entry_price=100.0, exit_price=105.0, quantity=1.0, pnl=5.0)
+            Trade(
+                entry_time=i,
+                exit_time=i + 1,
+                entry_price=100.0,
+                exit_price=105.0,
+                quantity=1.0,
+                pnl=5.0,
+            )
             for i in range(5)
         ]
 
@@ -368,7 +379,14 @@ class TestEdgeCases:
     def test_all_losing_trades(self) -> None:
         """Test with all losing trades."""
         trades = [
-            Trade(entry_time=i, exit_time=i + 1, entry_price=100.0, exit_price=95.0, quantity=1.0, pnl=-5.0)
+            Trade(
+                entry_time=i,
+                exit_time=i + 1,
+                entry_price=100.0,
+                exit_price=95.0,
+                quantity=1.0,
+                pnl=-5.0,
+            )
             for i in range(5)
         ]
 

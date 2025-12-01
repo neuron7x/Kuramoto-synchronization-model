@@ -46,15 +46,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import (
-    Callable,
-    Dict,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Protocol,
-    TypeVar,
-)
+from typing import Callable, Dict, Iterable, Mapping, MutableMapping, Protocol, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 

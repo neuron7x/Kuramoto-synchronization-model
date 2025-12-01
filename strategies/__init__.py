@@ -12,9 +12,7 @@ from .registry import (
     register_strategy,
     resolve_strategy,
 )
-from .registry import (
-    available_strategies as _available_strategies,
-)
+from .registry import available_strategies as _available_strategies
 
 
 def get_strategy(name: str, config: Dict[str, Any] | None = None) -> Any:

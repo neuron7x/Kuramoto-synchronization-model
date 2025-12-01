@@ -5,10 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.architecture_integrator.component import (
-    ComponentHealth,
-    ComponentStatus,
-)
+from core.architecture_integrator.component import ComponentHealth, ComponentStatus
 from core.architecture_integrator.integrator import ArchitectureIntegrator
 
 

@@ -25,12 +25,7 @@ from execution.normalization import (
     SymbolSpecification,
 )
 from execution.oms import OMSConfig, OrderManagementSystem
-from execution.risk import (
-    JsonRiskStateStore,
-    LimitViolation,
-    RiskLimits,
-    RiskManager,
-)
+from execution.risk import JsonRiskStateStore, LimitViolation, RiskLimits, RiskManager
 
 
 @pytest.fixture()

@@ -17,13 +17,7 @@ from bisect import bisect_left
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import (
-    Mapping,
-    MutableMapping,
-    Protocol,
-    Sequence,
-    runtime_checkable,
-)
+from typing import Mapping, MutableMapping, Protocol, Sequence, runtime_checkable
 
 from .notifications import NotificationDispatcher
 

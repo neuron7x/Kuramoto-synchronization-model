@@ -15,10 +15,7 @@ from core.data.backfill import (
     _resolve_cadence,
 )
 from core.data.catalog import normalize_symbol
-from core.data.materialization import (
-    InMemoryCheckpointStore,
-    StreamMaterializer,
-)
+from core.data.materialization import InMemoryCheckpointStore, StreamMaterializer
 from core.data.path_guard import DataPathGuard
 from core.data.resampling import (
     _ensure_datetime_index,

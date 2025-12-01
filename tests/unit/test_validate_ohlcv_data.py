@@ -11,10 +11,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from scripts.validate_ohlcv_data import (
-    ValidationReport,
-    validate_ohlcv_file,
-)
+from scripts.validate_ohlcv_data import ValidationReport, validate_ohlcv_file
 
 
 class TestValidationReport:

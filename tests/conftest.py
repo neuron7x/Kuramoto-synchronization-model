@@ -13,10 +13,7 @@ from typing import Iterable, Sequence
 import pytest
 import yaml
 
-from observability.audit.trail import (
-    get_access_audit_trail,
-    get_system_audit_trail,
-)
+from observability.audit.trail import get_access_audit_trail, get_system_audit_trail
 
 os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
 os.environ.setdefault("THERMO_DUAL_SECRET", "test-secret")

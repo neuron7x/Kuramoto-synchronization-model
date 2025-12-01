@@ -5,10 +5,7 @@ from collections import deque
 import pytest
 
 from domain import Order, OrderSide, OrderType
-from execution.connectors import (
-    SimulatedExchangeConnector,
-    TransientOrderError,
-)
+from execution.connectors import SimulatedExchangeConnector, TransientOrderError
 from execution.normalization import SymbolSpecification
 
 

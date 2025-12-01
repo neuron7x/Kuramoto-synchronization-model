@@ -61,11 +61,7 @@ from .router import (
     ResilientExecutionRouter,
     SlippageModel,
 )
-from .session_snapshot import (
-    ExecutionMode,
-    SessionSnapshotError,
-    SessionSnapshotter,
-)
+from .session_snapshot import ExecutionMode, SessionSnapshotError, SessionSnapshotter
 from .watchdog import Watchdog
 from .workflows import (
     OrderAssessment,

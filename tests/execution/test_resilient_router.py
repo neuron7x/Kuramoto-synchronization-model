@@ -16,11 +16,7 @@ from execution.resilience.circuit_breaker import (
     LeakyBucketRateLimiter,
     TokenBucketRateLimiter,
 )
-from execution.router import (
-    ExecutionRoute,
-    ResilientExecutionRouter,
-    SlippageModel,
-)
+from execution.router import ExecutionRoute, ResilientExecutionRouter, SlippageModel
 
 
 class DummyConnector(ExecutionConnector):

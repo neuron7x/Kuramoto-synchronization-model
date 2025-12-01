@@ -22,10 +22,7 @@ import httpx
 import pytest
 from fastapi import HTTPException, status
 
-from application.api.idempotency import (
-    IdempotencyCache,
-    IdempotencyConflictError,
-)
+from application.api.idempotency import IdempotencyCache, IdempotencyConflictError
 from application.api.rate_limit import (
     InMemorySlidingWindowBackend,
     RateLimiterSnapshot,

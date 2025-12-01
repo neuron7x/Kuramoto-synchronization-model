@@ -6,15 +6,7 @@ from dataclasses import dataclass, field, fields, is_dataclass, replace
 from datetime import datetime, timezone
 from enum import Enum
 from types import MappingProxyType
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Protocol,
-    Sequence,
-)
+from typing import Any, Callable, Iterable, Mapping, MutableMapping, Protocol, Sequence
 
 from core.events.models import SignalDirection
 

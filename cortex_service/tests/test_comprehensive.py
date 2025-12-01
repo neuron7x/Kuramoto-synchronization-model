@@ -29,9 +29,7 @@ from cortex_service.app.config import (
 )
 from cortex_service.app.core.signals import FeatureObservation, compute_signal
 from cortex_service.app.decorators import with_retry
-from cortex_service.app.errors import (
-    DatabaseError,
-)
+from cortex_service.app.errors import DatabaseError
 from cortex_service.app.ethics.risk import compute_risk
 from cortex_service.app.services.regime_service import RegimeCache
 

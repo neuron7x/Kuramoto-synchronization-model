@@ -8,10 +8,7 @@ import pytest
 
 from domain import Order, OrderSide, OrderStatus
 from execution.connectors import SimulatedExchangeConnector
-from execution.paper_trading import (
-    DeterministicLatencyModel,
-    PaperTradingEngine,
-)
+from execution.paper_trading import DeterministicLatencyModel, PaperTradingEngine
 
 
 @pytest.mark.smoke

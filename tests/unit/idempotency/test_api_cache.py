@@ -2,10 +2,7 @@ import asyncio
 
 import pytest
 
-from application.api.idempotency import (
-    IdempotencyCache,
-    IdempotencyConflictError,
-)
+from application.api.idempotency import IdempotencyCache, IdempotencyConflictError
 
 
 @pytest.mark.asyncio

@@ -9,11 +9,7 @@ from .evaluator import (
     StrategyEvaluationError,
     evaluate_strategies,
 )
-from .orchestrator import (
-    StrategyFlow,
-    StrategyOrchestrationError,
-    StrategyOrchestrator,
-)
+from .orchestrator import StrategyFlow, StrategyOrchestrationError, StrategyOrchestrator
 from .registry import (
     AgentRegistry,
     AgentRegistryError,

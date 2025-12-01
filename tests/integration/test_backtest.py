@@ -4,12 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from backtest.engine import (
-    LatencyConfig,
-    OrderBookConfig,
-    SlippageConfig,
-    walk_forward,
-)
+from backtest.engine import LatencyConfig, OrderBookConfig, SlippageConfig, walk_forward
 
 
 def trend_following_signal(prices: np.ndarray) -> np.ndarray:

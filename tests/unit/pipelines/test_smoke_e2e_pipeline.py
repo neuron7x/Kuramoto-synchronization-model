@@ -8,11 +8,7 @@ import numpy as np
 from backtest.engine import Result
 from core.data.ingestion import Ticker
 from core.data.models import InstrumentType
-from core.pipelines.smoke_e2e import (
-    SmokeE2EConfig,
-    SmokeE2EPipeline,
-    write_summary,
-)
+from core.pipelines.smoke_e2e import SmokeE2EConfig, SmokeE2EPipeline, write_summary
 
 
 def _make_tick(price: float) -> Ticker:

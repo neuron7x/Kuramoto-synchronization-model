@@ -4,10 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from observability.cache_warmup import (
-    CacheWarmupController,
-    CacheWarmupSpec,
-)
+from observability.cache_warmup import CacheWarmupController, CacheWarmupSpec
 
 UTC = timezone.utc
 

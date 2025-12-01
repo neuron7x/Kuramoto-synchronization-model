@@ -17,9 +17,7 @@ import pandas as pd
 import torch
 
 from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
-from neuropro.hpc_validation import (
-    generate_synthetic_data,
-)
+from neuropro.hpc_validation import generate_synthetic_data
 
 
 @dataclass

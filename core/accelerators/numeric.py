@@ -18,15 +18,9 @@ _logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover - optional acceleration module
     if _NUMPY_AVAILABLE:
-        from tradepulse_accel import (
-            convolve as _rust_convolve,
-        )
-        from tradepulse_accel import (
-            quantiles as _rust_quantiles,
-        )
-        from tradepulse_accel import (
-            sliding_windows as _rust_sliding_windows,
-        )
+        from tradepulse_accel import convolve as _rust_convolve
+        from tradepulse_accel import quantiles as _rust_quantiles
+        from tradepulse_accel import sliding_windows as _rust_sliding_windows
 
         _RUST_ACCEL_AVAILABLE = True
     else:

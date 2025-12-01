@@ -53,10 +53,7 @@ from application.api.idempotency import (
     IdempotencySnapshot,
 )
 from application.api.metrics import MetricsSampler
-from application.api.middleware import (
-    AccessLogMiddleware,
-    PrometheusMetricsMiddleware,
-)
+from application.api.middleware import AccessLogMiddleware, PrometheusMetricsMiddleware
 from application.api.rate_limit import (
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
@@ -1595,9 +1592,7 @@ def create_app(
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
         from prometheus_client import REGISTRY as prometheus_registry
-        from prometheus_client import (
-            ProcessCollector,
-        )
+        from prometheus_client import ProcessCollector
     except Exception:  # pragma: no cover - optional dependency
         metrics_registry = None
     else:
