@@ -767,6 +767,52 @@
         "to_mode"
       ],
       "subsystem": "trading"
+    },
+    {
+      "name": "tradepulse_drawdown_percent",
+      "type": "gauge",
+      "description": "Current portfolio drawdown expressed as a percentage.",
+      "labels": [],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_kill_switch_triggers_total",
+      "type": "counter",
+      "description": "Kill switch triggers grouped by reason.",
+      "labels": [
+        "reason"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_validations_total",
+      "type": "counter",
+      "description": "Total risk validation outcomes.",
+      "labels": [
+        "symbol",
+        "outcome"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_compliance_checks_total",
+      "type": "counter",
+      "description": "Compliance check outcomes.",
+      "labels": [
+        "symbol",
+        "status"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_compliance_violations_total",
+      "type": "counter",
+      "description": "Compliance violations by type.",
+      "labels": [
+        "symbol",
+        "violation_type"
+      ],
+      "subsystem": "risk"
     }
   ]
 }

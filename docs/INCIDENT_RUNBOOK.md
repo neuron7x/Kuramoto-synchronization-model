@@ -19,6 +19,7 @@
 
 ## Типові Інциденти
 
+<a id="1-kill-switch-triggered"></a>
 ### 1. Kill-Switch Спрацював
 
 **Симптоми:**
@@ -69,6 +70,7 @@ curl -X POST http://localhost:8080/admin/kill-switch/reset \
 
 ---
 
+<a id="2-no-new-orders"></a>
 ### 2. Немає Нових Ордерів
 
 **Симптоми:**
@@ -128,6 +130,7 @@ Exchange не відповідає?
 
 ---
 
+<a id="3-risk-engine-blocking"></a>
 ### 3. Risk-Engine Блокує Все
 
 **Симптоми:**
@@ -167,6 +170,7 @@ Exchange не відповідає?
 
 ---
 
+<a id="4-ml-errors-timeouts"></a>
 ### 4. ML Відповідає з Помилками / Таймаутами
 
 **Симптоми:**
@@ -210,6 +214,7 @@ tradepulse-admin model switch --to fallback
 
 ---
 
+<a id="5-metrics-logs-missing"></a>
 ### 5. Метрики/Логи Пропали
 
 **Симптоми:**
@@ -251,6 +256,7 @@ tradepulse-admin model switch --to fallback
 
 ---
 
+<a id="6-high-latency-order-execution"></a>
 ### 6. High Latency на Order Execution
 
 **Симптоми:**

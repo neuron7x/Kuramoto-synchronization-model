@@ -70,7 +70,7 @@
           "labels": {
             "severity": "critical",
             "team": "trade-ops",
-            "runbook": "docs/INCIDENT_RUNBOOK.md#1-kill-switch-спрацював"
+            "runbook": "docs/INCIDENT_RUNBOOK.md#1-kill-switch-triggered"
           },
           "annotations": {
             "summary": "Kill switch is ENGAGED - all trading halted",
@@ -84,7 +84,7 @@
           "labels": {
             "severity": "warning",
             "team": "trade-ops",
-            "runbook": "docs/INCIDENT_RUNBOOK.md#3-risk-engine-блокує-все"
+            "runbook": "docs/INCIDENT_RUNBOOK.md#3-risk-engine-blocking"
           },
           "annotations": {
             "summary": "Circuit breaker is OPEN",
@@ -98,7 +98,7 @@
           "labels": {
             "severity": "warning",
             "team": "trade-ops",
-            "runbook": "docs/INCIDENT_RUNBOOK.md#3-risk-engine-блокує-все"
+            "runbook": "docs/INCIDENT_RUNBOOK.md#3-risk-engine-blocking"
           },
           "annotations": {
             "summary": "High order rejection rate by risk engine",
@@ -253,7 +253,7 @@
           "labels": {
             "severity": "warning",
             "team": "ml-ops",
-            "runbook": "docs/INCIDENT_RUNBOOK.md#4-ml-відповідає-з-помилками--таймаутами"
+            "runbook": "docs/INCIDENT_RUNBOOK.md#4-ml-errors-timeouts"
           },
           "annotations": {
             "summary": "ML model inference latency is high",
@@ -267,7 +267,7 @@
           "labels": {
             "severity": "warning",
             "team": "ml-ops",
-            "runbook": "docs/INCIDENT_RUNBOOK.md#4-ml-відповідає-з-помилками--таймаутами"
+            "runbook": "docs/INCIDENT_RUNBOOK.md#4-ml-errors-timeouts"
           },
           "annotations": {
             "summary": "ML model error rate exceeds 1%",
@@ -352,7 +352,7 @@
           "labels": {
             "severity": "critical",
             "team": "platform-ops",
-            "runbook": "docs/INCIDENT_RUNBOOK.md#5-метрикилоги-пропали"
+            "runbook": "docs/INCIDENT_RUNBOOK.md#5-metrics-logs-missing"
           },
           "annotations": {
             "summary": "TradePulse metrics are missing",
