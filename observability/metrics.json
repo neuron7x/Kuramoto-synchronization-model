@@ -664,6 +664,155 @@
         "outcome"
       ],
       "subsystem": "operations"
+    },
+    {
+      "name": "tradepulse_risk_kill_switch",
+      "type": "gauge",
+      "description": "Global kill switch state (1=enabled, 0=disabled).",
+      "labels": [
+        "env"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_gross_exposure",
+      "type": "gauge",
+      "description": "Current gross exposure in notional terms.",
+      "labels": [
+        "env"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_daily_drawdown",
+      "type": "gauge",
+      "description": "Current daily drawdown (percentage or notional).",
+      "labels": [
+        "env",
+        "mode"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_circuit_state",
+      "type": "gauge",
+      "description": "Circuit breaker state (0=closed, 1=open, 2=half_open).",
+      "labels": [
+        "state"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_rejections_total",
+      "type": "counter",
+      "description": "Total number of orders rejected by risk checks.",
+      "labels": [
+        "reason"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_circuit_trips_total",
+      "type": "counter",
+      "description": "Total number of circuit breaker trips.",
+      "labels": [
+        "reason"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_open_orders",
+      "type": "gauge",
+      "description": "Current number of open orders.",
+      "labels": [
+        "env"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_trading_mode",
+      "type": "gauge",
+      "description": "Current trading mode (1 when active for that mode label: BACKTEST/PAPER/LIVE).",
+      "labels": [
+        "mode"
+      ],
+      "subsystem": "trading"
+    },
+    {
+      "name": "tradepulse_trading_mode_transitions_total",
+      "type": "counter",
+      "description": "Total number of trading mode transitions.",
+      "labels": [
+        "from_mode",
+        "to_mode",
+        "reason"
+      ],
+      "subsystem": "trading"
+    },
+    {
+      "name": "tradepulse_trading_mode_duration_seconds",
+      "type": "gauge",
+      "description": "Time spent in current trading mode.",
+      "labels": [
+        "mode"
+      ],
+      "subsystem": "trading"
+    },
+    {
+      "name": "tradepulse_trading_mode_transition_latency_seconds",
+      "type": "histogram",
+      "description": "Latency of mode transitions.",
+      "labels": [
+        "from_mode",
+        "to_mode"
+      ],
+      "subsystem": "trading"
+    },
+    {
+      "name": "tradepulse_drawdown_percent",
+      "type": "gauge",
+      "description": "Current portfolio drawdown expressed as a percentage.",
+      "labels": [],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_kill_switch_triggers_total",
+      "type": "counter",
+      "description": "Kill switch triggers grouped by reason.",
+      "labels": [
+        "reason"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_risk_validations_total",
+      "type": "counter",
+      "description": "Total risk validation outcomes.",
+      "labels": [
+        "symbol",
+        "outcome"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_compliance_checks_total",
+      "type": "counter",
+      "description": "Compliance check outcomes.",
+      "labels": [
+        "symbol",
+        "status"
+      ],
+      "subsystem": "risk"
+    },
+    {
+      "name": "tradepulse_compliance_violations_total",
+      "type": "counter",
+      "description": "Compliance violations by type.",
+      "labels": [
+        "symbol",
+        "violation_type"
+      ],
+      "subsystem": "risk"
     }
   ]
 }
