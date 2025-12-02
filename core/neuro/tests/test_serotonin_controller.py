@@ -896,3 +896,97 @@ def test_health_check_detects_config_issues(controller):
     health = controller.health_check()
     assert not health["healthy"]
     assert any("decay_rate" in issue for issue in health["issues"])
+
+
+
+def test_configurable_hysteresis_margin(tmp_path):
+    """Test v2.5.0 configurable hysteresis margin feature."""
+    config_dict = {
+        "alpha": 0.42,
+        "beta": 0.28,
+        "gamma": 0.32,
+        "delta_rho": 0.18,
+        "k": 1.0,
+        "theta": 0.5,
+        "delta": 0.8,
+        "za_bias": -0.33,
+        "decay_rate": 0.05,
+        "cooldown_threshold": 0.7,
+        "desens_threshold_ticks": 100,
+        "desens_rate": 0.01,
+        "target_dd": -0.05,
+        "target_sharpe": 1.0,
+        "beta_temper": 0.12,
+        "max_desens_counter": 1000,
+        "phase_threshold": 0.4,
+        "burst_factor": 2.5,
+        "mod_t_max": 4.0,
+        "mod_t_half": 24.0,
+        "mod_k": 0.7,
+        "tick_hours": 1.0,
+        "phase_kappa": 0.08,
+        "desens_gain": 0.12,
+        "gate_veto": 0.9,
+        "phasic_veto": 1.0,
+        "temperature_floor_min": 0.05,
+        "temperature_floor_max": 0.4,
+        "hysteresis_margin": 0.10,  # Custom 10% hysteresis margin
+    }
+
+    cfg_path = tmp_path / "serotonin_hysteresis.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f)
+
+    controller = SerotoninController(str(cfg_path))
+
+    # Verify hysteresis margin is loaded from config
+    assert controller.config.get("hysteresis_margin", 0.05) == 0.10
+
+    # Test that the controller works with custom hysteresis
+    veto = controller.check_cooldown(0.5)  # Below threshold
+    assert not veto  # Should not veto at low level
+
+
+def test_hysteresis_margin_default_value(tmp_path):
+    """Test that hysteresis_margin defaults to 0.05 if not specified."""
+    config_dict = {
+        "alpha": 0.42,
+        "beta": 0.28,
+        "gamma": 0.32,
+        "delta_rho": 0.18,
+        "k": 1.0,
+        "theta": 0.5,
+        "delta": 0.8,
+        "za_bias": -0.33,
+        "decay_rate": 0.05,
+        "cooldown_threshold": 0.7,
+        "desens_threshold_ticks": 100,
+        "desens_rate": 0.01,
+        "target_dd": -0.05,
+        "target_sharpe": 1.0,
+        "beta_temper": 0.12,
+        "max_desens_counter": 1000,
+        "phase_threshold": 0.4,
+        "burst_factor": 2.5,
+        "mod_t_max": 4.0,
+        "mod_t_half": 24.0,
+        "mod_k": 0.7,
+        "tick_hours": 1.0,
+        "phase_kappa": 0.08,
+        "desens_gain": 0.12,
+        "gate_veto": 0.9,
+        "phasic_veto": 1.0,
+        "temperature_floor_min": 0.05,
+        "temperature_floor_max": 0.4,
+        # No hysteresis_margin specified - should default to 0.05
+    }
+
+    cfg_path = tmp_path / "serotonin_no_hysteresis.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config_dict, f)
+
+    controller = SerotoninController(str(cfg_path))
+
+    # check_cooldown should use default margin of 0.05
+    veto = controller.check_cooldown(0.5)
+    assert not veto  # Should work with default margin

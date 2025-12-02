@@ -63,6 +63,7 @@ desens_gain: 0.8        # Gain applied during desensitisation
 # Veto thresholds
 gate_veto: 0.9          # Gate level above which cooldown veto triggers
 phasic_veto: 1.0        # Phasic level above which cooldown veto triggers
+hysteresis_margin: 0.05 # Hysteresis margin for veto threshold transitions (v2.5.0)
 
 # Temperature floor bounds
 temperature_floor_min: 0.1   # Lower bound for serotonin-governed temperature floor

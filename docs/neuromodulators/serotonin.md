@@ -4,9 +4,13 @@
 
 The serotonin module implements a production-grade neuromodulatory controller for risk management and stress adaptation in trading systems. It models tonic (chronic baseline) and phasic (acute spike) serotonin dynamics with hysteretic hold logic to prevent trading during high-stress periods.
 
-**Version:** 2.4.0
+**Version:** 2.5.0
 **Status:** Production
 **Coverage:** 95% test coverage, comprehensive invariants
+
+## What's New in v2.5.0
+
+- **Configurable Hysteresis Margin**: The hysteresis margin for veto threshold transitions is now configurable via the `hysteresis_margin` parameter (default: 0.05, range: 0.01-0.15). This allows fine-tuning of state transition smoothness for different trading regimes.
 
 ## Architecture
 
