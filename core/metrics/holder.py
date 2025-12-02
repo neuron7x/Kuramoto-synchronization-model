@@ -34,6 +34,15 @@ except ImportError:  # pragma: no cover - optional dependency
     _PYWT_AVAILABLE = False
 
 
+# Threshold for q-values to avoid undefined log(0) in structure function
+# q=0 would result in log(1)=0 for all cases, breaking the scaling analysis
+_Q_ZERO_THRESHOLD = 0.01
+
+# Minimum absolute coefficient value to include in structure function
+# Values below this are considered numerical noise and excluded
+_COEFF_MIN_THRESHOLD = 1e-12
+
+
 def holder_exponent_wavelet(
     x: Iterable[float],
     *,
@@ -279,8 +288,8 @@ def singularity_spectrum(
 
     # q-values for structure function
     q_values = np.linspace(q_range[0], q_range[1], n_q)
-    # Avoid q=0 (undefined log)
-    q_values[np.abs(q_values) < 0.01] = 0.01
+    # Avoid q=0 (undefined log) by clamping near-zero values
+    q_values[np.abs(q_values) < _Q_ZERO_THRESHOLD] = _Q_ZERO_THRESHOLD
 
     # Compute structure functions
     scales = []
@@ -292,12 +301,13 @@ def singularity_spectrum(
         scale = 2 ** (j + 1)
         scales.append(scale)
         # Structure function S(q, j) = (1/n) * sum(|d_j|^q)
-        s_q = np.zeros(len(q_values))
         abs_d = np.abs(d)
-        abs_d = abs_d[abs_d > 1e-12]  # Filter near-zero
+        abs_d = abs_d[abs_d > _COEFF_MIN_THRESHOLD]  # Filter near-zero coefficients
         if len(abs_d) > 0:
-            for i, q in enumerate(q_values):
-                s_q[i] = np.mean(abs_d**q)
+            # Vectorized computation: compute |d|^q for all q values at once
+            s_q = np.mean(abs_d[:, np.newaxis] ** q_values[np.newaxis, :], axis=0)
+        else:
+            s_q = np.zeros(len(q_values))
         structure.append(s_q)
 
     if len(scales) < 2:
