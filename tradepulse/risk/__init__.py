@@ -7,31 +7,59 @@ implementing:
 - Central risk engine with configurable limits
 - Kill-switch and safe-mode mechanisms
 - Structured logging and metrics for risk decisions
+
+For backward compatibility, this module also re-exports legacy risk management
+classes from execution.risk and automated testing utilities from
+src.tradepulse.risk.
 """
 
+# Legacy API re-exports for backward compatibility
+from execution.risk import (
+    KillSwitch,
+    LimitViolation,
+    OrderRateExceeded,
+    RiskError,
+    RiskLimits,
+    RiskManager,
+    portfolio_heat,
+)
+
+# Automated testing utilities
+from src.tradepulse.risk.automated_testing import (
+    AutomatedRiskTester,
+    MonteCarloConfig,
+    RiskScenario,
+    ScenarioType,
+    StressTestResult,
+    generate_flash_crash_scenarios,
+    generate_liquidity_crisis_scenarios,
+    generate_market_stress_scenarios,
+    validate_risk_metrics,
+)
+
+from .config import (
+    RiskEngineConfig,
+    load_risk_config,
+)
 from .engine import (
     CentralRiskEngine,
     RiskDecision,
     RiskStatus,
 )
 from .environment import (
-    EnvironmentMode,
     EnvironmentConfig,
     EnvironmentError,
-    validate_environment,
+    EnvironmentMode,
     get_current_mode,
-    set_current_mode,
-    require_mode,
     is_live_trading_allowed,
+    require_mode,
+    set_current_mode,
+    validate_environment,
 )
 from .kill_switch import (
-    SafetyState,
     SafetyController,
+    SafetyState,
     get_safety_controller,
-)
-from .config import (
-    RiskEngineConfig,
-    load_risk_config,
 )
 
 __all__ = [
@@ -44,7 +72,7 @@ __all__ = [
     "set_current_mode",
     "require_mode",
     "is_live_trading_allowed",
-    # Risk Engine
+    # Risk Engine (new API)
     "CentralRiskEngine",
     "RiskDecision",
     "RiskStatus",
@@ -55,4 +83,22 @@ __all__ = [
     # Configuration
     "RiskEngineConfig",
     "load_risk_config",
+    # Legacy API (backward compatibility)
+    "RiskManager",
+    "RiskLimits",
+    "RiskError",
+    "LimitViolation",
+    "OrderRateExceeded",
+    "KillSwitch",
+    "portfolio_heat",
+    # Automated testing
+    "AutomatedRiskTester",
+    "RiskScenario",
+    "ScenarioType",
+    "StressTestResult",
+    "MonteCarloConfig",
+    "generate_market_stress_scenarios",
+    "generate_liquidity_crisis_scenarios",
+    "generate_flash_crash_scenarios",
+    "validate_risk_metrics",
 ]
