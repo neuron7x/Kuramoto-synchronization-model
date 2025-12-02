@@ -1,6 +1,6 @@
 # Security Reports Guide — TradePulse
 
-> Як читати та реагувати на security reports у CI.
+> How to read and respond to security reports in CI.
 
 ## Overview
 

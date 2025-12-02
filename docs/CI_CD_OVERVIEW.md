@@ -1,8 +1,8 @@
 # CI/CD Overview — TradePulse
 
-> **TL;DR:** Жодне лайно не потрапить у `main` — CI/CD жорстко валідує lint, тести, coverage, security та build.
+> **TL;DR:** Nothing breaks `main` — CI/CD strictly validates lint, tests, coverage, security, and build.
 
-## Принципи
+## Principles
 
 1. **Ніяких `disable tests/lint`** — лагодиш, не вимикаєш.
 2. **Один пайплайн = зрозумілий набір перевірок** — без франкенштейнів.

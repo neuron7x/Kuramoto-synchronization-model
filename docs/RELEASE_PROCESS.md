@@ -1,6 +1,6 @@
 # Release Process — TradePulse
 
-> Як робити релізи — від merge до production.
+> How to create releases — from merge to production.
 
 ## Overview
 
