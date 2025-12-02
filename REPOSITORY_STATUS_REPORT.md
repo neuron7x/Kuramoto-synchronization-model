@@ -1,8 +1,10 @@
 # Звіт про поточний стан репозиторію TradePulse
 
-**Дата аналізу:** 2025-12-01  
+**Дата аналізу:** 2025-12-02  
 **Версія:** 0.1.0 (Beta)  
-**Гілка:** `copilot/check-repo-status-and-coverage`
+**Гілка:** `copilot/analyze-project-status`
+
+> 📋 **Детальний звіт:** Для повного аналізу з готовністю по категоріях модулів див. [PROJECT_STATUS_DETAILED.md](PROJECT_STATUS_DETAILED.md)
 
 ---
 
