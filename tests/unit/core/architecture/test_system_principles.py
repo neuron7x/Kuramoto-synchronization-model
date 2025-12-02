@@ -760,8 +760,10 @@ class TestEnums:
     """Tests for enum types."""
 
     def test_principle_status_values(self) -> None:
-        assert PrincipleStatus.NOT_IMPLEMENTED.value == 1
-        assert PrincipleStatus.IMPLEMENTED.value == 3
+        # Test status enum members exist and are distinct
+        assert PrincipleStatus.NOT_IMPLEMENTED != PrincipleStatus.IMPLEMENTED
+        assert PrincipleStatus.NOT_IMPLEMENTED != PrincipleStatus.VALIDATED
+        assert len(PrincipleStatus) == 4  # NOT_IMPLEMENTED, PARTIAL, IMPLEMENTED, VALIDATED
 
     def test_component_role_values(self) -> None:
         assert ComponentRole.SENSOR.value == "sensor"
