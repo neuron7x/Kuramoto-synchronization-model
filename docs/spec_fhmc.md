@@ -63,3 +63,22 @@
 **Мультифрактальний каскад (p-model, діадичний)**
 
 На кожному кроці масив ваг множиться на \((p, 1-p)\) у підвідрізках; Hӧlder-поля оцінюються з вейвлет-коефіцієнтів.
+
+## Реалізація
+
+Усі формальні рівняння реалізовані в наступних модулях:
+
+| Формула | Модуль | Функція/Клас |
+|---------|--------|--------------|
+| Flip-flop | `runtime/thermo_controller.py` | `FHMC.flipflop_step()` |
+| Orexin-arousal | `runtime/thermo_controller.py` | `FHMC.compute_orexin()` |
+| Threat-imminence | `runtime/thermo_controller.py` | `FHMC.compute_threat()` |
+| OU-noise | `rl/explore/noise.py` | `OUProcess` |
+| Colored-noise | `utils/fractal_cascade.py` | `pink_noise()` |
+| DFA | `core/metrics/dfa.py` | `dfa_alpha()` |
+| Aperiodic slope | `core/metrics/aperiodic.py` | `aperiodic_slope()` |
+| RPE/APE | `rl/core/habit_head.py` | `ape_update()` |
+| Lévy diffusion | `neuropro/multifractal_opt.py` | `fractional_update()` |
+| p-model cascade | `utils/fractal_cascade.py` | `DyadicPMCascade` |
+| Hölder fields | `core/metrics/holder.py` | `holder_exponent_wavelet()`, `local_holder_spectrum()` |
+| Singularity spectrum | `core/metrics/holder.py` | `singularity_spectrum()`, `multifractal_width()` |
