@@ -45,6 +45,7 @@ __all__ = [
     "AutonomousPrinciple",
     "SystemArchitecture",
     "get_system_architecture",
+    "PrincipleStatus",
     "PrincipleViolation",
     "ComponentRole",
     "ModuleCapability",

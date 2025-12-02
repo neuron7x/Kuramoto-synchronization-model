@@ -19,17 +19,26 @@ For detailed architecture documentation, see:
 from core.architecture.system_principles import (
     ArchitecturePrinciple,
     AutonomousPrinciple,
+    AutonomyLevel,
+    ComponentRole,
+    ControlAction,
     ControllablePrinciple,
+    IntegrationContract,
     IntegrativePrinciple,
     ModularPrinciple,
+    ModuleCapability,
     NeuroOrientedPrinciple,
+    PrincipleStatus,
+    PrincipleViolation,
     ReproduciblePrinciple,
     RoleBasedPrinciple,
+    StateSnapshot,
     SystemArchitecture,
     get_system_architecture,
 )
 
 __all__ = [
+    # Principles
     "ArchitecturePrinciple",
     "NeuroOrientedPrinciple",
     "ModularPrinciple",
@@ -38,6 +47,17 @@ __all__ = [
     "ReproduciblePrinciple",
     "ControllablePrinciple",
     "AutonomousPrinciple",
+    # System
     "SystemArchitecture",
     "get_system_architecture",
+    # Enums
+    "PrincipleStatus",
+    "ComponentRole",
+    "AutonomyLevel",
+    "ModuleCapability",
+    # Data Classes
+    "PrincipleViolation",
+    "IntegrationContract",
+    "StateSnapshot",
+    "ControlAction",
 ]
