@@ -40,7 +40,7 @@
             "team": "trade-ops"
           },
           "annotations": {
-            "summary": "Signal \u2192 ack latency breaching 400 ms",
+            "summary": "Signal → ack latency breaching 400 ms",
             "description": "p95 signal to acknowledgement latency exceeded 400 ms for 5 minutes"
           }
         },
@@ -53,8 +53,127 @@
             "team": "trade-ops"
           },
           "annotations": {
-            "summary": "Signal \u2192 fill latency breaching 650 ms",
+            "summary": "Signal → fill latency breaching 650 ms",
             "description": "p99 signal to fill latency exceeded 650 ms for 5 minutes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "tradepulse.risk",
+      "interval": "30s",
+      "rules": [
+        {
+          "alert": "TradePulseKillSwitchEngaged",
+          "expr": "tradepulse_risk_kill_switch == 1",
+          "for": "0m",
+          "labels": {
+            "severity": "critical",
+            "team": "trade-ops",
+            "runbook": "docs/INCIDENT_RUNBOOK.md#1-kill-switch-спрацював"
+          },
+          "annotations": {
+            "summary": "Kill switch is ENGAGED - all trading halted",
+            "description": "The global kill switch has been triggered. All order submissions are blocked. Immediate investigation required."
+          }
+        },
+        {
+          "alert": "TradePulseCircuitBreakerOpen",
+          "expr": "tradepulse_risk_circuit_state{state=\"open\"} == 1",
+          "for": "1m",
+          "labels": {
+            "severity": "warning",
+            "team": "trade-ops",
+            "runbook": "docs/INCIDENT_RUNBOOK.md#3-risk-engine-блокує-все"
+          },
+          "annotations": {
+            "summary": "Circuit breaker is OPEN",
+            "description": "The risk circuit breaker has tripped and is currently open. Orders may be blocked."
+          }
+        },
+        {
+          "alert": "TradePulseHighRejectionRate",
+          "expr": "rate(tradepulse_risk_rejections_total[5m]) > 10",
+          "for": "5m",
+          "labels": {
+            "severity": "warning",
+            "team": "trade-ops",
+            "runbook": "docs/INCIDENT_RUNBOOK.md#3-risk-engine-блокує-все"
+          },
+          "annotations": {
+            "summary": "High order rejection rate by risk engine",
+            "description": "More than 10 orders per minute are being rejected by the risk engine."
+          }
+        },
+        {
+          "alert": "TradePulseCircuitBreakerTrip",
+          "expr": "increase(tradepulse_risk_circuit_trips_total[5m]) > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "warning",
+            "team": "trade-ops"
+          },
+          "annotations": {
+            "summary": "Circuit breaker has tripped",
+            "description": "The risk circuit breaker has been triggered at least once in the last 5 minutes."
+          }
+        },
+        {
+          "alert": "TradePulseHighDrawdown",
+          "expr": "tradepulse_drawdown_percent > 5",
+          "for": "10m",
+          "labels": {
+            "severity": "warning",
+            "team": "trade-ops"
+          },
+          "annotations": {
+            "summary": "Portfolio drawdown exceeds 5%",
+            "description": "Current portfolio drawdown has exceeded 5% for more than 10 minutes."
+          }
+        },
+        {
+          "alert": "TradePulseCriticalDrawdown",
+          "expr": "tradepulse_drawdown_percent > 10",
+          "for": "5m",
+          "labels": {
+            "severity": "critical",
+            "team": "trade-ops"
+          },
+          "annotations": {
+            "summary": "Portfolio drawdown exceeds 10% - CRITICAL",
+            "description": "Current portfolio drawdown has exceeded 10%. Risk limits may trigger kill switch."
+          }
+        }
+      ]
+    },
+    {
+      "name": "tradepulse.mode",
+      "interval": "1m",
+      "rules": [
+        {
+          "alert": "TradePulseModeTransition",
+          "expr": "increase(tradepulse_trading_mode_transitions_total[5m]) > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "info",
+            "team": "trade-ops"
+          },
+          "annotations": {
+            "summary": "Trading mode has changed",
+            "description": "A trading mode transition occurred in the last 5 minutes. Verify this was intentional."
+          }
+        },
+        {
+          "alert": "TradePulseLiveModeActive",
+          "expr": "tradepulse_trading_mode{mode=\"LIVE\"} == 1",
+          "for": "0m",
+          "labels": {
+            "severity": "info",
+            "team": "trade-ops"
+          },
+          "annotations": {
+            "summary": "System is in LIVE trading mode",
+            "description": "TradePulse is currently executing real trades. Ensure proper monitoring is active."
           }
         }
       ]
@@ -124,6 +243,53 @@
       ]
     },
     {
+      "name": "tradepulse.model",
+      "interval": "1m",
+      "rules": [
+        {
+          "alert": "TradePulseModelLatencyHigh",
+          "expr": "tradepulse_model_inference_latency_quantiles_seconds{quantile=\"p99\"} > 0.5",
+          "for": "5m",
+          "labels": {
+            "severity": "warning",
+            "team": "ml-ops",
+            "runbook": "docs/INCIDENT_RUNBOOK.md#4-ml-відповідає-з-помилками--таймаутами"
+          },
+          "annotations": {
+            "summary": "ML model inference latency is high",
+            "description": "p99 model inference latency exceeded 500ms for 5 minutes"
+          }
+        },
+        {
+          "alert": "TradePulseModelErrorRateHigh",
+          "expr": "tradepulse_model_inference_error_ratio > 0.01",
+          "for": "5m",
+          "labels": {
+            "severity": "warning",
+            "team": "ml-ops",
+            "runbook": "docs/INCIDENT_RUNBOOK.md#4-ml-відповідає-з-помилками--таймаутами"
+          },
+          "annotations": {
+            "summary": "ML model error rate exceeds 1%",
+            "description": "Model inference error ratio has exceeded 1% for 5 minutes"
+          }
+        },
+        {
+          "alert": "TradePulseModelDegradation",
+          "expr": "increase(tradepulse_model_quality_degradation_events_total[15m]) > 0",
+          "for": "0m",
+          "labels": {
+            "severity": "warning",
+            "team": "ml-ops"
+          },
+          "annotations": {
+            "summary": "Model quality degradation detected",
+            "description": "At least one model quality degradation event was emitted in the last 15 minutes"
+          }
+        }
+      ]
+    },
+    {
       "name": "tradepulse.operations",
       "interval": "1m",
       "rules": [
@@ -177,6 +343,20 @@
           "annotations": {
             "summary": "Runbook execution failed",
             "description": "At least one production runbook failed in the last 15 minutes"
+          }
+        },
+        {
+          "alert": "TradePulseMetricsMissing",
+          "expr": "absent(up{job=\"tradepulse\"})",
+          "for": "5m",
+          "labels": {
+            "severity": "critical",
+            "team": "platform-ops",
+            "runbook": "docs/INCIDENT_RUNBOOK.md#5-метрикилоги-пропали"
+          },
+          "annotations": {
+            "summary": "TradePulse metrics are missing",
+            "description": "Prometheus cannot scrape metrics from TradePulse. Service may be down or unreachable."
           }
         }
       ]
