@@ -600,11 +600,14 @@ After optimization, these workflows run on PRs:
 
 ## References
 
-- [Release Gates Documentation](../../docs/RELEASE_GATES.md)
+- [CI/CD Overview](../../docs/CI_CD_OVERVIEW.md) - Complete CI/CD documentation with local commands
+- [Release Process](../../docs/RELEASE_PROCESS.md) - How to create and manage releases
+- [Release Gates Documentation](../../docs/RELEASE_GATES.md) - Quality gate thresholds and enforcement
+- [Quality Gates](../../docs/quality_gates.md) - Automated governance and pre-commit stack
 - [Operations Guide](../../docs/OPERATIONS.md)
 - [Testing Guide](../../TESTING.md)
 
 ---
 
-**Last Updated:** 2025-11-16
-**Version:** 2.0.0 - Major optimization for solo developer workflow
+**Last Updated:** 2025-12-02
+**Version:** 2.1.0 - Added comprehensive CI/CD and release documentation
