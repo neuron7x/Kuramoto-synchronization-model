@@ -84,6 +84,7 @@ neuro_advanced = [
     "gudhi>=3.10.0",
     "POT>=0.9.5",
     "statsmodels>=0.14.0",
+    "PyWavelets>=1.4.0",
 ]
 dev = [
     "black>=25.9.0",
