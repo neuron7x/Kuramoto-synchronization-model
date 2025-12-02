@@ -8,6 +8,8 @@ can be reused in research notebooks as well as production control loops.
 
 from __future__ import annotations
 
+from typing import Tuple
+
 import numpy as np
 
 
@@ -17,6 +19,9 @@ class DyadicPMCascade:
     The ``heavy_tail`` parameter modulates the variability of the generated
     intervals: larger values skew the distribution towards rare but elongated
     windows.  ``base_dt`` controls the base sampling period in seconds.
+
+    The cascade also supports Hölder exponent estimation via wavelet analysis,
+    as specified in the FHMC documentation.
     """
 
     def __init__(
@@ -69,6 +74,48 @@ class DyadicPMCascade:
         """Adapt the heavy-tail coefficient while respecting bounds."""
 
         self.heavy_tail = float(np.clip(self.heavy_tail + float(delta), 0.0, 1.0))
+
+    def holder_field(self, n: int = 256) -> Tuple[np.ndarray, np.ndarray]:
+        """Estimate local Hölder exponents from the cascade weights.
+
+        The Hölder field characterizes local regularity of the multiplicative
+        cascade at each position. This implements the wavelet-based estimation
+        mentioned in the FHMC specification (Hӧlder-поля оцінюються з
+        вейвлет-коефіцієнтів).
+
+        Args:
+            n: Number of positions to estimate.
+
+        Returns:
+            Tuple of (positions, holder_values) where positions are indices
+            and holder_values are the local Hölder exponents.
+        """
+        from core.metrics.holder import local_holder_spectrum
+
+        # Generate cascade samples
+        samples = self.sample(max(n, 64))
+
+        # Compute local Hölder spectrum
+        window = min(32, len(samples) // 4)
+        window = max(16, window)
+
+        positions, h_values = local_holder_spectrum(samples, window=window)
+
+        # Truncate to requested size
+        mask = positions < n
+        return positions[mask], h_values[mask]
+
+    def theoretical_holder(self) -> float:
+        """Compute theoretical Hölder exponent for the p-model cascade.
+
+        For a binomial cascade with parameter p, the minimum Hölder exponent
+        is related to p: h_min = -log(max(p, 1-p)) / log(2).
+
+        Returns:
+            Theoretical minimum Hölder exponent for the cascade parameters.
+        """
+        p_max = max(self.p, 1.0 - self.p)
+        return -np.log(p_max) / np.log(2.0)
 
 
 def pink_noise(

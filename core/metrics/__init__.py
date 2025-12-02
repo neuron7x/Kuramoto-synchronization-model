@@ -4,6 +4,12 @@
 
 from .aperiodic import aperiodic_slope
 from .dfa import dfa_alpha
+from .holder import (
+    holder_exponent_wavelet,
+    local_holder_spectrum,
+    multifractal_width,
+    singularity_spectrum,
+)
 from .microstructure import (
     MicrostructureReport,
     build_symbol_microstructure_report,
@@ -34,4 +40,8 @@ __all__ = [
     "symmetric_mean_absolute_percentage_error",
     "dfa_alpha",
     "aperiodic_slope",
+    "holder_exponent_wavelet",
+    "local_holder_spectrum",
+    "singularity_spectrum",
+    "multifractal_width",
 ]
