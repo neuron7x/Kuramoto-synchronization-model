@@ -1,0 +1,283 @@
+# Release Process — TradePulse
+
+> How to create releases — from merge to production.
+
+## Overview
+
+TradePulse використовує **trunk-based development**:
+- `main` — production-ready код
+- Feature branches → PRs → merge to main
+- Tags (`v*`) — version releases
+- Автоматичний changelog через Towncrier
+
+---
+
+## Release Types
+
+| Type | When | Process |
+|------|------|---------|
+| **Patch** (`v1.0.x`) | Bug fixes, security patches | Fast-track, minimal review |
+| **Minor** (`v1.x.0`) | New features, backwards-compatible | Standard release |
+| **Major** (`vX.0.0`) | Breaking changes | Extended review, migration guide |
+
+---
+
+## Pre-Release Checklist
+
+### Quality Gates (Automatic)
+- [ ] Code coverage ≥ 98%
+- [ ] Mutation kill rate ≥ 90%
+- [ ] All tests passing
+- [ ] No critical security vulnerabilities
+- [ ] Lint/type checks passing
+
+### Manual Verification
+- [ ] Changelog entries in `newsfragments/`
+- [ ] Version bump if needed
+- [ ] Documentation updated
+- [ ] Breaking changes documented (if any)
+- [ ] Performance benchmarks reviewed
+
+---
+
+## Creating a Release
+
+### Step 1: Prepare Changelog Entries
+
+Use [Towncrier](https://towncrier.readthedocs.io/) fragments in `newsfragments/`:
+
+```bash
+# Create a fragment for your change
+echo "Added new risk calculation module" > newsfragments/123.feature.md
+echo "Fixed memory leak in order execution" > newsfragments/124.bugfix.md
+```
+
+Fragment types:
+- `feature` — New features
+- `bugfix` — Bug fixes
+- `performance` — Performance improvements
+- `maintenance` — Maintenance work
+- `docs` — Documentation
+- `security` — Security fixes
+- `ci` — CI/CD changes
+
+### Step 2: Build Changelog
+
+```bash
+# Preview changelog
+towncrier build --draft
+
+# Build changelog (removes fragments)
+towncrier build --version X.Y.Z
+```
+
+### Step 3: Bump Version
+
+Version is managed by `setuptools_scm` from git tags:
+
+```bash
+# Check current version
+python -c "from importlib.metadata import version; print(version('tradepulse'))"
+```
+
+### Step 4: Create Release Tag
+
+```bash
+# Tag the release
+git tag -a v1.2.3 -m "Release v1.2.3"
+git push origin v1.2.3
+```
+
+### Step 5: Create GitHub Release
+
+1. Go to GitHub → Releases → Draft new release
+2. Select the tag (`v1.2.3`)
+3. Auto-generate release notes or copy from CHANGELOG.md
+4. Attach artifacts if needed
+5. Publish release
+
+---
+
+## Automated Release Pipeline
+
+When a tag is pushed:
+
+### `ci.yml` triggers:
+1. ✅ Run all tests with coverage
+2. ✅ Mutation testing gate
+3. ✅ Build container images
+4. ✅ Push to `ghcr.io/neuron7x/tradepulse`
+5. ✅ Sign images with Cosign
+
+### Image Tagging:
+```
+ghcr.io/neuron7x/tradepulse:v1.2.3      # Version tag
+ghcr.io/neuron7x/tradepulse:sha-abc123  # Commit SHA
+ghcr.io/neuron7x/tradepulse:main        # Branch name
+```
+
+---
+
+## Deployment Pipeline (`enterprise-cicd.yml`)
+
+### Staging Deployment (Automatic)
+1. Push to `main` triggers staging deployment
+2. Canary deployment with 1 replica
+3. Progressive rollout: 25% → 50% → 100%
+4. Monitoring for errors/latency
+
+### Production Deployment (Manual)
+1. Trigger via `workflow_dispatch`
+2. Select `environment: production`
+3. Select rollout strategy: `canary` / `blue-green` / `direct`
+4. Requires approval via GitHub Environments
+
+---
+
+## Rollback Process
+
+### Automatic Rollback
+If canary deployment fails:
+1. `rollback` job triggers automatically
+2. `kubectl rollout undo` executed
+3. Canary pods deleted
+4. Notification sent to Slack
+
+### Manual Rollback
+```bash
+# Kubernetes
+kubectl rollout undo deployment/tradepulse-api
+
+# Docker
+docker pull ghcr.io/neuron7x/tradepulse:v1.2.2  # Previous version
+docker tag ghcr.io/neuron7x/tradepulse:v1.2.2 ghcr.io/neuron7x/tradepulse:latest
+docker push ghcr.io/neuron7x/tradepulse:latest
+```
+
+---
+
+## Release Drafter
+
+GitHub Release Drafter (`release-drafter.yml`) automatically:
+- Groups PRs by labels
+- Generates changelog from PR titles
+- Bumps version based on PR labels
+
+Labels for version bumping:
+- `breaking` → Major version bump
+- `enhancement`, `feature` → Minor version bump
+- `bugfix`, `fix` → Patch version bump
+
+---
+
+## Hotfix Process
+
+For urgent fixes to production:
+
+1. Create branch from latest tag: `git checkout -b hotfix/v1.2.4 v1.2.3`
+2. Apply fix with tests
+3. Fast-track PR review (still requires passing CI)
+4. Merge and tag: `v1.2.4`
+5. Cherry-pick to `main` if needed
+
+---
+
+## Version Compatibility
+
+### Semantic Versioning
+```
+MAJOR.MINOR.PATCH
+  │     │     └── Bug fixes, no API changes
+  │     └──────── New features, backwards compatible
+  └────────────── Breaking changes
+```
+
+### Python Version Support
+- Python 3.11+ required
+- Tested on: 3.11, 3.12
+
+### Dependency Updates
+1. Run security audit: `make security-audit`
+2. Update `requirements*.txt`
+3. Run full test suite
+4. Update `constraints/security.txt` for security-critical packages
+
+---
+
+## Artifacts & Provenance
+
+### SBOM (Software Bill of Materials)
+Generated by `sbom-generation.yml`:
+- CycloneDX format
+- Includes all dependencies
+- Saved in `sbom/cyclonedx-sbom.json`
+
+### SLSA Provenance
+Generated by `slsa-provenance.yml`:
+- Level 3 attestation
+- Signed build provenance
+- Verifiable supply chain
+
+### Container Signing
+```bash
+# Verify image signature
+cosign verify ghcr.io/neuron7x/tradepulse:v1.2.3 \
+  --certificate-identity-regexp=".*" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+```
+
+---
+
+## Monitoring Post-Release
+
+After release, monitor:
+
+| Metric | Dashboard | Alert Threshold |
+|--------|-----------|-----------------|
+| Error rate | Grafana | > 0.1% |
+| Latency p99 | Grafana | > 100ms |
+| Memory usage | Prometheus | > 80% |
+| Failed orders | Trading Dashboard | Any |
+
+See `docs/OPERATIONS.md` for detailed runbooks.
+
+---
+
+## Emergency Procedures
+
+### Kill Switch
+```bash
+# Immediate trading halt
+python -m tradepulse emergency-stop --reason "suspected issue"
+```
+
+### Rollback within 5 minutes
+```bash
+kubectl rollout undo deployment/tradepulse-api --to-revision=<previous>
+```
+
+### Contact
+- **On-call:** PagerDuty rotation
+- **Escalation:** See `docs/INCIDENT_RUNBOOK.md`
+
+---
+
+## Changelog
+
+All changes tracked in `CHANGELOG.md` with format:
+```markdown
+## TradePulse 1.2.3 (2025-12-01)
+
+### 🚀 Features
+- Added new risk calculation module (#123)
+
+### 🐛 Fixes
+- Fixed memory leak in order execution (#124)
+
+### 🔐 Security
+- Updated cryptography to 46.0.3 (#125)
+```
+
+---
+
+*Last updated: 2025-12*
