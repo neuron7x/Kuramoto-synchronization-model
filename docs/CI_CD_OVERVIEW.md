@@ -4,13 +4,13 @@
 
 ## Principles
 
-1. **Ніяких `disable tests/lint`** — лагодиш, не вимикаєш.
-2. **Один пайплайн = зрозумілий набір перевірок** — без франкенштейнів.
-3. **Повторюваність, швидкість, передбачуваність** — локально = CI.
+1. **Never disable tests/lint** — fix the issue, don't work around it.
+2. **One pipeline = clear set of checks** — no Frankenstein monsters.
+3. **Reproducibility, speed, predictability** — local = CI.
 
 ---
 
-## Quality Gates (Що блокує merge)
+## Quality Gates (What Blocks Merge)
 
 | Gate | Threshold | Enforced By | Action on Failure |
 |------|-----------|-------------|-------------------|
