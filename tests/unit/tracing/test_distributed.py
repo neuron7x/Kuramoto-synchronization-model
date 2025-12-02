@@ -619,11 +619,13 @@ class TestStartDistributedSpanEdgeCases:
     """Additional edge case tests for start_distributed_span."""
 
     def test_start_span_auto_generates_correlation(self) -> None:
-        """Verify span auto-generates correlation ID."""
+        """Verify span correctly handles correlation ID within its scope."""
         with start_distributed_span("test-span"):
             corr = current_correlation_id()
-            # Either the span has correlation or we got an auto-generated one
-            assert corr is not None or corr is None  # Either is valid
+            # Within the span scope, a correlation ID should be set
+            # (auto-generated if not explicitly provided)
+            assert corr is not None
+            assert len(corr) == 32  # UUID hex format
 
     def test_start_span_preserves_correlation_after_exit(self) -> None:
         """Verify correlation is reset after span exit."""
