@@ -103,3 +103,20 @@ actionlint
 /*_SUMMARY_*.md
 /SECURITY_SUMMARY.txt
 data/feature_catalog.json
+
+# CI artifacts and generated reports
+.ci_artifacts/
+coverage.json
+
+# Sample/test data files
+sample.csv
+
+# State/database files
+state/*.sqlite
+state/*.db
+
+# Internal assessment and status reports (meta-documentation)
+/*_ASSESSMENT.md
+/*_STATUS*.md
+/*_IMPROVEMENTS.md
+/*_PREVIEW.md
