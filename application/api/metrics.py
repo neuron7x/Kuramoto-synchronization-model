@@ -14,12 +14,12 @@ from core.utils.metrics import MetricsCollector
 
 try:  # pragma: no cover - psutil is optional in certain environments
     import psutil
-except Exception:  # pragma: no cover - defensive fallback when psutil missing
+except ImportError:  # pragma: no cover - defensive fallback when psutil missing
     psutil = None
 
 try:  # pragma: no cover - resource is POSIX-only
     import resource
-except Exception:  # pragma: no cover - gracefully degrade on non-POSIX systems
+except ImportError:  # pragma: no cover - gracefully degrade on non-POSIX systems
     resource = None  # type: ignore[assignment]
 
 

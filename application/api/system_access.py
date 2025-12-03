@@ -579,9 +579,22 @@ class SystemAccess:
                             placed.filled_quantity,
                             float(fill_price),
                         )
-                    except Exception:  # pragma: no cover - defensive
+                    except Exception as exc:  # pragma: no cover - defensive
                         # Risk updates are best-effort; surfacing the order response takes precedence.
-                        pass
+                        # Log the error for debugging and audit purposes.
+                        self._logger.warning(
+                            "Failed to register fill with risk manager",
+                            extra={
+                                "event": "system.orders.risk_register_fill_failed",
+                                "symbol": placed.symbol,
+                                "side": placed.side.value,
+                                "quantity": placed.filled_quantity,
+                                "price": float(fill_price),
+                                "error": str(exc),
+                                "error_type": type(exc).__name__,
+                            },
+                            exc_info=True,
+                        )
 
             dto = order_to_dto(placed)
             response = OrderResponse(

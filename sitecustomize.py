@@ -38,7 +38,7 @@ def _patch_pip_symlink_extraction() -> None:
         from packaging.version import InvalidVersion, Version
         from pip._internal.exceptions import InstallationError
         from pip._internal.utils import unpacking
-    except Exception:  # pragma: no cover - defensive guard; pip may be absent.
+    except ImportError:  # pragma: no cover - defensive guard; pip may be absent.
         return
 
     try:

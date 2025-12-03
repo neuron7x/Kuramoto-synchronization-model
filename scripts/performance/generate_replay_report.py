@@ -31,7 +31,10 @@ from tests.performance.performance_artifacts import (
 
 def get_git_info() -> dict[str, str]:
     """Get current git information."""
+    import logging
     import subprocess
+
+    logger = logging.getLogger("tradepulse.scripts.generate_replay_report")
 
     try:
         commit = (
@@ -41,7 +44,21 @@ def get_git_info() -> dict[str, str]:
             .decode()
             .strip()
         )
-    except Exception:
+    except FileNotFoundError:
+        logger.debug("git command not found - unable to retrieve commit hash")
+        commit = "unknown"
+    except subprocess.CalledProcessError as exc:
+        logger.debug(
+            "git rev-parse HEAD failed with exit code %d - may not be a git repository",
+            exc.returncode,
+        )
+        commit = "unknown"
+    except Exception as exc:
+        logger.warning(
+            "Unexpected error retrieving git commit hash: %s",
+            exc,
+            exc_info=True,
+        )
         commit = "unknown"
 
     try:
@@ -52,7 +69,21 @@ def get_git_info() -> dict[str, str]:
             .decode()
             .strip()
         )
-    except Exception:
+    except FileNotFoundError:
+        logger.debug("git command not found - unable to retrieve branch name")
+        branch = "unknown"
+    except subprocess.CalledProcessError as exc:
+        logger.debug(
+            "git rev-parse --abbrev-ref HEAD failed with exit code %d",
+            exc.returncode,
+        )
+        branch = "unknown"
+    except Exception as exc:
+        logger.warning(
+            "Unexpected error retrieving git branch name: %s",
+            exc,
+            exc_info=True,
+        )
         branch = "unknown"
 
     return {"commit": commit, "branch": branch}

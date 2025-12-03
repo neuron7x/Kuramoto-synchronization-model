@@ -114,8 +114,22 @@ def validate_ohlcv_file(
         try:
             timestamps = pd.to_datetime(df[timestamp_col])
             report.date_range = f"{timestamps.min()} to {timestamps.max()}"
-        except Exception:
-            report.warnings.append("Could not parse timestamps")
+        except (ValueError, TypeError) as exc:
+            # Handle expected parsing errors with specific message
+            report.warnings.append(
+                f"Could not parse timestamps in column '{timestamp_col}': {exc}"
+            )
+        except Exception as exc:
+            # Log unexpected errors for debugging but continue validation
+            LOGGER.warning(
+                "Unexpected error parsing timestamps in column '%s': %s",
+                timestamp_col,
+                exc,
+                exc_info=True,
+            )
+            report.warnings.append(
+                f"Could not parse timestamps in column '{timestamp_col}': unexpected error"
+            )
 
     # Validate price columns
     price_cols = [

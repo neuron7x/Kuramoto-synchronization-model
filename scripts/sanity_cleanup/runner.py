@@ -58,8 +58,21 @@ def _write_summary(result: CleanupResult) -> Path | None:
         output_path.write_text(
             json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
-    except Exception:  # pragma: no cover - best effort reporting
-        LOGGER.exception("Unable to write summary to %s", output_path)
+    except (OSError, IOError) as exc:  # pragma: no cover - best effort reporting
+        LOGGER.error(
+            "Unable to write summary to %s: %s",
+            output_path,
+            exc,
+        )
+        return None
+    except json.JSONDecodeError as exc:  # pragma: no cover - should not happen
+        LOGGER.error(
+            "JSON encoding failed for summary: %s",
+            exc,
+        )
+        return None
+    except Exception:  # pragma: no cover - unexpected errors
+        LOGGER.exception("Unexpected error writing summary to %s", output_path)
         return None
 
     return output_path
