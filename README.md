@@ -147,13 +147,18 @@ cp .env.example .env
 ### Run Backtest Example
 
 ```bash
-python -m backtest.run --config configs/backtest/default.yaml
+# Run a quick start example
+python examples/quick_start.py
+
+# Or run the neuro trading backtest demo
+python examples/neuro_trade_pulse_backtest.py
 ```
 
 ### Run Live Paper Trading Example
 
 ```bash
-python -m execution.paper_trading --config configs/live/paper.yaml
+# Paper trading with default configuration
+python -m execution.paper_trading --config configs/live/default.toml
 ```
 
 ---
