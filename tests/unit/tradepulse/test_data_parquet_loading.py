@@ -148,6 +148,17 @@ class TestParquetLoading:
         assert len(bars) == 2
         assert bars[0].open == Decimal("100.0")
 
+    def test_load_unsupported_file_extension(self, tmp_path: Path) -> None:
+        """Test that unsupported file extension raises ValueError."""
+        unsupported_path = tmp_path / "data.json"
+
+        with pytest.raises(ValueError, match="Unsupported file extension"):
+            load_historical_bars(
+                unsupported_path,
+                symbol="BTCUSDT",
+                validate=False,
+            )
+
     def test_load_parquet_missing_file(self, tmp_path: Path) -> None:
         """Test that loading a missing Parquet file raises FileNotFoundError."""
         missing_path = tmp_path / "nonexistent.parquet"

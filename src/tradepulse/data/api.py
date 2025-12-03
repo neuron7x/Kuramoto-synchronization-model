@@ -453,7 +453,7 @@ def load_historical_bars(
     """Load historical bars from a data source.
 
     This is the primary entry point for loading historical data.
-    It handles CSV files, parquet files (future), and API sources (future).
+    It handles CSV files, Parquet files, and API sources (future).
 
     Args:
         source: Path to data file or DataSourceConfig
@@ -467,7 +467,7 @@ def load_historical_bars(
 
     Raises:
         FileNotFoundError: If file source doesn't exist
-        ValueError: If data format is invalid
+        ValueError: If data format is invalid or unsupported file extension
         DataQualityError: If validation fails (when validate=True)
 
     Example:
@@ -481,8 +481,18 @@ def load_historical_bars(
     # Create config if path provided
     if isinstance(source, (str, Path)):
         path = Path(source)
+        suffix = path.suffix.lower()
+        if suffix == ".csv":
+            source_type = "csv"
+        elif suffix == ".parquet":
+            source_type = "parquet"
+        else:
+            raise ValueError(
+                f"Unsupported file extension '{suffix}'. "
+                f"Supported formats: .csv, .parquet"
+            )
         config = DataSourceConfig(
-            source_type="csv" if path.suffix.lower() == ".csv" else "parquet",
+            source_type=source_type,
             path=path,
             symbol=symbol,
             timeframe=timeframe,

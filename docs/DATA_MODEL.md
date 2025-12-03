@@ -249,9 +249,16 @@ bars = load_historical_bars(
     timeframe=Timeframe.M1,
 )
 
+# Parquet loading (auto-detected from .parquet extension)
+bars = load_historical_bars(
+    "data/btcusdt_1m.parquet",
+    symbol="BTCUSDT",
+    timeframe=Timeframe.M1,
+)
+
 # With custom configuration
 config = DataSourceConfig(
-    source_type="csv",
+    source_type="csv",  # or "parquet"
     path="data/custom.csv",
     symbol="ETHUSDT",
     timeframe=Timeframe.H1,
@@ -266,6 +273,12 @@ config = DataSourceConfig(
 )
 bars = load_historical_bars(config)
 ```
+
+**Supported Timestamp Formats:**
+- Python `datetime` objects (timezone-aware or naive)
+- Epoch seconds (float/int)
+- Epoch milliseconds (auto-detected if > 1e12)
+- ISO 8601 strings
 
 ### Getting Data Windows
 
