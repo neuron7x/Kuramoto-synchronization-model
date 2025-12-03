@@ -15,6 +15,7 @@ src/_version.py
 .coverage.*
 htmlcov/
 coverage_html/
+coverage.json
 reports/
 .pytest_cache/
 .hypothesis/
