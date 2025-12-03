@@ -37,6 +37,7 @@ levels:
   - level: L2
     patterns:
       - tests/api/**
+      - tests/connectors/**
       - tests/contracts/**
       - tests/interfaces/**
       - tests/observability/**
