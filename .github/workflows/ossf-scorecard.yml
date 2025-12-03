@@ -119,6 +119,7 @@ jobs:
     steps:
       - name: Download scorecard results
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: ossf-scorecard-results
 
@@ -131,44 +132,65 @@ jobs:
             const pull_number = context.payload.pull_request.number;
 
             let sarifData;
+            let analysisSucceeded = true;
             try {
               sarifData = JSON.parse(fs.readFileSync('ossf-scorecard-results.sarif', 'utf8'));
             } catch (error) {
-              console.log('Could not read SARIF file');
-              return;
+              console.log('Could not read SARIF file:', error.message);
+              analysisSucceeded = false;
             }
 
-            const results = sarifData.runs[0].results || [];
-            const criticalCount = results.filter(r => r.level === 'error').length;
-            const warningCount = results.filter(r => r.level === 'warning').length;
+            let body;
+            if (!analysisSucceeded) {
+              body = [
+                '## ⚠️ OSSF Scorecard - Supply Chain Security',
+                '',
+                '### Analysis Status',
+                'The OSSF Scorecard analysis could not be completed for this PR.',
+                '',
+                'This may occur when:',
+                '- The analysis is still running or timed out',
+                '- There was an issue with the scorecard action',
+                '- The workflow permissions need adjustment',
+                '',
+                'Please check the [Actions tab](https://github.com/' + owner + '/' + repo + '/actions) for details.',
+                '',
+                '---',
+                `*Last updated: ${new Date().toISOString()}*`
+              ].join('\n');
+            } else {
+              const results = sarifData.runs[0].results || [];
+              const criticalCount = results.filter(r => r.level === 'error').length;
+              const warningCount = results.filter(r => r.level === 'warning').length;
 
-            const emoji = criticalCount === 0 ? '✅' : '❌';
+              const emoji = criticalCount === 0 ? '✅' : '❌';
 
-            const body = [
-              `## ${emoji} OSSF Scorecard - Supply Chain Security`,
-              '',
-              '### Summary',
-              `- **Critical Issues:** ${criticalCount}`,
-              `- **Warnings:** ${warningCount}`,
-              '',
-              criticalCount === 0
-                ? '✅ **No critical supply chain security issues detected**'
-                : '❌ **Action Required:** Critical supply chain security issues found. Review Security tab.',
-              '',
-              '### Scorecard Checks',
-              'OSSF Scorecard evaluates:',
-              '- Branch protection configuration',
-              '- Security policy presence',
-              '- Dependency update practices',
-              '- CI/CD security best practices',
-              '- Code review requirements',
-              '- Signed commits and releases',
-              '',
-              '[View full results in Security tab →](https://github.com/' + owner + '/' + repo + '/security/code-scanning)',
-              '',
-              '---',
-              `*Last updated: ${new Date().toISOString()}*`
-            ].join('\n');
+              body = [
+                `## ${emoji} OSSF Scorecard - Supply Chain Security`,
+                '',
+                '### Summary',
+                `- **Critical Issues:** ${criticalCount}`,
+                `- **Warnings:** ${warningCount}`,
+                '',
+                criticalCount === 0
+                  ? '✅ **No critical supply chain security issues detected**'
+                  : '❌ **Action Required:** Critical supply chain security issues found. Review Security tab.',
+                '',
+                '### Scorecard Checks',
+                'OSSF Scorecard evaluates:',
+                '- Branch protection configuration',
+                '- Security policy presence',
+                '- Dependency update practices',
+                '- CI/CD security best practices',
+                '- Code review requirements',
+                '- Signed commits and releases',
+                '',
+                '[View full results in Security tab →](https://github.com/' + owner + '/' + repo + '/security/code-scanning)',
+                '',
+                '---',
+                `*Last updated: ${new Date().toISOString()}*`
+              ].join('\n');
+            }
 
             // Find existing comment
             const comments = await github.rest.issues.listComments({
