@@ -65,9 +65,9 @@ def _write_summary(result: CleanupResult) -> Path | None:
             exc,
         )
         return None
-    except json.JSONDecodeError as exc:  # pragma: no cover - should not happen
+    except TypeError as exc:  # pragma: no cover - non-serializable objects
         LOGGER.error(
-            "JSON encoding failed for summary: %s",
+            "JSON serialization failed for summary (non-serializable type): %s",
             exc,
         )
         return None
