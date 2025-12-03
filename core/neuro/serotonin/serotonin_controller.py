@@ -142,6 +142,12 @@ class SerotoninConfig(BaseModel):
     tick_hours: float = Field(
         1.0, gt=0.0, description="Wall-clock hours represented by a controller tick"
     )
+    hysteresis_margin: float = Field(
+        0.05,
+        ge=0.01,
+        le=0.15,
+        description="Hysteresis margin for veto threshold transitions (v2.5.0)",
+    )
 
     model_config = ConfigDict(extra="ignore")
 
@@ -638,6 +644,7 @@ class SerotoninController:
 
         Hysteresis prevents rapid oscillation at threshold boundaries by using
         slightly different thresholds for entering vs. exiting HOLD state.
+        The hysteresis margin is now configurable via the config file (v2.5.0).
         """
 
         with self._lock:
@@ -646,8 +653,9 @@ class SerotoninController:
 
             cfg = self.config
 
-            # Hysteresis margins (5% of threshold for smooth transitions)
-            hysteresis_margin = 0.05
+            # Configurable hysteresis margin (v2.5.0)
+            # Defaults to 5% of threshold for smooth transitions
+            hysteresis_margin = cfg.get("hysteresis_margin", 0.05)
 
             # Calculate effective thresholds based on current hold state
             if self._hold_state:
