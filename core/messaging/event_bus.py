@@ -7,7 +7,7 @@ import json
 import logging
 import ssl
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Awaitable, Callable, Dict, MutableMapping, Optional
@@ -450,7 +450,7 @@ def _envelope_from_kafka_message(message) -> EventEnvelope:  # type: ignore[no-u
     occurred_at = (
         datetime.fromisoformat(headers.get("occurred_at"))
         if "occurred_at" in headers
-        else datetime.utcnow()
+        else datetime.now(timezone.utc)
     )
     return EventEnvelope(
         event_type=headers.get("event_type", ""),
@@ -470,7 +470,7 @@ def _envelope_from_nats_message(message) -> EventEnvelope:  # type: ignore[no-un
     occurred_at = (
         datetime.fromisoformat(occurred_at_raw)
         if isinstance(occurred_at_raw, str)
-        else datetime.utcnow()
+        else datetime.now(timezone.utc)
     )
     return EventEnvelope(
         event_type=headers.get("event_type", ""),

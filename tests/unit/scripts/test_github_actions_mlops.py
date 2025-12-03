@@ -11,13 +11,23 @@ from scripts.mlops.github_actions_pipeline import _derive_seed
 
 
 @pytest.fixture()
-def pipeline_config(tmp_path: Path) -> PipelineConfig:
+def sample_dataset(tmp_path: Path) -> Path:
+    """Create a minimal sample dataset for testing."""
+    dataset = tmp_path / "sample.csv"
+    closes = "\n".join(str(100 + idx * 0.1) for idx in range(80))
+    dataset.write_text(f"close\n{closes}\n", encoding="utf-8")
+    return dataset
+
+
+@pytest.fixture()
+def pipeline_config(tmp_path: Path, sample_dataset: Path) -> PipelineConfig:
     return PipelineConfig(
         artifact_root=tmp_path / "artifacts",
         registry_root=tmp_path / "registry",
         experiment="ci/test-experiment",
         commit_sha="0123456789abcdef0123456789abcdef01234567",
         environment="staging",
+        dataset_path=sample_dataset,
     )
 
 

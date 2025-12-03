@@ -13,6 +13,15 @@ from core.metrics.holder import (
 )
 from utils.fractal_cascade import pink_noise
 
+try:
+    import pywt  # noqa: F401
+
+    _PYWT_AVAILABLE = True
+except ImportError:
+    _PYWT_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not _PYWT_AVAILABLE, reason="PyWavelets not installed")
+
 
 def test_holder_exponent_basic():
     """Test basic Hölder exponent estimation on synthetic data."""

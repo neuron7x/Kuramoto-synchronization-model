@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
@@ -151,7 +151,7 @@ class CodeMetricAggregator:
                 current=curr,
                 delta=curr - prev,
                 direction="up" if curr > prev else ("down" if curr < prev else "flat"),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
             for path, prev, curr in compute_trends(
                 previous=previous_snapshot, current=snapshot
@@ -162,7 +162,7 @@ class CodeMetricAggregator:
         hotspots = self._identify_hotspots(file_metrics)
 
         repo_metrics = RepositoryMetrics(
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             files=file_metrics,
             thresholds=self.thresholds,
             risk_hotspots=hotspots,

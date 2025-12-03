@@ -8,7 +8,7 @@ import statistics
 import subprocess
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import (
     Dict,
@@ -218,7 +218,7 @@ class GitHistoryAnalyzer:
         return max(0.0, min(1.0, stability))
 
     def hot_files(self, limit: int = 10, days: int = 90) -> List[Tuple[str, int]]:
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = self._run("log", "--since", since, "--name-only", "--pretty=format:")
         counter: Counter[str] = Counter()
         for line in result.stdout.splitlines():
@@ -229,7 +229,7 @@ class GitHistoryAnalyzer:
         return counter.most_common(limit)
 
     def developer_activity(self, days: int = 90) -> List[DeveloperMetrics]:
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = self._run("log", "--since", since, "--numstat", "--pretty=%an")
         author: Optional[str] = None
         churn: Counter[str] = Counter()
@@ -277,7 +277,7 @@ class GitHistoryAnalyzer:
     def _ensure_change_cache(self, days: int) -> Dict[str, Dict[str, int]]:
         if days in self._change_cache:
             return self._change_cache[days]
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = self._run("log", "--since", since, "--numstat", "--pretty=%H")
         data: Dict[str, Dict[str, int]] = defaultdict(
             lambda: {"frequency": 0, "churn": 0}
@@ -309,7 +309,7 @@ class GitHistoryAnalyzer:
     def _ensure_interface_cache(self, days: int) -> Dict[str, Tuple[int, int]]:
         if days in self._interface_cache:
             return self._interface_cache[days]
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = self._run(
             "log",
             "--since",
