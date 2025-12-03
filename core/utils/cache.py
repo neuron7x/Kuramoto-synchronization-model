@@ -90,6 +90,8 @@ class CacheKeyNormalizer:
 class TTLStrategy(ABC):
     """Defines the interface for TTL computations."""
 
+    __slots__ = ()
+
     @abstractmethod
     def compute_ttl(
         self,

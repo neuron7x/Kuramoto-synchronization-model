@@ -69,6 +69,8 @@ class MarketDataHandler:
         ...         yield [MarketEvent(...), MarketEvent(...)]
     """
 
+    __slots__ = ()
+
     def stream(self) -> Iterator[Iterable[MarketEvent]]:
         """Stream market data in chunks.
 

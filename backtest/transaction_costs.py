@@ -20,6 +20,8 @@ class TransactionCostModel:
     return non-negative values and gracefully handle zero or NaN inputs.
     """
 
+    __slots__ = ()
+
     def get_commission(self, volume: float, price: float) -> float:
         """Return the monetary commission for executing ``volume`` at ``price``."""
 
