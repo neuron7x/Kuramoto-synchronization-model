@@ -189,23 +189,51 @@ def _load_csv_bars(
     with open(path, "r", newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         
+        # Get column names for better error messages
+        ohlcv = config.ohlcv_columns
+        ts_col = config.timestamp_column
+        open_col = ohlcv.get("open", "open")
+        high_col = ohlcv.get("high", "high")
+        low_col = ohlcv.get("low", "low")
+        close_col = ohlcv.get("close", "close")
+        volume_col = ohlcv.get("volume", "volume")
+        
         for row_num, row in enumerate(reader, start=2):
             try:
                 # Parse timestamp
-                ts_str = row.get(config.timestamp_column, "")
+                ts_str = row.get(ts_col, "")
                 if not ts_str:
-                    logger.warning(f"Row {row_num}: Missing timestamp, skipping")
+                    logger.warning(
+                        f"Row {row_num}: Missing timestamp column '{ts_col}'. "
+                        f"Available columns: {list(row.keys())}. Skipping row."
+                    )
                     continue
                 
                 timestamp = _parse_timestamp(ts_str, config.source_timezone)
                 
-                # Get OHLCV values
-                ohlcv = config.ohlcv_columns
-                open_val = row.get(ohlcv.get("open", "open"), "")
-                high_val = row.get(ohlcv.get("high", "high"), "")
-                low_val = row.get(ohlcv.get("low", "low"), "")
-                close_val = row.get(ohlcv.get("close", "close"), "")
-                volume_val = row.get(ohlcv.get("volume", "volume"), "0")
+                # Get OHLCV values with validation
+                open_val = row.get(open_col, "")
+                high_val = row.get(high_col, "")
+                low_val = row.get(low_col, "")
+                close_val = row.get(close_col, "")
+                volume_val = row.get(volume_col, "0")
+                
+                # Check for missing required values
+                if not all([open_val, high_val, low_val, close_val]):
+                    missing = [
+                        name for name, val in [
+                            (open_col, open_val),
+                            (high_col, high_val),
+                            (low_col, low_val),
+                            (close_col, close_val),
+                        ] if not val
+                    ]
+                    logger.warning(
+                        f"Row {row_num}: Missing OHLC columns: {missing}. "
+                        f"Expected columns: open='{open_col}', high='{high_col}', "
+                        f"low='{low_col}', close='{close_col}'. Skipping row."
+                    )
+                    continue
                 
                 # Determine symbol
                 symbol = config.symbol
@@ -230,7 +258,10 @@ def _load_csv_bars(
                 bars.append(bar)
                 
             except (ValueError, KeyError) as e:
-                logger.warning(f"Row {row_num}: Error parsing row: {e}")
+                logger.warning(
+                    f"Row {row_num}: Error parsing row - {type(e).__name__}: {e}. "
+                    f"Row data: {dict(row)}. Skipping row."
+                )
                 continue
     
     return bars

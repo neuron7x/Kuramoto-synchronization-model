@@ -160,6 +160,7 @@ class _FrozenModel(BaseModel):
     )
 
     @field_serializer("*", when_used="json")
+    @classmethod
     def _serialize_special_types(cls, value: Any) -> Any:
         """Serialize Decimal and other types for JSON export."""
         if isinstance(value, Decimal):

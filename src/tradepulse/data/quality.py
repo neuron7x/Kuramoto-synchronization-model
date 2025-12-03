@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from .schema import Bar, DataQualityStatus, Timeframe
 
 __all__ = [
+    "DataQualityError",
     "DataQualityIssue",
     "DataQualityReport",
     "IssueSeverity",
@@ -48,6 +49,7 @@ __all__ = [
     "detect_duplicates",
     "detect_gaps",
     "detect_outliers",
+    "require_valid_data",
     "validate_series",
 ]
 
