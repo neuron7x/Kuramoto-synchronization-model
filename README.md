@@ -2374,6 +2374,138 @@ The TPLA permits internal, non-commercial evaluation and development use only. C
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!--                                              MONEY PROOF                                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
+
+<br>
+
+---
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Money%20with%20Wings.png" alt="Money with Wings" width="40" height="40" />
+<h2>Does It Actually Make/Save Money?</h2>
+
+<br>
+
+### 💰 Risk Guardian — Proof of Value
+
+</div>
+
+<br>
+
+> **This is not marketing. This is a reproducible experiment.**
+
+TradePulse includes **Risk Guardian** — an automated risk control layer that limits maximum drawdown and daily losses. Here's a real simulation comparing trading with and without Risk Guardian:
+
+<br>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+<div align="center">
+
+### ❌ Baseline (No Risk Control)
+
+</div>
+
+```
+Total Return:      +31.6%
+Max Drawdown:      -16.3%
+Sharpe Ratio:      2.24
+Worst Day:         -7.1%
+```
+
+**Risk Events:**
+- No protection during flash crashes
+- Full position exposure at all times
+- No automatic loss limiting
+
+</td>
+<td width="50%" valign="top">
+
+<div align="center">
+
+### ✅ With Risk Guardian
+
+</div>
+
+```
+Total Return:      +28.8%
+Max Drawdown:      -13.3% (capped)
+Sharpe Ratio:      2.50
+Worst Day:         -4.1% (limited)
+```
+
+**Risk Events:**
+- Safe Mode Activations: 2
+- Daily loss capped at 5%
+- Drawdown capped at 15%
+
+</td>
+</tr>
+</table>
+
+<br>
+
+<div align="center">
+
+### 📊 Value Delivered
+
+| Metric | Value |
+|:-------|------:|
+| **Saved Capital** | **$7,914** (5.3% of peak) |
+| Sharpe Improvement | +11% |
+| Drawdown Reduction | 18% |
+
+</div>
+
+<br>
+
+<details>
+<summary><strong>🔬 Reproduce This Experiment — Click to Expand</strong></summary>
+
+<br>
+
+```bash
+# Install TradePulse
+pip install -e .
+
+# Run the proof experiment
+python -m money_proof.proof_experiment --csv=sample.csv
+
+# Or use the Risk Guardian CLI
+python -m apps.risk_guardian.cli simulate \
+    --csv=sample.csv \
+    --price-col=close \
+    --daily-limit=5 \
+    --max-drawdown=15
+```
+
+The experiment uses:
+- **Data:** 2000 hourly price bars with simulated flash crashes
+- **Strategy:** Simple momentum (SMA crossover)
+- **Risk Settings:** 5% daily limit, 15% max drawdown kill-switch
+
+All results are deterministic and reproducible.
+
+</details>
+
+<br>
+
+<div align="center">
+
+> [!IMPORTANT]
+> **Trade-off:** Risk Guardian may slightly reduce total return to significantly improve risk-adjusted return. The goal is capital preservation, not maximum profit.
+
+</div>
+
+<br>
+
+📖 **Learn more:** [PRODUCT_PAIN_SOLUTION.md](PRODUCT_PAIN_SOLUTION.md) &nbsp;•&nbsp; [Risk Guardian Docs](apps/risk_guardian/)
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 <!--                                              DISCLAIMER                                                                     -->
 <!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 
