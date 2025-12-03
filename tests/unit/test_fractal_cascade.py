@@ -7,6 +7,13 @@ import pytest
 
 from utils.fractal_cascade import DyadicPMCascade, pink_noise
 
+try:
+    import pywt  # noqa: F401
+
+    _PYWT_AVAILABLE = True
+except ImportError:
+    _PYWT_AVAILABLE = False
+
 
 class TestDyadicPMCascade:
     """Tests for the DyadicPMCascade class."""
@@ -44,6 +51,7 @@ class TestDyadicPMCascade:
         cascade.adjust_heavy_tail(-1.5)  # Should clamp to 0.0
         assert cascade.heavy_tail == pytest.approx(0.0)
 
+    @pytest.mark.skipif(not _PYWT_AVAILABLE, reason="PyWavelets not installed")
     def test_cascade_holder_field(self):
         """Test Hölder field estimation from cascade."""
         rng = np.random.default_rng(42)
