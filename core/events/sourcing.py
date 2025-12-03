@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -50,6 +51,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from domain.order import OrderSide, OrderStatus, OrderType
+
+# SQL identifier validation regex (matches PostgreSQL unquoted identifier rules)
+_SQL_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1078,6 +1082,29 @@ class ProjectionRebuilder:
 # ---------------------------------------------------------------------------
 
 
+def _validate_sql_identifier(value: str, label: str) -> str:
+    """Validate that value is a safe SQL identifier.
+    
+    Args:
+        value: The identifier to validate
+        label: Description of the identifier for error messages
+        
+    Returns:
+        The validated identifier
+        
+    Raises:
+        ValueError: If the identifier is invalid or empty
+    """
+    if not value:
+        raise ValueError(f"{label} must be a non-empty identifier")
+    if not _SQL_IDENTIFIER_RE.fullmatch(value):
+        raise ValueError(
+            f"{label} must be a valid SQL identifier (alphanumeric and underscores, "
+            f"starting with a letter or underscore): {value!r}"
+        )
+    return value
+
+
 @dataclass(slots=True)
 class MaterializedView:
     """Represents a read model backed by a PostgreSQL materialized view."""
@@ -1087,6 +1114,10 @@ class MaterializedView:
     refresh_concurrently: bool = True
     with_data: bool = True
 
+    def __post_init__(self) -> None:
+        """Validate that the view name is a safe SQL identifier."""
+        _validate_sql_identifier(self.name, "MaterializedView name")
+
 
 class MaterializedViewManager:
     """Utility to create and refresh materialized view based read models."""
@@ -1095,8 +1126,14 @@ class MaterializedViewManager:
         self._engine = engine
 
     def ensure_exists(self, view: MaterializedView) -> None:
-        """Create the materialized view if it is absent."""
-
+        """Create the materialized view if it is absent.
+        
+        Note: The view name is validated as a SQL identifier when the
+        MaterializedView is constructed. The definition_sql is expected
+        to be provided by trusted code (e.g., application developers),
+        not user input.
+        """
+        # View name is already validated in MaterializedView.__post_init__
         create_sql = "CREATE MATERIALIZED VIEW IF NOT EXISTS {name} AS {definition} {with_data}".format(
             name=view.name,
             definition=view.definition_sql,
@@ -1106,8 +1143,12 @@ class MaterializedViewManager:
             connection.execute(text(create_sql))
 
     def refresh(self, view: MaterializedView) -> None:
-        """Refresh the materialized view, optionally concurrently."""
-
+        """Refresh the materialized view, optionally concurrently.
+        
+        Note: The view name is validated as a SQL identifier when the
+        MaterializedView is constructed.
+        """
+        # View name is already validated in MaterializedView.__post_init__
         if view.refresh_concurrently:
             refresh_sql = f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view.name}"
         else:

@@ -305,7 +305,10 @@ class IndicatorCache:
         # Hash параметрів
         if params:
             params_str = str(sorted(params.items()))
-            params_hash = hashlib.md5(params_str.encode()).hexdigest()[:8]
+            # Use blake2b for faster, more secure hashing than MD5
+            params_hash = hashlib.blake2b(
+                params_str.encode(), digest_size=4
+            ).hexdigest()
         else:
             params_hash = "none"
 
