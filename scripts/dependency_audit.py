@@ -101,7 +101,8 @@ def _is_mitigated(finding: dict[str, object]) -> bool:
         import pip
         from packaging.version import InvalidVersion, Version
         from pip._internal.utils import unpacking
-    except Exception:
+    except ImportError:
+        # Required modules not available - cannot verify mitigation
         return False
 
     try:

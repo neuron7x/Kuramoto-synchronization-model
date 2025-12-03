@@ -195,7 +195,14 @@ def _extract_script_metadata(path: Path) -> dict[str, object]:
             docstring = ast.get_docstring(module)
             if docstring:
                 metadata["docstring"] = docstring.strip().splitlines()[0]
+        except SyntaxError:
+            # Python file has syntax errors - cannot parse
+            LOGGER.debug("Syntax error in %s - cannot extract docstring", path)
+        except (OSError, IOError) as exc:
+            # File access error
+            LOGGER.debug("Unable to read file %s: %s", path, exc)
         except Exception:
+            # Unexpected error - log with full traceback for debugging
             LOGGER.debug("Unable to extract docstring from %s", path, exc_info=True)
     else:
         try:
@@ -204,7 +211,14 @@ def _extract_script_metadata(path: Path) -> dict[str, object]:
             ]
             if first_line.startswith("#!"):
                 metadata["shebang"] = first_line.strip()
+        except IndexError:
+            # Empty file - no shebang
+            pass
+        except (OSError, IOError) as exc:
+            # File access error
+            LOGGER.debug("Unable to read file %s: %s", path, exc)
         except Exception:
+            # Unexpected error - log with full traceback for debugging
             LOGGER.debug("Unable to read shebang from %s", path, exc_info=True)
 
     return metadata

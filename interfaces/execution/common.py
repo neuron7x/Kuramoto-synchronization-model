@@ -21,7 +21,7 @@ import httpx
 
 try:  # pragma: no cover - optional dependency guard
     from dotenv import load_dotenv
-except Exception:  # pragma: no cover - library not installed
+except ImportError:  # pragma: no cover - library not installed
 
     def load_dotenv(*_: object, **__: object) -> None:
         """Fallback noop when python-dotenv is not available."""
@@ -402,7 +402,8 @@ def parse_server_time(response: httpx.Response) -> float | None:
     if date_header:
         try:
             parsed = parsedate_to_datetime(date_header)
-        except Exception:
+        except (ValueError, TypeError):
+            # Invalid date format in header - expected case
             parsed = None
         if parsed is not None:
             return parsed.timestamp()
@@ -568,7 +569,8 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         if isinstance(value, (bytes, bytearray)):
             try:
                 return value.decode()
-            except Exception:
+            except UnicodeDecodeError:
+                # Binary data that cannot be decoded to UTF-8; return hex representation
                 return value.hex()
         if isinstance(value, (str, int, float, bool)) or value is None:
             return value
@@ -796,7 +798,8 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
                 import json
 
                 data = json.loads(message)
-            except Exception:
+            except json.JSONDecodeError:
+                # Invalid JSON in websocket message - expected case
                 return None
             if isinstance(data, dict):
                 return data

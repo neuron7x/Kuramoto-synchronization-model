@@ -2,16 +2,30 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import argparse
 import importlib
+import logging
 import pkgutil
 from typing import Any, Dict, List
 
 ADAPTERS_PKG = "execution.adapters"
+LOGGER = logging.getLogger("tradepulse.scripts.generate_exchange_matrix")
 
 
 def discover_adapters() -> List[str]:
     try:
         pkg = importlib.import_module(ADAPTERS_PKG)
-    except Exception:
+    except ImportError as exc:
+        LOGGER.debug(
+            "Adapters package not available: %s - returning empty adapter list",
+            exc,
+        )
+        return []
+    except Exception as exc:
+        LOGGER.warning(
+            "Unexpected error importing adapters package '%s': %s",
+            ADAPTERS_PKG,
+            exc,
+            exc_info=True,
+        )
         return []
     found = []
     for _, name, ispkg in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
@@ -23,7 +37,20 @@ def discover_adapters() -> List[str]:
 def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
     try:
         mod = importlib.import_module(mod_name)
-    except Exception:
+    except ImportError as exc:
+        LOGGER.debug(
+            "Could not import adapter module '%s': %s",
+            mod_name,
+            exc,
+        )
+        return {}
+    except Exception as exc:
+        LOGGER.warning(
+            "Unexpected error importing adapter module '%s': %s",
+            mod_name,
+            exc,
+            exc_info=True,
+        )
         return {}
     funcs = {k for k, v in vars(mod).items() if callable(v)}
     caps = {
