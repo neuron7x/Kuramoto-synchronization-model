@@ -528,6 +528,7 @@ class IngestionRunner:
                 if isinstance(result, Exception):
                     self._stats.backend_errors += 1
                     self._stats.events_failed += 1
+                    logger.warning(f"Backend error during batch processing: {result}")
                 elif isinstance(result, BackendResult):
                     self._results.append(result)
                     if result.success:

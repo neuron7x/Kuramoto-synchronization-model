@@ -37,6 +37,38 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+def _coerce_timestamp(value: datetime | float | int | str) -> datetime:
+    """Convert various timestamp formats to UTC datetime.
+
+    Args:
+        value: Timestamp in various formats
+
+    Returns:
+        UTC-aware datetime
+
+    Raises:
+        TypeError: If value cannot be converted
+    """
+    if isinstance(value, (int, float)):
+        dt = datetime.fromtimestamp(float(value), tz=timezone.utc)
+    elif isinstance(value, str):
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+    elif isinstance(value, datetime):
+        dt = value
+    else:
+        raise TypeError(f"Cannot convert {type(value).__name__} to datetime")
+
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt
+
+
 class NormalizationError(Exception):
     """Raised when raw event normalization fails.
 
@@ -127,26 +159,9 @@ class NormalizedEvent(BaseModel):
 
     @field_validator("timestamp", mode="before")
     @classmethod
-    def _coerce_timestamp(cls, value: datetime | float | int | str) -> datetime:
+    def _validate_timestamp(cls, value: datetime | float | int | str) -> datetime:
         """Ensure timestamp is UTC-aware."""
-        if isinstance(value, (int, float)):
-            dt = datetime.fromtimestamp(float(value), tz=timezone.utc)
-        elif isinstance(value, str):
-            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            else:
-                dt = dt.astimezone(timezone.utc)
-        elif isinstance(value, datetime):
-            dt = value
-        else:
-            raise TypeError(f"Cannot convert {type(value).__name__} to datetime")
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
-        return dt
+        return _coerce_timestamp(value)
 
     @field_validator("seeds", mode="before")
     @classmethod
@@ -204,26 +219,9 @@ class MFNRequest(BaseModel):
 
     @field_validator("timestamp", mode="before")
     @classmethod
-    def _coerce_timestamp(cls, value: datetime | float | int | str) -> datetime:
+    def _validate_timestamp(cls, value: datetime | float | int | str) -> datetime:
         """Ensure timestamp is UTC-aware."""
-        if isinstance(value, (int, float)):
-            dt = datetime.fromtimestamp(float(value), tz=timezone.utc)
-        elif isinstance(value, str):
-            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            else:
-                dt = dt.astimezone(timezone.utc)
-        elif isinstance(value, datetime):
-            dt = value
-        else:
-            raise TypeError(f"Cannot convert {type(value).__name__} to datetime")
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
-        return dt
+        return _coerce_timestamp(value)
 
     @model_validator(mode="after")
     def _validate_seeds_for_type(self) -> "MFNRequest":

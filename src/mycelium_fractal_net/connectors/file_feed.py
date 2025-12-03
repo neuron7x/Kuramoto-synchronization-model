@@ -203,7 +203,7 @@ class FileFeedIngestor(BaseIngestor):
         if not value:
             return None
 
-        # Try integer
+        # Try integer first
         try:
             return int(value)
         except ValueError:
@@ -215,10 +215,11 @@ class FileFeedIngestor(BaseIngestor):
         except ValueError:
             pass
 
-        # Check for boolean
-        if value.lower() in ("true", "yes", "1"):
+        # Check for boolean strings (true/false/yes/no)
+        lower_value = value.lower()
+        if lower_value in ("true", "yes"):
             return True
-        if value.lower() in ("false", "no", "0"):
+        if lower_value in ("false", "no"):
             return False
 
         return value
