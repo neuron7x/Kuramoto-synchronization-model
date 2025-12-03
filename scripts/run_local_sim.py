@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping, MutableMapping
 
@@ -157,7 +157,7 @@ def _load_prices(config: SimulationConfig) -> pd.DataFrame:
 
     length = max(config.history_length, 2)
     index = pd.date_range(
-        end=datetime.utcnow(),
+        end=datetime.now(timezone.utc),
         periods=length,
         freq=config.price_frequency,
     )

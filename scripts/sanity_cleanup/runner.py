@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -36,7 +36,7 @@ def _write_summary(result: CleanupResult) -> Path | None:
     """Persist a machine-readable summary for downstream automation."""
 
     summary = {
-        "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds") + "Z",
         "root": str(result.root),
         "tasks": [
             {
