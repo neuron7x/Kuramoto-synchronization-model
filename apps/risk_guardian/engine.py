@@ -354,12 +354,15 @@ class RiskGuardian:
                     LOGGER.warning("Kill-switch activated at %s (drawdown: %.1f%%)", ts, current_dd * 100)
 
             # Safe mode check
+            was_in_safe_mode = state.is_safe_mode
             if self._config.enable_safe_mode and current_dd >= self._config.safe_mode_threshold_pct / 100:
-                if not state.is_safe_mode:
-                    state.is_safe_mode = True
-                    risk_events["safe_mode"] += 1
+                state.is_safe_mode = True
             elif current_dd < self._config.safe_mode_threshold_pct / 100 * 0.8:  # Hysteresis
                 state.is_safe_mode = False
+
+            # Count periods spent in safe mode
+            if state.is_safe_mode:
+                risk_events["safe_mode"] += 1
 
             # Daily loss limit check
             if daily_loss_pct >= self._config.daily_loss_limit_pct / 100:
