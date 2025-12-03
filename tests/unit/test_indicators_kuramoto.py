@@ -186,8 +186,16 @@ def test_multi_asset_kuramoto_feature_reports_asset_count(sin_wave: np.ndarray) 
     )
 
 
-def _synth_dataframe_for_kuramoto_test(periods: int = 512, seed: int = 42) -> pd.DataFrame:
-    """Generate deterministic synthetic data for Kuramoto tests."""
+def _synth_dataframe(periods: int = 4096, seed: int = 0) -> pd.DataFrame:
+    """Generate deterministic synthetic data for Kuramoto tests.
+
+    Args:
+        periods: Number of data points to generate.
+        seed: Random seed for reproducibility.
+
+    Returns:
+        DataFrame with 'close' column and DatetimeIndex.
+    """
     rng = np.random.default_rng(seed)
     idx = pd.date_range("2024-01-01", periods=periods, freq="1min")
     t = np.arange(periods)
@@ -200,21 +208,9 @@ def _synth_dataframe_for_kuramoto_test(periods: int = 512, seed: int = 42) -> pd
     return pd.DataFrame({"close": price}, index=idx)
 
 
-def _synth_dataframe(periods: int = 4096) -> pd.DataFrame:
-    idx = pd.date_range("2024-01-01", periods=periods, freq="1min")
-    t = np.arange(periods)
-    price = (
-        100
-        + 5 * np.sin(2 * np.pi * t / 240)
-        + 2 * np.sin(2 * np.pi * t / 1024)
-        + 0.25 * np.random.default_rng(0).normal(size=periods)
-    )
-    return pd.DataFrame({"close": price}, index=idx)
-
-
 def test_multiscale_kuramoto_matches_realistic_sample() -> None:
     """Test multiscale Kuramoto analysis on synthetic data."""
-    df = _synth_dataframe_for_kuramoto_test(periods=512, seed=42)
+    df = _synth_dataframe(periods=512, seed=42)
     analyzer = MultiScaleKuramoto(
         timeframes=(TimeFrame.M1, TimeFrame.M5),
         use_adaptive_window=False,
@@ -235,7 +231,7 @@ def test_multiscale_kuramoto_matches_realistic_sample() -> None:
 
 def test_kuramoto_order_remains_stable_with_nan_and_clamp() -> None:
     """Test that Kuramoto order is stable with NaN and Inf values."""
-    df = _synth_dataframe_for_kuramoto_test(periods=512, seed=42)
+    df = _synth_dataframe(periods=512, seed=42)
     prices = df["close"].to_numpy(copy=True)
     prices[5] = np.nan
     prices[6] = np.inf
