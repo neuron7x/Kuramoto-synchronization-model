@@ -53,7 +53,9 @@ from sqlalchemy.orm import Session, sessionmaker
 from domain.order import OrderSide, OrderStatus, OrderType
 
 # SQL identifier validation regex (matches PostgreSQL unquoted identifier rules)
+# PostgreSQL has a maximum identifier length of 63 characters
 _SQL_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_SQL_IDENTIFIER_MAX_LENGTH = 63
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1097,6 +1099,13 @@ def _validate_sql_identifier(value: str, label: str) -> str:
     """
     if not value:
         raise ValueError(f"{label} must be a non-empty identifier")
+    # Check length first to prevent ReDoS with very long strings and enforce
+    # PostgreSQL's 63-character identifier limit
+    if len(value) > _SQL_IDENTIFIER_MAX_LENGTH:
+        raise ValueError(
+            f"{label} exceeds maximum length of {_SQL_IDENTIFIER_MAX_LENGTH} "
+            f"characters: {len(value)} characters"
+        )
     if not _SQL_IDENTIFIER_RE.fullmatch(value):
         raise ValueError(
             f"{label} must be a valid SQL identifier (alphanumeric and underscores, "
