@@ -120,3 +120,14 @@ state/*.db
 /*_STATUS*.md
 /*_IMPROVEMENTS.md
 /*_PREVIEW.md
+/*_IMPLEMENTATION.md
+/*_FIXES.md
+/*_AUDIT.md
+/*_MIGRATION.md
+/*_COMPARISON.md
+/*_GUIDE.md
+/*_POSTURE*.md
+/*VULNERABILITIES*.md
+/*_ITERATIONS*.md
+/*_POLICY.md
+/SECURITY_FIX_README.md
