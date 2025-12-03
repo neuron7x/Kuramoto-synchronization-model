@@ -131,3 +131,8 @@ state/*.db
 /*_ITERATIONS*.md
 /*_POLICY.md
 /SECURITY_FIX_README.md
+
+# Generated report files
+reports/*.json
+reports/*.csv
+reports/complexity.*
