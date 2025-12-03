@@ -21,10 +21,10 @@ should use this API instead of directly reading files or raw data sources.
 
 Example:
     >>> from tradepulse.data.api import get_historical_window, load_historical_bars
-    >>> 
+    >>>
     >>> # Load historical data from CSV
     >>> bars = load_historical_bars("data/btcusdt_1m.csv", symbol="BTCUSDT")
-    >>> 
+    >>>
     >>> # Get a time window
     >>> window = get_historical_window(
     ...     bars,
@@ -42,19 +42,14 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import (
-    Any,
-    Callable,
     Dict,
-    Iterator,
     List,
     Optional,
     Protocol,
     Sequence,
-    TypeVar,
     Union,
 )
 
-from .quality import DataQualityReport, validate_series
 from .schema import Bar, FeatureVector, MarketSnapshot, Timeframe
 
 __all__ = [
@@ -72,7 +67,7 @@ logger = logging.getLogger(__name__)
 
 class DataSourceConfig:
     """Configuration for a data source.
-    
+
     Attributes:
         source_type: Type of source ("csv", "parquet", "api", "memory")
         path: File path for file-based sources
@@ -83,7 +78,7 @@ class DataSourceConfig:
         timezone: Source timezone (data will be converted to UTC)
         skip_validation: Whether to skip quality validation
     """
-    
+
     def __init__(
         self,
         source_type: str = "csv",
@@ -113,10 +108,10 @@ class DataSourceConfig:
 
 class DataSource(Protocol):
     """Protocol for data sources.
-    
+
     Custom data sources should implement this protocol.
     """
-    
+
     def load_bars(
         self,
         symbol: str,
@@ -126,7 +121,7 @@ class DataSource(Protocol):
     ) -> List[Bar]:
         """Load bars from the data source."""
         ...
-    
+
     def get_latest_snapshot(self, symbol: str) -> Optional[MarketSnapshot]:
         """Get the latest market snapshot for a symbol."""
         ...
@@ -161,7 +156,7 @@ def _parse_timestamp(value: str, tz_name: str = "UTC") -> datetime:
                 return dt
             except (ValueError, OSError):
                 raise ValueError(f"Unable to parse timestamp: {value}")
-    
+
     # Handle timezone
     if dt.tzinfo is None:
         # Assume source timezone
@@ -171,7 +166,7 @@ def _parse_timestamp(value: str, tz_name: str = "UTC") -> datetime:
         except ImportError:
             # Fallback to UTC
             dt = dt.replace(tzinfo=timezone.utc)
-    
+
     # Convert to UTC
     return dt.astimezone(timezone.utc)
 
@@ -182,13 +177,13 @@ def _load_csv_bars(
 ) -> List[Bar]:
     """Load bars from a CSV file."""
     bars: List[Bar] = []
-    
+
     if not path.exists():
         raise FileNotFoundError(f"CSV file not found: {path}")
-    
+
     with open(path, "r", newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        
+
         # Get column names for better error messages
         ohlcv = config.ohlcv_columns
         ts_col = config.timestamp_column
@@ -197,7 +192,7 @@ def _load_csv_bars(
         low_col = ohlcv.get("low", "low")
         close_col = ohlcv.get("close", "close")
         volume_col = ohlcv.get("volume", "volume")
-        
+
         for row_num, row in enumerate(reader, start=2):
             try:
                 # Parse timestamp
@@ -208,16 +203,16 @@ def _load_csv_bars(
                         f"Available columns: {list(row.keys())}. Skipping row."
                     )
                     continue
-                
+
                 timestamp = _parse_timestamp(ts_str, config.source_timezone)
-                
+
                 # Get OHLCV values with validation
                 open_val = row.get(open_col, "")
                 high_val = row.get(high_col, "")
                 low_val = row.get(low_col, "")
                 close_val = row.get(close_col, "")
                 volume_val = row.get(volume_col, "0")
-                
+
                 # Check for missing required values
                 if not all([open_val, high_val, low_val, close_val]):
                     missing = [
@@ -234,17 +229,17 @@ def _load_csv_bars(
                         f"low='{low_col}', close='{close_col}'. Skipping row."
                     )
                     continue
-                
+
                 # Determine symbol
                 symbol = config.symbol
                 if not symbol:
                     symbol = row.get("symbol", "UNKNOWN")
-                
+
                 # Determine timeframe
                 timeframe = config.timeframe
                 if not timeframe:
                     timeframe = Timeframe.M1  # Default
-                
+
                 bar = Bar(
                     timestamp=timestamp,
                     symbol=symbol,
@@ -256,14 +251,150 @@ def _load_csv_bars(
                     volume=Decimal(volume_val) if volume_val else Decimal("0"),
                 )
                 bars.append(bar)
-                
+
             except (ValueError, KeyError) as e:
                 logger.warning(
                     f"Row {row_num}: Error parsing row - {type(e).__name__}: {e}. "
                     f"Row data: {dict(row)}. Skipping row."
                 )
                 continue
-    
+
+    return bars
+
+
+def _load_parquet_bars(
+    path: Path,
+    config: DataSourceConfig,
+) -> List[Bar]:
+    """Load bars from a Parquet file.
+
+    Parquet files should contain columns for timestamp and OHLCV data.
+    The column mapping is controlled by DataSourceConfig.
+
+    Args:
+        path: Path to Parquet file
+        config: Data source configuration
+
+    Returns:
+        List of Bar objects parsed from the Parquet file
+
+    Raises:
+        FileNotFoundError: If Parquet file doesn't exist
+        ImportError: If pyarrow is not installed
+        ValueError: If required columns are missing
+    """
+    try:
+        import pyarrow.parquet as pq
+    except ImportError as e:
+        raise ImportError(
+            "Parquet loading requires pyarrow. Install with: pip install pyarrow"
+        ) from e
+
+    if not path.exists():
+        raise FileNotFoundError(f"Parquet file not found: {path}")
+
+    bars: List[Bar] = []
+
+    # Read the Parquet file
+    table = pq.read_table(path)
+    df_dict = table.to_pydict()
+
+    # Get column mappings
+    ohlcv = config.ohlcv_columns
+    ts_col = config.timestamp_column
+    open_col = ohlcv.get("open", "open")
+    high_col = ohlcv.get("high", "high")
+    low_col = ohlcv.get("low", "low")
+    close_col = ohlcv.get("close", "close")
+    volume_col = ohlcv.get("volume", "volume")
+
+    # Verify required columns exist
+    available_columns = list(df_dict.keys())
+    required_cols = [ts_col, open_col, high_col, low_col, close_col]
+    missing = [col for col in required_cols if col not in available_columns]
+    if missing:
+        raise ValueError(
+            f"Missing required columns: {missing}. "
+            f"Available columns: {available_columns}"
+        )
+
+    # Get data arrays
+    timestamps = df_dict[ts_col]
+    opens = df_dict[open_col]
+    highs = df_dict[high_col]
+    lows = df_dict[low_col]
+    closes = df_dict[close_col]
+    volumes = df_dict.get(volume_col, [0] * len(timestamps))
+    symbols = df_dict.get("symbol", [config.symbol] * len(timestamps))
+
+    n_rows = len(timestamps)
+
+    for i in range(n_rows):
+        try:
+            # Parse timestamp
+            ts_value = timestamps[i]
+            if isinstance(ts_value, datetime):
+                timestamp = ts_value
+                if timestamp.tzinfo is None:
+                    timestamp = timestamp.replace(tzinfo=timezone.utc)
+                else:
+                    timestamp = timestamp.astimezone(timezone.utc)
+            elif isinstance(ts_value, (int, float)):
+                # Epoch seconds or milliseconds
+                ts_float = float(ts_value)
+                if ts_float > 1e12:  # Likely milliseconds
+                    ts_float = ts_float / 1000
+                timestamp = datetime.fromtimestamp(ts_float, tz=timezone.utc)
+            elif isinstance(ts_value, str):
+                timestamp = _parse_timestamp(ts_value, config.source_timezone)
+            else:
+                logger.warning(
+                    f"Row {i + 1}: Unable to parse timestamp type {type(ts_value)}. Skipping."
+                )
+                continue
+
+            # Get OHLCV values
+            open_val = opens[i]
+            high_val = highs[i]
+            low_val = lows[i]
+            close_val = closes[i]
+            volume_val = volumes[i] if i < len(volumes) else 0
+
+            # Skip rows with None/NaN values
+            if any(v is None for v in [open_val, high_val, low_val, close_val]):
+                logger.warning(f"Row {i + 1}: Missing OHLC values. Skipping.")
+                continue
+
+            # Determine symbol
+            symbol = config.symbol
+            if not symbol and i < len(symbols):
+                symbol = symbols[i] if symbols[i] else "UNKNOWN"
+            if not symbol:
+                symbol = "UNKNOWN"
+
+            # Determine timeframe
+            timeframe = config.timeframe
+            if not timeframe:
+                timeframe = Timeframe.M1  # Default
+
+            bar = Bar(
+                timestamp=timestamp,
+                symbol=symbol,
+                timeframe=timeframe,
+                open=Decimal(str(open_val)),
+                high=Decimal(str(high_val)),
+                low=Decimal(str(low_val)),
+                close=Decimal(str(close_val)),
+                volume=Decimal(str(volume_val)) if volume_val else Decimal("0"),
+            )
+            bars.append(bar)
+
+        except (ValueError, TypeError) as e:
+            logger.warning(
+                f"Row {i + 1}: Error parsing row - {type(e).__name__}: {e}. Skipping."
+            )
+            continue
+
     return bars
 
 
@@ -275,25 +406,25 @@ def normalize_bars(
     fill_gaps: bool = False,
 ) -> List[Bar]:
     """Normalize a sequence of bars.
-    
+
     Args:
         bars: Input bars to normalize
         sort_by_time: Whether to sort bars by timestamp
         remove_duplicates: Whether to remove duplicate timestamps (keeps first)
         fill_gaps: Whether to fill gaps with interpolated bars (not implemented)
-        
+
     Returns:
         Normalized list of bars
     """
     if not bars:
         return []
-    
+
     result = list(bars)
-    
+
     # Sort by timestamp
     if sort_by_time:
         result.sort(key=lambda b: b.timestamp)
-    
+
     # Remove duplicates
     if remove_duplicates:
         seen_timestamps: set[datetime] = set()
@@ -303,11 +434,11 @@ def normalize_bars(
                 seen_timestamps.add(bar.timestamp)
                 unique_bars.append(bar)
         result = unique_bars
-    
+
     # Gap filling is not implemented yet
     if fill_gaps:
         logger.warning("Gap filling is not yet implemented")
-    
+
     return result
 
 
@@ -320,25 +451,25 @@ def load_historical_bars(
     normalize: bool = True,
 ) -> List[Bar]:
     """Load historical bars from a data source.
-    
+
     This is the primary entry point for loading historical data.
     It handles CSV files, parquet files (future), and API sources (future).
-    
+
     Args:
         source: Path to data file or DataSourceConfig
         symbol: Symbol name (overrides config if provided)
         timeframe: Timeframe (overrides config if provided)
         validate: Whether to validate data quality
         normalize: Whether to normalize (sort, dedupe) the bars
-        
+
     Returns:
         List of validated, normalized Bar objects
-        
+
     Raises:
         FileNotFoundError: If file source doesn't exist
         ValueError: If data format is invalid
         DataQualityError: If validation fails (when validate=True)
-        
+
     Example:
         >>> bars = load_historical_bars(
         ...     "data/btcusdt_1m.csv",
@@ -362,24 +493,24 @@ def load_historical_bars(
             config.symbol = symbol
         if timeframe:
             config.timeframe = timeframe
-    
+
     # Load based on source type
     if config.source_type == "csv" and config.path:
         bars = _load_csv_bars(config.path, config)
-    elif config.source_type == "parquet":
-        raise NotImplementedError("Parquet loading not yet implemented")
+    elif config.source_type == "parquet" and config.path:
+        bars = _load_parquet_bars(config.path, config)
     else:
         raise ValueError(f"Unknown source type: {config.source_type}")
-    
+
     # Normalize
     if normalize:
         bars = normalize_bars(bars, sort_by_time=True, remove_duplicates=True)
-    
+
     # Validate
     if validate and not config.skip_validation:
         from .quality import require_valid_data
         require_valid_data(bars, allow_warnings=True)
-    
+
     logger.info(f"Loaded {len(bars)} bars from {config.path or config.source_type}")
     return bars
 
@@ -393,17 +524,17 @@ def get_historical_window(
     end: Optional[datetime] = None,
 ) -> List[Bar]:
     """Get a time window of historical bars.
-    
+
     Args:
         bars: Source bars to filter
         symbol: Filter by symbol (optional)
         timeframe: Filter by timeframe (optional)
         start: Window start time (inclusive)
         end: Window end time (inclusive)
-        
+
     Returns:
         Filtered and sorted list of bars within the window
-        
+
     Example:
         >>> window = get_historical_window(
         ...     all_bars,
@@ -413,27 +544,27 @@ def get_historical_window(
         ... )
     """
     result: List[Bar] = []
-    
+
     for bar in bars:
         # Filter by symbol
         if symbol and bar.symbol != symbol.upper():
             continue
-        
+
         # Filter by timeframe
         if timeframe and bar.timeframe != timeframe:
             continue
-        
+
         # Filter by time range
         if start and bar.timestamp < start:
             continue
         if end and bar.timestamp > end:
             continue
-        
+
         result.append(bar)
-    
+
     # Sort by timestamp
     result.sort(key=lambda b: b.timestamp)
-    
+
     return result
 
 
@@ -444,27 +575,27 @@ def get_latest_snapshot(
     include_bar: bool = True,
 ) -> Optional[MarketSnapshot]:
     """Get the latest market snapshot for a symbol.
-    
+
     Args:
         bars: Source bars
         symbol: Symbol to get snapshot for
         include_bar: Whether to include the last bar in snapshot
-        
+
     Returns:
         MarketSnapshot with latest data, or None if no bars found
     """
     symbol = symbol.upper()
-    
+
     # Find latest bar for symbol
     latest_bar: Optional[Bar] = None
     for bar in bars:
         if bar.symbol == symbol:
             if latest_bar is None or bar.timestamp > latest_bar.timestamp:
                 latest_bar = bar
-    
+
     if latest_bar is None:
         return None
-    
+
     return MarketSnapshot(
         timestamp=latest_bar.timestamp,
         symbol=symbol,
@@ -482,30 +613,30 @@ def get_feature_window(
     feature_names: Optional[Sequence[str]] = None,
 ) -> List[FeatureVector]:
     """Get a time window of feature vectors.
-    
+
     Args:
         features: Source feature vectors
         symbol: Filter by symbol (optional)
         start: Window start time (inclusive)
         end: Window end time (inclusive)
         feature_names: Only include these features (optional)
-        
+
     Returns:
         Filtered and sorted list of feature vectors
     """
     result: List[FeatureVector] = []
-    
+
     for fv in features:
         # Filter by symbol
         if symbol and fv.symbol != symbol.upper():
             continue
-        
+
         # Filter by time range
         if start and fv.timestamp < start:
             continue
         if end and fv.timestamp > end:
             continue
-        
+
         # Filter features if specified
         if feature_names:
             filtered_features = {
@@ -519,10 +650,10 @@ def get_feature_window(
                 features=filtered_features,
                 metadata=fv.metadata,
             )
-        
+
         result.append(fv)
-    
+
     # Sort by timestamp
     result.sort(key=lambda f: f.timestamp)
-    
+
     return result
