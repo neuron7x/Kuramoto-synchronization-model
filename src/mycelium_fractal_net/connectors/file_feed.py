@@ -131,11 +131,15 @@ class FileFeedIngestor(BaseIngestor):
                 try:
                     data = json.loads(line)
                     if not isinstance(data, dict):
-                        logger.warning(f"Line {line_num}: Expected dict, got {type(data).__name__}")
+                        logger.warning(
+                            f"Line {line_num}: Expected dict, got {type(data).__name__}"
+                        )
                         self._error_count += 1
                         continue
 
-                    timestamp = self._extract_timestamp(data) or datetime.now(timezone.utc)
+                    timestamp = self._extract_timestamp(data) or datetime.now(
+                        timezone.utc
+                    )
                     event = RawEvent(
                         source=self.source_name,
                         timestamp=timestamp,
@@ -176,7 +180,9 @@ class FileFeedIngestor(BaseIngestor):
                     else:
                         payload = {k: self._coerce_value(v) for k, v in row.items()}
 
-                    timestamp = self._extract_timestamp(payload) or datetime.now(timezone.utc)
+                    timestamp = self._extract_timestamp(payload) or datetime.now(
+                        timezone.utc
+                    )
                     event = RawEvent(
                         source=self.source_name,
                         timestamp=timestamp,

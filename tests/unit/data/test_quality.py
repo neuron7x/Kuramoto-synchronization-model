@@ -22,8 +22,7 @@ _src_path = Path(__file__).parent.parent.parent.parent / "src"
 if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
-from tradepulse.data.schema import Bar, DataQualityStatus, Timeframe
-from tradepulse.data.quality import (
+from tradepulse.data.quality import (  # noqa: E402
     DataQualityError,
     DataQualityIssue,
     DataQualityReport,
@@ -35,6 +34,7 @@ from tradepulse.data.quality import (
     require_valid_data,
     validate_series,
 )
+from tradepulse.data.schema import Bar, DataQualityStatus, Timeframe  # noqa: E402
 
 
 def make_bar(
@@ -86,7 +86,7 @@ class TestValidateSeries:
         """Valid series should return OK status."""
         bars = make_bar_series(10, datetime.now(timezone.utc))
         report = validate_series(bars)
-        
+
         assert report.status == DataQualityStatus.OK
         assert report.bar_count == 10
         assert report.is_valid()
@@ -96,7 +96,7 @@ class TestValidateSeries:
         """Report should capture symbol and timeframe from bars."""
         bars = make_bar_series(5, datetime.now(timezone.utc), symbol="ETHUSDT")
         bars[0] = make_bar(bars[0].timestamp, symbol="ETHUSDT", timeframe=Timeframe.H1)
-        
+
         report = validate_series([bars[0]])
         assert report.symbol == "ETHUSDT"
         assert report.timeframe == Timeframe.H1
@@ -105,7 +105,7 @@ class TestValidateSeries:
         """Report should serialize to dictionary."""
         bars = make_bar_series(5, datetime.now(timezone.utc))
         report = validate_series(bars)
-        
+
         data = report.to_dict()
         assert data["status"] == "OK"
         assert data["bar_count"] == 5
@@ -128,7 +128,7 @@ class TestCheckMonotonicTime:
             make_bar(ts),
             make_bar(ts),  # Same timestamp
         ]
-        
+
         issues = check_monotonic_time(bars)
         assert len(issues) == 1
         assert issues[0].code == "TIMESTAMP_EQUAL"
@@ -141,7 +141,7 @@ class TestCheckMonotonicTime:
             make_bar(ts + timedelta(minutes=1)),
             make_bar(ts),  # Earlier than previous
         ]
-        
+
         issues = check_monotonic_time(bars)
         assert len(issues) == 1
         assert issues[0].code == "TIMESTAMP_NOT_MONOTONIC"
@@ -164,7 +164,7 @@ class TestDetectGaps:
             make_bar(ts),
             make_bar(ts + timedelta(minutes=5)),  # 5 min gap (expecting 1 min)
         ]
-        
+
         issues = detect_gaps(bars, expected_interval_seconds=60)
         assert len(issues) == 1
         assert issues[0].code == "GAP_DETECTED"
@@ -177,7 +177,7 @@ class TestDetectGaps:
             make_bar(ts),
             make_bar(ts + timedelta(minutes=15)),  # 15 min gap = ~14 bars missing
         ]
-        
+
         issues = detect_gaps(bars, expected_interval_seconds=60)
         assert len(issues) == 1
         assert issues[0].severity == IssueSeverity.ERROR
@@ -189,7 +189,7 @@ class TestDetectGaps:
             make_bar(ts),
             make_bar(ts + timedelta(hours=3)),  # 3 hour gap = ~180 bars missing
         ]
-        
+
         issues = detect_gaps(bars, expected_interval_seconds=60)
         assert len(issues) == 1
         assert issues[0].severity == IssueSeverity.CRITICAL
@@ -201,7 +201,7 @@ class TestDetectGaps:
             make_bar(ts, timeframe=Timeframe.H1),
             make_bar(ts + timedelta(hours=3), timeframe=Timeframe.H1),  # 2 bar gap
         ]
-        
+
         issues = detect_gaps(bars)
         assert len(issues) == 1
         assert "Gap of" in issues[0].message
@@ -218,7 +218,7 @@ class TestDetectOutliers:
             make_bar(ts + timedelta(minutes=1), close=101),
             make_bar(ts + timedelta(minutes=2), close=102),
         ]
-        
+
         issues = detect_outliers(bars)
         assert len(issues) == 0
 
@@ -227,9 +227,11 @@ class TestDetectOutliers:
         ts = datetime.now(timezone.utc)
         bars = [
             make_bar(ts, open_=100, high=105, low=95, close=100),
-            make_bar(ts + timedelta(minutes=1), open_=130, high=135, low=125, close=130),  # 30% change
+            make_bar(
+                ts + timedelta(minutes=1), open_=130, high=135, low=125, close=130
+            ),  # 30% change
         ]
-        
+
         issues = detect_outliers(bars, price_change_threshold_pct=20.0)
         assert len(issues) == 1
         assert issues[0].code == "PRICE_OUTLIER"
@@ -240,9 +242,11 @@ class TestDetectOutliers:
         ts = datetime.now(timezone.utc)
         bars = [
             make_bar(ts, open_=100, high=105, low=95, close=100),
-            make_bar(ts + timedelta(minutes=1), open_=160, high=165, low=155, close=160),  # 60% change
+            make_bar(
+                ts + timedelta(minutes=1), open_=160, high=165, low=155, close=160
+            ),  # 60% change
         ]
-        
+
         issues = detect_outliers(bars, price_change_threshold_pct=20.0)
         assert len(issues) == 1
         assert issues[0].severity == IssueSeverity.ERROR
@@ -256,7 +260,7 @@ class TestDetectOutliers:
             make_bar(ts + timedelta(minutes=2), volume=100),
             make_bar(ts + timedelta(minutes=3), volume=5000),  # 50x spike
         ]
-        
+
         issues = detect_outliers(bars, volume_spike_multiplier=10.0)
         volume_issues = [i for i in issues if i.code == "VOLUME_OUTLIER"]
         assert len(volume_issues) == 1
@@ -279,7 +283,7 @@ class TestDetectDuplicates:
             make_bar(ts + timedelta(minutes=1)),
             make_bar(ts),  # Duplicate of first
         ]
-        
+
         issues = detect_duplicates(bars)
         assert len(issues) == 1
         assert issues[0].code == "DUPLICATE_TIMESTAMP"
@@ -295,7 +299,7 @@ class TestRequireValidData:
         """Valid data should return report without raising."""
         bars = make_bar_series(10, datetime.now(timezone.utc))
         report = require_valid_data(bars)
-        
+
         assert report.is_valid()
         assert report.bar_count == 10
 
@@ -306,10 +310,10 @@ class TestRequireValidData:
             make_bar(ts + timedelta(minutes=1)),
             make_bar(ts),  # Not monotonic
         ]
-        
+
         with pytest.raises(DataQualityError) as exc_info:
             require_valid_data(bars)
-        
+
         assert "validation failed" in str(exc_info.value)
         assert exc_info.value.report is not None
 
@@ -318,13 +322,15 @@ class TestRequireValidData:
         ts = datetime.now(timezone.utc)
         bars = [
             make_bar(ts, open_=100, high=105, low=95, close=100),
-            make_bar(ts + timedelta(minutes=5), open_=130, high=135, low=125, close=130),  # Gap + price outlier
+            make_bar(
+                ts + timedelta(minutes=5), open_=130, high=135, low=125, close=130
+            ),  # Gap + price outlier
         ]
-        
+
         # Should not raise with allow_warnings=True
         report = require_valid_data(bars, allow_warnings=True)
         assert report.has_warnings()
-        
+
         # Should raise with allow_warnings=False
         with pytest.raises(DataQualityError):
             require_valid_data(bars, allow_warnings=False)
@@ -337,20 +343,24 @@ class TestDataQualityReport:
         """Adding issues should update status correctly."""
         report = DataQualityReport()
         assert report.status == DataQualityStatus.OK
-        
-        report.add_issue(DataQualityIssue(
-            code="TEST",
-            message="Test warning",
-            severity=IssueSeverity.WARNING,
-        ))
+
+        report.add_issue(
+            DataQualityIssue(
+                code="TEST",
+                message="Test warning",
+                severity=IssueSeverity.WARNING,
+            )
+        )
         assert report.status == DataQualityStatus.WARN
-        
+
         # Add error - should become critical
-        report.add_issue(DataQualityIssue(
-            code="TEST",
-            message="Test error",
-            severity=IssueSeverity.ERROR,
-        ))
+        report.add_issue(
+            DataQualityIssue(
+                code="TEST",
+                message="Test error",
+                severity=IssueSeverity.ERROR,
+            )
+        )
         assert report.status == DataQualityStatus.CRITICAL
 
     def test_is_valid_and_has_warnings(self) -> None:
@@ -358,18 +368,22 @@ class TestDataQualityReport:
         report = DataQualityReport()
         assert report.is_valid()
         assert not report.has_warnings()
-        
-        report.add_issue(DataQualityIssue(
-            code="TEST",
-            message="Test warning",
-            severity=IssueSeverity.WARNING,
-        ))
+
+        report.add_issue(
+            DataQualityIssue(
+                code="TEST",
+                message="Test warning",
+                severity=IssueSeverity.WARNING,
+            )
+        )
         assert report.is_valid()
         assert report.has_warnings()
-        
-        report.add_issue(DataQualityIssue(
-            code="TEST",
-            message="Test critical",
-            severity=IssueSeverity.CRITICAL,
-        ))
+
+        report.add_issue(
+            DataQualityIssue(
+                code="TEST",
+                message="Test critical",
+                severity=IssueSeverity.CRITICAL,
+            )
+        )
         assert not report.is_valid()

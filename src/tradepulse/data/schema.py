@@ -15,7 +15,7 @@ must consume market data through these standardized schemas.
 **Models**
 
 - ``Bar`` / ``Candle``: OHLCV bar data
-- ``Tick``: Tick-level price updates  
+- ``Tick``: Tick-level price updates
 - ``FeatureVector``: Structured features for strategies
 - ``MarketSnapshot``: Point-in-time market state
 
@@ -37,7 +37,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 from pydantic import (
     BaseModel,
@@ -63,22 +63,23 @@ __all__ = [
 
 class Timeframe(str, Enum):
     """Supported timeframes for bar aggregation.
-    
+
     Follows standard market data conventions.
     """
-    S1 = "1s"    # 1 second
-    S5 = "5s"    # 5 seconds
+
+    S1 = "1s"  # 1 second
+    S5 = "5s"  # 5 seconds
     S15 = "15s"  # 15 seconds
     S30 = "30s"  # 30 seconds
-    M1 = "1m"    # 1 minute
-    M5 = "5m"    # 5 minutes
+    M1 = "1m"  # 1 minute
+    M5 = "5m"  # 5 minutes
     M15 = "15m"  # 15 minutes
     M30 = "30m"  # 30 minutes
-    H1 = "1h"    # 1 hour
-    H4 = "4h"    # 4 hours
-    D1 = "1d"    # 1 day
-    W1 = "1w"    # 1 week
-    MN1 = "1M"   # 1 month
+    H1 = "1h"  # 1 hour
+    H4 = "4h"  # 4 hours
+    D1 = "1d"  # 1 day
+    W1 = "1w"  # 1 week
+    MN1 = "1M"  # 1 month
 
     @property
     def seconds(self) -> int:
@@ -107,7 +108,7 @@ class Timeframe(str, Enum):
         # Handle common aliases
         aliases = {
             "1min": "1m",
-            "5min": "5m", 
+            "5min": "5m",
             "15min": "15m",
             "30min": "30m",
             "1hour": "1h",
@@ -125,12 +126,14 @@ class Timeframe(str, Enum):
 
 class OrderSide(str, Enum):
     """Order side for trading."""
+
     BUY = "BUY"
     SELL = "SELL"
 
 
 class DataQualityStatus(str, Enum):
     """Data quality status levels."""
+
     OK = "OK"
     WARN = "WARN"
     CRITICAL = "CRITICAL"
@@ -172,11 +175,11 @@ class _FrozenModel(BaseModel):
 
 class Bar(_FrozenModel):
     """OHLCV bar representing aggregated price data for a time interval.
-    
+
     This is the primary data structure for historical and live market data.
     All price values are stored as Decimal for precision, and timestamps
     must be timezone-aware UTC.
-    
+
     Attributes:
         timestamp: Bar open time (must be UTC timezone-aware)
         symbol: Trading symbol (e.g., "BTCUSDT", "AAPL")
@@ -188,7 +191,7 @@ class Bar(_FrozenModel):
         volume: Trading volume (must be >= 0)
         trades: Number of trades in the bar (optional)
         vwap: Volume-weighted average price (optional)
-    
+
     Example:
         >>> bar = Bar(
         ...     timestamp=datetime.now(timezone.utc),
@@ -201,6 +204,7 @@ class Bar(_FrozenModel):
         ...     volume=Decimal("100.5"),
         ... )
     """
+
     timestamp: datetime
     symbol: StrictStr = Field(..., min_length=1, description="Trading symbol")
     timeframe: Timeframe
@@ -210,7 +214,9 @@ class Bar(_FrozenModel):
     close: Decimal = Field(..., description="Closing price")
     volume: Decimal = Field(..., description="Trading volume")
     trades: Optional[int] = Field(default=None, ge=0, description="Number of trades")
-    vwap: Optional[Decimal] = Field(default=None, description="Volume-weighted average price")
+    vwap: Optional[Decimal] = Field(
+        default=None, description="Volume-weighted average price"
+    )
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -240,7 +246,9 @@ class Bar(_FrozenModel):
 
     @field_validator("vwap", mode="before")
     @classmethod
-    def _coerce_vwap(cls, value: Optional[Union[Decimal, float, int, str]]) -> Optional[Decimal]:
+    def _coerce_vwap(
+        cls, value: Optional[Union[Decimal, float, int, str]]
+    ) -> Optional[Decimal]:
         """Convert VWAP to Decimal if provided."""
         if value is None:
             return None
@@ -338,7 +346,7 @@ Candle = Bar
 
 class Tick(_FrozenModel):
     """Tick-level price update representing a single trade or quote.
-    
+
     Attributes:
         timestamp: Time of the tick (must be UTC)
         symbol: Trading symbol
@@ -347,6 +355,7 @@ class Tick(_FrozenModel):
         side: Trade side (optional)
         trade_id: Exchange trade identifier (optional)
     """
+
     timestamp: datetime
     symbol: StrictStr = Field(..., min_length=1, description="Trading symbol")
     price: Decimal = Field(..., description="Trade price")
@@ -412,7 +421,7 @@ class Tick(_FrozenModel):
             raise ValueError("timestamp must be timezone-aware")
         if self.timestamp.utcoffset() != timedelta(0):
             raise ValueError("timestamp must be UTC")
-        
+
         max_magnitude = Decimal("1e15")
         for field_name in ("price", "volume"):
             value: Decimal = getattr(self, field_name)
@@ -430,20 +439,25 @@ class Tick(_FrozenModel):
 
 class FeatureVector(_FrozenModel):
     """Structured feature vector for strategy consumption.
-    
+
     This model provides a standardized interface for passing computed
     features (indicators, signals, etc.) to strategies.
-    
+
     Attributes:
         timestamp: Feature computation time
         symbol: Associated symbol
         features: Dictionary of feature name -> value mappings
         metadata: Optional additional context
     """
+
     timestamp: datetime
     symbol: StrictStr = Field(..., min_length=1, description="Associated symbol")
-    features: Dict[str, float] = Field(default_factory=dict, description="Feature values")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional context")
+    features: Dict[str, float] = Field(
+        default_factory=dict, description="Feature values"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional context"
+    )
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -480,7 +494,9 @@ class FeatureVector(_FrozenModel):
             raise ValueError("timestamp must be UTC")
         return self
 
-    def get(self, feature_name: str, default: Optional[float] = None) -> Optional[float]:
+    def get(
+        self, feature_name: str, default: Optional[float] = None
+    ) -> Optional[float]:
         """Get a feature value by name."""
         return self.features.get(feature_name, default)
 
@@ -492,10 +508,10 @@ class FeatureVector(_FrozenModel):
 
 class MarketSnapshot(_FrozenModel):
     """Point-in-time market state for a symbol.
-    
+
     Combines price data, order book summary, and other market metrics
     into a single snapshot.
-    
+
     Attributes:
         timestamp: Snapshot time
         symbol: Trading symbol
@@ -507,6 +523,7 @@ class MarketSnapshot(_FrozenModel):
         last_bar: Most recent completed bar (optional)
         features: Associated feature vector (optional)
     """
+
     model_config = ConfigDict(
         frozen=True,
         strict=False,  # Allow flexible type coercion for nested models
@@ -514,14 +531,18 @@ class MarketSnapshot(_FrozenModel):
         extra="forbid",
         use_enum_values=False,
     )
-    
+
     timestamp: datetime
     symbol: StrictStr = Field(..., min_length=1, description="Trading symbol")
     last_price: Decimal = Field(..., description="Most recent trade price")
     bid: Optional[Decimal] = Field(default=None, description="Best bid price")
     ask: Optional[Decimal] = Field(default=None, description="Best ask price")
-    bid_volume: Optional[Decimal] = Field(default=None, description="Volume at best bid")
-    ask_volume: Optional[Decimal] = Field(default=None, description="Volume at best ask")
+    bid_volume: Optional[Decimal] = Field(
+        default=None, description="Volume at best bid"
+    )
+    ask_volume: Optional[Decimal] = Field(
+        default=None, description="Volume at best ask"
+    )
     last_bar: Optional[Any] = Field(default=None, description="Most recent bar")
     features: Optional[Any] = Field(default=None, description="Feature vector")
 
@@ -542,9 +563,13 @@ class MarketSnapshot(_FrozenModel):
             dt = dt.astimezone(timezone.utc)
         return dt
 
-    @field_validator("last_price", "bid", "ask", "bid_volume", "ask_volume", mode="before")
+    @field_validator(
+        "last_price", "bid", "ask", "bid_volume", "ask_volume", mode="before"
+    )
     @classmethod
-    def _coerce_decimal(cls, value: Optional[Union[Decimal, float, int, str]]) -> Optional[Decimal]:
+    def _coerce_decimal(
+        cls, value: Optional[Union[Decimal, float, int, str]]
+    ) -> Optional[Decimal]:
         """Convert numeric inputs to Decimal."""
         if value is None:
             return None
@@ -576,7 +601,7 @@ class MarketSnapshot(_FrozenModel):
         if self.bid is not None and self.ask is not None:
             if self.bid > self.ask:
                 raise ValueError("bid cannot be greater than ask")
-        
+
         if self.bid is not None and self.bid <= 0:
             raise ValueError("bid must be positive")
         if self.ask is not None and self.ask <= 0:

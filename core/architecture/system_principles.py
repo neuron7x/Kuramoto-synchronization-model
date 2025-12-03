@@ -500,7 +500,11 @@ class RoleBasedPrinciple(ArchitecturePrinciple):
         }
         self._role_permissions: Dict[ComponentRole, Set[str]] = {
             ComponentRole.SENSOR: {"read_market_data", "emit_events"},
-            ComponentRole.PROCESSOR: {"process_signals", "emit_events", "read_features"},
+            ComponentRole.PROCESSOR: {
+                "process_signals",
+                "emit_events",
+                "read_features",
+            },
             ComponentRole.ACTUATOR: {"execute_orders", "emit_events"},
             ComponentRole.COORDINATOR: {
                 "orchestrate",
@@ -628,8 +632,7 @@ class IntegrativePrinciple(ArchitecturePrinciple):
 
         # Check for required integrations
         active_integrations = set(
-            (c["source"], c["target"])
-            for c in context.get("integration_contracts", [])
+            (c["source"], c["target"]) for c in context.get("integration_contracts", [])
         )
         missing = self._required_integrations - active_integrations
         if missing:
@@ -773,7 +776,7 @@ class ReproduciblePrinciple(ArchitecturePrinciple):
 
         # Trim old snapshots if necessary
         if len(self._snapshots) > self._max_snapshots:
-            self._snapshots = self._snapshots[-self._max_snapshots:]
+            self._snapshots = self._snapshots[-self._max_snapshots :]
 
         return snapshot
 
@@ -823,7 +826,9 @@ class ControllablePrinciple(ArchitecturePrinciple):
         violations: List[PrincipleViolation] = []
 
         # Check kill switch availability
-        if self._kill_switch_enabled and not context.get("kill_switch_available", False):
+        if self._kill_switch_enabled and not context.get(
+            "kill_switch_available", False
+        ):
             violations.append(
                 PrincipleViolation(
                     principle_name=self.name,
@@ -933,7 +938,9 @@ class AutonomousPrinciple(ArchitecturePrinciple):
         violations: List[PrincipleViolation] = []
 
         # Check self-healing capability
-        if self._self_healing_enabled and not context.get("self_healing_available", False):
+        if self._self_healing_enabled and not context.get(
+            "self_healing_available", False
+        ):
             violations.append(
                 PrincipleViolation(
                     principle_name=self.name,
@@ -1036,7 +1043,9 @@ class SystemArchitecture:
         """Get a specific principle by name."""
         return self._principles.get(name)
 
-    def validate_all(self, context: Mapping[str, Any]) -> Dict[str, List[PrincipleViolation]]:
+    def validate_all(
+        self, context: Mapping[str, Any]
+    ) -> Dict[str, List[PrincipleViolation]]:
         """Validate all principles against given context.
 
         Parameters

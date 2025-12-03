@@ -154,8 +154,12 @@ class NormalizedEvent(BaseModel):
     )
     seeds: list[float] = Field(default_factory=list, description="Seed values")
     grid_size: int = Field(default=64, ge=8, le=1024, description="Grid dimension")
-    params: dict[str, Any] = Field(default_factory=dict, description="Additional parameters")
-    raw_payload: dict[str, Any] = Field(default_factory=dict, description="Original payload")
+    params: dict[str, Any] = Field(
+        default_factory=dict, description="Additional parameters"
+    )
+    raw_payload: dict[str, Any] = Field(
+        default_factory=dict, description="Original payload"
+    )
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -212,7 +216,9 @@ class MFNRequest(BaseModel):
     timestamp: datetime = Field(..., description="Request timestamp (UTC)")
     seeds: list[float] = Field(default_factory=list, description="Seed values")
     grid_size: int = Field(default=64, ge=8, le=1024, description="Grid dimension")
-    params: dict[str, Any] = Field(default_factory=dict, description="Operation parameters")
+    params: dict[str, Any] = Field(
+        default_factory=dict, description="Operation parameters"
+    )
     source_event: NormalizedEvent | None = Field(
         default=None, description="Originating event"
     )
@@ -282,7 +288,11 @@ class Transformer:
                 if field in payload:
                     value = payload[field]
                     if isinstance(value, (list, tuple)):
-                        seeds = [float(v) for v in value if isinstance(v, (int, float, Decimal, str))]
+                        seeds = [
+                            float(v)
+                            for v in value
+                            if isinstance(v, (int, float, Decimal, str))
+                        ]
                         break
                     elif isinstance(value, (int, float, Decimal)):
                         seeds = [float(value)]

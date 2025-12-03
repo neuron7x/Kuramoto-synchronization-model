@@ -4,10 +4,9 @@
 from __future__ import annotations
 
 import logging
-import math
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Callable, Iterator
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -212,7 +211,9 @@ class RiskGuardian:
         baseline_max_loss = peak_baseline - trough_baseline
         protected_max_loss = peak_protected - trough_protected
         saved_capital = max(0.0, baseline_max_loss - protected_max_loss)
-        saved_capital_pct = (saved_capital / peak_baseline * 100) if peak_baseline > 0 else 0.0
+        saved_capital_pct = (
+            (saved_capital / peak_baseline * 100) if peak_baseline > 0 else 0.0
+        )
 
         return SimulationResult(
             baseline_pnl=baseline_pnl,
@@ -270,7 +271,11 @@ class RiskGuardian:
                 day_start_equity = equity[i - 1]
 
             # Update position based on signal
-            target_position = signals[i] * (equity[i] * self._config.max_position_pct / 100.0) / prices[i]
+            target_position = (
+                signals[i]
+                * (equity[i] * self._config.max_position_pct / 100.0)
+                / prices[i]
+            )
             position = target_position
 
         # Final day return
@@ -327,7 +332,10 @@ class RiskGuardian:
 
                 # Reset kill-switch if we're at a new day and drawdown recovered
                 current_dd = self._get_drawdown(state.equity, state.peak_equity)
-                if state.is_halted and current_dd < self._config.safe_mode_threshold_pct / 100:
+                if (
+                    state.is_halted
+                    and current_dd < self._config.safe_mode_threshold_pct / 100
+                ):
                     state.is_halted = False
                     LOGGER.info("Kill-switch deactivated at %s", ts)
 
@@ -344,20 +352,34 @@ class RiskGuardian:
 
             # Check risk limits
             current_dd = self._get_drawdown(state.equity, state.peak_equity)
-            daily_loss_pct = -state.daily_pnl / day_start_equity if day_start_equity > 0 else 0
+            daily_loss_pct = (
+                -state.daily_pnl / day_start_equity if day_start_equity > 0 else 0
+            )
 
             # Kill-switch check
-            if self._config.enable_kill_switch and current_dd >= self._config.max_drawdown_pct / 100:
+            if (
+                self._config.enable_kill_switch
+                and current_dd >= self._config.max_drawdown_pct / 100
+            ):
                 if not state.is_halted:
                     state.is_halted = True
                     risk_events["kill_switch"] += 1
-                    LOGGER.warning("Kill-switch activated at %s (drawdown: %.1f%%)", ts, current_dd * 100)
+                    LOGGER.warning(
+                        "Kill-switch activated at %s (drawdown: %.1f%%)",
+                        ts,
+                        current_dd * 100,
+                    )
 
             # Safe mode check
-            was_in_safe_mode = state.is_safe_mode
-            if self._config.enable_safe_mode and current_dd >= self._config.safe_mode_threshold_pct / 100:
+            _ = state.is_safe_mode  # Track prior state for logging/metrics
+            if (
+                self._config.enable_safe_mode
+                and current_dd >= self._config.safe_mode_threshold_pct / 100
+            ):
                 state.is_safe_mode = True
-            elif current_dd < self._config.safe_mode_threshold_pct / 100 * 0.8:  # Hysteresis
+            elif (
+                current_dd < self._config.safe_mode_threshold_pct / 100 * 0.8
+            ):  # Hysteresis
                 state.is_safe_mode = False
 
             # Count periods spent in safe mode
@@ -375,10 +397,15 @@ class RiskGuardian:
                     risk_events["blocked"] += 1
             else:
                 position_multiplier = (
-                    self._config.safe_mode_position_multiplier if state.is_safe_mode else 1.0
+                    self._config.safe_mode_position_multiplier
+                    if state.is_safe_mode
+                    else 1.0
                 )
                 max_pos_value = (
-                    state.equity * self._config.max_position_pct / 100 * position_multiplier
+                    state.equity
+                    * self._config.max_position_pct
+                    / 100
+                    * position_multiplier
                 )
                 target_position = signals[i] * max_pos_value / prices[i]
 
@@ -411,7 +438,9 @@ class RiskGuardian:
         return float(np.max(drawdown))
 
     @staticmethod
-    def _calculate_sharpe(daily_returns: list[float], periods_per_year: int = 252) -> float:
+    def _calculate_sharpe(
+        daily_returns: list[float], periods_per_year: int = 252
+    ) -> float:
         """Calculate annualized Sharpe ratio from daily returns."""
         if len(daily_returns) < 2:
             return 0.0

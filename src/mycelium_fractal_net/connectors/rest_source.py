@@ -142,7 +142,9 @@ class RestIngestor(BaseIngestor):
                 )
             except httpx.RequestError as e:
                 self._error_count += 1
-                logger.warning(f"Request error polling {self.url}: {e} (attempt {self._error_count})")
+                logger.warning(
+                    f"Request error polling {self.url}: {e} (attempt {self._error_count})"
+                )
             except Exception as e:
                 self._error_count += 1
                 logger.error(f"Unexpected error polling {self.url}: {e}")
@@ -183,7 +185,7 @@ class RestIngestor(BaseIngestor):
                         f"Server error {e.response.status_code}, "
                         f"retrying ({attempt + 1}/{self.max_retries})"
                     )
-                    await asyncio.sleep(2 ** attempt)
+                    await asyncio.sleep(2**attempt)
                     continue
                 raise
 
@@ -192,7 +194,7 @@ class RestIngestor(BaseIngestor):
                 logger.warning(
                     f"Request failed, retrying ({attempt + 1}/{self.max_retries}): {e}"
                 )
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
                 continue
 
         if last_error:

@@ -162,9 +162,7 @@ class BacktestReport:
     equity_curve: NDArray[np.float64] | None = None
     drawdown_info: DrawdownInfo | None = None
     periods_per_year: int = 252
-    generated_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def summary(self) -> str:
         """Return a human-readable summary of the report."""

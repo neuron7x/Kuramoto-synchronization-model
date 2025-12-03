@@ -11,7 +11,6 @@ Tests for data access API functions:
 from __future__ import annotations
 
 import sys
-import tempfile
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -24,8 +23,7 @@ if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
 # Now we can import properly
-from tradepulse.data.schema import Bar, FeatureVector, MarketSnapshot, Timeframe
-from tradepulse.data.api import (
+from tradepulse.data.api import (  # noqa: E402
     DataSourceConfig,
     get_feature_window,
     get_historical_window,
@@ -33,6 +31,7 @@ from tradepulse.data.api import (
     load_historical_bars,
     normalize_bars,
 )
+from tradepulse.data.schema import Bar, FeatureVector, Timeframe  # noqa: E402
 
 
 def make_bar(
@@ -87,9 +86,9 @@ class TestNormalizeBars:
             make_bar(ts),
             make_bar(ts + timedelta(minutes=1)),
         ]
-        
+
         result = normalize_bars(bars)
-        
+
         assert len(result) == 3
         assert result[0].timestamp < result[1].timestamp < result[2].timestamp
 
@@ -101,9 +100,9 @@ class TestNormalizeBars:
             make_bar(ts + timedelta(minutes=1), close=101),
             make_bar(ts, close=102),  # Duplicate of first
         ]
-        
+
         result = normalize_bars(bars)
-        
+
         assert len(result) == 2
         # First occurrence should be kept
         assert result[0].close == Decimal("100")
@@ -115,9 +114,9 @@ class TestNormalizeBars:
             make_bar(ts + timedelta(minutes=1)),
             make_bar(ts),
         ]
-        
+
         result = normalize_bars(bars, sort_by_time=False)
-        
+
         # Should keep original order
         assert result[0].timestamp > result[1].timestamp
 
@@ -128,9 +127,9 @@ class TestNormalizeBars:
             make_bar(ts),
             make_bar(ts),  # Duplicate
         ]
-        
+
         result = normalize_bars(bars, remove_duplicates=False)
-        
+
         assert len(result) == 2
 
 
@@ -140,9 +139,9 @@ class TestGetHistoricalWindow:
     def test_returns_all_bars_without_filters(self) -> None:
         """Without filters, should return all bars."""
         bars = make_bar_series(10, datetime.now(timezone.utc))
-        
+
         result = get_historical_window(bars)
-        
+
         assert len(result) == 10
 
     def test_filters_by_symbol(self) -> None:
@@ -153,9 +152,9 @@ class TestGetHistoricalWindow:
             make_bar(ts + timedelta(minutes=1), symbol="ETHUSDT"),
             make_bar(ts + timedelta(minutes=2), symbol="BTCUSDT"),
         ]
-        
+
         result = get_historical_window(bars, symbol="BTCUSDT")
-        
+
         assert len(result) == 2
         assert all(b.symbol == "BTCUSDT" for b in result)
 
@@ -168,12 +167,12 @@ class TestGetHistoricalWindow:
             make_bar(ts + timedelta(hours=2)),
             make_bar(ts + timedelta(hours=3)),
         ]
-        
+
         start = ts + timedelta(minutes=30)
         end = ts + timedelta(hours=2, minutes=30)
-        
+
         result = get_historical_window(bars, start=start, end=end)
-        
+
         assert len(result) == 2  # Hours 1 and 2
 
     def test_filters_by_timeframe(self) -> None:
@@ -184,9 +183,9 @@ class TestGetHistoricalWindow:
             make_bar(ts + timedelta(minutes=1), timeframe=Timeframe.H1),
             make_bar(ts + timedelta(minutes=2), timeframe=Timeframe.M1),
         ]
-        
+
         result = get_historical_window(bars, timeframe=Timeframe.M1)
-        
+
         assert len(result) == 2
         assert all(b.timeframe == Timeframe.M1 for b in result)
 
@@ -198,9 +197,9 @@ class TestGetHistoricalWindow:
             make_bar(ts),
             make_bar(ts + timedelta(minutes=1)),
         ]
-        
+
         result = get_historical_window(bars)
-        
+
         assert result[0].timestamp < result[1].timestamp < result[2].timestamp
 
 
@@ -215,9 +214,9 @@ class TestGetLatestSnapshot:
     def test_returns_none_for_unknown_symbol(self) -> None:
         """Unknown symbol should return None."""
         bars = make_bar_series(5, datetime.now(timezone.utc), symbol="ETHUSDT")
-        
+
         result = get_latest_snapshot(bars, "BTCUSDT")
-        
+
         assert result is None
 
     def test_returns_latest_bar_data(self) -> None:
@@ -228,9 +227,9 @@ class TestGetLatestSnapshot:
             make_bar(ts + timedelta(minutes=1), close=101),
             make_bar(ts + timedelta(minutes=2), close=102),
         ]
-        
+
         result = get_latest_snapshot(bars, "BTCUSDT")
-        
+
         assert result is not None
         assert result.symbol == "BTCUSDT"
         assert result.last_price == Decimal("102")
@@ -239,18 +238,18 @@ class TestGetLatestSnapshot:
     def test_includes_last_bar_by_default(self) -> None:
         """Should include last bar by default."""
         bars = make_bar_series(5, datetime.now(timezone.utc))
-        
+
         result = get_latest_snapshot(bars, "BTCUSDT")
-        
+
         assert result is not None
         assert result.last_bar is not None
 
     def test_can_exclude_last_bar(self) -> None:
         """Should be able to exclude last bar."""
         bars = make_bar_series(5, datetime.now(timezone.utc))
-        
+
         result = get_latest_snapshot(bars, "BTCUSDT", include_bar=False)
-        
+
         assert result is not None
         assert result.last_bar is None
 
@@ -263,11 +262,15 @@ class TestGetFeatureWindow:
         ts = datetime.now(timezone.utc)
         features = [
             FeatureVector(timestamp=ts, symbol="BTCUSDT", features={"rsi": 50.0}),
-            FeatureVector(timestamp=ts + timedelta(minutes=1), symbol="ETHUSDT", features={"rsi": 60.0}),
+            FeatureVector(
+                timestamp=ts + timedelta(minutes=1),
+                symbol="ETHUSDT",
+                features={"rsi": 60.0},
+            ),
         ]
-        
+
         result = get_feature_window(features, symbol="BTCUSDT")
-        
+
         assert len(result) == 1
         assert result[0].symbol == "BTCUSDT"
 
@@ -276,16 +279,24 @@ class TestGetFeatureWindow:
         ts = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
         features = [
             FeatureVector(timestamp=ts, symbol="BTCUSDT", features={"rsi": 50.0}),
-            FeatureVector(timestamp=ts + timedelta(hours=1), symbol="BTCUSDT", features={"rsi": 55.0}),
-            FeatureVector(timestamp=ts + timedelta(hours=2), symbol="BTCUSDT", features={"rsi": 60.0}),
+            FeatureVector(
+                timestamp=ts + timedelta(hours=1),
+                symbol="BTCUSDT",
+                features={"rsi": 55.0},
+            ),
+            FeatureVector(
+                timestamp=ts + timedelta(hours=2),
+                symbol="BTCUSDT",
+                features={"rsi": 60.0},
+            ),
         ]
-        
+
         result = get_feature_window(
             features,
             start=ts + timedelta(minutes=30),
             end=ts + timedelta(hours=1, minutes=30),
         )
-        
+
         assert len(result) == 1
 
     def test_filters_by_feature_names(self) -> None:
@@ -298,9 +309,9 @@ class TestGetFeatureWindow:
                 features={"rsi": 50.0, "macd": 0.5, "momentum": 1.2},
             ),
         ]
-        
+
         result = get_feature_window(features, feature_names=["rsi", "macd"])
-        
+
         assert len(result) == 1
         assert "rsi" in result[0].features
         assert "macd" in result[0].features
@@ -318,14 +329,14 @@ class TestLoadHistoricalBars:
             "2024-01-01 00:00:00,100,105,95,102,1000\n"
             "2024-01-01 00:01:00,102,107,100,105,1500\n"
         )
-        
+
         bars = load_historical_bars(
             csv_file,
             symbol="BTCUSDT",
             timeframe=Timeframe.M1,
             validate=False,  # Skip validation for simple test
         )
-        
+
         assert len(bars) == 2
         assert bars[0].symbol == "BTCUSDT"
         assert bars[0].close == Decimal("102")
@@ -344,14 +355,14 @@ class TestLoadHistoricalBars:
             "2024-01-01 00:00:00,100,105,95,102,1000\n"
             "2024-01-01 00:01:00,102,107,100,105,1500\n"
         )
-        
+
         bars = load_historical_bars(
             csv_file,
             symbol="BTCUSDT",
             timeframe=Timeframe.M1,
             validate=False,
         )
-        
+
         # Should be sorted by timestamp
         assert bars[0].timestamp < bars[1].timestamp < bars[2].timestamp
 
@@ -359,10 +370,9 @@ class TestLoadHistoricalBars:
         """Should accept DataSourceConfig."""
         csv_file = tmp_path / "test_data.csv"
         csv_file.write_text(
-            "ts,o,h,l,c,vol\n"
-            "2024-01-01 00:00:00,100,105,95,102,1000\n"
+            "ts,o,h,l,c,vol\n" "2024-01-01 00:00:00,100,105,95,102,1000\n"
         )
-        
+
         config = DataSourceConfig(
             source_type="csv",
             path=csv_file,
@@ -378,9 +388,9 @@ class TestLoadHistoricalBars:
             },
             skip_validation=True,
         )
-        
+
         bars = load_historical_bars(config)
-        
+
         assert len(bars) == 1
         assert bars[0].symbol == "ETHUSDT"
         assert bars[0].timeframe == Timeframe.H1

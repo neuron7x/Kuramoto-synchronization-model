@@ -300,10 +300,12 @@ class TestNeuroOrientedPrinciple:
 
     def test_configure(self) -> None:
         principle = NeuroOrientedPrinciple()
-        principle.configure({
-            "required_neuromodulators": ["dopamine", "serotonin"],
-            "required_components": ["custom_component"],
-        })
+        principle.configure(
+            {
+                "required_neuromodulators": ["dopamine", "serotonin"],
+                "required_components": ["custom_component"],
+            }
+        )
         # After configuration, validation should use new requirements
         context = {
             "neuromodulators": ["dopamine", "serotonin"],
@@ -373,10 +375,12 @@ class TestModularPrinciple:
 
     def test_configure(self) -> None:
         principle = ModularPrinciple()
-        principle.configure({
-            "max_coupling_score": 0.5,
-            "min_cohesion_score": 0.5,
-        })
+        principle.configure(
+            {
+                "max_coupling_score": 0.5,
+                "min_cohesion_score": 0.5,
+            }
+        )
         context = {
             "coupling_score": 0.4,
             "cohesion_score": 0.6,
@@ -673,7 +677,9 @@ class TestAutonomousPrinciple:
 class TestSystemArchitecture:
     """Tests for SystemArchitecture container."""
 
-    def test_all_principles_present(self, system_architecture: SystemArchitecture) -> None:
+    def test_all_principles_present(
+        self, system_architecture: SystemArchitecture
+    ) -> None:
         principles = system_architecture.principles
         assert len(principles) == 7
         assert "neuro_oriented" in principles
@@ -763,7 +769,9 @@ class TestEnums:
         # Test status enum members exist and are distinct
         assert PrincipleStatus.NOT_IMPLEMENTED != PrincipleStatus.IMPLEMENTED
         assert PrincipleStatus.NOT_IMPLEMENTED != PrincipleStatus.VALIDATED
-        assert len(PrincipleStatus) == 4  # NOT_IMPLEMENTED, PARTIAL, IMPLEMENTED, VALIDATED
+        assert (
+            len(PrincipleStatus) == 4
+        )  # NOT_IMPLEMENTED, PARTIAL, IMPLEMENTED, VALIDATED
 
     def test_component_role_values(self) -> None:
         assert ComponentRole.SENSOR.value == "sensor"

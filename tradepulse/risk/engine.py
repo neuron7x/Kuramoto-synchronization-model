@@ -15,7 +15,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Mapping, Protocol
+from typing import Any, Callable, Protocol
 
 from .config import RiskEngineConfig, load_risk_config
 from .environment import EnvironmentConfig, EnvironmentMode, get_current_mode
@@ -294,7 +294,9 @@ class CentralRiskEngine:
                     status=RiskStatus.HALTED,
                     message=f"Kill-switch active: {self._safety.state.kill_switch_reason}",
                     order=order,
-                    metadata={"kill_switch_reason": self._safety.state.kill_switch_reason},
+                    metadata={
+                        "kill_switch_reason": self._safety.state.kill_switch_reason
+                    },
                 )
 
             # 2. Check if risk checks are enabled
@@ -319,7 +321,10 @@ class CentralRiskEngine:
                 )
 
             # 3. Check environment constraints
-            if not env_config.allow_real_orders and env_mode != EnvironmentMode.BACKTEST:
+            if (
+                not env_config.allow_real_orders
+                and env_mode != EnvironmentMode.BACKTEST
+            ):
                 # Paper mode - allow but note it's simulated
                 metadata["simulated"] = True
 
@@ -420,13 +425,13 @@ class CentralRiskEngine:
                 status=status,
                 message=message,
                 order=order,
-                adjusted_quantity=adjusted_quantity if position_multiplier < 1.0 else None,
+                adjusted_quantity=(
+                    adjusted_quantity if position_multiplier < 1.0 else None
+                ),
                 metadata=metadata,
             )
 
-    def assess_after_trade(
-        self, portfolio_state: PortfolioState
-    ) -> RiskStatus:
+    def assess_after_trade(self, portfolio_state: PortfolioState) -> RiskStatus:
         """Assess portfolio risk status after a trade.
 
         This should be called after each trade to update risk tracking
@@ -454,9 +459,15 @@ class CentralRiskEngine:
             drawdown = portfolio_state.get_drawdown()
             if self._safety.is_kill_switch_active():
                 return RiskStatus.HALTED
-            elif drawdown > self._config.max_daily_loss_percent * CRITICAL_THRESHOLD_FACTOR:
+            elif (
+                drawdown
+                > self._config.max_daily_loss_percent * CRITICAL_THRESHOLD_FACTOR
+            ):
                 return RiskStatus.CRITICAL
-            elif drawdown > self._config.max_daily_loss_percent * WARNING_THRESHOLD_FACTOR:
+            elif (
+                drawdown
+                > self._config.max_daily_loss_percent * WARNING_THRESHOLD_FACTOR
+            ):
                 return RiskStatus.WARNING
             return RiskStatus.OK
 
@@ -507,8 +518,7 @@ class CentralRiskEngine:
         if len(self._order_timestamps) >= self._config.max_orders_per_minute:
             return False
 
-        # Check hour limit
-        hour_ago = now - 3600
+        # Check hour limit (reset counter if more than 1 hour since last reset)
         if now - self._last_hour_reset > 3600:
             self._hourly_order_count = 0
             self._last_hour_reset = now
@@ -561,7 +571,9 @@ class CentralRiskEngine:
             return
 
         drawdown = portfolio_state.get_drawdown()
-        warning_threshold = self._config.max_daily_loss_percent * SAFE_MODE_TRIGGER_FACTOR
+        warning_threshold = (
+            self._config.max_daily_loss_percent * SAFE_MODE_TRIGGER_FACTOR
+        )
 
         if drawdown > warning_threshold:
             self._safety.activate_safe_mode(

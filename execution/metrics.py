@@ -20,7 +20,12 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
 
-__all__ = ["RiskMetrics", "TradingModeMetrics", "get_risk_metrics", "get_trading_mode_metrics"]
+__all__ = [
+    "RiskMetrics",
+    "TradingModeMetrics",
+    "get_risk_metrics",
+    "get_trading_mode_metrics",
+]
 
 
 _GLOBAL_METRICS: Optional["RiskMetrics"] = None

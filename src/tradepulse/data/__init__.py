@@ -16,17 +16,17 @@ Example:
     >>> from tradepulse.data.validation import validate_ohlcv
     >>> from tradepulse.data.quality import validate_series
     >>> from tradepulse.data.api import load_historical_bars, get_historical_window
-    >>> 
+    >>>
     >>> # Load historical data from CSV
     >>> bars = load_historical_bars("data/btcusdt.csv", symbol="BTCUSDT")
-    >>> 
+    >>>
     >>> # Get a time window
     >>> window = get_historical_window(
     ...     bars,
     ...     start=datetime(2024, 1, 1, tzinfo=timezone.utc),
     ...     end=datetime(2024, 1, 31, tzinfo=timezone.utc),
     ... )
-    >>> 
+    >>>
     >>> # Validate a series of bars
     >>> report = validate_series(bars)
     >>> if not report.is_valid():
@@ -44,16 +44,15 @@ from core.data.validation import (
     validate_timeseries_frame,
 )
 
-# Unified schema models
-from .schema import (
-    Bar,
-    Candle,
-    DataQualityStatus,
-    FeatureVector,
-    MarketSnapshot,
-    OrderSide,
-    Tick,
-    Timeframe,
+# Data access API
+from .api import (
+    DataSource,
+    DataSourceConfig,
+    get_feature_window,
+    get_historical_window,
+    get_latest_snapshot,
+    load_historical_bars,
+    normalize_bars,
 )
 
 # Data quality validation
@@ -70,15 +69,16 @@ from .quality import (
     validate_series,
 )
 
-# Data access API
-from .api import (
-    DataSource,
-    DataSourceConfig,
-    get_feature_window,
-    get_historical_window,
-    get_latest_snapshot,
-    load_historical_bars,
-    normalize_bars,
+# Unified schema models
+from .schema import (
+    Bar,
+    Candle,
+    DataQualityStatus,
+    FeatureVector,
+    MarketSnapshot,
+    OrderSide,
+    Tick,
+    Timeframe,
 )
 
 __all__ = [

@@ -898,7 +898,6 @@ def test_health_check_detects_config_issues(controller):
     assert any("decay_rate" in issue for issue in health["issues"])
 
 
-
 def test_configurable_hysteresis_margin(tmp_path):
     """Test v2.5.0 configurable hysteresis margin feature."""
     config_dict = {

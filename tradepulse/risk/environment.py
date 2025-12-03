@@ -13,7 +13,7 @@ import threading
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Callable, TypeVar, ParamSpec
+from typing import Callable, ParamSpec, TypeVar
 
 __all__ = [
     "EnvironmentMode",
@@ -189,9 +189,7 @@ def validate_environment(
     errors: list[str] = []
 
     if config.require_api_keys and not api_keys_present:
-        errors.append(
-            f"{mode.value.upper()} mode requires API keys to be configured"
-        )
+        errors.append(f"{mode.value.upper()} mode requires API keys to be configured")
 
     if config.require_risk_engine and not risk_engine_enabled:
         errors.append(
@@ -216,9 +214,9 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-def require_mode(*allowed_modes: EnvironmentMode) -> Callable[
-    [Callable[P, T]], Callable[P, T]
-]:
+def require_mode(
+    *allowed_modes: EnvironmentMode,
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator that restricts function execution to specific environment modes.
 
     Args:

@@ -14,7 +14,6 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -22,7 +21,6 @@ from tradepulse.risk import (
     CentralRiskEngine,
     EnvironmentConfig,
     EnvironmentMode,
-    RiskDecision,
     RiskEngineConfig,
     RiskStatus,
     SafetyController,
@@ -40,7 +38,7 @@ from tradepulse.risk.engine import (
     PortfolioState,
     RiskViolation,
 )
-from tradepulse.risk.environment import EnvironmentError, _current_mode
+from tradepulse.risk.environment import EnvironmentError
 from tradepulse.risk.kill_switch import KillSwitchTriggeredError, SafetyMode
 
 
@@ -225,9 +223,7 @@ max_notional_per_order: 100000.0
 max_leverage: 5.0
 enable_risk_checks: true
 """
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             f.flush()
 
@@ -244,9 +240,7 @@ enable_risk_checks: true
             "max_position_size_default": 75.0,
             "max_leverage": 4.0,
         }
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(json_content, f)
             f.flush()
 
@@ -448,9 +442,7 @@ class TestCentralRiskEngine:
             total_exposure=total_exposure,
         )
 
-    def _create_market(
-        self, prices: dict[str, float] | None = None
-    ) -> MarketState:
+    def _create_market(self, prices: dict[str, float] | None = None) -> MarketState:
         """Create a market state for testing."""
         return MarketState(prices=prices or {"BTC/USD": 50000.0})
 
@@ -616,9 +608,7 @@ class TestCentralRiskEngine:
         """Test post-trade risk assessment."""
         engine = self._create_engine()
 
-        status = engine.assess_after_trade(
-            self._create_portfolio(daily_pnl=-1000.0)
-        )
+        status = engine.assess_after_trade(self._create_portfolio(daily_pnl=-1000.0))
 
         assert status in [RiskStatus.OK, RiskStatus.WARNING]
 

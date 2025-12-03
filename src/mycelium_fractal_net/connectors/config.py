@@ -53,12 +53,18 @@ class RestSourceConfig(BaseModel):
     poll_interval_seconds: float = Field(
         default=60.0, ge=1.0, le=3600.0, description="Poll interval"
     )
-    batch_size: int = Field(default=100, ge=1, le=10000, description="Max records per poll")
+    batch_size: int = Field(
+        default=100, ge=1, le=10000, description="Max records per poll"
+    )
     max_retries: int = Field(default=3, ge=0, le=10, description="Retry attempts")
-    timeout: float = Field(default=30.0, ge=1.0, le=300.0, description="Request timeout")
+    timeout: float = Field(
+        default=30.0, ge=1.0, le=300.0, description="Request timeout"
+    )
     headers: dict[str, str] = Field(default_factory=dict, description="HTTP headers")
     params: dict[str, str] = Field(default_factory=dict, description="Query parameters")
-    source_name: str | None = Field(default=None, description="Source identifier override")
+    source_name: str | None = Field(
+        default=None, description="Source identifier override"
+    )
 
 
 class FileSourceConfig(BaseModel):
@@ -80,12 +86,18 @@ class FileSourceConfig(BaseModel):
 
     path: str = Field(..., min_length=1, description="Path to data file")
     format: Literal["jsonl", "csv"] = Field(default="jsonl", description="File format")
-    batch_size: int = Field(default=100, ge=1, le=10000, description="Records per batch")
+    batch_size: int = Field(
+        default=100, ge=1, le=10000, description="Records per batch"
+    )
     field_mapping: dict[str, str] = Field(
         default_factory=dict, description="Column to field mapping"
     )
-    source_name: str | None = Field(default=None, description="Source identifier override")
-    timestamp_field: str | None = Field(default=None, description="Timestamp field name")
+    source_name: str | None = Field(
+        default=None, description="Source identifier override"
+    )
+    timestamp_field: str | None = Field(
+        default=None, description="Timestamp field name"
+    )
 
     @field_validator("path")
     @classmethod
@@ -122,10 +134,14 @@ class KafkaSourceConfig(BaseModel):
     auto_offset_reset: Literal["earliest", "latest"] = Field(
         default="latest", description="Offset reset policy"
     )
-    batch_size: int = Field(default=100, ge=1, le=10000, description="Messages per batch")
-    source_name: str | None = Field(default=None, description="Source identifier override")
-    security_protocol: Literal["PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"] = Field(
-        default="PLAINTEXT", description="Security protocol"
+    batch_size: int = Field(
+        default=100, ge=1, le=10000, description="Messages per batch"
+    )
+    source_name: str | None = Field(
+        default=None, description="Source identifier override"
+    )
+    security_protocol: Literal["PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"] = (
+        Field(default="PLAINTEXT", description="Security protocol")
     )
     sasl_mechanism: str | None = Field(default=None, description="SASL mechanism")
     sasl_username: str | None = Field(default=None, description="SASL username")
@@ -148,11 +164,17 @@ class BackendConfig(BaseModel):
         extra="forbid",
     )
 
-    type: Literal["local", "remote"] = Field(default="local", description="Backend type")
+    type: Literal["local", "remote"] = Field(
+        default="local", description="Backend type"
+    )
     endpoint: str | None = Field(default=None, description="Remote endpoint URL")
-    protocol: Literal["grpc", "rest"] = Field(default="rest", description="Remote protocol")
+    protocol: Literal["grpc", "rest"] = Field(
+        default="rest", description="Remote protocol"
+    )
     api_key: str | None = Field(default=None, description="API key for authentication")
-    timeout: float = Field(default=30.0, ge=1.0, le=300.0, description="Request timeout")
+    timeout: float = Field(
+        default=30.0, ge=1.0, le=300.0, description="Request timeout"
+    )
 
 
 class IngestionConfig(BaseSettings):
@@ -208,7 +230,9 @@ class IngestionConfig(BaseSettings):
         default="feature", description="Processing mode"
     )
     batch_size: int = Field(default=10, ge=1, le=1000, description="Events per batch")
-    max_queue_size: int = Field(default=1000, ge=10, le=100000, description="Max queue depth")
+    max_queue_size: int = Field(
+        default=1000, ge=10, le=100000, description="Max queue depth"
+    )
     workers: int = Field(default=1, ge=1, le=32, description="Worker task count")
 
     # Transform configuration
@@ -268,14 +292,20 @@ class IngestionConfig(BaseSettings):
         backend = BackendConfig(
             type=backend_type if backend_type in ("local", "remote") else "local",
             endpoint=os.environ.get("MFN_BACKEND_ENDPOINT"),
-            protocol=backend_protocol if backend_protocol in ("grpc", "rest") else "rest",
+            protocol=(
+                backend_protocol if backend_protocol in ("grpc", "rest") else "rest"
+            ),
             api_key=os.environ.get("MFN_BACKEND_API_KEY"),
         )
 
         source_type_env = os.environ.get("MFN_SOURCE_TYPE", "rest")
         mode_env = os.environ.get("MFN_MODE", "feature")
         return cls(
-            source_type=source_type_env if source_type_env in ("rest", "file", "kafka") else "rest",
+            source_type=(
+                source_type_env
+                if source_type_env in ("rest", "file", "kafka")
+                else "rest"
+            ),
             rest_source=rest_source,
             file_source=file_source,
             kafka_source=kafka_source,
@@ -309,7 +339,9 @@ class IngestionConfig(BaseSettings):
 
         return cls.model_validate(data)
 
-    def get_source_config(self) -> RestSourceConfig | FileSourceConfig | KafkaSourceConfig:
+    def get_source_config(
+        self,
+    ) -> RestSourceConfig | FileSourceConfig | KafkaSourceConfig:
         """Get the active source configuration.
 
         Returns:
