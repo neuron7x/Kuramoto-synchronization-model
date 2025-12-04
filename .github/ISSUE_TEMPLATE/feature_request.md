@@ -6,25 +6,44 @@ labels: [enhancement, needs-triage]
 assignees: ''
 ---
 
-## Summary
+## 🎯 Problem Statement
 
-- Describe the problem this feature solves.
+Is your feature request related to a problem? Please describe.
 
-## Proposal
+*Example: "I'm always frustrated when..."*
 
-- Outline the approach, scope, and success metrics.
+## 💡 Proposed Solution
 
-## Alternatives Considered
+Describe the solution you'd like. Be as specific as possible.
 
-- What options were evaluated and why were they rejected?
+### Acceptance Criteria
 
-## Dependencies / Risks
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
 
-- Mention required data, services, or coordination.
+## 🔄 Alternatives Considered
 
-## Checklist
+What other solutions or approaches have you considered? Why were they rejected?
 
-- [ ] Documented acceptance criteria.
-- [ ] Estimated complexity and rollout plan.
-- [ ] Considered observability / regression metrics impacts.
-- [ ] Identified CODEOWNERS or teams for review.
+## ⚠️ Potential Risks
+
+Are there any risks or trade-offs with this feature?
+
+- Performance impact?
+- Breaking changes?
+- Security considerations?
+- Complexity vs. benefit?
+
+## 📚 Additional Context
+
+- Mockups, diagrams, or examples
+- Related documentation or research
+- Similar features in other projects
+
+## ✔️ Checklist
+
+- [ ] I have searched existing [issues](https://github.com/neuron7x/TradePulse/issues) and [discussions](https://github.com/neuron7x/TradePulse/discussions) for similar requests
+- [ ] I have defined clear acceptance criteria
+- [ ] I have considered potential risks and alternatives
+- [ ] I am willing to help implement this feature (optional)
