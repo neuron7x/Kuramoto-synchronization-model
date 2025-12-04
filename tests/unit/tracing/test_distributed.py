@@ -640,9 +640,9 @@ class TestCorrelationScopeEdgeCases:
 
     def test_nested_correlation_scopes(self) -> None:
         """Verify nested correlation scopes work correctly."""
-        with correlation_scope("outer") as outer_id:
+        with correlation_scope("outer"):
             assert current_correlation_id() == "outer"
-            with correlation_scope("inner") as inner_id:
+            with correlation_scope("inner"):
                 assert current_correlation_id() == "inner"
             assert current_correlation_id() == "outer"
 

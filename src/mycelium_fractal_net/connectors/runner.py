@@ -141,7 +141,9 @@ class LocalBackend(MFNBackend):
 
             latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
 
-            logger.debug(f"Feature extraction complete: {request.request_id} ({latency:.2f}ms)")
+            logger.debug(
+                f"Feature extraction complete: {request.request_id} ({latency:.2f}ms)"
+            )
 
             return BackendResult(
                 success=True,

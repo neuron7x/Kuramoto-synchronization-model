@@ -73,9 +73,12 @@ class TestFileFeedIngestor:
         """Test reading JSONL file."""
         data_file = tmp_path / "data.jsonl"
         data_file.write_text(
-            json.dumps({"id": 1, "value": "first"}) + "\n"
-            + json.dumps({"id": 2, "value": "second"}) + "\n"
-            + json.dumps({"id": 3, "value": "third"}) + "\n"
+            json.dumps({"id": 1, "value": "first"})
+            + "\n"
+            + json.dumps({"id": 2, "value": "second"})
+            + "\n"
+            + json.dumps({"id": 3, "value": "third"})
+            + "\n"
         )
 
         ingestor = FileFeedIngestor(path=data_file, format="jsonl")
@@ -97,10 +100,12 @@ class TestFileFeedIngestor:
         """Test that empty lines are skipped."""
         data_file = tmp_path / "data.jsonl"
         data_file.write_text(
-            json.dumps({"id": 1}) + "\n"
+            json.dumps({"id": 1})
+            + "\n"
             + "\n"  # empty line
             + "   \n"  # whitespace only
-            + json.dumps({"id": 2}) + "\n"
+            + json.dumps({"id": 2})
+            + "\n"
         )
 
         ingestor = FileFeedIngestor(path=data_file, format="jsonl")
@@ -119,9 +124,11 @@ class TestFileFeedIngestor:
         """Test that invalid JSON lines are logged and skipped."""
         data_file = tmp_path / "data.jsonl"
         data_file.write_text(
-            json.dumps({"id": 1}) + "\n"
+            json.dumps({"id": 1})
+            + "\n"
             + "not valid json\n"
-            + json.dumps({"id": 2}) + "\n"
+            + json.dumps({"id": 2})
+            + "\n"
         )
 
         ingestor = FileFeedIngestor(path=data_file, format="jsonl")
@@ -140,11 +147,7 @@ class TestFileFeedIngestor:
     async def test_read_csv_file(self, tmp_path: Path) -> None:
         """Test reading CSV file."""
         data_file = tmp_path / "data.csv"
-        data_file.write_text(
-            "id,name,value\n"
-            "1,first,100\n"
-            "2,second,200\n"
-        )
+        data_file.write_text("id,name,value\n" "1,first,100\n" "2,second,200\n")
 
         ingestor = FileFeedIngestor(path=data_file, format="csv")
         await ingestor.connect()
@@ -164,10 +167,7 @@ class TestFileFeedIngestor:
     async def test_csv_field_mapping(self, tmp_path: Path) -> None:
         """Test CSV field mapping."""
         data_file = tmp_path / "data.csv"
-        data_file.write_text(
-            "col_a,col_b,col_c\n"
-            "1,hello,3.14\n"
-        )
+        data_file.write_text("col_a,col_b,col_c\n" "1,hello,3.14\n")
 
         ingestor = FileFeedIngestor(
             path=data_file,
@@ -223,8 +223,10 @@ class TestFileFeedIngestor:
         """Test timestamp extraction from JSONL records."""
         data_file = tmp_path / "data.jsonl"
         data_file.write_text(
-            json.dumps({"id": 1, "timestamp": 1704067200.0}) + "\n"
-            + json.dumps({"id": 2, "time": "2024-01-02T12:00:00Z"}) + "\n"
+            json.dumps({"id": 1, "timestamp": 1704067200.0})
+            + "\n"
+            + json.dumps({"id": 2, "time": "2024-01-02T12:00:00Z"})
+            + "\n"
         )
 
         ingestor = FileFeedIngestor(path=data_file, format="jsonl")
@@ -247,9 +249,7 @@ class TestFileFeedIngestor:
     async def test_custom_timestamp_field(self, tmp_path: Path) -> None:
         """Test custom timestamp field configuration."""
         data_file = tmp_path / "data.jsonl"
-        data_file.write_text(
-            json.dumps({"id": 1, "event_time": 1704067200.0}) + "\n"
-        )
+        data_file.write_text(json.dumps({"id": 1, "event_time": 1704067200.0}) + "\n")
 
         ingestor = FileFeedIngestor(
             path=data_file,
@@ -308,9 +308,7 @@ class TestFileFeedIngestor:
         """Test stats property returns correct counts."""
         data_file = tmp_path / "data.jsonl"
         data_file.write_text(
-            json.dumps({"id": 1}) + "\n"
-            + "invalid\n"
-            + json.dumps({"id": 2}) + "\n"
+            json.dumps({"id": 1}) + "\n" + "invalid\n" + json.dumps({"id": 2}) + "\n"
         )
 
         ingestor = FileFeedIngestor(path=data_file, format="jsonl")

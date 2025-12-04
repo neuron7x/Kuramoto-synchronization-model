@@ -10,7 +10,7 @@ Tests validation of core market data models:
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -22,10 +22,9 @@ _src_path = Path(__file__).parent.parent.parent.parent / "src"
 if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
-from tradepulse.data.schema import (
+from tradepulse.data.schema import (  # noqa: E402
     Bar,
     Candle,
-    DataQualityStatus,
     FeatureVector,
     MarketSnapshot,
     OrderSide,
@@ -33,10 +32,10 @@ from tradepulse.data.schema import (
     Timeframe,
 )
 
-
 # ============================================================================
 # Timeframe Tests
 # ============================================================================
+
 
 class TestTimeframe:
     """Tests for Timeframe enum."""
@@ -64,6 +63,7 @@ class TestTimeframe:
 # Bar Tests
 # ============================================================================
 
+
 class TestBar:
     """Tests for Bar (OHLCV) model."""
 
@@ -84,7 +84,7 @@ class TestBar:
     def test_valid_bar_creation(self, valid_bar_data: dict) -> None:
         """Test creating a valid bar."""
         bar = Bar(**valid_bar_data)
-        
+
         assert bar.symbol == "BTCUSDT"
         assert bar.timeframe == Timeframe.M1
         assert bar.open == Decimal("45000")
@@ -105,7 +105,7 @@ class TestBar:
             close="3050",
             volume="500.25",
         )
-        
+
         assert bar.open == Decimal("3000")
         assert bar.volume == Decimal("500.25")
 
@@ -121,7 +121,7 @@ class TestBar:
             close=3050.0,
             volume=500.25,
         )
-        
+
         assert bar.open == Decimal("3000.0")
 
     def test_bar_accepts_epoch_timestamp(self) -> None:
@@ -137,7 +137,7 @@ class TestBar:
             close=45050,
             volume=100,
         )
-        
+
         assert bar.ts == pytest.approx(epoch)
         assert bar.timestamp.tzinfo is timezone.utc
 
@@ -154,7 +154,7 @@ class TestBar:
             close=45050,
             volume=100,
         )
-        
+
         assert bar.timestamp.tzinfo is timezone.utc
 
     def test_bar_symbol_uppercased(self) -> None:
@@ -169,7 +169,7 @@ class TestBar:
             close=45050,
             volume=100,
         )
-        
+
         assert bar.symbol == "BTCUSDT"
 
     def test_bar_rejects_negative_price(self) -> None:
@@ -258,7 +258,9 @@ class TestBar:
 
     def test_bar_rejects_empty_symbol(self) -> None:
         """Test bar rejects empty symbol."""
-        with pytest.raises(ValidationError, match="String should have at least 1 character"):
+        with pytest.raises(
+            ValidationError, match="String should have at least 1 character"
+        ):
             Bar(
                 timestamp=datetime.now(timezone.utc),
                 symbol="   ",
@@ -326,7 +328,7 @@ class TestBar:
             trades=50,
             vwap=102.5,
         )
-        
+
         assert bar.trades == 50
         assert bar.vwap == Decimal("102.5")
 
@@ -342,7 +344,7 @@ class TestBar:
             close=105,
             volume=100,
         )
-        
+
         with pytest.raises(ValidationError):
             bar.open = Decimal("200")  # type: ignore
 
@@ -358,7 +360,7 @@ class TestBar:
             close=105,
             volume=100,
         )
-        
+
         data = bar.to_dict()
         assert data["symbol"] == "BTCUSDT"
         assert data["timeframe"] == "1m"
@@ -373,6 +375,7 @@ class TestBar:
 # Tick Tests
 # ============================================================================
 
+
 class TestTick:
     """Tests for Tick model."""
 
@@ -384,7 +387,7 @@ class TestTick:
             price=Decimal("45000"),
             volume=Decimal("0.5"),
         )
-        
+
         assert tick.symbol == "BTCUSDT"
         assert tick.price == Decimal("45000")
         assert tick.volume == Decimal("0.5")
@@ -399,7 +402,7 @@ class TestTick:
             side=OrderSide.BUY,
             trade_id="trade123",
         )
-        
+
         assert tick.side == OrderSide.BUY
         assert tick.trade_id == "trade123"
 
@@ -440,7 +443,7 @@ class TestTick:
             symbol="BTCUSDT",
             price=45000,
         )
-        
+
         assert tick.volume == Decimal("0")
 
     def test_tick_symbol_uppercased(self) -> None:
@@ -450,13 +453,14 @@ class TestTick:
             symbol="btcusdt",
             price=45000,
         )
-        
+
         assert tick.symbol == "BTCUSDT"
 
 
 # ============================================================================
 # FeatureVector Tests
 # ============================================================================
+
 
 class TestFeatureVector:
     """Tests for FeatureVector model."""
@@ -468,7 +472,7 @@ class TestFeatureVector:
             symbol="BTCUSDT",
             features={"rsi": 65.0, "macd": 0.5, "momentum": 1.2},
         )
-        
+
         assert fv.symbol == "BTCUSDT"
         assert fv.features["rsi"] == 65.0
         assert fv.get("macd") == 0.5
@@ -481,7 +485,7 @@ class TestFeatureVector:
             features={"rsi": 65.0},
             metadata={"source": "binance", "computed_at": "2024-01-01"},
         )
-        
+
         assert fv.metadata["source"] == "binance"
 
     def test_feature_vector_get_with_default(self) -> None:
@@ -491,7 +495,7 @@ class TestFeatureVector:
             symbol="BTCUSDT",
             features={"rsi": 65.0},
         )
-        
+
         assert fv.get("rsi") == 65.0
         assert fv.get("nonexistent") is None
         assert fv.get("nonexistent", 0.0) == 0.0
@@ -502,13 +506,14 @@ class TestFeatureVector:
             timestamp=datetime.now(timezone.utc),
             symbol="BTCUSDT",
         )
-        
+
         assert fv.features == {}
 
 
 # ============================================================================
 # MarketSnapshot Tests
 # ============================================================================
+
 
 class TestMarketSnapshot:
     """Tests for MarketSnapshot model."""
@@ -520,7 +525,7 @@ class TestMarketSnapshot:
             symbol="BTCUSDT",
             last_price=Decimal("45000"),
         )
-        
+
         assert snapshot.symbol == "BTCUSDT"
         assert snapshot.last_price == Decimal("45000")
 
@@ -535,7 +540,7 @@ class TestMarketSnapshot:
             bid_volume=10.5,
             ask_volume=8.3,
         )
-        
+
         assert snapshot.bid == Decimal("44999")
         assert snapshot.ask == Decimal("45001")
         assert snapshot.spread == Decimal("2")
@@ -582,7 +587,7 @@ class TestMarketSnapshot:
             symbol="BTCUSDT",
             last_price=45000,
         )
-        
+
         assert snapshot.spread is None
         assert snapshot.mid_price is None
 
@@ -598,14 +603,14 @@ class TestMarketSnapshot:
             close=45050,
             volume=1000,
         )
-        
+
         snapshot = MarketSnapshot(
             timestamp=datetime.now(timezone.utc),
             symbol="BTCUSDT",
             last_price=45050,
             last_bar=bar,
         )
-        
+
         assert snapshot.last_bar is not None
         assert snapshot.last_bar.close == Decimal("45050")
 
@@ -616,13 +621,13 @@ class TestMarketSnapshot:
             symbol="BTCUSDT",
             features={"rsi": 65.0},
         )
-        
+
         snapshot = MarketSnapshot(
             timestamp=datetime.now(timezone.utc),
             symbol="BTCUSDT",
             last_price=45000,
             features=fv,
         )
-        
+
         assert snapshot.features is not None
         assert snapshot.features.get("rsi") == 65.0

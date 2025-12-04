@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 import click
 import numpy as np
@@ -217,9 +216,7 @@ def simulate(
 
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(
-            json.dumps(result.to_dict(), indent=2), encoding="utf-8"
-        )
+        output_path.write_text(json.dumps(result.to_dict(), indent=2), encoding="utf-8")
         if not quiet:
             click.echo(f"\nReport saved to: {output_path}")
 
@@ -306,8 +303,8 @@ def report(
         "",
         "## Configuration",
         "",
-        f"| Parameter | Value |",
-        f"|-----------|-------|",
+        "| Parameter | Value |",
+        "|-----------|-------|",
         f"| Initial Capital | ${config.initial_capital:,.0f} |",
         f"| Daily Loss Limit | {config.daily_loss_limit_pct}% |",
         f"| Max Drawdown (Kill-Switch) | {config.max_drawdown_pct}% |",
@@ -318,8 +315,8 @@ def report(
         "",
         "### Baseline (No Risk Control)",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Total Return | {result.baseline_pnl / config.initial_capital * 100:+.2f}% |",
         f"| Max Drawdown | {result.baseline_max_drawdown * 100:.2f}% |",
         f"| Sharpe Ratio | {result.baseline_sharpe:.2f} |",
@@ -327,8 +324,8 @@ def report(
         "",
         "### With Risk Guardian",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Total Return | {result.protected_pnl / config.initial_capital * 100:+.2f}% |",
         f"| Max Drawdown | {result.protected_max_drawdown * 100:.2f}% |",
         f"| Sharpe Ratio | {result.protected_sharpe:.2f} |",
@@ -336,16 +333,16 @@ def report(
         "",
         "### Risk Events",
         "",
-        f"| Event | Count |",
-        f"|-------|-------|",
+        "| Event | Count |",
+        "|-------|-------|",
         f"| Kill-Switch Activations | {result.kill_switch_activations} |",
         f"| Safe Mode Periods | {result.safe_mode_periods} |",
         f"| Blocked Trades | {result.blocked_trades} |",
         "",
         "## Value Delivered",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| **Saved Capital** | **${result.saved_capital:,.2f}** ({result.saved_capital_pct:.1f}%) |",
         f"| Sharpe Improvement | {result.sharpe_improvement:+.0f}% |",
         f"| Drawdown Reduction | {result.drawdown_reduction:.0f}% |",

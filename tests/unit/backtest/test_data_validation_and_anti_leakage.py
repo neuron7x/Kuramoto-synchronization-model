@@ -10,7 +10,6 @@ from backtest.engine import (
     AntiLeakageConfig,
     DataValidationConfig,
     LatencyConfig,
-    WalkForwardEngine,
     walk_forward,
 )
 from tradepulse.data_quality import DataQualityError
@@ -527,7 +526,10 @@ class TestBacktestReportGeneration:
 
         assert result.performance is not None
         assert result.report_path is not None
-        assert result.performance.sharpe_ratio is not None or result.performance.cagr is not None
+        assert (
+            result.performance.sharpe_ratio is not None
+            or result.performance.cagr is not None
+        )
 
     def test_report_includes_cost_breakdown(self) -> None:
         """Report should include a breakdown of all costs."""

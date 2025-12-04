@@ -222,7 +222,9 @@ class KafkaIngestor(BaseIngestor):
 
         timestamp = datetime.now(timezone.utc)
         if hasattr(message, "timestamp") and message.timestamp:
-            timestamp = datetime.fromtimestamp(message.timestamp / 1000, tz=timezone.utc)
+            timestamp = datetime.fromtimestamp(
+                message.timestamp / 1000, tz=timezone.utc
+            )
 
         return RawEvent(
             source=self.source_name,

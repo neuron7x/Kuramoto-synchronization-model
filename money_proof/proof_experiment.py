@@ -229,8 +229,14 @@ def main(
         timestamps = pd.to_datetime(df.index)
 
     # Select strategy
-    strategy_fn = momentum_strategy if strategy == "momentum" else mean_reversion_strategy
-    strategy_name = "Momentum (SMA Crossover)" if strategy == "momentum" else "Mean Reversion (Bollinger)"
+    strategy_fn = (
+        momentum_strategy if strategy == "momentum" else mean_reversion_strategy
+    )
+    strategy_name = (
+        "Momentum (SMA Crossover)"
+        if strategy == "momentum"
+        else "Mean Reversion (Bollinger)"
+    )
 
     # Configure Risk Guardian
     config = RiskGuardianConfig(

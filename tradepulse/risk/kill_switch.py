@@ -13,8 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -402,9 +401,7 @@ class SafetyController:
             if self._state.kill_switch_active:
                 raise KillSwitchTriggeredError(self._state.kill_switch_reason)
 
-    def register_callback(
-        self, callback: Callable[[SafetyState], None]
-    ) -> None:
+    def register_callback(self, callback: Callable[[SafetyState], None]) -> None:
         """Register a callback for state changes.
 
         Args:
@@ -413,9 +410,7 @@ class SafetyController:
         with self._lock:
             self._callbacks.append(callback)
 
-    def get_audit_log(
-        self, *, limit: int | None = None
-    ) -> list[dict[str, object]]:
+    def get_audit_log(self, *, limit: int | None = None) -> list[dict[str, object]]:
         """Get the audit log of state changes.
 
         Args:

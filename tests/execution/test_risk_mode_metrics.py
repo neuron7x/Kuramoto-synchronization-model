@@ -30,15 +30,11 @@ class TestRiskMetrics:
         metrics = RiskMetrics(registry)
 
         metrics.record_kill_switch(True, env="prod")
-        value = _sample_value(
-            registry, "tradepulse_risk_kill_switch", {"env": "prod"}
-        )
+        value = _sample_value(registry, "tradepulse_risk_kill_switch", {"env": "prod"})
         assert value == 1.0
 
         metrics.record_kill_switch(False, env="prod")
-        value = _sample_value(
-            registry, "tradepulse_risk_kill_switch", {"env": "prod"}
-        )
+        value = _sample_value(registry, "tradepulse_risk_kill_switch", {"env": "prod"})
         assert value == 0.0
 
     def test_gross_exposure_recording(self) -> None:
@@ -117,7 +113,9 @@ class TestRiskMetrics:
 
         metrics.record_circuit_trip("high_volatility")
         value = _sample_value(
-            registry, "tradepulse_risk_circuit_trips_total", {"reason": "high_volatility"}
+            registry,
+            "tradepulse_risk_circuit_trips_total",
+            {"reason": "high_volatility"},
         )
         assert value == 1.0
 
@@ -126,9 +124,7 @@ class TestRiskMetrics:
         metrics = RiskMetrics(registry)
 
         metrics.record_open_orders(15, env="prod")
-        value = _sample_value(
-            registry, "tradepulse_risk_open_orders", {"env": "prod"}
-        )
+        value = _sample_value(registry, "tradepulse_risk_open_orders", {"env": "prod"})
         assert value == 15.0
 
     def test_disabled_when_prometheus_unavailable(self, monkeypatch) -> None:

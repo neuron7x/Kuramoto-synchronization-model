@@ -50,7 +50,9 @@ class RawEvent(BaseModel):
 
     source: str = Field(..., min_length=1, description="Data source identifier")
     timestamp: datetime = Field(..., description="Event timestamp (UTC)")
-    payload: dict[str, Any] = Field(default_factory=dict, description="Event payload data")
+    payload: dict[str, Any] = Field(
+        default_factory=dict, description="Event payload data"
+    )
     meta: dict[str, Any] = Field(default_factory=dict, description="Optional metadata")
 
     @field_validator("timestamp", mode="before")
@@ -154,6 +156,8 @@ class BaseIngestor(ABC):
         await self.connect()
         return self
 
-    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any) -> None:
+    async def __aexit__(
+        self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any
+    ) -> None:
         """Async context manager exit."""
         await self.close()

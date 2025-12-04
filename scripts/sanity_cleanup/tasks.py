@@ -667,7 +667,9 @@ def archive_legacy_content(context: TaskContext) -> TaskReport:
         for candidate in candidates:
             relative = safe_relpath(candidate, context.root)
             slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", relative)
-            archive_name = f"{slug}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+            archive_name = (
+                f"{slug}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+            )
             archive_path = archive_root / f"{archive_name}.tar.gz"
             with tarfile.open(archive_path, "w:gz") as tar:
                 tar.add(candidate, arcname=relative)

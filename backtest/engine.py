@@ -459,7 +459,10 @@ class WalkForwardEngine(BacktestEngine[Result]):
                             "Use skip_validation=True to proceed at your own risk.",
                             report=data_quality_report,
                         )
-                    if data_quality_report.warnings_count > 0 and not validation_cfg.allow_warnings:
+                    if (
+                        data_quality_report.warnings_count > 0
+                        and not validation_cfg.allow_warnings
+                    ):
                         raise DataQualityError(
                             f"Data quality validation found {data_quality_report.warnings_count} warnings. "
                             "Use allow_warnings=True to proceed.",
@@ -487,7 +490,9 @@ class WalkForwardEngine(BacktestEngine[Result]):
                     adjusted_signal_delay = max(
                         0,
                         latency_cfg.signal_to_order,
-                        leakage_cfg.minimum_signal_delay - latency_cfg.order_to_execution - latency_cfg.execution_to_fill
+                        leakage_cfg.minimum_signal_delay
+                        - latency_cfg.order_to_execution
+                        - latency_cfg.execution_to_fill,
                     )
                     latency_cfg = LatencyConfig(
                         signal_to_order=adjusted_signal_delay,
