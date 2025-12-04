@@ -1,62 +1,119 @@
 # Changelog
 
-Ведемо зміни за правилами [Keep a Changelog](https://keepachangelog.com/) та [SemVer](https://semver.org/).
-Цей файл автоматично оновлюється за допомогою [Towncrier](https://towncrier.readthedocs.io/).
-Додавайте короткі фрагменти до каталогу `newsfragments/` для кожного Pull Request.
+All notable changes to TradePulse are documented in this file.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
+
+This file is automatically updated via [Towncrier](https://towncrier.readthedocs.io/).
+Add change fragments to `newsfragments/` for each Pull Request.
 
 <!-- towncrier release notes start -->
 
 ## [Unreleased]
-### Added
+
+### 🚀 Features
 - DOC PR COPILOT v2: LLM-based documentation agent for automated documentation review and patch generation in Pull Requests.
 - Agent configuration system in `.github/agents/` with system prompts, integration guides, and examples.
 - 4C Principles documentation (Clarity, Conciseness, Correctness, Consistency) for documentation standards.
+- Comprehensive API documentation (`docs/API.md`) with Python, CLI, and HTTP endpoint references.
 
-### Changed
+### ⚡ Performance
+- Refactored cache key normalisation to use deterministic `repr` tuples, improving synthetic throughput by ~19%.
+
+### 🧹 Maintenance
 - Hardened Release Drafter automation (v6 workflow, semantic version resolver, metrics summary).
-- Refactored cache key normalisation to use deterministic ``repr`` tuples, trimming redundant recursion and improving synthetic throughput by ~19%; systems with non-deterministic ``__repr__`` implementations on cache keys should validate behaviour.
+
+### ⚠️ Breaking Changes
+- Systems with non-deterministic `__repr__` implementations on cache keys should validate behaviour after the cache refactoring.
+
+---
 
 ## [2.1.3] - 2025-10-05
-### Added
-- Новий конвеєр **CI/CD**: `ci.yml` (матриці лінтів/тестів, concurrency, кеші), `pre-commit.yml`, `auto-merge.yml`, `sbom-scan.yml`, `publish-image.yml` (cosign), `data-sanity.yml`.
-- Якість/управління змінами: `benchmarks.yml`, `integration.yml`, `commitlint.yml`, `pr-labeler.yml`, `todo.yml`.
-- Контракти: `buf.yml` (lint+breaking), `gen-drift.yml` (+ Makefile `generate`).
-### Changed
-- Оновлено `.pre-commit-config.yaml` (black, ruff, prettier, buf hooks).
-- Адаптовано JS gateway (`domains/platform/gateway`) під lint-джоб.
+### 🚀 Features
+- New **CI/CD pipelines**: `ci.yml` (lint/test matrices, concurrency, caches), `pre-commit.yml`, `auto-merge.yml`, `sbom-scan.yml`, `publish-image.yml` (cosign), `data-sanity.yml`.
+- Quality management: `benchmarks.yml`, `integration.yml`, `commitlint.yml`, `pr-labeler.yml`, `todo.yml`.
+- Contract validation: `buf.yml` (lint+breaking), `gen-drift.yml` (+ Makefile `generate`).
+
+### 🧹 Maintenance
+- Updated `.pre-commit-config.yaml` (black, ruff, prettier, buf hooks).
+- Adapted JS gateway (`domains/platform/gateway`) for lint job.
+
+---
 
 ## [2.1.2] - 2025-10-05
-### Added
-- Конфіг для pre-commit (`.pre-commit-config.yaml`), pytest (`pytest.ini`).
-- Шаблони GitHub: issue/PR, labeler, dependabot, release-drafter.
-- Робочі процеси CI: release-drafter, codeql, lint, тест-матриця, docs-build, deploy, infra-check.
 
-### Added
-- Розширення скриптів автоматизації (`scripts/*`).
-- Шаблони процесів: `.gitattributes`, `CODEOWNERS`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`.
+### 🚀 Features
+- Pre-commit config (`.pre-commit-config.yaml`), pytest config (`pytest.ini`).
+- GitHub templates: issue/PR, labeler, dependabot, release-drafter.
+- CI workflows: release-drafter, codeql, lint, test-matrix, docs-build, deploy, infra-check.
+- Automation scripts expansion (`scripts/*`).
+- Process templates: `.gitattributes`, `CODEOWNERS`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`.
 
-### Changed
-- Уточнення документації щодо фрактальної декомпозиції (FPM-A).
+### 📝 Documentation
+- Clarified documentation on Fractal Modular Architecture (FPM-A).
+
+---
 
 ## [2.1.1] - 2025-10-05
-### Added
-- Інтегровано професійні проектні артефакти: `.gitattributes`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, `CODEOWNERS`.
-- Додано Python-пакет `scripts` із уніфікованим CLI (`python -m scripts`).
 
-### Security
-- Уніфікація ліній закінчення файлів через `.gitattributes`.
+### 🚀 Features
+- Integrated professional project artifacts: `.gitattributes`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, `CODEOWNERS`.
+- Added Python package `scripts` with unified CLI (`python -m scripts`).
+
+### 🔐 Security
+- Unified file line endings via `.gitattributes`.
+
+---
 
 ## [2.1.0] - 2025-10-05
-### Added
-- Інтеграція **FPM-A**: фрактальні юніти, граф залежностей, метрики цикломатичної складності, CI-гейти.
+
+### 🚀 Features
+- **FPM-A Integration**: Fractal units, dependency graphs, cyclomatic complexity metrics, CI gates.
+
+---
 
 ## [2.0.0] - 2025-10-05
-### Added
-- Початковий каркас TradePulse: protobuf-контракти, Python/Next.js скелети, інфраструктурні файли.
 
-## [0.1.0] - 2025-10-05
-### Added
-- Повноцінний каркас проєкту з фрактальною архітектурою (FPM-A), індикаторами (Kuramoto/Entropy/Hurst/Ricci), агентною системою, пайплайнами даних, фазовою логікою, бектестом, CLI та Streamlit-панеллю.
-- Професійна документація (README, MkDocs), CI/CD, безпека (CodeQL, SBOM), автолінти й тести.
-### Fixed
-- Заповнено шаблонні місця у CLI/скриптах; узгоджено версування і конфіги.
+### 🚀 Features
+- Initial TradePulse skeleton: protobuf contracts, Python/Next.js scaffolding, infrastructure files.
+
+---
+
+## [0.1.0] - 2025-10-05 — Initial Public Preview
+
+### 🚀 Features
+- **Core Indicators**: Kuramoto oscillators, Ricci flow curvature, Shannon entropy, Hurst exponent, 50+ technical indicators.
+- **Market Phase Detection**: Five-phase classification (CHAOTIC, PROTO_EMERGENT, STRONG_EMERGENT, TRANSITION, POST_EMERGENT).
+- **TradePulseCompositeEngine**: High-level API combining Kuramoto synchronization with Ricci flow geometry.
+- **Event-Driven Backtest Engine**: Walk-forward testing, Monte Carlo simulation, transaction cost modeling.
+- **CLI Interface**: `analyze`, `backtest`, `live` commands with JSON output and tracing.
+- **Streamlit Dashboard**: Interactive market analysis and visualization.
+- **Fractal Modular Architecture (FPM-A)**: Clean domain separation with ports/adapters pattern.
+
+### 📝 Documentation
+- README with quickstart, feature overview, and architecture diagrams.
+- MkDocs documentation site structure.
+- API reference, quickstart guide, deployment docs.
+
+### 🔐 Security
+- CodeQL scanning, SBOM generation, secret detection.
+- Security framework aligned with NIST SP 800-53 and ISO 27001.
+
+### 🐛 Fixes
+- Filled template placeholders in CLI/scripts.
+- Synchronized versioning and configs.
+
+### ⚠️ Known Limitations
+- Live trading is in beta; test thoroughly in paper mode before production.
+- Web dashboard is in early preview (alpha).
+- Some advanced indicators require optional dependencies (`pip install ".[neuro_advanced]"`).
+
+---
+
+[Unreleased]: https://github.com/neuron7x/TradePulse/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/neuron7x/TradePulse/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/neuron7x/TradePulse/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/neuron7x/TradePulse/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/neuron7x/TradePulse/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/neuron7x/TradePulse/compare/v0.1.0...v2.0.0
+[0.1.0]: https://github.com/neuron7x/TradePulse/releases/tag/v0.1.0
