@@ -1866,7 +1866,9 @@ We love contributions! Whether it's bug fixes, new features, or documentation im
 # Setup development environment
 git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
-pip install -e ".[dev]"
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.lock
 pre-commit install
 
 # Run quality checks before committing
