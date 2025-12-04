@@ -6,8 +6,68 @@ This document outlines the rules and processes that enable fast and safe develop
 
 ---
 
+## 🎯 Your First Contribution
+
+**New to TradePulse? Welcome!** Here's how to make your first contribution:
+
+### Quick Start for New Contributors
+
+1. **Find an Issue**
+   - Browse [**good first issues**](https://github.com/neuron7x/TradePulse/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — curated for newcomers
+   - Look for issues labeled `help wanted` or `documentation`
+   - Don't see something you like? Check [GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions) for ideas
+
+2. **Set Up Your Environment**
+   ```bash
+   # Fork the repo on GitHub, then clone your fork
+   git clone https://github.com/YOUR-USERNAME/TradePulse.git
+   cd TradePulse
+
+   # Create virtual environment
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+   # Install dependencies
+   pip install -r requirements-dev.lock
+   pre-commit install
+   ```
+
+3. **Create a Branch & Make Changes**
+   ```bash
+   # Create a feature branch
+   git checkout -b feat/your-feature-name
+
+   # Make your changes, then run tests
+   pytest tests/unit -q
+   ruff check .
+   ```
+
+4. **Submit Your PR**
+   - Push your branch and open a Pull Request
+   - Fill out the PR template
+   - Wait for review (we try to respond within 48 hours!)
+
+### Types of Contributions We Love
+
+| Type | Examples | Label |
+|------|----------|-------|
+| 🐛 Bug fixes | Fix typos, broken tests, edge cases | `bug` |
+| 📖 Documentation | Improve README, add examples, fix typos | `documentation` |
+| ✨ Features | New indicators, CLI commands, integrations | `enhancement` |
+| 🧪 Tests | Add missing tests, improve coverage | `test` |
+| 🎨 Code quality | Refactoring, type hints, linting fixes | `refactor` |
+
+### Need Help?
+
+- 💬 Ask in [GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions) — no question is too small!
+- 🎮 Join our [Discord](https://discord.gg/tradepulse) for real-time chat
+- 📧 Email maintainers for sensitive issues
+
+---
+
 ## Table of Contents
 
+- [Your First Contribution](#-your-first-contribution)
 - [Architectural Framework](#architectural-framework)
 - [Prerequisites](#prerequisites)
 - [Development Workflow](#development-workflow)

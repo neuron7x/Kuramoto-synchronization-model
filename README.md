@@ -1852,18 +1852,47 @@ We love contributions! Whether it's bug fixes, new features, or documentation im
 
 <br>
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
+<div align="center">
+
+**🚀 Quick Setup**
+
+</div>
+
 ```bash
 # Setup development environment
 git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
 pip install -e ".[dev]"
+pre-commit install
 
 # Run quality checks before committing
-black .           # Format code
 ruff check .      # Lint code
-mypy .            # Type check
 pytest            # Run tests
 ```
+
+</td>
+<td width="50%" valign="top">
+
+<div align="center">
+
+**🎯 First-Time Contributors**
+
+</div>
+
+New here? Great! Here's how to get started:
+
+1. 🔍 Browse [**good first issues**](https://github.com/neuron7x/TradePulse/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — beginner-friendly tasks
+2. 📖 Read our [**Contributing Guide**](CONTRIBUTING.md) — explains the full process
+3. 💬 Ask questions in [**GitHub Discussions**](https://github.com/neuron7x/TradePulse/discussions)
+4. 🎉 Submit your first PR!
+
+</td>
+</tr>
+</table>
 
 <br>
 
@@ -2027,26 +2056,36 @@ gantt
 
 <table>
 <tr>
-<td width="50%" valign="top" align="center">
+<td width="33%" valign="top" align="center">
 
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Speech%20Balloon.png" alt="Speech Balloon" width="30" height="30" />
 
-### Chat & Discussion
+### 💬 Ask Questions
 
-- 💬 [Discord Community](https://discord.gg/tradepulse) — Real-time chat
-- 🐦 [Twitter](https://twitter.com/tradepulse) — Latest updates
-- 📧 [Mailing List](https://tradepulse.io/newsletter) — Monthly newsletter
+- [**GitHub Discussions**](https://github.com/neuron7x/TradePulse/discussions) — Q&A, ideas, show & tell
+- [Discord Community](https://discord.gg/tradepulse) — Real-time chat
+- [Stack Overflow](https://stackoverflow.com/questions/tagged/tradepulse) — Tagged questions
 
 </td>
-<td width="50%" valign="top" align="center">
+<td width="33%" valign="top" align="center">
 
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="30" height="30" />
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="30" height="30" />
 
-### Learn & Share
+### 💡 Propose Ideas
 
-- 🎥 [YouTube Channel](https://youtube.com/tradepulse) — Video tutorials
-- 📝 [Blog](https://blog.tradepulse.io) — Technical articles
-- 💼 [LinkedIn](https://linkedin.com/company/tradepulse) — Professional network
+- [**Feature Requests**](https://github.com/neuron7x/TradePulse/issues/new?template=feature_request.md) — Suggest improvements
+- [GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions/categories/ideas) — Brainstorm with the community
+
+</td>
+<td width="33%" valign="top" align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Handshake.png" alt="Handshake" width="30" height="30" />
+
+### 🤝 Get Involved
+
+- [**Good First Issues**](https://github.com/neuron7x/TradePulse/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — Start here!
+- [Contributing Guide](CONTRIBUTING.md) — Full contributor guide
+- [Code of Conduct](CODE_OF_CONDUCT.md) — Our community standards
 
 </td>
 </tr>
@@ -2056,8 +2095,8 @@ gantt
 
 <div align="center">
 
-> [!NOTE]
-> **New to the community?** Start by introducing yourself in our [Discord](https://discord.gg/tradepulse) #introductions channel!
+> [!TIP]
+> **New to the community?** Start with a [good first issue](https://github.com/neuron7x/TradePulse/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22), introduce yourself in [Discussions](https://github.com/neuron7x/TradePulse/discussions), or join our [Discord](https://discord.gg/tradepulse)!
 
 </div>
 
