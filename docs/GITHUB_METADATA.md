@@ -81,14 +81,16 @@ trading, algorithmic-trading, quantitative-finance, backtesting, market-analysis
 
 ## Website Link (optional)
 
-If you have a documentation site, add it in the "Website" field:
+If you have a documentation site, add it in the "Website" field.
 
-```
-https://tradepulse.io
-```
-
-Or the GitHub Pages docs URL:
+Using GitHub Pages (recommended for open source):
 
 ```
 https://neuron7x.github.io/TradePulse
+```
+
+Or a custom domain (if configured):
+
+```
+https://docs.tradepulse.io
 ```

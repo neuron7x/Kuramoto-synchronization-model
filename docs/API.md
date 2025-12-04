@@ -86,6 +86,28 @@ composite_config = {
 }
 ```
 
+**Full Configuration Example:**
+
+```python
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+
+# Custom configuration for all components
+engine = TradePulseCompositeEngine(
+    kuramoto_config={
+        "scales": [60, 300, 900],    # 1m, 5m, 15m timeframes in seconds
+        "coupling": 0.8,              # Oscillator coupling strength
+    },
+    ricci_config={
+        "window_size": 50,            # Graph construction window
+        "delta": 0.01,                # Edge weight threshold
+    },
+    composite_config={
+        "R_strong_emergent": 0.85,    # Higher threshold for strong signals
+        "min_confidence": 0.6,        # Require higher confidence
+    }
+)
+```
+
 #### Methods
 
 ##### analyze_market
@@ -124,12 +146,14 @@ Analyze market regime and generate trading signals.
 **Example:**
 
 ```python
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import (
+    TradePulseCompositeEngine, MarketPhase
+)
 
 engine = TradePulseCompositeEngine()
 signal = engine.analyze_market(market_data)
 
-if signal.phase.value == "strong_emergent" and signal.confidence > 0.7:
+if signal.phase == MarketPhase.STRONG_EMERGENT and signal.confidence > 0.7:
     print(f"Strong buy signal: {signal.entry_signal:.2f}")
 ```
 
