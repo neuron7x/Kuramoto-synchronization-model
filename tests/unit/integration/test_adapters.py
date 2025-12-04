@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
-import pytest
-
-from core.architecture_integrator.component import ComponentHealth, ComponentStatus
+from core.architecture_integrator.component import ComponentStatus
 from core.integration.adapters import (
     AgentCoordinatorAdapter,
     ServiceRegistryAdapter,
@@ -86,7 +84,7 @@ class TestServiceRegistryAdapter:
         mock_service1 = MagicMock()
         mock_service1.name = "market_data"
 
-        # Import and mock ServiceState
+        # Import ServiceState at runtime (same as adapter to avoid circular imports)
         from application.microservices.base import ServiceState
         mock_service1.state = ServiceState.RUNNING
 
@@ -219,6 +217,7 @@ class TestAgentCoordinatorAdapter:
     def test_health_check_running_healthy(self) -> None:
         """Test health check when running and healthy."""
         mock_coordinator = MagicMock()
+        # AgentCoordinator.get_system_health returns health_score as a formatted string
         mock_coordinator.get_system_health.return_value = {
             "health_score": "85.0",
             "total_agents": 3,

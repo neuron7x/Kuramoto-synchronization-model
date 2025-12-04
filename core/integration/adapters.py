@@ -73,6 +73,7 @@ class ServiceRegistryAdapter:
         unhealthy_services: List[str] = []
         metrics: Dict[str, float] = {"total_services": float(len(services))}
 
+        # Import ServiceState at runtime to avoid circular imports
         from application.microservices.base import ServiceState
 
         for service in services:
