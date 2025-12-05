@@ -121,13 +121,13 @@ export class LiveTable {
 
     const body = pageRows.length
       ? pageRows.map((row) => this.renderRow(row)).join('')
-      : `<tr class="tp-live-table__row tp-live-table__row--empty"><td class="tp-live-table__cell" colspan="${this.columns.length}">No data available.</td></tr>`;
+      : `<tr class="tp-live-table__row tp-live-table__row--empty"><td class="tp-live-table__cell tp-live-table__cell--empty" colspan="${this.columns.length}">No data available. Data will appear here when trading activity begins.</td></tr>`;
 
     const header = this.columns
       .map((column) => {
         const isActive = column.id === this.sortBy;
-        const indicator = isActive ? `<span class="tp-live-table__sort">${this.sortDirection === 'asc' ? '▲' : '▼'}</span>` : '';
-        return `<th class="tp-live-table__header tp-live-table__cell--${column.align}" scope="col" data-column="${escapeHtml(column.id)}">${escapeHtml(column.label)}${indicator}</th>`;
+        const indicator = isActive ? `<span class="tp-live-table__sort" aria-label="Sorted ${this.sortDirection === 'asc' ? 'ascending' : 'descending'}">${this.sortDirection === 'asc' ? '▲' : '▼'}</span>` : '';
+        return `<th class="tp-live-table__header tp-live-table__cell--${column.align}" scope="col" data-column="${escapeHtml(column.id)}" aria-sort="${isActive ? (this.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}">${escapeHtml(column.label)}${indicator}</th>`;
       })
       .join('');
 

@@ -35,12 +35,12 @@
       "monitoring": "Моніторинг"
     },
     "menu": {
-      "title": "Navigation menu",
-      "description": "Focus on the area you need by scanning grouped capabilities.",
+      "title": "Меню навігації",
+      "description": "Знайдіть потрібний розділ, переглядаючи згруповані функції.",
       "groups": {
         "intelligence": {
-          "label": "Market intelligence",
-          "description": "Monitor profitability, risk, and top-level telemetry.",
+          "label": "Ринкова аналітика",
+          "description": "Моніторинг прибутковості, ризиків та загальної телеметрії.",
           "items": [
             "overview",
             "monitoring",
@@ -49,16 +49,16 @@
           ]
         },
         "execution": {
-          "label": "Execution oversight",
-          "description": "Track live orders and signal intent.",
+          "label": "Контроль виконання",
+          "description": "Відстежуйте активні заявки та торгові сигнали.",
           "items": [
             "orders",
             "signals"
           ]
         },
         "community": {
-          "label": "Community insights",
-          "description": "Stay aligned with shared learnings and releases.",
+          "label": "Інсайти спільноти",
+          "description": "Будьте в курсі спільних знань та релізів.",
           "items": [
             "community"
           ]
@@ -66,41 +66,41 @@
       }
     },
     "toolbar": {
-      "title": "Workspace actions",
-      "description": "Operate this view without leaving the dashboard context.",
+      "title": "Дії робочого простору",
+      "description": "Керуйте цим виглядом без переходу на інші сторінки.",
       "actions": {
         "refresh": {
-          "label": "Refresh data",
-          "hint": "Reload the latest telemetry for this route.",
+          "label": "Оновити дані",
+          "hint": "Завантажити останні дані телеметрії для цього маршруту.",
           "feedback": {
-            "success": "Refreshing…",
-            "complete": "Updated",
-            "error": "Refresh failed"
+            "success": "Оновлюємо…",
+            "complete": "Оновлено",
+            "error": "Помилка оновлення"
           }
         },
         "export": {
-          "label": "Export report",
-          "hint": "Download a JSON snapshot for reviews.",
+          "label": "Експортувати звіт",
+          "hint": "Завантажити JSON-знімок для аналізу.",
           "feedback": {
-            "success": "Preparing…",
-            "complete": "Exported",
-            "error": "Export failed"
+            "success": "Готуємо…",
+            "complete": "Експортовано",
+            "error": "Помилка експорту"
           }
         },
         "share": {
-          "label": "Share link",
-          "hint": "Copy or share a deep link to this state.",
+          "label": "Поділитися посиланням",
+          "hint": "Скопіювати або надіслати пряме посилання на цей стан.",
           "feedback": {
-            "success": "Copying…",
-            "complete": "Link ready",
-            "error": "Share failed"
+            "success": "Копіюємо…",
+            "complete": "Посилання готове",
+            "error": "Помилка надсилання"
           }
         }
       }
     },
     "breadcrumbs": {
-      "root": "Dashboard",
-      "ariaLabel": "Breadcrumb"
+      "root": "Дашборд",
+      "ariaLabel": "Навігаційна стежка"
     },
     "locales": {
       "title": "Мова",

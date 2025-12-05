@@ -82,11 +82,15 @@ export function renderAreaChart({ id = 'chart', width = 480, height = 240, serie
     .join('');
 
   const legend = labels
-    ? `<ul class="tp-chart-legend">${labels}</ul>`
-    : '<div class="tp-chart-empty">Chart data is not available.</div>';
+    ? `<ul class="tp-chart-legend" role="list" aria-label="Chart data points">${labels}</ul>`
+    : '<div class="tp-chart-empty" role="status" aria-live="polite">Chart data is not available. Data will appear here once trading activity begins.</div>';
+
+  const chartLabel = points.length
+    ? `Area chart with ${points.length} data points. Values range from ${formatNumber(min, { maximumFractionDigits: 2 })} to ${formatNumber(max, { maximumFractionDigits: 2 })}.`
+    : 'Area chart with no data points.';
 
   const svg = `
-    <svg class="tp-area-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Area chart">
+    <svg class="tp-area-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${chartLabel}">
       <defs>
         <linearGradient id="${escapeHtml(gradientId)}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="rgba(56, 189, 248, 0.6)" />
