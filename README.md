@@ -860,6 +860,8 @@ print(f"📈 Entry Signal: {snapshot.entry_signal:.3f}")
 
 > [!IMPORTANT]
 > **Prerequisites:** Python 3.11+ required. For GPU acceleration, ensure CUDA toolkit 11.8+ is installed.
+>
+> 📖 **For detailed environment setup instructions, see [SETUP.md](SETUP.md)**
 
 <table>
 <tr>
@@ -881,10 +883,11 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install runtime dependencies
-pip install -r requirements.txt
+pip install --upgrade pip && pip install -r requirements.lock
 
-# Or install with optional features
-pip install -e ".[connectors,feature_store,dev]"
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your secrets (see SETUP.md)
 ```
 
 </td>
@@ -897,15 +900,16 @@ pip install -e ".[connectors,feature_store,dev]"
 </div>
 
 ```bash
-# Build and run with Docker Compose
-docker-compose up -d
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your secrets (see SETUP.md)
 
-# Or use pre-built image (coming soon)
-# docker pull ghcr.io/neuron7x/tradepulse:latest
+# Build and run with Docker Compose
+docker compose up -d
 
 # Access the services
-# API:       http://localhost:8000
-# Dashboard: http://localhost:8501
+# API:       https://localhost:8000
+# Prometheus: http://localhost:9090
 ```
 
 </td>
@@ -1434,6 +1438,7 @@ TACL is the **self-regulating control system** that manages TradePulse topology 
 
 </div>
 
+- [⚙️ Environment Setup](SETUP.md) — Development environment setup guide
 - [📥 Installation Guide](docs/installation.md) — Detailed setup instructions
 - [🚀 Quickstart Guide](docs/quickstart.md) — Step-by-step tutorials
 - [📖 User Guide](docs/quickstart.md) — Complete user documentation
