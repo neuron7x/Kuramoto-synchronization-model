@@ -24,9 +24,9 @@ valid data flows through the system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Mapping, Sequence, TypeVar
+from typing import Any, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -581,57 +581,74 @@ def filter_signals(
         arr = np.asarray(signals, dtype=np.float64)
 
     original_count = arr.size
-    all_removed_indices: list[int] = []
+    
+    # Track which indices from the original array are removed
+    # Use a boolean mask for accurate tracking
+    removed_mask = np.zeros(original_count, dtype=bool)
+    
+    # For non-REMOVE strategies, we modify in place
+    working = arr.copy()
 
     # Step 1: Filter invalid values
-    result = filter_invalid_values(
-        arr,
+    invalid_result = filter_invalid_values(
+        working,
         remove_nan=config.remove_nan,
         remove_inf=config.remove_inf,
         strategy=config.strategy,
     )
 
     if config.strategy == FilterStrategy.REMOVE:
-        # Track removed indices for REMOVE strategy
-        all_removed_indices.extend(result.removed_indices.tolist())
-        arr = result.data
+        # Mark removed indices in original array
+        removed_mask[invalid_result.removed_indices] = True
+        # Create mapping from current to original indices
+        current_to_original = np.where(~removed_mask)[0]
+        working = invalid_result.data
     else:
-        arr = result.data
+        working = invalid_result.data
 
     # Step 2: Filter by range
     if config.min_value is not None or config.max_value is not None:
-        result = filter_by_range(
-            arr,
+        range_result = filter_by_range(
+            working,
             min_value=config.min_value,
             max_value=config.max_value,
             strategy=config.strategy,
         )
 
         if config.strategy == FilterStrategy.REMOVE:
-            # Adjust indices based on previous removals
-            all_removed_indices.extend(result.removed_indices.tolist())
-            arr = result.data
+            # Map back to original indices and mark as removed
+            original_indices = current_to_original[range_result.removed_indices]
+            removed_mask[original_indices] = True
+            # Update mapping
+            current_to_original = np.where(~removed_mask)[0]
+            working = range_result.data
         else:
-            arr = result.data
+            working = range_result.data
 
     # Step 3: Filter outliers by z-score
     if config.zscore_threshold is not None:
-        result = filter_outliers_zscore(
-            arr,
+        zscore_result = filter_outliers_zscore(
+            working,
             threshold=config.zscore_threshold,
             window=config.zscore_window,
             strategy=config.strategy,
         )
 
         if config.strategy == FilterStrategy.REMOVE:
-            all_removed_indices.extend(result.removed_indices.tolist())
-            arr = result.data
+            if zscore_result.removed_count > 0:
+                # Map back to original indices and mark as removed
+                original_indices = current_to_original[zscore_result.removed_indices]
+                removed_mask[original_indices] = True
+            working = zscore_result.data
         else:
-            arr = result.data
+            working = zscore_result.data
+
+    # Get all removed indices
+    all_removed_indices = np.where(removed_mask)[0]
 
     return FilterResult(
-        data=arr,
-        removed_count=original_count - arr.size if config.strategy == FilterStrategy.REMOVE else len(set(all_removed_indices)),
-        removed_indices=np.array(sorted(set(all_removed_indices)), dtype=np.intp),
+        data=working,
+        removed_count=int(removed_mask.sum()) if config.strategy == FilterStrategy.REMOVE else int(removed_mask.sum()),
+        removed_indices=all_removed_indices,
         original_count=original_count,
     )

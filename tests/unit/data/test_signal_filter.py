@@ -302,6 +302,23 @@ class TestFilterSignals:
 
         assert 100.0 not in result.data
 
+    def test_index_tracking_with_multiple_filters(self) -> None:
+        """Indices should map back to original array correctly."""
+        # Create array with NaN, out-of-range, and valid values
+        # indices: 0=nan, 1=valid, 2=out-of-range, 3=valid, 4=inf
+        signals = np.array([np.nan, 1.0, 100.0, 2.0, np.inf])
+        config = SignalFilterConfig(min_value=0.0, max_value=10.0)
+        result = filter_signals(signals, config)
+
+        # Only indices 1 and 3 should remain (values 1.0 and 2.0)
+        np.testing.assert_array_equal(result.data, [1.0, 2.0])
+        # Removed indices should be 0, 2, 4 in original array
+        assert result.removed_count == 3
+        removed_set = set(result.removed_indices.tolist())
+        assert 0 in removed_set  # NaN
+        assert 2 in removed_set  # out-of-range (100.0)
+        assert 4 in removed_set  # Inf
+
 
 class TestFilterDataFrame:
     """Tests for filter_dataframe function."""
