@@ -20,6 +20,7 @@ from core.data.signal_filter import (
     FilterResult,
     FilterStrategy,
     SignalFilterConfig,
+    SignalFilterConfigError,
     filter_by_quality,
     filter_by_range,
     filter_dataframe,
@@ -427,3 +428,84 @@ class TestFilterResult:
         )
 
         assert result.retained_count == 3
+
+
+class TestSecurityValidation:
+    """Security validation tests for signal filtering module."""
+
+    def test_signal_filter_config_invalid_zscore_window_low(self) -> None:
+        """zscore_window must be >= 2."""
+        with pytest.raises(SignalFilterConfigError):
+            SignalFilterConfig(zscore_window=1)
+
+    def test_signal_filter_config_invalid_zscore_window_high(self) -> None:
+        """zscore_window must be <= 10000 to prevent DoS."""
+        with pytest.raises(SignalFilterConfigError):
+            SignalFilterConfig(zscore_window=20000)
+
+    def test_signal_filter_config_invalid_zscore_threshold(self) -> None:
+        """zscore_threshold must be positive."""
+        with pytest.raises(SignalFilterConfigError):
+            SignalFilterConfig(zscore_threshold=-1.0)
+
+    def test_signal_filter_config_invalid_min_max_range(self) -> None:
+        """min_value must be <= max_value."""
+        with pytest.raises(SignalFilterConfigError):
+            SignalFilterConfig(min_value=10.0, max_value=5.0)
+
+    def test_signal_filter_config_inf_min_value(self) -> None:
+        """min_value cannot be infinite."""
+        with pytest.raises(SignalFilterConfigError):
+            SignalFilterConfig(min_value=np.inf)
+
+    def test_signal_filter_config_nan_zscore_threshold(self) -> None:
+        """zscore_threshold cannot be NaN."""
+        with pytest.raises(SignalFilterConfigError):
+            SignalFilterConfig(zscore_threshold=np.nan)
+
+    def test_filter_by_range_invalid_min_value(self) -> None:
+        """filter_by_range should reject infinite min_value."""
+        data = np.array([1.0, 2.0, 3.0])
+        with pytest.raises(ValueError, match="min_value must be a finite"):
+            filter_by_range(data, min_value=np.inf)
+
+    def test_filter_by_range_invalid_max_value(self) -> None:
+        """filter_by_range should reject infinite max_value."""
+        data = np.array([1.0, 2.0, 3.0])
+        with pytest.raises(ValueError, match="max_value must be a finite"):
+            filter_by_range(data, max_value=np.inf)
+
+    def test_filter_by_range_invalid_range(self) -> None:
+        """filter_by_range should reject min > max."""
+        data = np.array([1.0, 2.0, 3.0])
+        with pytest.raises(ValueError, match="min_value .* must be <="):
+            filter_by_range(data, min_value=10.0, max_value=5.0)
+
+    def test_filter_outliers_zscore_invalid_threshold(self) -> None:
+        """filter_outliers_zscore should reject non-positive threshold."""
+        data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        with pytest.raises(ValueError, match="threshold must be positive"):
+            filter_outliers_zscore(data, threshold=-1.0)
+
+    def test_filter_outliers_zscore_invalid_window_low(self) -> None:
+        """filter_outliers_zscore should reject window < 2."""
+        data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        with pytest.raises(ValueError, match="window must be >= 2"):
+            filter_outliers_zscore(data, window=1)
+
+    def test_filter_outliers_zscore_invalid_window_high(self) -> None:
+        """filter_outliers_zscore should reject window > 10000."""
+        data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        with pytest.raises(ValueError, match="window must be <= 10000"):
+            filter_outliers_zscore(data, window=20000)
+
+    def test_valid_config_passes(self) -> None:
+        """Valid config should not raise."""
+        config = SignalFilterConfig(
+            min_value=0.0,
+            max_value=100.0,
+            zscore_threshold=3.0,
+            zscore_window=20,
+        )
+        assert config.min_value == 0.0
+        assert config.max_value == 100.0

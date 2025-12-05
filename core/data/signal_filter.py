@@ -36,6 +36,7 @@ __all__ = [
     "FilterResult",
     "FilterStrategy",
     "SignalFilterConfig",
+    "SignalFilterConfigError",
     "filter_by_quality",
     "filter_by_range",
     "filter_dataframe",
@@ -88,6 +89,12 @@ class FilterResult:
         return self.original_count - self.removed_count
 
 
+class SignalFilterConfigError(ValueError):
+    """Raised when SignalFilterConfig has invalid configuration."""
+
+    pass
+
+
 @dataclass(slots=True)
 class SignalFilterConfig:
     """Configuration for signal filtering operations.
@@ -102,6 +109,9 @@ class SignalFilterConfig:
         zscore_window: Rolling window size for z-score calculation
         quality_threshold: Minimum quality score to retain (None = disabled)
         strategy: Strategy for handling filtered values
+
+    Raises:
+        SignalFilterConfigError: If configuration parameters are invalid
     """
 
     remove_nan: bool = True
@@ -114,6 +124,52 @@ class SignalFilterConfig:
     quality_threshold: float | None = None
     strategy: FilterStrategy = FilterStrategy.REMOVE
 
+    def __post_init__(self) -> None:
+        """Validate configuration parameters for security and correctness."""
+        # Validate zscore_window is positive
+        if self.zscore_window < 2:
+            raise SignalFilterConfigError(
+                f"zscore_window must be >= 2, got {self.zscore_window}"
+            )
+        if self.zscore_window > 10000:
+            raise SignalFilterConfigError(
+                f"zscore_window must be <= 10000 to prevent DoS, got {self.zscore_window}"
+            )
+
+        # Validate zscore_threshold if set
+        if self.zscore_threshold is not None:
+            if self.zscore_threshold <= 0:
+                raise SignalFilterConfigError(
+                    f"zscore_threshold must be positive, got {self.zscore_threshold}"
+                )
+            if not np.isfinite(self.zscore_threshold):
+                raise SignalFilterConfigError(
+                    "zscore_threshold must be a finite value"
+                )
+
+        # Validate quality_threshold if set
+        if self.quality_threshold is not None:
+            if not np.isfinite(self.quality_threshold):
+                raise SignalFilterConfigError(
+                    "quality_threshold must be a finite value"
+                )
+
+        # Validate min/max values are finite if set
+        if self.min_value is not None and not np.isfinite(self.min_value):
+            raise SignalFilterConfigError("min_value must be a finite value")
+        if self.max_value is not None and not np.isfinite(self.max_value):
+            raise SignalFilterConfigError("max_value must be a finite value")
+
+        # Validate min <= max if both are set
+        if (
+            self.min_value is not None
+            and self.max_value is not None
+            and self.min_value > self.max_value
+        ):
+            raise SignalFilterConfigError(
+                f"min_value ({self.min_value}) must be <= max_value ({self.max_value})"
+            )
+
 
 def filter_invalid_values(
     data: NDArray[np.floating[Any]] | Sequence[float],
@@ -121,6 +177,7 @@ def filter_invalid_values(
     remove_nan: bool = True,
     remove_inf: bool = True,
     strategy: FilterStrategy = FilterStrategy.REMOVE,
+    max_size: int = 100_000_000,  # 100M elements max by default
 ) -> FilterResult:
     """Filter out invalid values (NaN, Inf) from numeric data.
 
@@ -129,9 +186,13 @@ def filter_invalid_values(
         remove_nan: Whether to remove NaN values
         remove_inf: Whether to remove Inf values
         strategy: Strategy for handling invalid values
+        max_size: Maximum allowed array size (DoS protection)
 
     Returns:
         FilterResult with cleaned data and statistics
+
+    Raises:
+        ValueError: If input array exceeds max_size
 
     Example:
         >>> import numpy as np
@@ -142,6 +203,12 @@ def filter_invalid_values(
     """
     arr = np.asarray(data, dtype=np.float64)
     original_count = arr.size
+
+    # DoS protection: limit input size
+    if arr.size > max_size:
+        raise ValueError(
+            f"Input array size ({arr.size}) exceeds maximum allowed size ({max_size})"
+        )
 
     # Build mask of invalid values
     invalid_mask = np.zeros(arr.size, dtype=bool)
@@ -195,6 +262,7 @@ def filter_by_range(
     inclusive_min: bool = True,
     inclusive_max: bool = True,
     strategy: FilterStrategy = FilterStrategy.REMOVE,
+    max_size: int = 100_000_000,  # 100M elements max by default
 ) -> FilterResult:
     """Filter values outside a specified range.
 
@@ -205,17 +273,35 @@ def filter_by_range(
         inclusive_min: Whether to include min_value
         inclusive_max: Whether to include max_value
         strategy: Strategy for handling out-of-range values
+        max_size: Maximum allowed array size (DoS protection)
 
     Returns:
         FilterResult with filtered data and statistics
+
+    Raises:
+        ValueError: If input array exceeds max_size or range values are invalid
 
     Example:
         >>> data = np.array([1.0, 5.0, 10.0, 15.0, 20.0])
         >>> result = filter_by_range(data, min_value=5.0, max_value=15.0)
         >>> print(result.data)  # [5.0, 10.0, 15.0]
     """
+    # Validate range values
+    if min_value is not None and not np.isfinite(min_value):
+        raise ValueError("min_value must be a finite number")
+    if max_value is not None and not np.isfinite(max_value):
+        raise ValueError("max_value must be a finite number")
+    if min_value is not None and max_value is not None and min_value > max_value:
+        raise ValueError(f"min_value ({min_value}) must be <= max_value ({max_value})")
+
     arr = np.asarray(data, dtype=np.float64)
     original_count = arr.size
+
+    # DoS protection: limit input size
+    if arr.size > max_size:
+        raise ValueError(
+            f"Input array size ({arr.size}) exceeds maximum allowed size ({max_size})"
+        )
 
     # Build mask of out-of-range values
     out_of_range = np.zeros(arr.size, dtype=bool)
@@ -272,6 +358,7 @@ def filter_outliers_zscore(
     threshold: float = 3.0,
     window: int = 20,
     strategy: FilterStrategy = FilterStrategy.REMOVE,
+    max_size: int = 100_000_000,  # 100M elements max by default
 ) -> FilterResult:
     """Filter outliers based on rolling z-score.
 
@@ -280,17 +367,37 @@ def filter_outliers_zscore(
         threshold: Z-score threshold for outlier detection
         window: Rolling window size for calculating mean and std
         strategy: Strategy for handling outliers
+        max_size: Maximum allowed array size (DoS protection)
 
     Returns:
         FilterResult with filtered data and statistics
+
+    Raises:
+        ValueError: If parameters are invalid or input exceeds max_size
 
     Example:
         >>> data = np.array([1.0, 1.1, 1.0, 100.0, 1.0, 1.1])  # 100.0 is outlier
         >>> result = filter_outliers_zscore(data, threshold=2.0, window=3)
         >>> print(100.0 in result.data)  # False (outlier removed)
     """
+    # Validate parameters
+    if threshold <= 0:
+        raise ValueError(f"threshold must be positive, got {threshold}")
+    if not np.isfinite(threshold):
+        raise ValueError("threshold must be a finite value")
+    if window < 2:
+        raise ValueError(f"window must be >= 2, got {window}")
+    if window > 10000:
+        raise ValueError(f"window must be <= 10000 to prevent DoS, got {window}")
+
     arr = np.asarray(data, dtype=np.float64)
     original_count = arr.size
+
+    # DoS protection: limit input size
+    if arr.size > max_size:
+        raise ValueError(
+            f"Input array size ({arr.size}) exceeds maximum allowed size ({max_size})"
+        )
 
     if arr.size < window:
         # Not enough data for z-score calculation
