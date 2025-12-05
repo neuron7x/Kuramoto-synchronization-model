@@ -960,6 +960,103 @@ docker-compose up -d
 
 <br>
 
+<details>
+<summary><strong>📦 Core Dependencies — Click to Expand</strong></summary>
+
+<br>
+
+TradePulse uses the following core libraries. All dependencies are managed via `requirements.txt` and `pyproject.toml`.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**📊 Analytics & Data Science:**
+
+| Library | Version | Purpose |
+|:--------|:--------|:--------|
+| `numpy` | ≥2.3.3 | Numerical computing and array operations |
+| `scipy` | ≥1.16.2 | Scientific computing and optimization |
+| `pandas` | ≥2.3.3 | Data manipulation and time series |
+| `scikit-learn` | ≥1.3.0 | Machine learning algorithms |
+| `torch` | ≥2.1.0 | Deep learning and neural networks |
+| `networkx` | ≥3.5 | Graph algorithms for market analysis |
+
+<br>
+
+**🔧 Configuration & Validation:**
+
+| Library | Version | Purpose |
+|:--------|:--------|:--------|
+| `pydantic` | ≥2.12.4 | Data validation and settings |
+| `pandera` | ≥0.20.4 | DataFrame schema validation |
+| `hydra-core` | ≥1.3.2 | Configuration management |
+| `PyYAML` | ≥6.0.3 | YAML file parsing |
+
+</td>
+<td width="50%" valign="top">
+
+**🌐 API & Connectivity:**
+
+| Library | Version | Purpose |
+|:--------|:--------|:--------|
+| `fastapi` | ≥0.119.0 | REST API framework |
+| `uvicorn` | ≥0.37.0 | ASGI server |
+| `httpx` | ≥0.28.1 | HTTP client |
+| `websockets` | ≥15.0.1 | WebSocket connections |
+| `ccxt` | ≥4.5.12 | Cryptocurrency exchange integration |
+| `redis` | ≥7.0.0 | Caching and pub/sub |
+
+<br>
+
+**📈 Observability & Monitoring:**
+
+| Library | Version | Purpose |
+|:--------|:--------|:--------|
+| `prometheus-client` | ≥0.23.1 | Metrics collection |
+| `opentelemetry-api` | ≥1.38.0 | Distributed tracing |
+| `streamlit` | ≥1.31.0 | Interactive dashboards |
+
+<br>
+
+**🔐 Security:**
+
+| Library | Version | Purpose |
+|:--------|:--------|:--------|
+| `cryptography` | ≥46.0.3 | Encryption and security |
+| `PyJWT` | ≥2.9.0 | JWT token handling |
+
+</td>
+</tr>
+</table>
+
+<br>
+
+**Optional Extras:**
+
+```bash
+# Market data connectors (Alpaca, Polygon)
+pip install ".[connectors]"
+
+# Feature store with Polars/PyArrow
+pip install ".[feature_store]"
+
+# GPU acceleration with Numba/CuPy
+pip install ".[gpu]"
+
+# Development tools (pytest, ruff, mypy)
+pip install ".[dev]"
+
+# Documentation tools (MkDocs)
+pip install ".[docs]"
+```
+
+📄 **Full dependency list:** See [`requirements.txt`](requirements.txt) and [`pyproject.toml`](pyproject.toml)
+
+</details>
+
+<br>
+
 <!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
 <!--                                              YOUR FIRST STRATEGY                                                            -->
 <!-- ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ -->
