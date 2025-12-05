@@ -1,5 +1,12 @@
 """Top-level TradePulse namespace."""
 
+from .integration import (
+    AgentCoordinatorAdapter,
+    IntegrationConfig,
+    ServiceRegistryAdapter,
+    SystemIntegrator,
+    SystemIntegratorBuilder,
+)
 from .protocol import (
     DivConvSignal,
     DivConvSnapshot,
@@ -23,6 +30,13 @@ from .sdk import (
 )
 
 __all__ = [
+    # Integration
+    "AgentCoordinatorAdapter",
+    "IntegrationConfig",
+    "ServiceRegistryAdapter",
+    "SystemIntegrator",
+    "SystemIntegratorBuilder",
+    # Protocol
     "DivConvSignal",
     "DivConvSnapshot",
     "aggregate_signals",
@@ -33,6 +47,7 @@ __all__ = [
     "compute_threshold_tau_c",
     "compute_threshold_tau_d",
     "compute_time_warp_invariant_metric",
+    # SDK
     "TradePulseSDK",
     "SDKConfig",
     "MarketState",
