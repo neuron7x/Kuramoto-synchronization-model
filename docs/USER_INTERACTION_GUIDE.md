@@ -228,13 +228,33 @@ echo "Batch analysis complete!"
 import subprocess
 import json
 import sys
+from pathlib import Path
 
 def analyze_market_data(csv_path: str, window: int = 200) -> dict:
-    """Run TradePulse analysis and return results."""
+    """Run TradePulse analysis and return results.
+    
+    Args:
+        csv_path: Path to CSV file (validated for safety)
+        window: Analysis window size
+        
+    Returns:
+        Analysis results as dictionary
+        
+    Raises:
+        ValueError: If csv_path is invalid
+        RuntimeError: If analysis fails
+    """
+    # Validate and sanitize the file path
+    safe_path = Path(csv_path).resolve()
+    if not safe_path.exists():
+        raise ValueError(f"CSV file not found: {safe_path}")
+    if not safe_path.suffix.lower() == '.csv':
+        raise ValueError(f"Expected CSV file, got: {safe_path.suffix}")
+    
     result = subprocess.run(
         [
             sys.executable, "-m", "interfaces.cli", "analyze",
-            "--csv", csv_path,
+            "--csv", str(safe_path),
             "--window", str(window),
         ],
         capture_output=True,
@@ -579,8 +599,14 @@ print(f"Trades: {result.trades}")
 ```python
 from tradepulse.sdk import TradePulseSDK, MarketState, SDKConfig
 from application.system import TradePulseSystem
+from hydra import compose, initialize
 
-# Initialize system (with your configuration)
+# Load configuration using Hydra
+# Configuration files are typically in configs/ directory
+with initialize(version_base=None, config_path="../configs"):
+    config = compose(config_name="config")
+
+# Initialize system with configuration
 system = TradePulseSystem(config)
 
 # Configure SDK
@@ -913,9 +939,21 @@ uvicorn application.api:app --reload --port 8000
 
 **Issue: CORS errors in browser**
 ```python
-# Solution: Configure CORS in FastAPI
+# Solution: Configure CORS in FastAPI with specific allowed origins
+# Note: Never use "*" in production - specify allowed domains explicitly
+import os
 from fastapi.middleware.cors import CORSMiddleware
-app.add_middleware(CORSMiddleware, allow_origins=["*"])
+
+# Use environment variable for allowed origins in production
+allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,  # Specify allowed origins
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 ```
 
 ---
