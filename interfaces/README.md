@@ -2,6 +2,28 @@
 
 This directory contains the interface layer for TradePulse, providing entry points for users and systems to interact with the trading framework.
 
+> 📚 **For comprehensive documentation with detailed examples, see the [User Interaction Guide](../docs/USER_INTERACTION_GUIDE.md).**
+
+---
+
+## Quick Start
+
+```bash
+# CLI Analysis
+python -m interfaces.cli analyze --csv sample.csv --window 200
+
+# CLI Backtest
+python -m interfaces.cli backtest --csv sample.csv --fee 0.001
+
+# Streamlit Dashboard
+streamlit run interfaces/dashboard_streamlit.py
+
+# Python API
+python -c "from interfaces.cli import signal_from_indicators; import numpy as np; print(signal_from_indicators(np.random.randn(300) + 100)[-10:])"
+```
+
+---
+
 ## Overview
 
 The interfaces module provides multiple ways to interact with TradePulse:
@@ -372,12 +394,14 @@ tradepulse analyze --csv data.csv
 ## Support & Documentation
 
 - **Full Documentation**: [https://github.com/neuron7x/TradePulse](https://github.com/neuron7x/TradePulse)
+- **User Interaction Guide**: [docs/USER_INTERACTION_GUIDE.md](../docs/USER_INTERACTION_GUIDE.md) — Comprehensive examples for all interfaces
 - **API Reference**: [https://docs.tradepulse.io/api](https://docs.tradepulse.io/api)
 - **Examples**: See `examples/` directory in repository
 - **Issues**: [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
 
 ## Version History
 
+- **v2.1.0**: Added comprehensive User Interaction Guide with examples
 - **v2.0.0**: Enhanced dashboard with export, history, and advanced indicators
 - **v2.0.0**: Comprehensive CLI error handling and validation
 - **v1.0.0**: Initial interface implementations
