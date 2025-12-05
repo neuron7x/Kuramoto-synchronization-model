@@ -60,8 +60,8 @@ streamlit run interfaces/dashboard_streamlit.py
 # Web Application
 cd apps/web && npm install && npm run dev
 
-# Python API
-python -c "from core.indicators.kuramoto import compute_phase; print('API ready')"
+# Python API - Verify installation
+python -c "from core.indicators.kuramoto import compute_phase; import numpy as np; phases = compute_phase(np.array([100,101,102])); print('API ready, phases:', phases)"
 ```
 
 ---
@@ -741,19 +741,60 @@ plt.show()
 
 ```python
 #!/usr/bin/env python3
-"""Scheduled market analysis job."""
+"""Scheduled market analysis job.
+
+Requires: pip install schedule
+"""
 import json
 import time
 from datetime import datetime
 from pathlib import Path
 
-import schedule
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+import numpy as np
 import pandas as pd
+
+# pip install schedule
+try:
+    import schedule
+except ImportError:
+    raise ImportError("This example requires 'schedule'. Install with: pip install schedule")
+
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+
+
+def load_latest_market_data() -> pd.DataFrame:
+    """Load latest market data from your data source.
+    
+    Replace this with your actual data loading logic:
+    - Read from database
+    - Fetch from exchange API
+    - Load from file system
+    """
+    # Example: Generate sample data for demonstration
+    # In production, replace with actual data source
+    index = pd.date_range(end=datetime.now(), periods=500, freq='5min')
+    prices = 100 + np.cumsum(np.random.normal(0, 0.5, 500))
+    volume = np.random.lognormal(10, 0.3, 500)
+    return pd.DataFrame({'close': prices, 'volume': volume}, index=index)
+
+
+def send_alert(result: dict) -> None:
+    """Send alert notification.
+    
+    Replace with your alerting implementation:
+    - Email via SMTP
+    - Slack webhook
+    - SMS via Twilio
+    - Push notification
+    """
+    print(f"🚨 ALERT: High-confidence signal detected!")
+    print(f"   Phase: {result['phase']}")
+    print(f"   Confidence: {result['confidence']:.3f}")
+    print(f"   Entry Signal: {result['entry_signal']:.3f}")
+
 
 def run_analysis():
     """Run periodic market analysis."""
-    # Load latest data (implement your data source)
     df = load_latest_market_data()
     
     engine = TradePulseCompositeEngine()
@@ -776,7 +817,7 @@ def run_analysis():
     
     # Alert on high-confidence signals
     if result['confidence'] > 0.8 and abs(result['entry_signal']) > 0.5:
-        send_alert(result)  # Implement your alerting
+        send_alert(result)
 
 # Schedule every 15 minutes
 schedule.every(15).minutes.do(run_analysis)
@@ -892,8 +933,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"])
 
 ## Version History
 
-- **v2.0.0** (2025-01-01): Comprehensive user interaction guide with examples
-- **v1.0.0** (2024-06-01): Initial interface implementations
+- **v1.0.0**: Comprehensive user interaction guide with CLI, Dashboard, and API examples
+- **Initial**: Interface implementations and basic documentation
 
 ---
 
