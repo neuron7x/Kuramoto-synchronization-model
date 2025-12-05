@@ -248,8 +248,8 @@ class TestCheckConfigFile:
 class TestCheckSecurityConstraints:
     """Tests for check_security_constraints function."""
 
-    def test_security_constraints_file_exists(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-        """Test security constraints check with existing file."""
+    def test_security_constraints_validation_with_file(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        """Test security constraints check parses file and counts constraints."""
         constraints_file = tmp_path / "constraints" / "security.txt"
         constraints_file.parent.mkdir(parents=True)
         constraints_file.write_text(
@@ -264,6 +264,7 @@ class TestCheckSecurityConstraints:
 
         assert result.passed is True
         assert "constraint_count" in result.details
+        assert result.details["constraint_count"] == 2
 
     def test_security_constraints_file_missing(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         """Test security constraints check with missing file."""

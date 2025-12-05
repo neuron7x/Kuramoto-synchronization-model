@@ -4,7 +4,6 @@ from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import argparse
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -323,29 +322,20 @@ def test_notification_arguments_dataclass() -> None:
     assert args.timeout == 10.0
 
 
-@patch("scripts.notify_status._build_parser")
-def test_main_dry_run(mock_parser: MagicMock, capsys) -> None:
+def test_main_dry_run(capsys, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test main with dry-run prints message."""
-    mock_namespace = MagicMock()
-    mock_namespace.stage = "build"
-    mock_namespace.status = "success"
-    mock_namespace.workflow = "CI"
-    mock_namespace.job = None
-    mock_namespace.run_url = "https://example.com"
-    mock_namespace.branch = "main"
-    mock_namespace.commit = None
-    mock_namespace.actor = None
-    mock_namespace.environment = None
-    mock_namespace.fields = []
-    mock_namespace.slack_webhook = None
-    mock_namespace.slack_channel = None
-    mock_namespace.slack_username = None
-    mock_namespace.teams_webhook = None
-    mock_namespace.teams_theme_color = None
-    mock_namespace.timeout = 5.0
-    mock_namespace.dry_run = True
-
-    mock_parser.return_value.parse_args.return_value = mock_namespace
+    # Use actual parser with test arguments
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "notify_status.py",
+            "--stage", "build",
+            "--status", "success",
+            "--workflow", "CI",
+            "--run-url", "https://example.com",
+            "--dry-run",
+        ],
+    )
 
     exit_code = notify_status.main()
 

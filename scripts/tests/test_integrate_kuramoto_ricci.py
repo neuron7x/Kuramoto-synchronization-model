@@ -204,7 +204,9 @@ def test_main_missing_data_file() -> None:
             "--data", "/nonexistent/data.csv",
         ])
 
-    assert "not found" in str(exc_info.value).lower() or exc_info.value.code != 0
+    # SystemExit message contains "not found" for missing file
+    exit_message = str(exc_info.value).lower()
+    assert "not found" in exit_message, f"Expected 'not found' in exit message: {exc_info.value}"
 
 
 def test_main_missing_config_file(tmp_path: Path) -> None:
@@ -218,8 +220,9 @@ def test_main_missing_config_file(tmp_path: Path) -> None:
             "--config", "/nonexistent/config.yaml",
         ])
 
-    # Should exit with error
-    assert exc_info.value.code != 0 or "not found" in str(exc_info.value).lower()
+    # SystemExit message contains "not found" for missing config
+    exit_message = str(exc_info.value).lower()
+    assert "not found" in exit_message, f"Expected 'not found' in exit message: {exc_info.value}"
 
 
 def test_main_output_dir_not_empty_blocked(tmp_path: Path) -> None:
@@ -241,8 +244,9 @@ def test_main_output_dir_not_empty_blocked(tmp_path: Path) -> None:
             "--output", str(output_dir),
         ])
 
-    # Should exit with error message about non-empty directory
-    assert exc_info.value.code != 0 or "not empty" in str(exc_info.value).lower()
+    # SystemExit message contains "not empty" for non-empty directory
+    exit_message = str(exc_info.value).lower()
+    assert "not empty" in exit_message, f"Expected 'not empty' in exit message: {exc_info.value}"
 
 
 def test_constants_defined() -> None:
