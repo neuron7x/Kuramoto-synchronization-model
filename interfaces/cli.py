@@ -618,14 +618,29 @@ def main():
     p = argparse.ArgumentParser(
         prog="tradepulse",
         description="TradePulse - Advanced Algorithmic Trading Framework with Geometric Market Indicators",
-        epilog="For detailed documentation, visit https://github.com/neuron7x/TradePulse",
+        epilog="""
+Examples:
+  # Analyze a CSV file with default settings
+  tradepulse analyze --csv prices.csv
+
+  # Analyze with custom window and column
+  tradepulse analyze --csv data.csv --price-col close --window 100
+
+  # Run a backtest on historical data
+  tradepulse backtest --csv historical.csv --fee 0.001
+
+  # Launch live trading (requires configuration)
+  tradepulse live --config configs/live/binance.toml
+
+For detailed documentation, visit: https://github.com/neuron7x/TradePulse
+""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = p.add_subparsers(
         dest="cmd", required=True, help="Available commands", metavar="COMMAND"
     )
 
-    trace_arg_help = "W3C traceparent header used to join an existing trace"
+    trace_arg_help = "W3C traceparent header used to join an existing distributed trace"
 
     # Analyze command
     pa = sub.add_parser(
@@ -640,6 +655,28 @@ Analyze market data using TradePulse's suite of geometric indicators including:
 
 Outputs comprehensive JSON analysis suitable for pipelines and auditing.
         """,
+        epilog="""
+Examples:
+  # Basic analysis with default settings
+  tradepulse analyze --csv prices.csv
+
+  # Use a custom price column and window size
+  tradepulse analyze --csv data.csv --price-col close --window 100
+
+  # Enable GPU acceleration for faster processing
+  tradepulse analyze --csv large_dataset.csv --gpu
+
+  # Use configuration from YAML file
+  tradepulse analyze --csv prices.csv --config settings.yaml
+
+Output is JSON-formatted and includes:
+  - R: Kuramoto order parameter (0-1, higher = more synchronized)
+  - H: Shannon entropy
+  - delta_H: Entropy change over window
+  - kappa_mean: Mean Ricci curvature
+  - Hurst: Hurst exponent (>0.5 = trending, <0.5 = mean-reverting)
+  - phase: Detected market phase
+""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     pa.add_argument(
@@ -690,6 +727,24 @@ entropy measures, and geometric curvature indicators.
 
 Outputs performance metrics including PnL, max drawdown, and trade count.
         """,
+        epilog="""
+Examples:
+  # Run backtest with default settings
+  tradepulse backtest --csv historical.csv
+
+  # Specify custom fee and window
+  tradepulse backtest --csv data.csv --fee 0.001 --window 150
+
+  # Use custom price column from OHLCV data
+  tradepulse backtest --csv ohlcv.csv --price-col close
+
+Output metrics:
+  - pnl: Total profit/loss
+  - max_dd: Maximum drawdown percentage
+  - trades: Number of executed trades
+  - sharpe_ratio: Risk-adjusted return (if available)
+  - win_rate: Percentage of profitable trades (if available)
+""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     pb.add_argument(
@@ -736,6 +791,26 @@ Bootstrap the live trading system with comprehensive risk controls:
 
 Requires proper configuration including venue credentials and risk parameters.
         """,
+        epilog="""
+Examples:
+  # Start with default configuration
+  tradepulse live
+
+  # Use custom configuration file
+  tradepulse live --config configs/live/binance.toml
+
+  # Restrict to specific venues
+  tradepulse live --venue binance --venue coinbase
+
+  # Cold start (skip position reconciliation)
+  tradepulse live --config prod.toml --cold-start
+
+  # Expose Prometheus metrics
+  tradepulse live --metrics-port 9090
+
+IMPORTANT: Always test with paper trading before using real funds.
+Configure risk limits appropriately in your TOML configuration file.
+""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     pl.add_argument(

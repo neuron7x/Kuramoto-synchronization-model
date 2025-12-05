@@ -417,16 +417,39 @@ def _load_feature_dataset(path: Path) -> v21.StrictCausalFeatures:
     return v21.StrictCausalFeatures(features=features, labels=labels)
 
 
-@click.group()
+@click.group(
+    epilog="""
+Examples:
+  # Generate a configuration template
+  tradepulse_cli ingest --generate-config --template-output ingest.yaml
+
+  # Run data ingestion from a config file
+  tradepulse_cli ingest --config my_ingest.yaml
+
+  # Run a backtest with output
+  tradepulse_cli backtest --config backtest.yaml --output table
+
+  # Generate shell completions
+  tradepulse_cli completion bash
+
+For more information, visit: https://github.com/neuron7x/TradePulse
+"""
+)
 @click.option(
     "--templates-dir",
     type=click.Path(file_okay=False, path_type=Path),
     default=DEFAULT_TEMPLATES_DIR,
-    help="Directory containing YAML configuration templates.",
+    help="Directory containing YAML configuration templates (default: configs/templates).",
 )
 @click.pass_context
 def cli(ctx: click.Context, templates_dir: Path) -> None:
-    """TradePulse orchestration CLI."""
+    """TradePulse orchestration CLI.
+
+    A comprehensive command-line tool for managing trading workflows including
+    data ingestion, backtesting, optimization, live execution, and reporting.
+
+    Use --help on any command to see detailed usage information and examples.
+    """
 
     _ensure_manager(ctx, templates_dir)
 
@@ -434,7 +457,22 @@ def cli(ctx: click.Context, templates_dir: Path) -> None:
 @cli.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 def completion(shell: str) -> None:
-    """Generate shell completion snippet for the requested shell."""
+    """Generate shell completion snippet for the requested shell.
+
+    This enables tab-completion for TradePulse CLI commands, options,
+    and arguments in your terminal.
+
+    \b
+    Example:
+      # For bash (add to ~/.bashrc)
+      tradepulse_cli completion bash
+
+      # For zsh (add to ~/.zshrc)
+      tradepulse_cli completion zsh
+
+      # For fish (add to ~/.config/fish/config.fish)
+      tradepulse_cli completion fish
+    """
 
     prog_name = Path(sys.argv[0]).name or "tradepulse_cli"
     env_prefix = prog_name.replace("-", "_").upper()
@@ -453,15 +491,17 @@ def completion(shell: str) -> None:
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to ingest YAML config.",
+    help="Path to ingest YAML config file containing data source and destination settings.",
 )
 @click.option(
-    "--generate-config", is_flag=True, help="Write the default ingest config template."
+    "--generate-config",
+    is_flag=True,
+    help="Generate a starter configuration template. Use with --template-output.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.pass_context
 def ingest(
@@ -470,20 +510,44 @@ def ingest(
     generate_config: bool,
     template_output: Path | None,
 ) -> None:
-    """Run data ingestion and register the produced artifact."""
+    """Run data ingestion and register the produced artifact.
+
+    Ingests data from a source file (CSV or Parquet), validates it,
+    and registers the output in the feature catalog for reproducibility.
+
+    \b
+    Examples:
+      # Generate a starter configuration
+      tradepulse_cli ingest --generate-config --template-output my_ingest.yaml
+
+      # Run ingestion using a config file
+      tradepulse_cli ingest --config my_ingest.yaml
+
+    \b
+    Configuration file should specify:
+      - source: Input data path and format (csv/parquet)
+      - destination: Where to save the processed data
+      - catalog: Path to the feature catalog
+      - versioning: Version control settings (e.g., DVC)
+    """
 
     command = "ingest"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli ingest --generate-config --template-output ingest.yaml"
             )
         manager.render("ingest", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli ingest --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to run ingestion.\n"
+            "To generate a starter config: tradepulse_cli ingest --generate-config --template-output ingest.yaml"
+        )
 
     completion = threading.Event()
     fatal_event = threading.Event()
@@ -621,23 +685,23 @@ def _emit_backtest_output(
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to backtest YAML config.",
+    help="Path to backtest YAML config with strategy and data settings.",
 )
 @click.option(
     "--generate-config",
     is_flag=True,
-    help="Write the default backtest config template.",
+    help="Generate a starter backtest configuration template.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.option(
     "--output-format",
     "--output",
     type=click.Choice(["table", "jsonl", "parquet"]),
-    help="Render results in the requested format in addition to the persisted artifact.",
+    help="Output format for results: table (readable), jsonl (machine-parseable), or parquet (analysis).",
 )
 @click.pass_context
 def backtest(
@@ -647,20 +711,46 @@ def backtest(
     template_output: Path | None,
     output_format: str | None,
 ) -> None:
-    """Execute a simple vectorized backtest."""
+    """Execute a simple vectorized backtest.
+
+    Runs a trading strategy simulation on historical data and computes
+    performance metrics like total return, max drawdown, and trade count.
+
+    \b
+    Examples:
+      # Generate a starter configuration
+      tradepulse_cli backtest --generate-config --template-output backtest.yaml
+
+      # Run backtest and display results as a table
+      tradepulse_cli backtest --config backtest.yaml --output table
+
+      # Run backtest with JSON Lines output (for pipelines)
+      tradepulse_cli backtest --config backtest.yaml --output jsonl
+
+    \b
+    Output Metrics:
+      - total_return: Overall strategy return
+      - max_drawdown: Worst peak-to-trough decline
+      - trades: Number of position changes
+    """
 
     command = "backtest"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli backtest --generate-config --template-output backtest.yaml"
             )
         manager.render("backtest", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli backtest --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to run backtesting.\n"
+            "To generate a starter config: tradepulse_cli backtest --generate-config --template-output backtest.yaml"
+        )
 
     with step_logger(command, "load config"):
         cfg = manager.load_config(config, BacktestConfig)
@@ -736,23 +826,23 @@ def _emit_optimize_output(
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to optimization YAML config.",
+    help="Path to optimization YAML config with parameter search space.",
 )
 @click.option(
     "--generate-config",
     is_flag=True,
-    help="Write the default optimize config template.",
+    help="Generate a starter optimization configuration template.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.option(
     "--output-format",
     "--output",
     type=click.Choice(["table", "jsonl", "parquet"]),
-    help="Render results in the requested format in addition to the persisted artifact.",
+    help="Output format for results: table, jsonl, or parquet.",
 )
 @click.pass_context
 def optimize(
@@ -762,20 +852,43 @@ def optimize(
     template_output: Path | None,
     output_format: str | None,
 ) -> None:
-    """Perform a brute-force search across a parameter grid."""
+    """Perform a brute-force search across a parameter grid.
+
+    Evaluates all combinations of strategy parameters defined in the
+    search space and identifies the best-performing configuration.
+
+    \b
+    Examples:
+      # Generate a starter configuration
+      tradepulse_cli optimize --generate-config --template-output optimize.yaml
+
+      # Run optimization with table output
+      tradepulse_cli optimize --config optimize.yaml --output table
+
+    \b
+    Configuration should include:
+      - search_space: Parameter ranges to explore
+      - objective: Function to maximize (e.g., Sharpe ratio)
+      - backtest: Embedded backtest configuration
+    """
 
     command = "optimize"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli optimize --generate-config --template-output optimize.yaml"
             )
         manager.render("optimize", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli optimize --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to run optimization.\n"
+            "To generate a starter config: tradepulse_cli optimize --generate-config --template-output optimize.yaml"
+        )
 
     with step_logger(command, "load config"):
         cfg = manager.load_config(config, OptimizeConfig)
@@ -850,21 +963,23 @@ def _emit_exec_output(
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to exec YAML config.",
+    help="Path to execution YAML config with strategy and data settings.",
 )
 @click.option(
-    "--generate-config", is_flag=True, help="Write the default exec config template."
+    "--generate-config",
+    is_flag=True,
+    help="Generate a starter execution configuration template.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.option(
     "--output-format",
     "--output",
     type=click.Choice(["table", "jsonl", "parquet"]),
-    help="Render results in the requested format in addition to the persisted artifact.",
+    help="Output format for results: table, jsonl, or parquet.",
 )
 @click.pass_context
 def exec(  # noqa: A001
@@ -874,20 +989,44 @@ def exec(  # noqa: A001
     template_output: Path | None,
     output_format: str | None,
 ) -> None:
-    """Evaluate the latest signal and persist it to disk."""
+    """Evaluate the latest signal and persist it to disk.
+
+    Computes the current trading signal based on the configured strategy
+    and persists the result for downstream consumption.
+
+    \b
+    Examples:
+      # Generate a starter configuration
+      tradepulse_cli exec --generate-config --template-output exec.yaml
+
+      # Run signal evaluation
+      tradepulse_cli exec --config exec.yaml
+
+      # Run with human-readable table output
+      tradepulse_cli exec --config exec.yaml --output table
+
+    \b
+    Tip: Use the 'serve' alias for the same functionality:
+      tradepulse_cli serve --config exec.yaml
+    """
 
     command = "exec"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli exec --generate-config --template-output exec.yaml"
             )
         manager.render("exec", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli exec --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to run signal evaluation.\n"
+            "To generate a starter config: tradepulse_cli exec --generate-config --template-output exec.yaml"
+        )
 
     with step_logger(command, "load config"):
         cfg = manager.load_config(config, ExecConfig)
@@ -982,21 +1121,23 @@ def _emit_parity_summary(report: FeatureParityReport, *, command: str) -> None:
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to report YAML config.",
+    help="Path to report YAML config with input artifacts and output paths.",
 )
 @click.option(
-    "--generate-config", is_flag=True, help="Write the default report config template."
+    "--generate-config",
+    is_flag=True,
+    help="Generate a starter report configuration template.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.option(
     "--output-format",
     "--output",
     type=click.Choice(["table", "jsonl", "parquet"]),
-    help="Render results in the requested format in addition to the persisted artifact.",
+    help="Additional output format for metadata (markdown is always generated).",
 )
 @click.pass_context
 def report(
@@ -1006,20 +1147,46 @@ def report(
     template_output: Path | None,
     output_format: str | None,
 ) -> None:
-    """Aggregate JSON artifacts into a markdown summary."""
+    """Aggregate JSON artifacts into a markdown summary.
+
+    Combines backtest, exec, and other JSON outputs into a single
+    comprehensive markdown report. Optionally renders to HTML or PDF.
+
+    \b
+    Examples:
+      # Generate a starter configuration
+      tradepulse_cli report --generate-config --template-output report.yaml
+
+      # Generate a report from multiple inputs
+      tradepulse_cli report --config report.yaml
+
+      # Show report metadata as a table
+      tradepulse_cli report --config report.yaml --output table
+
+    \b
+    Supported output formats in config:
+      - Markdown (.md): Always generated
+      - HTML (.html): Set html_output_path in config
+      - PDF (.pdf): Set pdf_output_path in config
+    """
 
     command = "report"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli report --generate-config --template-output report.yaml"
             )
         manager.render("report", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli report --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to generate a report.\n"
+            "To generate a starter config: tradepulse_cli report --generate-config --template-output report.yaml"
+        )
 
     with step_logger(command, "load config"):
         cfg = manager.load_config(config, ReportConfig)
@@ -1053,17 +1220,17 @@ def report(
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to deployment YAML config.",
+    help="Path to deployment YAML config with Kubernetes settings.",
 )
 @click.option(
     "--generate-config",
     is_flag=True,
-    help="Write the default deployment config template.",
+    help="Generate a starter deployment configuration template.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.pass_context
 def deploy(
@@ -1072,20 +1239,49 @@ def deploy(
     generate_config: bool,
     template_output: Path | None,
 ) -> None:
-    """Apply TradePulse Kubernetes manifests via kubectl."""
+    """Apply TradePulse Kubernetes manifests via kubectl.
+
+    Deploys TradePulse to a Kubernetes cluster using Kustomize overlays.
+    Supports dry-run mode, rollout waiting, and deployment annotations.
+
+    \b
+    Examples:
+      # Generate a starter deployment config
+      tradepulse_cli deploy --generate-config --template-output deploy.yaml
+
+      # Deploy to staging environment
+      tradepulse_cli deploy --config deploy.yaml
+
+    \b
+    Prerequisites:
+      - kubectl configured with cluster access
+      - Kustomize overlays in deploy/kustomize/overlays/
+
+    \b
+    Configuration options:
+      - environment: stage, prod, etc.
+      - kubectl.context: Kubernetes context to use
+      - kubectl.namespace: Target namespace
+      - kubectl.dry_run: client, server, or none
+    """
 
     command = "deploy"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli deploy --generate-config --template-output deploy.yaml"
             )
         manager.render("deploy", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli deploy --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to deploy.\n"
+            "To generate a starter config: tradepulse_cli deploy --generate-config --template-output deploy.yaml"
+        )
 
     with step_logger(command, "load config"):
         cfg = manager.load_config(config, DeploymentConfig)
@@ -1184,17 +1380,17 @@ def deploy(
 @click.option(
     "--config",
     type=click.Path(exists=True, path_type=Path),
-    help="Path to feature parity YAML config.",
+    help="Path to feature parity YAML config with store synchronization settings.",
 )
 @click.option(
     "--generate-config",
     is_flag=True,
-    help="Write the default feature parity config template.",
+    help="Generate a starter feature parity configuration template.",
 )
 @click.option(
     "--template-output",
     type=click.Path(path_type=Path),
-    help="Destination for generated template.",
+    help="Output path for the generated configuration template file.",
 )
 @click.pass_context
 def parity(
@@ -1203,20 +1399,50 @@ def parity(
     generate_config: bool,
     template_output: Path | None,
 ) -> None:
-    """Reconcile offline feature snapshots with the online feature store."""
+    """Reconcile offline feature snapshots with the online feature store.
+
+    Synchronizes features computed offline (e.g., from backtesting) with
+    the online feature store used for live inference. Detects drift and
+    schema changes.
+
+    \b
+    Examples:
+      # Generate a starter configuration
+      tradepulse_cli parity --generate-config --template-output parity.yaml
+
+      # Synchronize features with the online store
+      tradepulse_cli parity --config parity.yaml
+
+    \b
+    Synchronization modes:
+      - overwrite: Replace all online features with offline data
+      - merge: Add new records, update existing ones
+      - append: Only add new records
+
+    \b
+    Reports include:
+      - Row counts (inserted, updated, dropped)
+      - Value drift detection
+      - Schema evolution (added/removed columns)
+    """
 
     command = "parity"
     manager = _get_manager(ctx)
     if generate_config:
         if template_output is None:
             raise click.UsageError(
-                "--template-output must be provided when generating a template"
+                "--template-output is required when using --generate-config.\n"
+                "Example: tradepulse_cli parity --generate-config --template-output parity.yaml"
             )
         manager.render("parity", template_output)
-        click.echo(f"[{command}] template written to {template_output}")
+        click.echo(f"[{command}] ✓ Template written to {template_output}")
+        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli parity --config {template_output}")
         return
     if config is None:
-        raise click.UsageError("--config is required when not generating a template")
+        raise click.UsageError(
+            "--config is required to run parity check.\n"
+            "To generate a starter config: tradepulse_cli parity --generate-config --template-output parity.yaml"
+        )
 
     with step_logger(command, "load config"):
         cfg = manager.load_config(config, FeatureParityConfig)
@@ -1242,29 +1468,54 @@ def parity(
     "csv_path",
     type=click.Path(exists=True, path_type=Path),
     required=True,
-    help="Input CSV path containing price history.",
+    help="Input CSV path containing price history (required).",
 )
 @click.option(
     "--price-col",
     default="price",
     show_default=True,
-    help="CSV column containing price levels.",
+    help="Name of the column containing price values.",
 )
 @click.option(
     "--prob-col",
     default=None,
-    help="Optional CSV column with model probabilities (0..1).",
+    help="Optional column with model probabilities (0-1). If not provided, synthetic probabilities are generated.",
 )
 @click.option(
     "--out",
     "out_path",
     type=click.Path(path_type=Path),
-    help="Optional destination for the equity curve CSV.",
+    help="Optional output path for the equity curve CSV file.",
 )
 def fete_backtest(
     csv_path: Path, price_col: str, prob_col: str | None, out_path: Path | None
 ) -> None:
-    """Run the FETE engine on a CSV dataset and display risk metrics."""
+    """Run the FETE engine on a CSV dataset and display risk metrics.
+
+    FETE (Fast Ensemble Trading Engine) is a probability-aware backtester
+    that includes risk management, circuit breakers, and comprehensive
+    performance metrics.
+
+    \b
+    Examples:
+      # Basic backtest with default price column
+      tradepulse_cli fete-backtest --csv data/prices.csv
+
+      # Custom column names and output
+      tradepulse_cli fete-backtest --csv data.csv --price-col close --out equity.csv
+
+      # With model probabilities
+      tradepulse_cli fete-backtest --csv data.csv --prob-col signal_prob
+
+    \b
+    Displayed Metrics:
+      - Final Equity: End-of-backtest portfolio value
+      - Total Return: Overall percentage gain/loss
+      - Sharpe Ratio: Risk-adjusted return measure
+      - Max Drawdown: Worst peak-to-trough decline
+      - Win Rate: Percentage of profitable trades
+      - Audit Metrics: Brier score, ECE, Entropy, Kendall's τ
+    """
 
     command = "fete-backtest"
     prices, probs = _load_fete_inputs(csv_path, price_col, prob_col)
@@ -1315,38 +1566,42 @@ def fete_backtest(
 @click.option(
     "--returns-csv",
     type=click.Path(exists=True, path_type=Path),
-    help="CSV file with log returns; must include ticker columns and optionally a timestamp column.",
+    help="CSV file with log returns. Include ticker columns and optionally a timestamp column.",
 )
 @click.option(
     "--features-csv",
     type=click.Path(exists=True, path_type=Path),
-    help="CSV file with precomputed features and labels.",
+    help="CSV file with precomputed features and labels (alternative to returns-csv).",
 )
 @click.option(
     "--window",
     default=252,
     show_default=True,
-    help="Rolling window length for feature generation.",
+    help="Rolling window length for feature generation (trading days).",
 )
 @click.option(
     "--horizon",
     default=5,
     show_default=True,
-    help="Forward horizon (in periods) for labels.",
+    help="Forward horizon in periods for label creation.",
 )
 @click.option(
     "--lambda-base",
     default=0.6,
     show_default=True,
-    help="Ensemble weight for the base calibrated probability.",
+    help="Ensemble weight for base calibrated probability (0-1).",
 )
 @click.option(
-    "--hmm-states", type=click.Choice(["2", "3"]), default="2", show_default=True
+    "--hmm-states",
+    type=click.Choice(["2", "3"]),
+    default="2",
+    show_default=True,
+    help="Number of hidden states for regime detection (2=bull/bear, 3=bull/bear/neutral).",
 )
 @click.option(
     "--output",
     type=click.Path(path_type=Path),
-    help="Optional destination for the JSON output. Printed to stdout regardless.",
+    help="Optional JSON output file path. Results are also printed to stdout.",
 )
 def causal_pipeline(
     returns_csv: Path | None,
@@ -1357,12 +1612,39 @@ def causal_pipeline(
     hmm_states: str,
     output: Path | None,
 ) -> None:
-    """Execute the causal early-warning pipeline with optional backtest."""
+    """Execute the causal early-warning pipeline with optional backtest.
+
+    Runs the TradePulse V21 causal inference pipeline for market regime
+    detection and early warning signals. Supports both raw returns input
+    and precomputed features.
+
+    \b
+    Examples:
+      # Run pipeline from log returns CSV
+      tradepulse_cli causal-pipeline --returns-csv returns.csv --output results.json
+
+      # Run from precomputed features
+      tradepulse_cli causal-pipeline --features-csv features.csv
+
+      # Custom window and horizon
+      tradepulse_cli causal-pipeline --returns-csv data.csv --window 126 --horizon 10
+
+    \b
+    Input Requirements:
+      --returns-csv: Columns for tickers + optional timestamp column
+      --features-csv: Must include dr, ricci_mean, topo_intensity,
+                      causal_strength, and y (label) columns
+
+    \b
+    Note: Provide exactly one of --returns-csv or --features-csv.
+    """
 
     command = "causal-pipeline"
     if bool(returns_csv) == bool(features_csv):
         raise click.UsageError(
-            "Provide exactly one of --returns-csv or --features-csv."
+            "Provide exactly one of --returns-csv or --features-csv.\n"
+            "Example with returns: tradepulse_cli causal-pipeline --returns-csv returns.csv\n"
+            "Example with features: tradepulse_cli causal-pipeline --features-csv features.csv"
         )
 
     feature_builder = v21.StrictCausalFeatureBuilder(
