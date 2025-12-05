@@ -1441,7 +1441,7 @@ TACL is the **self-regulating control system** that manages TradePulse topology 
 - [⚙️ Environment Setup](SETUP.md) — Development environment setup guide
 - [📥 Installation Guide](docs/installation.md) — Detailed setup instructions
 - [🚀 Quickstart Guide](docs/quickstart.md) — Step-by-step tutorials
-- [📖 User Guide](docs/quickstart.md) — Complete user documentation
+- [🖥️ User Interaction Guide](docs/USER_INTERACTION_GUIDE.md) — CLI, Dashboard, API examples
 - [💡 Strategy Examples](docs/examples) — 20+ working strategies
 
 <br>
