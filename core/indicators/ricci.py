@@ -167,7 +167,7 @@ except Exception:  # pragma: no cover - fallback for lightweight environments
     nx = _NXModule()
 
 try:  # pragma: no cover - SciPy optional
-    from scipy.spatial.distance import wasserstein_distance as W1
+    from scipy.stats import wasserstein_distance as W1
 except Exception:  # pragma: no cover
     W1 = None
 
