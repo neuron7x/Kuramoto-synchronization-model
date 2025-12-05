@@ -74,6 +74,19 @@ from .validation import (
     validate_timeseries_frame,
 )
 from .versioning import DataVersionManager, VersioningError
+from .signal_filter import (
+    FilterResult,
+    FilterStrategy,
+    SignalFilterConfig,
+    SignalFilterConfigError,
+    filter_by_quality,
+    filter_by_range,
+    filter_dataframe,
+    filter_duplicates,
+    filter_invalid_values,
+    filter_outliers_zscore,
+    filter_signals,
+)
 
 try:
     from .timeutils import (
@@ -169,4 +182,15 @@ __all__ = [
     "SyntheticAugmentationConfig",
     "ToxicityFilterConfig",
     "build_online_writer",
+    "FilterResult",
+    "FilterStrategy",
+    "SignalFilterConfig",
+    "SignalFilterConfigError",
+    "filter_by_quality",
+    "filter_by_range",
+    "filter_dataframe",
+    "filter_duplicates",
+    "filter_invalid_values",
+    "filter_outliers_zscore",
+    "filter_signals",
 ]
