@@ -883,7 +883,7 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install runtime dependencies
-pip install -r requirements.lock
+pip install --upgrade pip && pip install -r requirements.lock
 
 # Configure environment variables
 cp .env.example .env

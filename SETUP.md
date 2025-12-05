@@ -59,7 +59,7 @@ xcode-select --install
 ```
 
 **Windows:**
-- Use [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install) with Ubuntu 22.04 (recommended)
+- Use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) with Ubuntu 22.04 (recommended)
 - Or install [Build Tools for Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 
 ---
@@ -270,13 +270,9 @@ cp .env.example .env
 
 **Step 2: Generate and set required secrets**
 ```bash
-# Generate secrets
-python -c "
-import secrets
-print('Add these to your .env file:')
-print(f'TRADEPULSE_AUDIT_SECRET={secrets.token_hex(32)}')
-print(f'TRADEPULSE_RBAC_AUDIT_SECRET={secrets.token_hex(32)}')
-"
+# Generate secrets (run each command and copy output to .env)
+python -c "import secrets; print('TRADEPULSE_AUDIT_SECRET=' + secrets.token_hex(32))"
+python -c "import secrets; print('TRADEPULSE_RBAC_AUDIT_SECRET=' + secrets.token_hex(32))"
 ```
 
 **Step 3: Edit `.env` with the generated secrets and your configuration**
@@ -469,4 +465,4 @@ After setting up your environment:
 
 ---
 
-**Last Updated:** 2025-01-01
+**Last Updated:** 2025-12-05
