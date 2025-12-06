@@ -101,9 +101,27 @@ jobs:
           ../.venv/bin/python scripts/performance/run_resource_checks.py \
             --output ../reports/performance/baseline_resources.json
 
+      - name: Debug generated files
+        if: always()
+        run: |
+          set -xuo pipefail
+          echo "List reports/performance:"
+          ls -lah reports/performance || true
+          for f in reports/performance/*.json; do
+            echo "=== $f (size=$(stat -c%s "$f" 2>/dev/null || echo 0)) ==="
+            python -m json.tool "$f" || { echo "INVALID JSON: $f"; cat "$f"; exit 2; }
+          done
+
+      - name: Verify python environment
+        run: |
+          set -xuo pipefail
+          .venv/bin/python --version
+          .venv/bin/pip --version
+
       - name: Compare performance against main
         run: |
-          .venv/bin/python scripts/performance/compare_performance.py \
+          set -xuo pipefail
+          .venv/bin/python -u scripts/performance/compare_performance.py \
             --baseline-benchmark reports/performance/baseline_benchmark.json \
             --current-benchmark reports/performance/current_benchmark.json \
             --baseline-resources reports/performance/baseline_resources.json \
@@ -115,12 +133,17 @@ jobs:
       - name: Publish performance summary
         if: always()
         run: |
-          if [ -f reports/performance/comparison.md ]; then
-            {
-              echo '## Performance regression summary'
+          {
+            echo '## Performance regression summary'
+            if [ -f reports/performance/comparison.md ]; then
               cat reports/performance/comparison.md
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
+            else
+              echo "⚠️ No comparison report generated. Check debug logs above."
+            fi
+            echo ""
+            echo "### Artifact files"
+            ls -la reports/performance/*.json 2>/dev/null || echo "No JSON files found"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload performance artifacts
         if: always()
