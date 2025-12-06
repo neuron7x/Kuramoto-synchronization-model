@@ -788,16 +788,16 @@ def _w1_fallback(
     if total_a <= 0.0 and total_b <= 0.0:
         return 0.0
 
-    # Normalize weights
+    # Normalize weights in-place for HFT-grade performance
     if total_a > 0.0:
-        weights_a = weights_a / total_a
+        weights_a /= total_a
     else:
-        weights_a = np.zeros_like(weights_a)
+        weights_a.fill(0.0)
 
     if total_b > 0.0:
-        weights_b = weights_b / total_b
+        weights_b /= total_b
     else:
-        weights_b = np.zeros_like(weights_b)
+        weights_b.fill(0.0)
 
     # Build unified position support
     positions = np.union1d(pos_a, pos_b)

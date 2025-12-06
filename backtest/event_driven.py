@@ -906,8 +906,9 @@ def vectorized_backtest(
     # Net returns after costs
     net_returns = strategy_returns - trade_costs
 
-    # Equity curve
-    equity_curve = initial_capital + np.cumsum(net_returns * (initial_capital if initial_capital > 0 else 1.0))
+    # Equity curve: scale returns by capital or use unit returns
+    capital_scale = initial_capital if initial_capital > 0 else 1.0
+    equity_curve = initial_capital + np.cumsum(net_returns * capital_scale)
 
     # Maximum drawdown
     peaks = np.maximum.accumulate(equity_curve)

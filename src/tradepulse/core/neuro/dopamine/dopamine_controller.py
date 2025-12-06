@@ -23,7 +23,7 @@ def _sanitize_scalar(value: float, default: float = 0.0) -> float:
     Returns:
         float: Sanitized value (either original or default).
     """
-    if not math.isfinite(value):
+    if not np.isfinite(value):
         return default
     return value
 
