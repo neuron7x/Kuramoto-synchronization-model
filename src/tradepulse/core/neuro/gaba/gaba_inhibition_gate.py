@@ -11,6 +11,12 @@ GABAInhibitionGate : Main inhibition gate class with update() interface
 The gate computes inhibition coefficients that reduce Go drives when
 impulsivity (measured by sequence intensity) exceeds threshold levels.
 STDP-like plasticity allows the gate to adapt based on prediction errors.
+
+Performance Notes
+-----------------
+- Algorithmic complexity: O(1) per update call
+- All magic numbers extracted to GABAConfig for production-grade configurability
+- Uses numpy-based sanitization for robust handling of non-finite values
 """
 
 from __future__ import annotations
@@ -19,9 +25,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, Mapping, Optional
 
+import numpy as np
 import yaml
 
 from .._validation import ensure_bool, ensure_float
+
+
+def _sanitize_scalar(value: float, default: float = 0.0) -> float:
+    """Sanitize a scalar value, replacing NaN/Inf with default.
+
+    Args:
+        value: Input scalar value to sanitize.
+        default: Default value to use if input is non-finite.
+
+    Returns:
+        float: Sanitized value (either original or default).
+    """
+    if not np.isfinite(value):
+        return default
+    return float(value)
 
 
 @dataclass(frozen=True)
@@ -180,11 +202,36 @@ class GABAInhibitionGate:
         rpe: float = 0.0,
         stress: float = 0.0,
     ) -> Mapping[str, float]:
+        """Update the GABA inhibition gate with new inputs.
+
+        Computes inhibition coefficient based on impulse trace and stress.
+        Uses STDP-like plasticity to adapt weights based on RPE feedback.
+
+        Args:
+            sequence_intensity: Current action sequence intensity (≥ 0).
+            dt: Time delta for EMA updates (> 0, default 1.0).
+            rpe: Reward prediction error for STDP plasticity.
+            stress: Stress level for enhanced inhibition (≥ 0).
+
+        Returns:
+            Mapping with keys: inhibition, weight, impulse_trace, stdp_dw.
+
+        Raises:
+            ValueError: If dt ≤ 0.
+
+        Note:
+            Algorithmic complexity: O(1) per call.
+            Uses robust sanitization for non-finite inputs.
+        """
         if dt <= 0:
             raise ValueError("dt must be positive")
-        seq = float(max(0.0, sequence_intensity))
-        stress = float(max(0.0, stress))
-        rpe = float(rpe)
+
+        # Robust sanitization of inputs using np.nan_to_num equivalent
+        seq = _sanitize_scalar(float(sequence_intensity), 0.0)
+        seq = max(0.0, seq)
+        stress = _sanitize_scalar(float(stress), 0.0)
+        stress = max(0.0, stress)
+        rpe = _sanitize_scalar(float(rpe), 0.0)
 
         cfg = self._config
         alpha = 1.0 - (1.0 - cfg.impulse_decay) ** dt

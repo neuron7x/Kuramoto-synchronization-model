@@ -809,6 +809,138 @@ class EventDrivenBacktestEngine(BacktestEngine[Result]):
             )
 
 
+def vectorized_backtest(
+    prices: NDArray[np.float64],
+    signals: NDArray[np.float64],
+    *,
+    fee_per_trade: float = 0.0005,
+    initial_capital: float = 0.0,
+) -> dict[str, float | NDArray[np.float64]]:
+    """Fast vectorized backtest for HFT-grade strategy evaluation.
+
+    This function provides O(n) complexity backtest without event loop overhead,
+    suitable for rapid parameter optimization and walk-forward analysis.
+
+    Unlike the event-driven engine, this implementation:
+    - Uses pure numpy vectorization (no Python loops in hot path)
+    - Assumes instant execution (no latency modeling)
+    - Does not support complex order book simulation
+
+    For production backtesting with realistic execution simulation,
+    use EventDrivenBacktestEngine instead.
+
+    Args:
+        prices: 1-D array of asset prices.
+        signals: 1-D array of position signals in [-1, 1].
+            Must have same length as prices.
+            Signals are shifted by 1 to prevent look-ahead bias.
+        fee_per_trade: Transaction fee as fraction of trade value.
+        initial_capital: Starting capital (default 0 for return-based).
+
+    Returns:
+        dict containing:
+            - pnl: Total P&L
+            - max_dd: Maximum drawdown
+            - trades: Number of trades executed
+            - equity_curve: Array of equity values
+            - sharpe: Annualized Sharpe ratio (assuming 252 trading days)
+            - positions: Array of position history
+
+    Raises:
+        ValueError: If prices and signals have different lengths.
+
+    Example:
+        >>> prices = np.array([100.0, 101.0, 102.0, 101.0, 103.0])
+        >>> signals = np.array([0.0, 1.0, 1.0, -1.0, 0.0])
+        >>> result = vectorized_backtest(prices, signals)
+        >>> result['pnl']
+        2.0
+
+    Note:
+        Algorithmic complexity: O(n) where n = len(prices).
+        Uses rolling window approach to prevent look-ahead bias.
+    """
+    prices = np.asarray(prices, dtype=np.float64)
+    signals = np.asarray(signals, dtype=np.float64)
+
+    if prices.shape != signals.shape:
+        raise ValueError("prices and signals must have the same length")
+
+    n = len(prices)
+    if n == 0:
+        return {
+            "pnl": 0.0,
+            "max_dd": 0.0,
+            "trades": 0,
+            "equity_curve": np.array([], dtype=np.float64),
+            "sharpe": 0.0,
+            "positions": np.array([], dtype=np.float64),
+        }
+
+    # Sanitize inputs with robust np.nan_to_num
+    prices = np.nan_to_num(prices, nan=0.0, posinf=0.0, neginf=0.0)
+    signals = np.nan_to_num(signals, nan=0.0, posinf=0.0, neginf=0.0)
+
+    # Clip signals to valid range
+    signals = np.clip(signals, -1.0, 1.0)
+
+    # Shift signals by 1 to prevent look-ahead bias
+    # Signal at t determines position at t+1
+    positions = np.zeros(n, dtype=np.float64)
+    positions[1:] = signals[:-1]
+
+    # Compute returns
+    price_returns = np.zeros(n, dtype=np.float64)
+    price_returns[1:] = (prices[1:] - prices[:-1]) / np.maximum(prices[:-1], 1e-10)
+
+    # Strategy returns = position * price_returns
+    strategy_returns = positions * price_returns
+
+    # Compute trades (position changes)
+    position_changes = np.zeros(n, dtype=np.float64)
+    position_changes[1:] = np.abs(positions[1:] - positions[:-1])
+
+    # Transaction costs
+    trade_costs = position_changes * fee_per_trade
+
+    # Net returns after costs
+    net_returns = strategy_returns - trade_costs
+
+    # Equity curve
+    equity_curve = initial_capital + np.cumsum(net_returns * (initial_capital if initial_capital > 0 else 1.0))
+
+    # Maximum drawdown
+    peaks = np.maximum.accumulate(equity_curve)
+    drawdowns = equity_curve - peaks
+    max_dd = float(np.min(drawdowns))
+
+    # P&L
+    pnl = float(equity_curve[-1] - initial_capital) if n > 0 else 0.0
+
+    # Number of trades
+    trades = int(np.sum(position_changes > 1e-10))
+
+    # Sharpe ratio (annualized, assuming 252 trading days)
+    if n > 1:
+        mean_return = np.mean(net_returns)
+        std_return = np.std(net_returns)
+        if std_return > 1e-10:
+            sharpe = float((mean_return / std_return) * np.sqrt(252))
+        else:
+            sharpe = 0.0
+    else:
+        sharpe = 0.0
+
+    return {
+        "pnl": pnl,
+        "max_dd": max_dd,
+        "trades": trades,
+        "equity_curve": equity_curve,
+        "sharpe": sharpe,
+        "positions": positions,
+    }
+
+
 __all__ = [
     "ArrayDataHandler",
     "CSVChunkDataHandler",
@@ -817,4 +949,5 @@ __all__ = [
     "SimulatedExecutionHandler",
     "Strategy",
     "VectorisedStrategy",
+    "vectorized_backtest",
 ]

@@ -4,15 +4,86 @@ import math
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import yaml
 
 from ._invariants import check_monotonic_thresholds
 from .ddm_adapter import DDMThresholds, ddm_thresholds
 
 
+def _sanitize_scalar(value: float, default: float = 0.0) -> float:
+    """Sanitize a scalar value, replacing NaN/Inf with default.
+
+    This provides robust handling of non-finite values for HFT resiliency.
+
+    Args:
+        value: Input scalar value to sanitize.
+        default: Default value to use if input is non-finite.
+
+    Returns:
+        float: Sanitized value (either original or default).
+    """
+    if not math.isfinite(value):
+        return default
+    return value
+
+
+def _sanitize_array(arr: np.ndarray, default: float = 0.0) -> np.ndarray:
+    """Sanitize an array, replacing NaN/Inf with default using np.nan_to_num.
+
+    This is the array-level equivalent of _ensure_finite for batch processing.
+
+    Args:
+        arr: Input array to sanitize.
+        default: Default value for NaN replacement.
+
+    Returns:
+        np.ndarray: Sanitized array with all finite values.
+    """
+    return np.nan_to_num(arr, nan=default, posinf=default, neginf=default)
+
+
 @dataclass(frozen=True)
 class DopamineConfig:
-    """Typed configuration with range validation and defaults."""
+    """Typed configuration with range validation and defaults.
+
+    This dataclass encapsulates all tunable parameters for the DopamineController,
+    eliminating magic numbers from the logic methods. All parameters are validated
+    at construction time to ensure numerical stability.
+
+    Attributes:
+        version: Configuration schema version for compatibility tracking.
+        discount_gamma: TD(0) discount factor γ ∈ (0, 1].
+        learning_rate_v: Value estimate learning rate ∈ (0, 1].
+        decay_rate: Tonic level EMA decay rate ∈ [0, 1].
+        burst_factor: Phasic burst scaling factor ≥ 0.
+        k: Logistic sigmoid steepness parameter.
+        theta: Logistic sigmoid threshold parameter.
+        logistic_clip_max: Maximum value for logistic input clipping (prevents overflow).
+        logistic_clip_min: Minimum value for logistic input clipping (prevents underflow).
+        w_r, w_n, w_m, w_v: Appetitive state weighting factors.
+        novelty_mode: Either "external" or "abs_rpe".
+        c_absrpe: Coefficient for |RPE|-based novelty.
+        baseline: DA baseline for action value modulation.
+        delta_gain: Action value modulation gain.
+        base_temperature: Base exploration temperature.
+        min_temperature: Minimum temperature floor.
+        temp_k: Temperature decay rate with DA.
+        neg_rpe_temp_gain: Temperature boost on negative RPE.
+        max_temp_multiplier: Maximum temperature multiplier.
+        invigoration_threshold: DA threshold for Go gate.
+        no_go_threshold: DA threshold for No-Go gate.
+        hold_threshold: DA threshold for Hold gate.
+        target_dd: Target drawdown for meta-adaptation.
+        target_sharpe: Target Sharpe ratio for meta-adaptation.
+        meta_cooldown_ticks: Cooldown between meta-adaptations.
+        metric_interval: Interval for metric logging.
+        meta_adapt_rules: Rules for meta-adaptation by performance state.
+        rpe_ema_beta: EMA beta for RPE statistics.
+        temp_adapt_*: Adaptive temperature parameters (Adam optimizer).
+        rpe_var_release_*: RPE variance release gate parameters.
+        ddm_*: Drift-Diffusion Model integration parameters.
+    """
 
     version: str
     discount_gamma: float
@@ -60,6 +131,9 @@ class DopamineConfig:
     ddm_baseline_t0: float
     ddm_eps: float
     hold_threshold: float
+    # Logistic sigmoid clipping bounds to prevent overflow
+    logistic_clip_max: float = 60.0
+    logistic_clip_min: float = -60.0
 
     def to_mapping(self) -> Dict[str, float | str | int]:
         return {
@@ -109,6 +183,8 @@ class DopamineConfig:
             "ddm_baseline_t0": self.ddm_baseline_t0,
             "ddm_eps": self.ddm_eps,
             "hold_threshold": self.hold_threshold,
+            "logistic_clip_max": self.logistic_clip_max,
+            "logistic_clip_min": self.logistic_clip_min,
         }
 
 
@@ -148,6 +224,9 @@ _OPTIONAL_DEFAULTS: Dict[str, float] = {
     "ddm_baseline_t0": 0.2,
     "ddm_eps": 1.0e-6,
     "hold_threshold": 0.4,
+    # Logistic sigmoid clipping bounds (prevent numerical overflow)
+    "logistic_clip_max": 60.0,
+    "logistic_clip_min": -60.0,
 }
 
 
@@ -218,7 +297,11 @@ class DopamineController:
         self._last_temperature: float = float(self.config["base_temperature"])
 
     def _init_cache_values(self) -> None:
-        """Cache frequently accessed config values for performance."""
+        """Cache frequently accessed config values for performance.
+
+        This optimization reduces dictionary lookups in the hot path,
+        improving per-tick latency for HFT applications.
+        """
         self._cache_discount_gamma: float = float(self.config["discount_gamma"])
         self._cache_learning_rate_v: float = float(self.config["learning_rate_v"])
         self._cache_decay_rate: float = float(self.config["decay_rate"])
@@ -239,6 +322,13 @@ class DopamineController:
         )
         self._cache_no_go_threshold: float = float(self.config["no_go_threshold"])
         self._cache_hold_threshold: float = float(self.config["hold_threshold"])
+        # Logistic sigmoid clipping bounds (extracted magic numbers)
+        self._cache_logistic_clip_max: float = float(
+            self.config.get("logistic_clip_max", 60.0)
+        )
+        self._cache_logistic_clip_min: float = float(
+            self.config.get("logistic_clip_min", -60.0)
+        )
 
     def _default_logger(self, name: str, value: float) -> None:
         try:
@@ -592,6 +682,8 @@ class DopamineController:
             ddm_baseline_t0=cfg["ddm_baseline_t0"],
             ddm_eps=cfg["ddm_eps"],
             hold_threshold=cfg["hold_threshold"],
+            logistic_clip_max=float(cfg.get("logistic_clip_max", 60.0)),
+            logistic_clip_min=float(cfg.get("logistic_clip_min", -60.0)),
         )
 
     # ---------- appetitive state ----------
@@ -716,6 +808,27 @@ class DopamineController:
         appetitive_state: float,
         rpe: Optional[float] = None,
     ) -> float:
+        """Compute dopamine signal from appetitive state and RPE.
+
+        Implements the core DA dynamics:
+        - Phasic: burst_factor * max(0, RPE)
+        - Tonic: EMA of (appetitive + phasic) with decay_rate
+        - DA: sigmoid(k * (tonic - theta)), clipped to [0, 1]
+
+        Args:
+            appetitive_state: Non-negative appetitive drive signal.
+            rpe: Optional reward prediction error (uses last_rpe if None).
+
+        Returns:
+            float: Dopamine level in [0, 1].
+
+        Raises:
+            ValueError: If appetitive_state is negative.
+
+        Note:
+            Algorithmic complexity: O(1) per call.
+            Uses cached config values for HFT-grade latency.
+        """
         if appetitive_state < 0:
             raise ValueError("appetitive_state must be ≥ 0")
         appetitive_state = self._ensure_finite(
@@ -735,9 +848,9 @@ class DopamineController:
         )
         self._ensure_finite("tonic_level", self.tonic_level)
 
-        # bounded logistic
+        # bounded logistic with configurable clip bounds
         x = self._cache_k * (self.tonic_level - self._cache_theta)
-        x = max(min(x, 60.0), -60.0)
+        x = max(min(x, self._cache_logistic_clip_max), self._cache_logistic_clip_min)
         sig = 1.0 / (1.0 + math.exp(-x))
         self.dopamine_level = float(min(1.0, max(0.0, sig)))
 
