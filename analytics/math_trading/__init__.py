@@ -30,18 +30,24 @@ from .kelly_criterion import (
     KellyParams,
     KellyResult,
     MultiAssetKelly,
+    MultiAssetKellyParams,
+    MultiAssetKellyResult,
+    kelly_from_edge_variance,
 )
 from .optimal_execution import (
     AlmgrenChrissOptimizer,
     ExecutionSlice,
     OptimalExecutionParams,
     OptimalExecutionResult,
+    compute_vwap_schedule,
 )
 from .portfolio_rebalancing import (
     PortfolioRebalancer,
     RebalanceConstraints,
     RebalanceRequest,
     RebalanceResult,
+    TradeOrder,
+    compute_minimum_variance_trades,
 )
 
 __all__ = [
@@ -50,14 +56,20 @@ __all__ = [
     "ExecutionSlice",
     "OptimalExecutionParams",
     "OptimalExecutionResult",
+    "compute_vwap_schedule",
     # Portfolio Rebalancing
     "PortfolioRebalancer",
     "RebalanceRequest",
     "RebalanceResult",
     "RebalanceConstraints",
+    "TradeOrder",
+    "compute_minimum_variance_trades",
     # Kelly Criterion
     "KellyCriterion",
     "KellyParams",
     "KellyResult",
     "MultiAssetKelly",
+    "MultiAssetKellyParams",
+    "MultiAssetKellyResult",
+    "kelly_from_edge_variance",
 ]
