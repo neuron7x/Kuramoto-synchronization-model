@@ -351,8 +351,8 @@ class RiskCompliance:
 
                     if drawdown_metric_value is not None:
                         self._record_metric(
-                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: collector.record_daily_drawdown(
-                                value, mode=mode
+                            lambda collector, value=drawdown_metric_value, mode=drawdown_metric_mode: (
+                                collector.record_daily_drawdown(value, mode=mode)
                             )
                         )
 
