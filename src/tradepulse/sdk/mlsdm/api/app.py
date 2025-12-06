@@ -8,7 +8,8 @@ and simulation management.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator, Dict, List
 
 try:
     from fastapi import FastAPI, HTTPException
@@ -22,15 +23,30 @@ from ..config import MLSDMConfig
 
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
+# Global MLSDM instance (initialized on startup)
+mlsdm_instance: MLSDM | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Manage application lifespan (startup and shutdown)."""
+    global mlsdm_instance
+    # Startup
+    logger.info("Starting MLSDM API")
+    mlsdm_instance = MLSDM.default()
+    logger.info("MLSDM API started successfully")
+    yield
+    # Shutdown
+    logger.info("Shutting down MLSDM API")
+
+
+# Create FastAPI app with lifespan
 app = FastAPI(
     title="MLSDM API",
     description="Multi-Level Stochastic Decision Model HTTP API",
     version="0.1.0",
+    lifespan=lifespan,
 )
-
-# Global MLSDM instance (initialized on startup)
-mlsdm_instance: MLSDM | None = None
 
 
 class BiomarkerRequest(BaseModel):
@@ -69,15 +85,6 @@ class HealthResponse(BaseModel):
 
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="API version")
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Initialize MLSDM on startup."""
-    global mlsdm_instance
-    logger.info("Starting MLSDM API")
-    mlsdm_instance = MLSDM.default()
-    logger.info("MLSDM API started successfully")
 
 
 @app.get("/health", response_model=HealthResponse)

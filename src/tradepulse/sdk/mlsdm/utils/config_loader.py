@@ -57,6 +57,25 @@ class ConfigLoader:
             raise
 
     @staticmethod
+    def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+        """Deep merge two dictionaries.
+
+        Args:
+            base: Base dictionary with default values.
+            override: Dictionary with override values.
+
+        Returns:
+            Merged dictionary where override takes precedence.
+        """
+        result = base.copy()
+        for key, value in override.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = ConfigLoader._deep_merge(result[key], value)
+            else:
+                result[key] = value
+        return result
+
+    @staticmethod
     def load_config_with_defaults(
         path: str | Path, defaults: Dict[str, Any] | None = None
     ) -> Dict[str, Any]:
@@ -72,8 +91,8 @@ class ConfigLoader:
         config = ConfigLoader.load_config(path)
 
         if defaults:
-            # Merge defaults with loaded config (config takes precedence)
-            merged = {**defaults, **config}
+            # Deep merge defaults with loaded config (config takes precedence)
+            merged = ConfigLoader._deep_merge(defaults, config)
             return merged
 
         return config
