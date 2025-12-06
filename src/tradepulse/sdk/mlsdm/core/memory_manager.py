@@ -80,9 +80,7 @@ class MemoryManager:
 
             # Take action if agent is available
             if self.mlsdm.agent is not None:
-                action = self.mlsdm.act(state)
-            else:
-                action = np.zeros(2)  # Default action
+                _ = self.mlsdm.act(state)  # Action computed but not used in demo
 
             # Log progress periodically
             if (step + 1) % 10 == 0:

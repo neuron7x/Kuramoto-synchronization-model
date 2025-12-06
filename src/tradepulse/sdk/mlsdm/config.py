@@ -183,11 +183,15 @@ class MLSDMConfig:
     optimizer: OptimizerConfig | None = None
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> MLSDMConfig:
-        """Load full MLSDM configuration from a YAML file."""
-        with open(path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+    def from_dict(cls, data: Mapping[str, Any]) -> MLSDMConfig:
+        """Create configuration from a dictionary.
 
+        Args:
+            data: Dictionary with configuration data.
+
+        Returns:
+            MLSDMConfig instance.
+        """
         fhmc_data = data.get("fhmc", data)
         fhmc = FHMCConfig.from_dict(fhmc_data)
 
@@ -215,6 +219,14 @@ class MLSDMConfig:
             )
 
         return cls(fhmc=fhmc, agent=agent, optimizer=optimizer)
+
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> MLSDMConfig:
+        """Load full MLSDM configuration from a YAML file."""
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        return cls.from_dict(data)
 
     @classmethod
     def default(cls) -> MLSDMConfig:

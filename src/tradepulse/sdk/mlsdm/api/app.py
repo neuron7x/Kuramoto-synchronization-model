@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Dict, List
+from typing import AsyncIterator, List
 
 try:
     from fastapi import FastAPI, HTTPException
@@ -19,7 +19,6 @@ except ImportError as e:
     raise ImportError(msg) from e
 
 from ..facade import MLSDM
-from ..config import MLSDMConfig
 
 logger = logging.getLogger(__name__)
 
