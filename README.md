@@ -182,7 +182,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies with security constraints
 pip install --upgrade pip
-pip install -c constraints/security.txt -r requirements.txt
+pip install -c constraints/security.txt -r requirements.lock
 
 # Configure environment variables
 cp .env.example .env
@@ -574,7 +574,7 @@ git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
 python -m venv .venv
 source .venv/bin/activate
-pip install -c constraints/security.txt -r requirements-dev.txt
+pip install -c constraints/security.txt -r requirements-dev.lock
 pre-commit install
 
 # Run quality checks
