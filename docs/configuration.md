@@ -115,7 +115,7 @@ KRAKEN_OTP=optional_totp_here
 ```
 
 Sample configuration overlays that map symbols, rate limits, and risk tolerances for each
-venue are available under `configs/exchanges/`. Copy the relevant file, adjust the
+venue are available under `artifacts/configs/`. Copy the relevant template file, adjust the
 notional limits, and load it alongside your primary strategy settings.
 
 ## Programmatic access
