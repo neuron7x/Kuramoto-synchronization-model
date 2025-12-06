@@ -30,10 +30,23 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from numba import njit
 from numpy.typing import NDArray
 
 from backtest.engine import walk_forward
+
+try:
+    from numba import njit
+    
+    NUMBA_AVAILABLE = True
+except ImportError:
+    NUMBA_AVAILABLE = False
+    
+    def njit(*args, **kwargs):
+        """Fallback decorator when Numba is not available."""
+        def decorator(func):
+            return func
+        
+        return decorator
 
 
 @dataclass
@@ -103,16 +116,21 @@ def _fast_dopamine_loop(
 
     value_estimate = 0.0
     current_tonic = 0.0
+    next_value_estimate = 0.0
 
     for i in range(n):
         reward = returns[i]
 
-        # Compute reward prediction error
-        rpe_val = reward + gamma * value_estimate - value_estimate
+        # Compute reward prediction error (TD error)
+        # RPE = reward + gamma * V(s') - V(s)
+        rpe_val = reward + gamma * next_value_estimate - value_estimate
         rpe[i] = rpe_val
 
-        # Update value estimate
+        # Update value estimate for current state
         value_estimate += lr_v * rpe_val
+        
+        # The updated value becomes the next state's value for the next iteration
+        next_value_estimate = value_estimate
 
         # Compute appetitive signal (reward + novelty bonus)
         appetitive = max(0.0, reward + c_novelty * novelty_scores[i])
@@ -171,9 +189,9 @@ def run_vectorized_dopamine_td(
     """
     close_prices = df["close"].to_numpy(dtype=np.float64)
 
-    # Compute returns
-    returns = np.diff(close_prices) / close_prices[:-1]
-    returns = np.concatenate(([0.0], returns))
+    # Compute returns with better memory efficiency
+    returns = np.zeros(len(close_prices), dtype=np.float64)
+    returns[1:] = np.diff(close_prices) / close_prices[:-1]
 
     # Get novelty scores if available
     if "novelty" in df.columns:
