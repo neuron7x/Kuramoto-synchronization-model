@@ -1,6 +1,0 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-openapi: 3.1.0
-info:
-  title: vpin API
-  version: 0.1.0
-paths: {}

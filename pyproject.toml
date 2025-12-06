@@ -166,8 +166,6 @@ include = [
     "markets.*",
     "modules",
     "modules.*",
-    "nfpro",
-    "nfpro.*",
     "neurotrade_pro",
     "neurotrade_pro.*",
     "observability",
