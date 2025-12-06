@@ -359,9 +359,9 @@ mutmut run --use-coverage
 
 ### Coverage Status
 
-**Current**: 94% overall coverage (93.7% measured, rounded up)  
-**Target**: 98% for v1.0 release  
-**Gate**: 92% minimum for CI
+**Target**: 98% for v1.0 release (configured in pyproject.toml)  
+**Current CI Gate**: 80% minimum while Kuramoto/Ricci suites stabilize  
+**Module Targets**: backtest (100% ✅), execution (100% ✅), core modules (90-95%)
 
 📖 **Testing Guide**: [TESTING.md](TESTING.md)
 
