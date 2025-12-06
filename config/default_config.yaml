@@ -1,0 +1,44 @@
+# Default configuration for MLSDM MemoryManager
+# This file provides baseline settings for running MLSDM simulations
+
+fhmc:
+  alpha_target: [0.5, 1.5]
+  orexin:
+    k1: 1.0
+    k2: 0.7
+    k3: 0.3
+  threat:
+    w_dd: 0.5
+    w_vol: 0.3
+    w_cp: 0.2
+    cp_threshold: 5.0
+    vol_window: 60
+  flipflop:
+    theta_lo: 0.6
+    theta_hi: 0.8
+    omega_lo: 0.4
+    omega_hi: 0.6
+  mfs:
+    depth: 12
+    p: 0.6
+    heavy_tail: 0.5
+    base_dt_seconds: 60.0
+    adapt_alpha: false
+  arousal:
+    slope_gate: false
+  sleep:
+    dgr_ratio: 0.25
+  explore:
+    ou_theta: 0.15
+    ou_sigma: 0.3
+    use_colored_noise_ppo: false
+  fractional_update:
+    eta_f: 0.5
+    levy_alpha: 1.5
+    on_states: null
+
+agent:
+  state_dim: 8
+  action_dim: 2
+  lr: 0.001
+  device: cpu
