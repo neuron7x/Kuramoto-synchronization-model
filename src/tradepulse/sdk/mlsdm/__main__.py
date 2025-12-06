@@ -82,7 +82,7 @@ def main() -> None:
         try:
             import uvicorn  # type: ignore[import]
             from .api.app import app
-        except Exception as exc:  # noqa: BLE001
+        except (ImportError, ModuleNotFoundError) as exc:
             logger.exception("Failed to import API app or uvicorn: %s", exc)
             raise SystemExit(1) from exc
 
@@ -92,16 +92,27 @@ def main() -> None:
 
     try:
         config = ConfigLoader.load_config(args.config)
-    except Exception as exc:  # noqa: BLE001
+    except (FileNotFoundError, OSError) as exc:
         logger.exception("Failed to load config '%s': %s", args.config, exc)
         raise SystemExit(1) from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Unexpected error loading config '%s': %s", args.config, exc)
+        raise SystemExit(1) from exc
 
-    manager = MemoryManager(config)
+    try:
+        manager = MemoryManager(config)
+    except (ValueError, KeyError, AttributeError) as exc:
+        logger.exception("Failed to initialize MemoryManager: %s", exc)
+        raise SystemExit(1) from exc
+
     logger.info("Running simulation...", extra={"steps": args.steps})
     try:
         manager.run_simulation(args.steps)
-    except Exception as exc:  # noqa: BLE001
+    except (RuntimeError, ValueError) as exc:
         logger.exception("Simulation failed: %s", exc)
+        raise SystemExit(1) from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Unexpected simulation error: %s", exc)
         raise SystemExit(1) from exc
     logger.info("Simulation finished successfully.")
 

@@ -54,9 +54,16 @@ class MemoryManager:
         """
         logger.info(f"Starting simulation for {steps} steps")
 
+        # Get state dimension from config or use default
+        state_dim = 8
+        if self.mlsdm.agent is not None and hasattr(self.mlsdm.agent, "state_dim"):
+            state_dim = self.mlsdm.agent.state_dim
+        elif isinstance(self.config, dict) and "agent" in self.config:
+            state_dim = self.config["agent"].get("state_dim", 8)
+
         for step in range(steps):
             # Generate synthetic state for demonstration
-            state = np.random.randn(8)  # Assuming state_dim=8
+            state = np.random.randn(state_dim)
 
             # Update biomarkers with synthetic market conditions
             exp_return = np.random.uniform(-0.05, 0.05)
