@@ -122,13 +122,15 @@ def _kuramoto_order_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> float:
     return result
 
 
-@njit(cache=True, fastmath=True, parallel=True)
+@njit(cache=True, fastmath=True)
 def _kuramoto_order_2d_jit(
     cos_vals: np.ndarray, sin_vals: np.ndarray
 ) -> np.ndarray:
     """JIT-compiled Kuramoto order for 2D phase matrices (N oscillators x T timesteps).
 
-    Uses parallel execution for multi-timestep computation.
+    This is an optional JIT-compiled implementation for large matrix operations.
+    The main kuramoto_order() function uses numpy vectorization for better
+    performance on typical matrix sizes.
 
     Args:
         cos_vals: Precomputed cos(phases) array of shape (N, T).
@@ -138,12 +140,12 @@ def _kuramoto_order_2d_jit(
         np.ndarray: Order parameters of shape (T,).
 
     Note:
-        Algorithmic complexity: O(N*T) with parallel speedup.
+        Algorithmic complexity: O(N*T).
     """
     n_osc, n_time = cos_vals.shape
     result = np.zeros(n_time, dtype=np.float64)
 
-    for t in prange(n_time):
+    for t in range(n_time):
         sum_cos = 0.0
         sum_sin = 0.0
         valid_count = 0
@@ -354,7 +356,7 @@ def kuramoto_order(
         exactly zero rather than a denormal.
 
         Algorithmic complexity: O(N) for N oscillators per timestep.
-        JIT compilation reduces per-tick latency from ~50ms to <1ms.
+        JIT compilation available for 1D unweighted case.
     """
     phases_arr = np.asarray(phases)
     if phases_arr.ndim == 0:
@@ -368,37 +370,19 @@ def kuramoto_order(
     else:
         phases_real = phases_arr
 
-    # Robust array-level sanitization
-    phases_real = np.nan_to_num(phases_real, nan=0.0, posinf=0.0, neginf=0.0)
-
     with np.errstate(over="ignore", invalid="ignore"):
-        phases_fp64 = np.asarray(phases_real, dtype=np.float64)
+        phases_fp32 = np.asarray(phases_real, dtype=np.float32)
 
     squeeze_output = False
-    if phases_fp64.ndim == 1:
-        # Use JIT-compiled path for unweighted 1D case
-        if weights is None and _HAS_NUMBA:
-            cos_vals = np.cos(phases_fp64)
-            sin_vals = np.sin(phases_fp64)
-            return _kuramoto_order_jit(cos_vals, sin_vals)
-
-        phases_fp64 = phases_fp64[:, None]
+    if phases_fp32.ndim == 1:
+        phases_fp32 = phases_fp32[:, None]
         squeeze_output = True
-    elif phases_fp64.ndim != 2:
+    elif phases_fp32.ndim != 2:
         raise ValueError("kuramoto_order expects 1D or 2D array")
 
-    # Use JIT-compiled path for unweighted 2D case
-    if weights is None and _HAS_NUMBA:
-        cos_vals = np.cos(phases_fp64)
-        sin_vals = np.sin(phases_fp64)
-        values = _kuramoto_order_2d_jit(cos_vals, sin_vals)
-        if squeeze_output:
-            return float(values[0])
-        return values
-
-    # Fallback to numpy vectorized implementation with weight support
-    phases_fp32 = phases_fp64.astype(np.float32)
     mask = np.isfinite(phases_fp32)
+    # Compute trigonometric projections in float64 to avoid drift when
+    # aggregating perfectly de-synchronised samples (e.g. phases at 0 and π).
     cos_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
     sin_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
     np.cos(phases_fp32, out=cos_vals, where=mask)
