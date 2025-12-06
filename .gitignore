@@ -13,6 +13,7 @@ src/_version.py
 # Testing
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 coverage_html/
 reports/
