@@ -170,6 +170,14 @@ class GABAInhibitionGate(nn.Module):
         'cycle_multiplier', 'stdp_delta', 'ltp_ltd_delta', 'adaptive_delta'.
     """
 
+    # Type annotations for registered buffers
+    gaba_fast: torch.Tensor
+    gaba_slow: torch.Tensor
+    risk_weight: torch.Tensor
+    t_ms: torch.Tensor
+    decay_fast: torch.Tensor
+    decay_slow: torch.Tensor
+
     def __init__(
         self, params: Optional[GateParams] = None, device: Optional[str] = None
     ):

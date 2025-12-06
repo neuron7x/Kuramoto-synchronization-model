@@ -36,16 +36,16 @@ from backtest.engine import walk_forward
 
 try:
     from numba import njit
-    
+
     NUMBA_AVAILABLE = True
 except ImportError:
     NUMBA_AVAILABLE = False
-    
+
     def njit(*args, **kwargs):
         """Fallback decorator when Numba is not available."""
         def decorator(func):
             return func
-        
+
         return decorator
 
 
@@ -128,7 +128,7 @@ def _fast_dopamine_loop(
 
         # Update value estimate for current state
         value_estimate += lr_v * rpe_val
-        
+
         # The updated value becomes the next state's value for the next iteration
         next_value_estimate = value_estimate
 

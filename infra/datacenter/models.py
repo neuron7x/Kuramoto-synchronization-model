@@ -113,11 +113,12 @@ class DataCenterHealth:
         score -= self.packet_loss_rate * 20
 
         # Resource utilization impact (up to -20 points)
-        avg_utilization = (
-            self.cpu_utilization + self.memory_utilization + self.disk_utilization
-        ) / 3
-        if avg_utilization > 70:
-            score -= min(20.0, (avg_utilization - 70) / 1.5)
+        # Use max utilization to ensure high usage in any resource is penalized
+        max_utilization = max(
+            self.cpu_utilization, self.memory_utilization, self.disk_utilization
+        )
+        if max_utilization > 70:
+            score -= min(20.0, (max_utilization - 70) / 1.0)
 
         # Error rate impact (up to -30 points)
         score -= self.error_rate * 30

@@ -90,6 +90,125 @@ class TestDataCenterHealth:
         score = health.calculate_health_score()
         assert score < 50.0
 
+    def test_health_score_high_cpu_low_others(self) -> None:
+        """Test health score with high CPU but low memory and disk.
+        
+        This test verifies the new max utilization logic:
+        - With max utilization (90% CPU), penalty is applied
+        - Score = 100 - (90-70)/1.0 = 80.0
+        """
+        health = DataCenterHealth(
+            cpu_utilization=90.0,
+            memory_utilization=10.0,
+            disk_utilization=10.0,
+        )
+        score = health.calculate_health_score()
+        # Penalty: min(20.0, (90-70)/1.0) = 20.0
+        # Expected: 100 - 20 = 80.0
+        assert score == 80.0
+
+    def test_health_score_high_memory_low_others(self) -> None:
+        """Test health score with high memory but low CPU and disk.
+        
+        This verifies max utilization catches memory constraint:
+        - Max utilization = 85% (memory)
+        - Score = 100 - (85-70)/1.0 = 85.0
+        """
+        health = DataCenterHealth(
+            cpu_utilization=20.0,
+            memory_utilization=85.0,
+            disk_utilization=15.0,
+        )
+        score = health.calculate_health_score()
+        # Penalty: min(20.0, (85-70)/1.0) = 15.0
+        # Expected: 100 - 15 = 85.0
+        assert score == 85.0
+
+    def test_health_score_high_disk_low_others(self) -> None:
+        """Test health score with high disk but low CPU and memory.
+        
+        This verifies max utilization catches disk constraint:
+        - Max utilization = 95% (disk)
+        - Penalty capped at 20.0 since (95-70)/1.0 = 25.0 > 20.0
+        """
+        health = DataCenterHealth(
+            cpu_utilization=30.0,
+            memory_utilization=25.0,
+            disk_utilization=95.0,
+        )
+        score = health.calculate_health_score()
+        # Penalty: min(20.0, (95-70)/1.0) = 20.0 (capped)
+        # Expected: 100 - 20 = 80.0
+        assert score == 80.0
+
+    def test_health_score_balanced_high_load(self) -> None:
+        """Test health score with balanced high load across all resources.
+        
+        This verifies behavior when all resources are equally high:
+        - Max utilization = 85% (all equal)
+        - Score = 100 - (85-70)/1.0 = 85.0
+        """
+        health = DataCenterHealth(
+            cpu_utilization=85.0,
+            memory_utilization=85.0,
+            disk_utilization=85.0,
+        )
+        score = health.calculate_health_score()
+        # Penalty: min(20.0, (85-70)/1.0) = 15.0
+        # Expected: 100 - 15 = 85.0
+        assert score == 85.0
+
+    def test_health_score_low_load_everywhere(self) -> None:
+        """Test health score with low load across all resources.
+        
+        This verifies no penalty when all resources are below threshold:
+        - Max utilization = 50% (all below 70% threshold)
+        - No penalty applied
+        """
+        health = DataCenterHealth(
+            cpu_utilization=50.0,
+            memory_utilization=40.0,
+            disk_utilization=30.0,
+        )
+        score = health.calculate_health_score()
+        # No penalty since max(50, 40, 30) = 50 < 70
+        # Expected: 100.0
+        assert score == 100.0
+
+    def test_health_score_threshold_boundary(self) -> None:
+        """Test health score at exactly the 70% threshold.
+        
+        This verifies that exactly 70% doesn't trigger penalty:
+        - Max utilization = 70%
+        - No penalty should be applied
+        """
+        health = DataCenterHealth(
+            cpu_utilization=70.0,
+            memory_utilization=50.0,
+            disk_utilization=60.0,
+        )
+        score = health.calculate_health_score()
+        # No penalty since 70 is not > 70
+        # Expected: 100.0
+        assert score == 100.0
+
+    def test_health_score_just_above_threshold(self) -> None:
+        """Test health score just above the 70% threshold.
+        
+        This verifies penalty calculation for minimal overage:
+        - Max utilization = 71%
+        - Small penalty of (71-70)/1.0 = 1.0
+        """
+        health = DataCenterHealth(
+            cpu_utilization=71.0,
+            memory_utilization=50.0,
+            disk_utilization=60.0,
+        )
+        score = health.calculate_health_score()
+        # Penalty: min(20.0, (71-70)/1.0) = 1.0
+        # Expected: 100 - 1 = 99.0
+        assert score == 99.0
+
     def test_negative_latency_fails(self) -> None:
         """Test that negative latency raises ValueError."""
         with pytest.raises(ValueError, match="cannot be negative"):
