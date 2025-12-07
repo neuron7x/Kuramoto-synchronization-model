@@ -200,7 +200,7 @@ tzdata==2025.2
 uc-micro-py==1.0.3
 unidecode==1.4.0
 uritemplate==4.2.0
-urllib3==2.5.0
+urllib3==2.6.0
 uvicorn==0.37.0
 watchdog==6.0.0
 websockets==15.0.1
