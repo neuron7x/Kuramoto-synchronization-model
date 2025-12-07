@@ -13,7 +13,7 @@ certifi==2025.10.5
 charset-normalizer==3.4.4
 idna==3.11
 requests==2.32.5
-urllib3==2.5.0
+urllib3==2.6.0
 
 # ============================================================================
 # Cryptography & Authentication - CRITICAL security packages
@@ -57,7 +57,8 @@ pandera==0.26.1
 # ============================================================================
 # configobj: Fix ReDoS vulnerability GHSA-c33w-24p9-8m24
 # Version 5.0.9 is the first version that fixes this vulnerability
-configobj>=5.0.9
+# NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
+configobj==5.0.9
 
 # setuptools: Fix path traversal and RCE vulnerabilities PYSEC-2025-49, GHSA-cx63-2mw6-8hw5
 # Version 78.1.1+ fixes these vulnerabilities
@@ -65,4 +66,5 @@ setuptools>=78.1.1
 
 # twisted: Fix XSS and request ordering vulnerabilities PYSEC-2024-75, GHSA-c8m8-j448-xjx7
 # Version 24.7.0+ fixes these vulnerabilities
-twisted>=24.7.0
+# NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
+twisted==24.7.0
