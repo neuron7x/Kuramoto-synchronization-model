@@ -456,7 +456,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         
         Should only be used for administrative purposes or testing.
         """
-        self._circuit_breaker._transition_to_closed()
+        self._circuit_breaker.reset()
         self._logger.info("Circuit breaker manually reset to CLOSED state")
 
     # ------------------------------------------------------------------
