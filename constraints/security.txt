@@ -57,6 +57,7 @@ pandera==0.26.1
 # ============================================================================
 # configobj: Fix ReDoS vulnerability GHSA-c33w-24p9-8m24
 # Version 5.0.9 is the first version that fixes this vulnerability
+# NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
 configobj==5.0.9
 
 # setuptools: Fix path traversal and RCE vulnerabilities PYSEC-2025-49, GHSA-cx63-2mw6-8hw5
@@ -65,4 +66,5 @@ setuptools>=78.1.1
 
 # twisted: Fix XSS and request ordering vulnerabilities PYSEC-2024-75, GHSA-c8m8-j448-xjx7
 # Version 24.7.0+ fixes these vulnerabilities
+# NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
 twisted==24.7.0
