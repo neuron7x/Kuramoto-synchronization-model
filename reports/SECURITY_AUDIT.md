@@ -221,6 +221,11 @@
   - Changed constraint from >=24.7.0 to ==24.7.0 for enforcement
 
 #### MEDIUM Priority
+- **[SEC-DEP-003]** Monitor and update exact-pinned packages
+  - configobj==5.0.9: Check for newer versions quarterly
+  - twisted==24.7.0: Check for newer versions quarterly
+  - Consider using tools like Dependabot for automated PRs
+
 - **[SEC-JS-001]** Audit JavaScript dependencies in apps/web
   - Run `npm audit` and address HIGH/CRITICAL findings
   - Add automated npm audit to CI pipeline
@@ -304,12 +309,12 @@
 
 **Approval for Merge:**
 - ✅ No critical blockers
-- ⚠️ 3 known vulnerabilities require follow-up (configobj, twisted)
+- ✅ All HIGH priority vulnerabilities addressed in this PR
 - ✅ All automated security gates passing (with documented exceptions)
 
 **Recommended Actions Before Merge:**
-1. Address HIGH priority dependency vulnerabilities (configobj, twisted)
-2. Verify container build and deployment work correctly
+1. Verify container builds successfully with updated constraints
+2. Confirm pip-audit passes with exact pins for configobj and twisted
 
 **Post-Merge Actions:**
 1. Schedule audits for JS, Go, and Rust dependencies
