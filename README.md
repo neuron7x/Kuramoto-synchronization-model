@@ -195,31 +195,35 @@ cp .env.example .env
 
 ```bash
 # Run the quick start example
-python examples/quick_start.py
+PYTHONPATH=. python examples/quick_start.py
 ```
 
 **Expected output:**
 ```
 === TradePulse Market Analysis ===
 ----------------------------------------
-Market Phase:     accumulation
-Confidence:       0.847
-Entry Signal:     0.623
+Market Phase:     transition
+Confidence:       0.893
+Entry Signal:     0.000
 ----------------------------------------
 
 📊 Interpretation:
-  • Market is in accumulation phase (potential bottoming)
-  • High confidence (84.7%) in current phase
+  • Market is transitioning between regimes
+  • High confidence (89.3%) in current phase
 
 ✅ Analysis complete!
 ```
 
+> **Note:** Use `PYTHONPATH=.` to ensure Python can find the local modules. On Windows PowerShell: `$env:PYTHONPATH="."; python examples/quick_start.py`
+
 ### Interactive Dashboard
 
 ```bash
-# Launch the Streamlit dashboard
-streamlit run interfaces/dashboard_streamlit.py
+# Launch the Streamlit dashboard (install streamlit first: pip install streamlit)
+PYTHONPATH=. streamlit run interfaces/dashboard_streamlit.py
 ```
+
+> **Note:** The dashboard requires streamlit to be installed. It provides interactive market analysis and visualization.
 
 📖 **Dashboard Guide**: [docs/ui_logical_structure.md](docs/ui_logical_structure.md)
 
