@@ -214,7 +214,7 @@ Entry Signal:     0.000
 ✅ Analysis complete!
 ```
 
-> **Note:** Use `PYTHONPATH=.` to ensure Python can find the local modules. On Windows PowerShell: `$env:PYTHONPATH="."; python examples/quick_start.py`
+> **Note:** Use `PYTHONPATH=.` to ensure Python can find the local modules. On Windows PowerShell: `$env:PYTHONPATH='.'; python examples/quick_start.py`
 
 ### Interactive Dashboard
 

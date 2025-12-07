@@ -30,7 +30,7 @@ The repository is clean, well-documented, and production-grade for beta users. A
 
 ### Version Information
 - Current VERSION file: `0.1.0`
-- Python version support: 3.11 - 3.12 (3.13 not supported)
+- Python version support: 3.11 - 3.12 (3.13 not supported due to dependency compatibility issues)
 - License: TPLA (TradePulse Proprietary License Agreement)
 
 ---
@@ -115,6 +115,8 @@ pytest tests/unit/backtest/ tests/unit/execution/ tests/unit/indicators/ \
 | kuramoto.compute_phase[128k] | 4.831ms | 9.304ms | -48.08% | ✅ OK |
 | kuramoto.order[4096x12] | 0.618ms | 2.350ms | -73.71% | ✅ OK |
 | hierarchical.features[3x2048] | 3.069ms | 9.000ms | -65.90% | ✅ OK |
+
+> **Note:** Benchmarks are considered OK when they show improvement over baseline or meet performance budgets. All benchmarks show significant improvements (48-74% faster).
 
 **Memory Regression:** 3/3 tests passing ✅
 
@@ -216,7 +218,7 @@ The repository's `.gitignore` is comprehensive and properly configured:
 **Reason:** Repository is already clean. All temporary artifacts are properly gitignored and not tracked by git.
 
 **Archive Candidates:** 0  
-**Reason:** No obvious legacy code or experimental features requiring archival at this time.
+**Reason:** No obvious legacy code requiring archival at this time. Experimental features (hydrobrain_v2/, rl/) are clearly marked as such in documentation and serve research purposes, so they are kept active rather than archived.
 
 ---
 
