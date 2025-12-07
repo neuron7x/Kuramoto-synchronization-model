@@ -23,9 +23,6 @@ COPY src ./src
 COPY configs ./configs
 COPY sitecustomize.py ./sitecustomize.py
 
-# Legacy components that remain part of the runtime environment.
-COPY nfpro ./nfpro
-
 RUN mkdir -p state
 
 EXPOSE 8000
