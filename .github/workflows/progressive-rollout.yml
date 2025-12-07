@@ -102,6 +102,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -163,6 +168,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            constraints/security.txt
       - name: Install runtime dependencies
         run: |
           set -euxo pipefail
