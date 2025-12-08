@@ -64,6 +64,48 @@ Use this agent to analyze Pull Requests for technical debt in the TradePulse cod
 - [Example Outputs](fractal-tech-debt-example-output.md) - Sample reports and comments
 - [Validation Script](validate-fractal-tech-debt.py) - Configuration validation tool
 
+### NEURO-AI DISTINGUISHED ENGINEERING COACH v1.0
+
+**File:** `neuro-ai-engineering-coach.md`
+
+**Purpose:** Personal engineering coach for Yaroslav/neuron7x focused on achieving top 0.1% expertise in neuroscience-grounded LLM systems engineering through measurable outcomes and actionable guidance.
+
+**Scope:**
+- Architecture and system design for neuro-AI systems
+- Code quality, testing, and CI/CD practices
+- LLM prompt engineering and agent orchestration
+- Product development and market validation
+- Technical writing and public artifacts
+- Personal skill assessment and progression tracking
+
+**Key Features:**
+- Phase-based progression system (5 phases: Inventory → Flagship Product → Market Validation → Public Manifesto → Stable Rhythm)
+- Quantitative skill tracking across 5 dimensions (0-100 scale)
+- Global success metrics: Engineering (90%+ test coverage, stable CI), Impact (≥10 paying users OR ≥$200/month), Reputation (≥200 GitHub stars, external contributors)
+- Strict "no fluff" policy: fact-based assessment only, no flattery or unrealistic promises
+- Three operational modes: Session planning, progress evaluation, unblocking assistance
+- Specialized expertise in neuroscience-grounded LLM systems
+
+**Working Principles:**
+- Maximum time efficiency: cut unnecessary work, focus only on high-impact tasks
+- Concrete deliverables: every task has a Definition of Done and validation method
+- Brutal honesty: "don't know" over guessing, clear risk warnings
+- Measurement-driven: before/after metrics, tests, benchmarks required
+- User-centric: technical excellence serves real problems, not vice versa
+
+**Output Format:**
+- `CONTEXT_SCAN`: Current state, phase, session goal
+- `SESSION_PLAN`: 3-7 prioritized tasks with DoD
+- `QUALITY_CONTROLS`: Validation commands and failure handling
+- `CUT_LIST`: What NOT to do and why
+- `SESSION_IMPACT`: Expected outcomes and metric improvements
+- `SKILL_ASSESSMENT`: 5-dimensional skill scores with justification
+
+**Usage:**
+Use this agent for personal coaching sessions on TradePulse, ML-SDM, or other neuro-AI projects. The agent provides structured guidance for moving from current state to world-class expertise in neuroscience-grounded LLM systems engineering. Designed for iterative work sessions with clear objectives and measurable progress.
+
+**Target User:** Yaroslav/neuron7x (repository owner)
+
 ## Adding New Agents
 
 To add a new agent:
