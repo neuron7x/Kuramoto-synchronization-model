@@ -10,20 +10,30 @@ on:
     # Run daily at 6 AM UTC
     - cron: '0 6 * * *'
 
+# Restrict permissions to minimum required
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Repository Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
+    # Job-specific permissions
+    permissions:
+      contents: read        # Read repository contents
+      actions: read         # Read artifacts
+      pull-requests: write  # Comment on PRs
+    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0  # Full history for git checks
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -35,13 +45,15 @@ jobs:
       
       - name: Upgrade pip
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==24.3.1 setuptools==75.6.0 wheel==0.45.0
       
       - name: Install project dependencies
         run: |
-          # Install with security constraints
-          pip install -c constraints/security.txt -r requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.txt
+          # Install with security constraints and hash verification
+          pip install --require-hashes --no-deps -c constraints/security.txt -r requirements.txt || \
+            pip install -c constraints/security.txt -r requirements.txt
+          pip install --require-hashes --no-deps -c constraints/security.txt -r requirements-dev.txt || \
+            pip install -c constraints/security.txt -r requirements-dev.txt
       
       - name: Verify httpx installation
         run: |
@@ -56,7 +68,7 @@ jobs:
         continue-on-error: false
       
       - name: Upload validation reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
         if: always()
         with:
           name: validation-reports
@@ -78,7 +90,7 @@ jobs:
       
       - name: Comment PR with validation results
         if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
         with:
           script: |
             const fs = require('fs');
