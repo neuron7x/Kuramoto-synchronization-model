@@ -96,7 +96,7 @@ with open('reports/repository_validation.json') as f:
               
               const stars = '⭐'.repeat(Math.floor(summary.health_score / 20));
               const body = `## 🔍 Repository Validation Results
-              
+
 **Health Score:** ${summary.health_score}/100 ${stars}
 
 | Metric | Value |
@@ -115,7 +115,9 @@ ${fs.readFileSync('reports/REPOSITORY_VALIDATION_REPORT.md', 'utf8').substring(0
 </details>
 
 🔗 [Full validation report available in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-              `;
+
+_Note: Report truncated to 20,000 characters for PR comment. Download artifacts for full report._
+`;
               
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
