@@ -160,6 +160,8 @@ include = [
     "libs.*",
     "src",
     "src.*",
+    "tradepulse",
+    "tradepulse.*",
     "tradepulse_agent",
     "tradepulse_agent.*",
     "markets",

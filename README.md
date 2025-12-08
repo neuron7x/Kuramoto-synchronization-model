@@ -409,10 +409,15 @@ TradePulse uses **Hydra** for flexible, composable configuration management.
 
 ### Configuration Structure
 
-- **`conf/`** — Main Hydra configuration directory
-- **`configs/`** — Additional configuration files
+TradePulse uses three configuration directories, each with a specific purpose:
+
+- **`conf/`** — Hydra framework configs and experiment settings
+- **`config/`** — Core neuromodulator and thermodynamic system configs
+- **`configs/`** — Application and service-level configurations
 - **`envs/`** — Environment-specific settings
 - **`.env`** — Environment variables (not committed)
+
+For detailed information about each directory's purpose and usage, see [Configuration Structure Guide](docs/architecture/configuration_structure.md).
 
 ### Example Configuration
 
