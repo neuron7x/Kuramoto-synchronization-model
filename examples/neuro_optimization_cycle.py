@@ -29,29 +29,21 @@ src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 # Import optimization modules
-import importlib.util
-
-# Load adaptive calibrator
-spec_calibrator = importlib.util.spec_from_file_location(
-    "adaptive_calibrator",
-    src_path / "tradepulse" / "core" / "neuro" / "adaptive_calibrator.py",
-)
-adaptive_calibrator = importlib.util.module_from_spec(spec_calibrator)
-spec_calibrator.loader.exec_module(adaptive_calibrator)
-
-AdaptiveCalibrator = adaptive_calibrator.AdaptiveCalibrator
-CalibrationMetrics = adaptive_calibrator.CalibrationMetrics
-
-# Load neuro optimizer
-spec_optimizer = importlib.util.spec_from_file_location(
-    "neuro_optimizer",
-    src_path / "tradepulse" / "core" / "neuro" / "neuro_optimizer.py",
-)
-neuro_optimizer = importlib.util.module_from_spec(spec_optimizer)
-spec_optimizer.loader.exec_module(neuro_optimizer)
-
-NeuroOptimizer = neuro_optimizer.NeuroOptimizer
-OptimizationConfig = neuro_optimizer.OptimizationConfig
+try:
+    from tradepulse.core.neuro.adaptive_calibrator import (
+        AdaptiveCalibrator,
+        CalibrationMetrics,
+    )
+    from tradepulse.core.neuro.neuro_optimizer import (
+        NeuroOptimizer,
+        OptimizationConfig,
+    )
+except ImportError as e:
+    print(f"Note: Running in demo mode without full imports: {e}")
+    print("This is a demonstration of the optimization cycle structure.")
+    print("\nTo run with full functionality, ensure TradePulse is installed:")
+    print("  pip install -e .")
+    sys.exit(0)
 
 
 class MarketSimulator:
