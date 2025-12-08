@@ -24,6 +24,11 @@ import httpx
 
 from domain import Order
 from execution.connectors import ExecutionConnector, OrderError, TransientOrderError
+from execution.resilience.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitBreakerState,
+)
 
 
 def _first_present(payload: Mapping[str, Any], *keys: str) -> Any:
@@ -132,6 +137,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         ws_factory: Callable[[str], AsyncContextManager[Any]] | None = None,
         rate_limit: tuple[int, float] = (1200, 60.0),
         max_backoff: float = 30.0,
+        circuit_breaker_config: CircuitBreakerConfig | None = None,
     ) -> None:
         super().__init__(sandbox=sandbox)
         self.name = name
@@ -144,6 +150,9 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
             max_requests=max(rate_limit[0], 1), interval_seconds=max(rate_limit[1], 0.1)
         )
         self._max_backoff = max(1.0, float(max_backoff))
+        self._circuit_breaker = CircuitBreaker(
+            circuit_breaker_config or CircuitBreakerConfig()
+        )
         self._ws_stop = threading.Event()
         self._ws_thread: threading.Thread | None = None
         self._orders: MutableMapping[str, Order] = {}
@@ -264,6 +273,24 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
     ) -> Mapping[str, Any] | list:
         if not self._connected or self._http_client is None:
             raise RuntimeError("Connector is not connected")
+        
+        # Check circuit breaker before allowing request
+        if not self._circuit_breaker.allow_request():
+            state = self._circuit_breaker.state
+            ttl = self._circuit_breaker.get_time_until_recovery()
+            reason = self._circuit_breaker.get_last_trip_reason() or "repeated failures"
+            self._logger.warning(
+                "Circuit breaker blocked request",
+                extra={
+                    "state": state.value,
+                    "recovery_seconds": ttl,
+                    "reason": reason,
+                },
+            )
+            raise TransientOrderError(
+                f"Circuit breaker {state.value} - service unavailable"
+            )
+        
         request_weight = (
             weight if weight is not None else self._weight_for(method, path)
         )
@@ -295,20 +322,39 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 headers=headers,
             )
         except httpx.TimeoutException as exc:
+            self._circuit_breaker.record_failure()
+            self._logger.error(
+                "HTTP request timed out",
+                extra={"method": method, "path": path},
+            )
             raise TransientOrderError("HTTP request timed out") from exc
         except httpx.RequestError as exc:
+            self._circuit_breaker.record_failure()
             message = str(exc)
             if not message:
                 message = exc.__class__.__name__
+            self._logger.error(
+                "HTTP request failed",
+                extra={"method": method, "path": path, "error": message},
+            )
             raise TransientOrderError(f"HTTP request failed: {message}") from exc
+        
+        # Record success/failure based on response status
         if response.status_code == 429:
+            self._circuit_breaker.record_failure()
             raise TransientOrderError("HTTP 429: rate limited")
         if 500 <= response.status_code < 600:
+            self._circuit_breaker.record_failure()
             raise TransientOrderError(
                 f"HTTP {response.status_code}: transient server error"
             )
         if response.is_error:
+            self._circuit_breaker.record_failure()
             raise OrderError(f"HTTP {response.status_code}: {response.text}")
+        
+        # Success case
+        self._circuit_breaker.record_success()
+        
         try:
             payload = response.json()
         except json.JSONDecodeError as exc:  # pragma: no cover - defensive
@@ -381,6 +427,37 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         idempotency_key: str | None = None,
     ) -> Order:
         raise OrderError("Cancel/replace is not supported by this connector")
+
+    # ------------------------------------------------------------------
+    # Circuit breaker and health monitoring
+    def get_circuit_breaker_state(self) -> CircuitBreakerState:
+        """Return the current circuit breaker state.
+        
+        Returns:
+            CircuitBreakerState: Current state (CLOSED, OPEN, or HALF_OPEN).
+        """
+        return self._circuit_breaker.state
+    
+    def get_circuit_breaker_metrics(self) -> Dict[str, Any]:
+        """Return circuit breaker health metrics.
+        
+        Returns:
+            Dict containing state, failure rate, and recovery information.
+        """
+        return {
+            "state": self._circuit_breaker.state.value,
+            "failure_rate": self._circuit_breaker.failure_rate(),
+            "time_until_recovery": self._circuit_breaker.get_time_until_recovery(),
+            "last_trip_reason": self._circuit_breaker.get_last_trip_reason(),
+        }
+    
+    def reset_circuit_breaker(self) -> None:
+        """Manually reset circuit breaker to closed state.
+        
+        Should only be used for administrative purposes or testing.
+        """
+        self._circuit_breaker.reset()
+        self._logger.info("Circuit breaker manually reset to CLOSED state")
 
     # ------------------------------------------------------------------
     # Streaming helpers

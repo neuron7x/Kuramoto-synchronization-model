@@ -116,6 +116,16 @@ class CircuitBreaker:
         self._consecutive_failures = 0
         self._half_open_calls = 0
 
+    def reset(self) -> None:
+        """Reset the circuit breaker to CLOSED state.
+        
+        This method is intended for administrative purposes such as manual
+        intervention or testing. It should not be called automatically in
+        response to failures.
+        """
+        with self._lock:
+            self._transition_to_closed()
+
     def record_risk_breach(self, reason: str) -> None:
         """Record a risk compliance breach."""
         with self._lock:

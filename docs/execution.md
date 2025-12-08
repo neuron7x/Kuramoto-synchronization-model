@@ -151,3 +151,72 @@ report = monitor.check("BTCUSDT", quantity=0.00125, price=26850.0)
 
 Leverage this monitor alongside throttles in `RiskManager` to keep order flow
 inside venue guardrails.
+
+---
+
+## Circuit Breaker Protection
+
+All exchange adapters built on `RESTWebSocketConnector` include automatic circuit
+breaker protection to prevent cascade failures during exchange outages. The circuit
+breaker monitors request failures and automatically opens when failure thresholds
+are exceeded.
+
+### Circuit Breaker States
+
+- **CLOSED** – Normal operation; all requests are allowed
+- **OPEN** – Too many failures detected; requests are blocked to prevent cascade failures
+- **HALF_OPEN** – Recovery period; limited requests allowed to test if service recovered
+
+### Configuration
+
+Circuit breaker behavior can be customized via `CircuitBreakerConfig`:
+
+```python
+from execution.adapters.binance import BinanceRESTConnector
+from execution.resilience.circuit_breaker import CircuitBreakerConfig
+
+config = CircuitBreakerConfig(
+    failure_threshold=5,        # Open after 5 consecutive failures
+    recovery_timeout=30.0,      # Wait 30s before attempting recovery
+    half_open_max_calls=3,      # Allow 3 test calls in HALF_OPEN state
+)
+
+connector = BinanceRESTConnector(
+    sandbox=False,
+    circuit_breaker_config=config
+)
+```
+
+### Monitoring Circuit Breaker State
+
+```python
+# Get current state
+state = connector.get_circuit_breaker_state()  # CLOSED, OPEN, or HALF_OPEN
+
+# Get detailed metrics
+metrics = connector.get_circuit_breaker_metrics()
+# Returns:
+# {
+#   "state": "closed",
+#   "failure_rate": 0.05,
+#   "time_until_recovery": 0.0,
+#   "last_trip_reason": None
+# }
+
+# Manual reset (administrative use only)
+connector.reset_circuit_breaker()
+```
+
+### Failure Detection
+
+The circuit breaker records failures for:
+- HTTP 500-599 server errors
+- HTTP 429 rate limit responses
+- Network timeouts and connection errors
+- Request exceptions
+
+Successful responses (2xx status codes) are recorded as successes and help the
+circuit breaker transition from HALF_OPEN back to CLOSED state.
+
+【F:execution/adapters/base.py†L27-L30,L153-L155,L276-L285,L441-L460】
+【F:execution/resilience/circuit_breaker.py†L41-L160】
