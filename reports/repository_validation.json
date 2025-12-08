@@ -1,0 +1,780 @@
+{
+  "timestamp": "2025-12-08T10:59:09.014457+00:00",
+  "repository": "https://github.com/neuron7x/TradePulse",
+  "branch": "copilot/validate-repository-authenticity",
+  "commit_sha": "75d2b91e63f96287729c00777c1bc6d3f745fd1b",
+  "summary": {
+    "total_checks": 80,
+    "passed": 72,
+    "failed": 8,
+    "warnings": 8,
+    "success_rate": 90.0,
+    "health_score": 82
+  },
+  "checks": [
+    {
+      "category": "Git Repository",
+      "name": "git_status",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Git repository is accessible (1 changed files)",
+      "duration_ms": 13.59,
+      "details": {
+        "changed_files": 1
+      }
+    },
+    {
+      "category": "Git Repository",
+      "name": "commit_sha",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Current commit: 75d2b91e",
+      "duration_ms": 0.0,
+      "details": {
+        "commit_sha": "75d2b91e63f96287729c00777c1bc6d3f745fd1b"
+      }
+    },
+    {
+      "category": "Git Repository",
+      "name": "branch",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Current branch: copilot/validate-repository-authenticity",
+      "duration_ms": 0.0,
+      "details": {
+        "branch": "copilot/validate-repository-authenticity"
+      }
+    },
+    {
+      "category": "Git Repository",
+      "name": "uncommitted_changes",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Working tree is clean",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "category": "Code Integrity",
+      "name": "python_syntax",
+      "passed": true,
+      "severity": "INFO",
+      "message": "All 1755 Python files have valid syntax",
+      "duration_ms": 1999.56,
+      "details": {
+        "files_checked": 1755
+      }
+    },
+    {
+      "category": "Module Imports",
+      "name": "import_core.indicators",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Failed to import core.indicators: No module named 'core'",
+      "duration_ms": 0.17,
+      "details": {
+        "error": "No module named 'core'"
+      }
+    },
+    {
+      "category": "Module Imports",
+      "name": "import_backtest.event_driven",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Failed to import backtest.event_driven: No module named 'backtest'",
+      "duration_ms": 0.08,
+      "details": {
+        "error": "No module named 'backtest'"
+      }
+    },
+    {
+      "category": "Module Imports",
+      "name": "import_execution.oms",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Failed to import execution.oms: No module named 'execution'",
+      "duration_ms": 0.07,
+      "details": {
+        "error": "No module named 'execution'"
+      }
+    },
+    {
+      "category": "Module Imports",
+      "name": "import_analytics",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Failed to import analytics: No module named 'analytics'",
+      "duration_ms": 0.07,
+      "details": {
+        "error": "No module named 'analytics'"
+      }
+    },
+    {
+      "category": "Module Imports",
+      "name": "import_domain",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Failed to import domain: No module named 'domain'",
+      "duration_ms": 0.06,
+      "details": {
+        "error": "No module named 'domain'"
+      }
+    },
+    {
+      "category": "Configuration",
+      "name": "config_backtest_cost_model.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 18.19,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_default.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.67,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_risk_engine.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.06,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_hncm_consensus.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.55,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_hbunified.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 4.8,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_performance_budgets.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 6.86,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_serotonin.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 3.1,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_amm.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.96,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_fhmc.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.09,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_wf.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.33,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_amm_strategy.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.51,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_markets.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.25,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_risk.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.76,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_gaba.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.55,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_dopamine.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.95,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_na_ach.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.61,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_kuramoto_ricci_composite.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.41,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_demo.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.57,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_perf_budgets.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.59,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_registry.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 11.12,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_igs.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.71,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_heavy_math_jobs.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.3,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_denylist.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.97,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_access_policy.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 3.27,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_allowlist.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.82,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_license_policy.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.54,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_locales.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 5.06,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_policy.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 7.8,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_production_readiness.json",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid JSON configuration",
+      "duration_ms": 0.07,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_baselines.json",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid JSON configuration",
+      "duration_ms": 0.07,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_default.toml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid TOML configuration",
+      "duration_ms": 3.0,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_critical_surface.toml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid TOML configuration",
+      "duration_ms": 0.26,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_config.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.35,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_default.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.15,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_default.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.42,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_btc_daily.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.5,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_prod.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 1.09,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_staging.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.92,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_base.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.27,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_dev.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.43,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_ci.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 0.59,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_dopamine.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 3.3,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_thermo_config.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 4.48,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_default_config.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 2.18,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_aggressive.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 3.5,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_conservative.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 3.47,
+      "details": {}
+    },
+    {
+      "category": "Configuration",
+      "name": "config_normal.yaml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid YAML configuration",
+      "duration_ms": 3.11,
+      "details": {}
+    },
+    {
+      "category": "Security",
+      "name": "security_constraints",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Security constraints file exists",
+      "duration_ms": 0.06,
+      "details": {}
+    },
+    {
+      "category": "Security",
+      "name": "pip_audit",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "pip-audit failed: Found 23 known vulnerabilities in 10 packages\n",
+      "duration_ms": 2660.64,
+      "details": {}
+    },
+    {
+      "category": "Security",
+      "name": "hardcoded_secrets",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Potential hardcoded secrets in 1 files",
+      "duration_ms": 29.59,
+      "details": {
+        "suspicious_files": [
+          "/home/runner/work/TradePulse/TradePulse/admin/api.py"
+        ]
+      }
+    },
+    {
+      "category": "Data Integrity",
+      "name": "sample_data",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Found 5 data files",
+      "duration_ms": 0.0,
+      "details": {
+        "file_count": 5
+      }
+    },
+    {
+      "category": "Data Integrity",
+      "name": "csv_sample_ohlc.csv",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid CSV with 6 columns",
+      "duration_ms": 246.08,
+      "details": {}
+    },
+    {
+      "category": "Data Integrity",
+      "name": "csv_sample.csv",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid CSV with 3 columns",
+      "duration_ms": 0.93,
+      "details": {}
+    },
+    {
+      "category": "Data Integrity",
+      "name": "csv_sample_crypto_ohlcv.csv",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid CSV with 7 columns",
+      "duration_ms": 0.76,
+      "details": {}
+    },
+    {
+      "category": "Data Integrity",
+      "name": "csv_sample_stocks_daily.csv",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid CSV with 7 columns",
+      "duration_ms": 0.69,
+      "details": {}
+    },
+    {
+      "category": "Data Integrity",
+      "name": "csv_indicator_macd_baseline.csv",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Valid CSV with 7 columns",
+      "duration_ms": 0.68,
+      "details": {}
+    },
+    {
+      "category": "Test Suite",
+      "name": "pytest_discovery",
+      "passed": false,
+      "severity": "WARNING",
+      "message": "Test discovery failed (exit code: 4)",
+      "duration_ms": 734.82,
+      "details": {
+        "stderr": "SciPy stats module unavailable for drift monitoring; using NumPy fallback\nImportError while loading conftest '/home/runner/work/TradePulse/TradePulse/tests/conftest.py'.\ntests/conftest.py:16: in <module>\n    from observability.audit.trail import (\nobservability/__init__.py:39: in <module>\n    from .drift import (  # noqa: F401\nobservability/drift.py:13: in <module>\n    from .notifications import NotificationDispatcher\nobservability/notifications.py:12: in <module>\n    import httpx\nE   ModuleNotF"
+      }
+    },
+    {
+      "category": "Build System",
+      "name": "makefile",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Makefile exists",
+      "duration_ms": 0.0,
+      "details": {}
+    },
+    {
+      "category": "Build System",
+      "name": "pyproject_toml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "pyproject.toml is valid",
+      "duration_ms": 1.31,
+      "details": {}
+    },
+    {
+      "category": "Build System",
+      "name": "ruff_available",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Ruff linter is available",
+      "duration_ms": 3.28,
+      "details": {}
+    },
+    {
+      "category": "Build System",
+      "name": "mypy_available",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Mypy type checker is available",
+      "duration_ms": 120.32,
+      "details": {}
+    },
+    {
+      "category": "Documentation",
+      "name": "doc_README.md",
+      "passed": true,
+      "severity": "INFO",
+      "message": "README.md exists (23041 bytes)",
+      "duration_ms": 0.0,
+      "details": {
+        "size": 23041
+      }
+    },
+    {
+      "category": "Documentation",
+      "name": "doc_CONTRIBUTING.md",
+      "passed": true,
+      "severity": "INFO",
+      "message": "CONTRIBUTING.md exists (17052 bytes)",
+      "duration_ms": 0.0,
+      "details": {
+        "size": 17052
+      }
+    },
+    {
+      "category": "Documentation",
+      "name": "doc_SECURITY.md",
+      "passed": true,
+      "severity": "INFO",
+      "message": "SECURITY.md exists (25496 bytes)",
+      "duration_ms": 0.0,
+      "details": {
+        "size": 25496
+      }
+    },
+    {
+      "category": "Documentation",
+      "name": "doc_LICENSE",
+      "passed": true,
+      "severity": "INFO",
+      "message": "LICENSE exists (5177 bytes)",
+      "duration_ms": 0.0,
+      "details": {
+        "size": 5177
+      }
+    },
+    {
+      "category": "Documentation",
+      "name": "doc_CHANGELOG.md",
+      "passed": true,
+      "severity": "INFO",
+      "message": "CHANGELOG.md exists (5511 bytes)",
+      "duration_ms": 0.0,
+      "details": {
+        "size": 5511
+      }
+    },
+    {
+      "category": "Documentation",
+      "name": "docs_directory",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Found 232 documentation files",
+      "duration_ms": 0.0,
+      "details": {
+        "file_count": 232
+      }
+    },
+    {
+      "category": "File Integrity",
+      "name": "checksum_pyproject.toml",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Checksum computed: c2aa3d734da553e8...",
+      "duration_ms": 0.05,
+      "details": {
+        "checksum": "c2aa3d734da553e84d42802e5f1575107805bde93b1f0e0175045136aa058986"
+      }
+    },
+    {
+      "category": "File Integrity",
+      "name": "checksum_requirements.txt",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Checksum computed: 596d04dc104771e3...",
+      "duration_ms": 0.02,
+      "details": {
+        "checksum": "596d04dc104771e3e288c70a798c230a253a54e9edc9082cc7467435108d33fd"
+      }
+    },
+    {
+      "category": "File Integrity",
+      "name": "checksum_Makefile",
+      "passed": true,
+      "severity": "INFO",
+      "message": "Checksum computed: 20ea2827a4def994...",
+      "duration_ms": 0.02,
+      "details": {
+        "checksum": "20ea2827a4def9948bb26552a94cf7eeebce80c765893aea94fd53e60b3077c1"
+      }
+    }
+  ]
+}

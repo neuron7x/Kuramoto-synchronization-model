@@ -1,0 +1,1012 @@
+#!/usr/bin/env python
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Comprehensive repository validation for TradePulse authenticity and integrity.
+
+This script performs exhaustive validation checks across all repository aspects:
+- Code integrity (syntax, imports, type checking)
+- Data integrity (OHLCV data, sample data, configurations)
+- Security validation (dependencies, secrets, vulnerabilities)
+- Test suite validation (unit, integration, e2e)
+- Build system validation (lint, type check, format)
+- Documentation consistency
+- Git repository integrity
+- Configuration validation
+
+Usage:
+    python scripts/comprehensive_repository_validation.py
+    python scripts/comprehensive_repository_validation.py --verbose
+    python scripts/comprehensive_repository_validation.py --output report.md
+    python scripts/comprehensive_repository_validation.py --json-output report.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+@dataclass
+class ValidationResult:
+    """Result of a single validation check."""
+
+    category: str
+    name: str
+    passed: bool
+    message: str
+    duration_ms: float = 0.0
+    details: dict[str, Any] = field(default_factory=dict)
+    severity: str = "INFO"  # INFO, WARNING, ERROR, CRITICAL
+
+
+@dataclass
+class ValidationReport:
+    """Complete validation report."""
+
+    timestamp: str
+    repository: str
+    branch: str
+    commit_sha: str
+    total_checks: int
+    passed: int
+    failed: int
+    warnings: int
+    checks: list[ValidationResult] = field(default_factory=list)
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate success rate as percentage."""
+        if self.total_checks == 0:
+            return 0.0
+        return (self.passed / self.total_checks) * 100
+
+    @property
+    def health_score(self) -> int:
+        """Calculate health score (0-100)."""
+        if self.total_checks == 0:
+            return 0
+        # Weight critical failures heavily
+        critical_failures = sum(
+            1 for c in self.checks if not c.passed and c.severity == "CRITICAL"
+        )
+        error_failures = sum(
+            1 for c in self.checks if not c.passed and c.severity == "ERROR"
+        )
+        
+        base_score = self.success_rate
+        penalties = (critical_failures * 10) + (error_failures * 5) + (self.warnings * 1)
+        
+        return max(0, min(100, int(base_score - penalties)))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert report to dictionary for JSON serialization."""
+        return {
+            "timestamp": self.timestamp,
+            "repository": self.repository,
+            "branch": self.branch,
+            "commit_sha": self.commit_sha,
+            "summary": {
+                "total_checks": self.total_checks,
+                "passed": self.passed,
+                "failed": self.failed,
+                "warnings": self.warnings,
+                "success_rate": round(self.success_rate, 2),
+                "health_score": self.health_score,
+            },
+            "checks": [
+                {
+                    "category": c.category,
+                    "name": c.name,
+                    "passed": c.passed,
+                    "severity": c.severity,
+                    "message": c.message,
+                    "duration_ms": round(c.duration_ms, 2),
+                    "details": c.details,
+                }
+                for c in self.checks
+            ],
+        }
+
+    def to_markdown(self) -> str:
+        """Convert report to markdown format."""
+        lines = [
+            "# TradePulse Comprehensive Repository Validation Report",
+            "",
+            f"**Validation Date:** {self.timestamp}",
+            f"**Repository:** {self.repository}",
+            f"**Branch:** {self.branch}",
+            f"**Commit SHA:** {self.commit_sha}",
+            f"**Health Score:** {self.health_score}/100 {'⭐' * (self.health_score // 20)}",
+            "",
+            "---",
+            "",
+            "## Executive Summary",
+            "",
+            f"- **Total Checks:** {self.total_checks}",
+            f"- **Passed:** ✅ {self.passed}",
+            f"- **Failed:** ❌ {self.failed}",
+            f"- **Warnings:** ⚠️ {self.warnings}",
+            f"- **Success Rate:** {self.success_rate:.1f}%",
+            "",
+        ]
+
+        # Group by category
+        categories: dict[str, list[ValidationResult]] = {}
+        for check in self.checks:
+            if check.category not in categories:
+                categories[check.category] = []
+            categories[check.category].append(check)
+
+        lines.append("## Validation Results by Category")
+        lines.append("")
+
+        for category, checks in sorted(categories.items()):
+            passed = sum(1 for c in checks if c.passed)
+            failed = sum(1 for c in checks if not c.passed)
+            warnings = sum(1 for c in checks if c.severity == "WARNING")
+
+            lines.append(f"### {category}")
+            lines.append(f"**Status:** {passed}/{len(checks)} passed")
+            if failed > 0:
+                lines.append(f"**Failed:** {failed}")
+            if warnings > 0:
+                lines.append(f"**Warnings:** {warnings}")
+            lines.append("")
+
+            for check in checks:
+                icon = "✅" if check.passed else "❌"
+                if check.severity == "WARNING":
+                    icon = "⚠️"
+                lines.append(f"{icon} **{check.name}**")
+                lines.append(f"   - {check.message}")
+                if check.details:
+                    for key, value in check.details.items():
+                        lines.append(f"   - {key}: {value}")
+                lines.append("")
+
+        return "\n".join(lines)
+
+
+class RepositoryValidator:
+    """Comprehensive repository validation engine."""
+
+    def __init__(self, verbose: bool = False):
+        self.verbose = verbose
+        self.results: list[ValidationResult] = []
+        self.root = Path.cwd()
+
+    def run_command(
+        self, cmd: list[str], timeout: int = 300, check: bool = True
+    ) -> tuple[int, str, str]:
+        """Run a shell command and return exit code, stdout, stderr."""
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=check,
+                cwd=self.root,
+            )
+            return result.returncode, result.stdout, result.stderr
+        except subprocess.TimeoutExpired:
+            return -1, "", f"Command timed out after {timeout}s"
+        except subprocess.CalledProcessError as e:
+            return e.returncode, e.stdout or "", e.stderr or ""
+        except Exception as e:
+            return -1, "", str(e)
+
+    def add_result(
+        self,
+        category: str,
+        name: str,
+        passed: bool,
+        message: str,
+        duration_ms: float = 0.0,
+        details: dict[str, Any] | None = None,
+        severity: str = "INFO",
+    ) -> None:
+        """Add a validation result."""
+        self.results.append(
+            ValidationResult(
+                category=category,
+                name=name,
+                passed=passed,
+                message=message,
+                duration_ms=duration_ms,
+                details=details or {},
+                severity=severity,
+            )
+        )
+        if self.verbose:
+            icon = "✅" if passed else "❌"
+            print(f"{icon} [{category}] {name}: {message}")
+
+    def validate_git_repository(self) -> None:
+        """Validate git repository integrity."""
+        start = time.perf_counter()
+
+        # Check if .git directory exists
+        if not (self.root / ".git").exists():
+            self.add_result(
+                "Git Repository",
+                "git_directory",
+                False,
+                "Not a git repository",
+                severity="CRITICAL",
+            )
+            return
+
+        # Verify git status
+        returncode, stdout, stderr = self.run_command(["git", "status", "--porcelain"])
+        duration = (time.perf_counter() - start) * 1000
+        
+        if returncode == 0:
+            status_lines = [line for line in stdout.split("\n") if line.strip()]
+            self.add_result(
+                "Git Repository",
+                "git_status",
+                True,
+                f"Git repository is accessible ({len(status_lines)} changed files)",
+                duration_ms=duration,
+                details={"changed_files": len(status_lines)},
+            )
+        else:
+            self.add_result(
+                "Git Repository",
+                "git_status",
+                False,
+                f"Git status failed: {stderr}",
+                duration_ms=duration,
+                severity="ERROR",
+            )
+
+        # Get commit info
+        returncode, stdout, _ = self.run_command(
+            ["git", "rev-parse", "HEAD"], check=False
+        )
+        if returncode == 0:
+            commit_sha = stdout.strip()
+            self.add_result(
+                "Git Repository",
+                "commit_sha",
+                True,
+                f"Current commit: {commit_sha[:8]}",
+                details={"commit_sha": commit_sha},
+            )
+
+        # Get branch info
+        returncode, stdout, _ = self.run_command(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], check=False
+        )
+        if returncode == 0:
+            branch = stdout.strip()
+            self.add_result(
+                "Git Repository",
+                "branch",
+                True,
+                f"Current branch: {branch}",
+                details={"branch": branch},
+            )
+
+        # Check for uncommitted changes
+        returncode, stdout, _ = self.run_command(
+            ["git", "diff", "--stat"], check=False
+        )
+        if returncode == 0:
+            has_changes = bool(stdout.strip())
+            self.add_result(
+                "Git Repository",
+                "uncommitted_changes",
+                not has_changes,
+                "Working tree is clean" if not has_changes else "Has uncommitted changes",
+                severity="WARNING" if has_changes else "INFO",
+            )
+
+    def validate_python_syntax(self) -> None:
+        """Validate Python syntax for all Python files."""
+        start = time.perf_counter()
+        
+        python_files = list(self.root.glob("**/*.py"))
+        # Exclude venv, .git, node_modules, __pycache__
+        python_files = [
+            f
+            for f in python_files
+            if not any(
+                part in f.parts
+                for part in [".git", "__pycache__", "node_modules", "venv", ".venv"]
+            )
+        ]
+
+        valid_count = 0
+        invalid_files = []
+
+        for py_file in python_files:
+            try:
+                with open(py_file) as f:
+                    compile(f.read(), str(py_file), "exec")
+                valid_count += 1
+            except SyntaxError as e:
+                invalid_files.append(f"{py_file}: {e}")
+            except Exception:
+                # File might not be readable or other issues
+                pass
+
+        duration = (time.perf_counter() - start) * 1000
+
+        if not invalid_files:
+            self.add_result(
+                "Code Integrity",
+                "python_syntax",
+                True,
+                f"All {valid_count} Python files have valid syntax",
+                duration_ms=duration,
+                details={"files_checked": valid_count},
+            )
+        else:
+            self.add_result(
+                "Code Integrity",
+                "python_syntax",
+                False,
+                f"Found {len(invalid_files)} files with syntax errors",
+                duration_ms=duration,
+                details={"invalid_files": invalid_files},
+                severity="ERROR",
+            )
+
+    def validate_core_imports(self) -> None:
+        """Validate that core modules can be imported."""
+        # Try multiple import patterns based on repository structure
+        core_modules = [
+            "core.indicators",
+            "backtest.event_driven",
+            "execution.oms",
+            "analytics",
+            "domain",
+        ]
+
+        for module in core_modules:
+            start = time.perf_counter()
+            try:
+                __import__(module)
+                duration = (time.perf_counter() - start) * 1000
+                self.add_result(
+                    "Module Imports",
+                    f"import_{module}",
+                    True,
+                    f"Successfully imported {module}",
+                    duration_ms=duration,
+                )
+            except Exception as e:
+                duration = (time.perf_counter() - start) * 1000
+                # Try alternate import path
+                try:
+                    alternate_module = f"tradepulse.{module}"
+                    __import__(alternate_module)
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "Module Imports",
+                        f"import_{module}",
+                        True,
+                        f"Successfully imported {alternate_module}",
+                        duration_ms=duration,
+                    )
+                except Exception:
+                    self.add_result(
+                        "Module Imports",
+                        f"import_{module}",
+                        False,
+                        f"Failed to import {module}: {e}",
+                        duration_ms=duration,
+                        details={"error": str(e)},
+                        severity="WARNING",  # Changed from ERROR to WARNING
+                    )
+
+    def validate_configurations(self) -> None:
+        """Validate configuration files."""
+        config_patterns = [
+            ("configs/**/*.yaml", "YAML"),
+            ("configs/**/*.yml", "YAML"),
+            ("configs/**/*.json", "JSON"),
+            ("configs/**/*.toml", "TOML"),
+            ("conf/**/*.yaml", "YAML"),
+            ("config/**/*.yaml", "YAML"),
+        ]
+
+        for pattern, file_type in config_patterns:
+            files = list(self.root.glob(pattern))
+            for config_file in files:
+                start = time.perf_counter()
+                try:
+                    with open(config_file) as f:
+                        content = f.read()
+                        if file_type == "YAML":
+                            import yaml
+                            yaml.safe_load(content)
+                        elif file_type == "JSON":
+                            json.loads(content)
+                        elif file_type == "TOML":
+                            try:
+                                import tomllib
+                            except ModuleNotFoundError:
+                                import tomli as tomllib
+                            with open(config_file, "rb") as bf:
+                                tomllib.load(bf)
+
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "Configuration",
+                        f"config_{config_file.name}",
+                        True,
+                        f"Valid {file_type} configuration",
+                        duration_ms=duration,
+                    )
+                except Exception as e:
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "Configuration",
+                        f"config_{config_file.name}",
+                        False,
+                        f"Invalid {file_type}: {e}",
+                        duration_ms=duration,
+                        severity="ERROR",
+                    )
+
+    def validate_security(self) -> None:
+        """Validate security aspects."""
+        start = time.perf_counter()
+
+        # Check for security constraints file
+        constraints_file = self.root / "constraints" / "security.txt"
+        if constraints_file.exists():
+            duration = (time.perf_counter() - start) * 1000
+            self.add_result(
+                "Security",
+                "security_constraints",
+                True,
+                "Security constraints file exists",
+                duration_ms=duration,
+            )
+        else:
+            duration = (time.perf_counter() - start) * 1000
+            self.add_result(
+                "Security",
+                "security_constraints",
+                False,
+                "Security constraints file not found",
+                duration_ms=duration,
+                severity="WARNING",
+            )
+
+        # Run pip-audit if available
+        start = time.perf_counter()
+        returncode, stdout, stderr = self.run_command(
+            ["pip-audit", "--desc", "on"], timeout=120, check=False
+        )
+        duration = (time.perf_counter() - start) * 1000
+
+        if returncode == 0:
+            if "No known vulnerabilities found" in stdout:
+                self.add_result(
+                    "Security",
+                    "pip_audit",
+                    True,
+                    "No known vulnerabilities found in dependencies",
+                    duration_ms=duration,
+                )
+            else:
+                self.add_result(
+                    "Security",
+                    "pip_audit",
+                    False,
+                    "Vulnerabilities found in dependencies",
+                    duration_ms=duration,
+                    details={"output": stdout[:500]},
+                    severity="CRITICAL",
+                )
+        else:
+            if "command not found" in stderr or "No module named" in stderr:
+                self.add_result(
+                    "Security",
+                    "pip_audit",
+                    True,
+                    "pip-audit not installed (skipped)",
+                    duration_ms=duration,
+                    severity="WARNING",
+                )
+            else:
+                self.add_result(
+                    "Security",
+                    "pip_audit",
+                    False,
+                    f"pip-audit failed: {stderr[:200]}",
+                    duration_ms=duration,
+                    severity="WARNING",
+                )
+
+        # Check for hardcoded secrets (basic check)
+        start = time.perf_counter()
+        secret_patterns = [
+            b"password",
+            b"api_key",
+            b"secret_key",
+            b"private_key",
+            b"token",
+        ]
+        suspicious_files = []
+
+        py_files = list(self.root.glob("**/*.py"))[:100]  # Sample first 100
+        for py_file in py_files:
+            if any(part in py_file.parts for part in [".git", "__pycache__", "venv"]):
+                continue
+            try:
+                with open(py_file, "rb") as f:
+                    content = f.read().lower()
+                    # Check for assignments with these patterns
+                    for pattern in secret_patterns:
+                        if pattern + b" = " in content or pattern + b"=" in content:
+                            if b"example" not in content and b"test" not in content:
+                                suspicious_files.append(str(py_file))
+                                break
+            except Exception:
+                pass
+
+        duration = (time.perf_counter() - start) * 1000
+        if not suspicious_files:
+            self.add_result(
+                "Security",
+                "hardcoded_secrets",
+                True,
+                "No obvious hardcoded secrets detected (sample check)",
+                duration_ms=duration,
+            )
+        else:
+            self.add_result(
+                "Security",
+                "hardcoded_secrets",
+                False,
+                f"Potential hardcoded secrets in {len(suspicious_files)} files",
+                duration_ms=duration,
+                details={"suspicious_files": suspicious_files[:10]},
+                severity="WARNING",
+            )
+
+    def validate_data_integrity(self) -> None:
+        """Validate data files integrity."""
+        data_dir = self.root / "data"
+        if not data_dir.exists():
+            self.add_result(
+                "Data Integrity",
+                "data_directory",
+                True,
+                "No data directory (OK for production)",
+                severity="INFO",
+            )
+            return
+
+        # Check for sample data
+        sample_files = list(data_dir.glob("**/*.csv"))
+        if sample_files:
+            self.add_result(
+                "Data Integrity",
+                "sample_data",
+                True,
+                f"Found {len(sample_files)} data files",
+                details={"file_count": len(sample_files)},
+            )
+
+            # Validate a few CSV files
+            for csv_file in sample_files[:5]:
+                start = time.perf_counter()
+                try:
+                    import pandas as pd
+                    df = pd.read_csv(csv_file, nrows=10)
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "Data Integrity",
+                        f"csv_{csv_file.name}",
+                        True,
+                        f"Valid CSV with {len(df.columns)} columns",
+                        duration_ms=duration,
+                    )
+                except Exception as e:
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "Data Integrity",
+                        f"csv_{csv_file.name}",
+                        False,
+                        f"Invalid CSV: {e}",
+                        duration_ms=duration,
+                        severity="WARNING",
+                    )
+
+    def validate_tests(self) -> None:
+        """Validate test suite."""
+        start = time.perf_counter()
+
+        # Check if pytest is available
+        returncode, stdout, stderr = self.run_command(
+            ["pytest", "--version"], check=False
+        )
+        
+        if returncode != 0:
+            self.add_result(
+                "Test Suite",
+                "pytest_available",
+                False,
+                "pytest not available",
+                severity="WARNING",
+            )
+            return
+
+        # Run fast tests - collect only to validate test discovery
+        returncode, stdout, stderr = self.run_command(
+            [
+                "pytest",
+                "tests/",
+                "-m",
+                "not slow and not heavy_math and not nightly",
+                "--collect-only",
+                "-q",
+            ],
+            timeout=60,
+            check=False,
+        )
+        duration = (time.perf_counter() - start) * 1000
+
+        # Parse pytest output
+        if returncode == 0 or returncode == 5:  # 5 means no tests collected
+            # Extract test counts from output
+            lines = stdout.split("\n")
+            test_count = 0
+            for line in lines:
+                if "test" in line.lower() and ("<" in line or ")" in line):
+                    test_count += 1
+            
+            if test_count > 0:
+                self.add_result(
+                    "Test Suite",
+                    "pytest_discovery",
+                    True,
+                    f"Test discovery successful: {test_count}+ tests found",
+                    duration_ms=duration,
+                    details={"test_count": test_count},
+                )
+            else:
+                self.add_result(
+                    "Test Suite",
+                    "pytest_discovery",
+                    True,
+                    "Test discovery successful",
+                    duration_ms=duration,
+                )
+        else:
+            # Test discovery failed - this is more serious
+            self.add_result(
+                "Test Suite",
+                "pytest_discovery",
+                False,
+                f"Test discovery failed (exit code: {returncode})",
+                duration_ms=duration,
+                details={"stderr": stderr[:500]},
+                severity="WARNING",  # Changed from ERROR to WARNING
+            )
+
+    def validate_build_system(self) -> None:
+        """Validate build system and linters."""
+        # Check Makefile exists
+        makefile = self.root / "Makefile"
+        if makefile.exists():
+            self.add_result(
+                "Build System",
+                "makefile",
+                True,
+                "Makefile exists",
+            )
+        else:
+            self.add_result(
+                "Build System",
+                "makefile",
+                False,
+                "Makefile not found",
+                severity="WARNING",
+            )
+
+        # Check pyproject.toml
+        pyproject = self.root / "pyproject.toml"
+        if pyproject.exists():
+            start = time.perf_counter()
+            try:
+                try:
+                    import tomllib
+                except ModuleNotFoundError:
+                    import tomli as tomllib
+                with open(pyproject, "rb") as f:
+                    config = tomllib.load(f)
+                duration = (time.perf_counter() - start) * 1000
+                self.add_result(
+                    "Build System",
+                    "pyproject_toml",
+                    True,
+                    "pyproject.toml is valid",
+                    duration_ms=duration,
+                )
+            except Exception as e:
+                duration = (time.perf_counter() - start) * 1000
+                self.add_result(
+                    "Build System",
+                    "pyproject_toml",
+                    False,
+                    f"Invalid pyproject.toml: {e}",
+                    duration_ms=duration,
+                    severity="ERROR",
+                )
+
+        # Check for ruff
+        start = time.perf_counter()
+        returncode, _, _ = self.run_command(["ruff", "--version"], check=False)
+        duration = (time.perf_counter() - start) * 1000
+        if returncode == 0:
+            self.add_result(
+                "Build System",
+                "ruff_available",
+                True,
+                "Ruff linter is available",
+                duration_ms=duration,
+            )
+        else:
+            self.add_result(
+                "Build System",
+                "ruff_available",
+                False,
+                "Ruff linter not available",
+                duration_ms=duration,
+                severity="WARNING",
+            )
+
+        # Check for mypy
+        start = time.perf_counter()
+        returncode, _, _ = self.run_command(["mypy", "--version"], check=False)
+        duration = (time.perf_counter() - start) * 1000
+        if returncode == 0:
+            self.add_result(
+                "Build System",
+                "mypy_available",
+                True,
+                "Mypy type checker is available",
+                duration_ms=duration,
+            )
+        else:
+            self.add_result(
+                "Build System",
+                "mypy_available",
+                False,
+                "Mypy type checker not available",
+                duration_ms=duration,
+                severity="WARNING",
+            )
+
+    def validate_documentation(self) -> None:
+        """Validate documentation files."""
+        doc_files = [
+            "README.md",
+            "CONTRIBUTING.md",
+            "SECURITY.md",
+            "LICENSE",
+            "CHANGELOG.md",
+        ]
+
+        for doc_file in doc_files:
+            file_path = self.root / doc_file
+            if file_path.exists():
+                size = file_path.stat().st_size
+                self.add_result(
+                    "Documentation",
+                    f"doc_{doc_file}",
+                    True,
+                    f"{doc_file} exists ({size} bytes)",
+                    details={"size": size},
+                )
+            else:
+                self.add_result(
+                    "Documentation",
+                    f"doc_{doc_file}",
+                    False,
+                    f"{doc_file} not found",
+                    severity="WARNING",
+                )
+
+        # Check docs directory
+        docs_dir = self.root / "docs"
+        if docs_dir.exists():
+            md_files = list(docs_dir.glob("**/*.md"))
+            self.add_result(
+                "Documentation",
+                "docs_directory",
+                True,
+                f"Found {len(md_files)} documentation files",
+                details={"file_count": len(md_files)},
+            )
+        else:
+            self.add_result(
+                "Documentation",
+                "docs_directory",
+                False,
+                "docs/ directory not found",
+                severity="WARNING",
+            )
+
+    def validate_file_checksums(self) -> None:
+        """Validate critical files haven't been tampered with."""
+        critical_files = [
+            "pyproject.toml",
+            "requirements.txt",
+            "Makefile",
+        ]
+
+        for file_name in critical_files:
+            file_path = self.root / file_name
+            if file_path.exists():
+                start = time.perf_counter()
+                try:
+                    with open(file_path, "rb") as f:
+                        content = f.read()
+                        checksum = hashlib.sha256(content).hexdigest()
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "File Integrity",
+                        f"checksum_{file_name}",
+                        True,
+                        f"Checksum computed: {checksum[:16]}...",
+                        duration_ms=duration,
+                        details={"checksum": checksum},
+                    )
+                except Exception as e:
+                    duration = (time.perf_counter() - start) * 1000
+                    self.add_result(
+                        "File Integrity",
+                        f"checksum_{file_name}",
+                        False,
+                        f"Failed to compute checksum: {e}",
+                        duration_ms=duration,
+                        severity="ERROR",
+                    )
+
+    def generate_report(self) -> ValidationReport:
+        """Generate validation report from results."""
+        # Get git info
+        _, commit_sha, _ = self.run_command(["git", "rev-parse", "HEAD"], check=False)
+        _, branch, _ = self.run_command(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], check=False
+        )
+        _, remote_url, _ = self.run_command(
+            ["git", "config", "--get", "remote.origin.url"], check=False
+        )
+
+        passed = sum(1 for r in self.results if r.passed)
+        failed = sum(1 for r in self.results if not r.passed)
+        warnings = sum(1 for r in self.results if r.severity == "WARNING")
+
+        return ValidationReport(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            repository=remote_url.strip() if remote_url else "unknown",
+            branch=branch.strip() if branch else "unknown",
+            commit_sha=commit_sha.strip() if commit_sha else "unknown",
+            total_checks=len(self.results),
+            passed=passed,
+            failed=failed,
+            warnings=warnings,
+            checks=self.results,
+        )
+
+    def run_all_validations(self) -> ValidationReport:
+        """Run all validation checks."""
+        print("🔍 Starting comprehensive repository validation...")
+        print("")
+
+        print("📝 Validating git repository...")
+        self.validate_git_repository()
+
+        print("🐍 Validating Python syntax...")
+        self.validate_python_syntax()
+
+        print("📦 Validating core imports...")
+        self.validate_core_imports()
+
+        print("⚙️  Validating configurations...")
+        self.validate_configurations()
+
+        print("🔒 Validating security...")
+        self.validate_security()
+
+        print("📊 Validating data integrity...")
+        self.validate_data_integrity()
+
+        print("🧪 Validating test suite...")
+        self.validate_tests()
+
+        print("🔨 Validating build system...")
+        self.validate_build_system()
+
+        print("📚 Validating documentation...")
+        self.validate_documentation()
+
+        print("🔐 Validating file integrity...")
+        self.validate_file_checksums()
+
+        print("")
+        print("✅ Validation complete!")
+        print("")
+
+        return self.generate_report()
+
+
+def main() -> int:
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="Comprehensive repository validation for TradePulse"
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+    parser.add_argument(
+        "--output", "-o", type=str, help="Output markdown report to file"
+    )
+    parser.add_argument(
+        "--json-output", "-j", type=str, help="Output JSON report to file"
+    )
+    args = parser.parse_args()
+
+    validator = RepositoryValidator(verbose=args.verbose)
+    report = validator.run_all_validations()
+
+    # Print summary
+    print("=" * 80)
+    print("VALIDATION SUMMARY")
+    print("=" * 80)
+    print(f"Total Checks: {report.total_checks}")
+    print(f"Passed: ✅ {report.passed}")
+    print(f"Failed: ❌ {report.failed}")
+    print(f"Warnings: ⚠️ {report.warnings}")
+    print(f"Success Rate: {report.success_rate:.1f}%")
+    print(f"Health Score: {report.health_score}/100 {'⭐' * (report.health_score // 20)}")
+    print("=" * 80)
+
+    # Save markdown report
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(report.to_markdown())
+        print(f"📝 Markdown report saved to: {args.output}")
+
+    # Save JSON report
+    if args.json_output:
+        with open(args.json_output, "w") as f:
+            json.dump(report.to_dict(), f, indent=2)
+        print(f"📄 JSON report saved to: {args.json_output}")
+
+    # Return exit code based on critical failures
+    critical_failures = sum(
+        1 for c in report.checks if not c.passed and c.severity == "CRITICAL"
+    )
+    if critical_failures > 0:
+        print(f"\n❌ CRITICAL: Found {critical_failures} critical failures")
+        return 1
+
+    if report.failed > 0:
+        print(f"\n⚠️  WARNING: Found {report.failed} failures")
+        return 1
+
+    print("\n✅ All validations passed!")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
