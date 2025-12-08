@@ -133,7 +133,7 @@ jobs:
       id-token: write
       actions: read
       packages: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
     with:
       image: ${{ needs.build-and-sign.outputs.image-name }}
       digest: ${{ needs.build-and-sign.outputs.image-digest }}
