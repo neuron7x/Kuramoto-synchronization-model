@@ -1,0 +1,126 @@
+name: Comprehensive Repository Validation
+
+on:
+  push:
+    branches: [main, develop, copilot/**]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:  # Allow manual trigger
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+jobs:
+  validate:
+    name: Repository Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git checks
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+      
+      - name: Install project dependencies
+        run: |
+          # Install with security constraints
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+      
+      - name: Verify httpx installation
+        run: |
+          python -c "import httpx; print(f'httpx version: {httpx.__version__}')"
+      
+      - name: Run comprehensive validation
+        id: validation
+        run: |
+          python scripts/comprehensive_repository_validation.py \
+            --output reports/REPOSITORY_VALIDATION_REPORT.md \
+            --json-output reports/repository_validation.json
+        continue-on-error: false
+      
+      - name: Upload validation reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-reports
+          path: |
+            reports/REPOSITORY_VALIDATION_REPORT.md
+            reports/repository_validation.json
+          retention-days: 30
+      
+      - name: Display validation summary
+        if: always()
+        run: |
+          echo "## Validation Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/repository_validation.json ]; then
+            python -c "
+import json
+with open('reports/repository_validation.json') as f:
+    data = json.load(f)
+    summary = data['summary']
+    print(f\"**Health Score:** {summary['health_score']}/100\")
+    print(f\"**Total Checks:** {summary['total_checks']}\")
+    print(f\"**Passed:** ✅ {summary['passed']}\")
+    print(f\"**Failed:** ❌ {summary['failed']}\")
+    print(f\"**Warnings:** ⚠️ {summary['warnings']}\")
+    print(f\"**Success Rate:** {summary['success_rate']:.1f}%\")
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Comment PR with validation results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('reports/repository_validation.json')) {
+              const data = JSON.parse(fs.readFileSync('reports/repository_validation.json', 'utf8'));
+              const summary = data.summary;
+              
+              const stars = '⭐'.repeat(Math.floor(summary.health_score / 20));
+              const body = `## 🔍 Repository Validation Results
+              
+**Health Score:** ${summary.health_score}/100 ${stars}
+
+| Metric | Value |
+|--------|-------|
+| Total Checks | ${summary.total_checks} |
+| Passed | ✅ ${summary.passed} |
+| Failed | ❌ ${summary.failed} |
+| Warnings | ⚠️ ${summary.warnings} |
+| Success Rate | ${summary.success_rate.toFixed(1)}% |
+
+<details>
+<summary>📊 View detailed breakdown</summary>
+
+${fs.readFileSync('reports/REPOSITORY_VALIDATION_REPORT.md', 'utf8').substring(0, 20000)}
+
+</details>
+
+🔗 [Full validation report available in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }

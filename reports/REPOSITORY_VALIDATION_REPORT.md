@@ -1,25 +1,27 @@
 # TradePulse Comprehensive Repository Validation Report
 
-**Validation Date:** 2025-12-08T10:59:09.014457+00:00
+**Validation Date:** 2025-12-08T11:20:37.399818+00:00
 **Repository:** https://github.com/neuron7x/TradePulse
 **Branch:** copilot/validate-repository-authenticity
-**Commit SHA:** 75d2b91e63f96287729c00777c1bc6d3f745fd1b
-**Health Score:** 82/100 ⭐⭐⭐⭐
+**Commit SHA:** 941b0e5c6001968b2e875cd8275e1c814ecdb025
+**Health Score:** 66/100 ⭐⭐⭐
 
 ---
 
 ## Executive Summary
 
 - **Total Checks:** 80
-- **Passed:** ✅ 72
-- **Failed:** ❌ 8
-- **Warnings:** ⚠️ 8
-- **Success Rate:** 90.0%
+- **Passed:** ✅ 65
+- **Failed:** ❌ 15
+- **Warnings:** ⚠️ 15
+- **Success Rate:** 81.2%
 
 ## Validation Results by Category
 
 ### Build System
-**Status:** 4/4 passed
+**Status:** 2/4 passed
+**Failed:** 2
+**Warnings:** 2
 
 ✅ **makefile**
    - Makefile exists
@@ -27,11 +29,11 @@
 ✅ **pyproject_toml**
    - pyproject.toml is valid
 
-✅ **ruff_available**
-   - Ruff linter is available
+⚠️ **ruff_available**
+   - Ruff linter not available
 
-✅ **mypy_available**
-   - Mypy type checker is available
+⚠️ **mypy_available**
+   - Mypy type checker not available
 
 ### Code Integrity
 **Status:** 1/1 passed
@@ -185,26 +187,28 @@
    - Valid YAML configuration
 
 ### Data Integrity
-**Status:** 6/6 passed
+**Status:** 1/6 passed
+**Failed:** 5
+**Warnings:** 5
 
 ✅ **sample_data**
    - Found 5 data files
    - file_count: 5
 
-✅ **csv_sample_ohlc.csv**
-   - Valid CSV with 6 columns
+⚠️ **csv_sample_ohlc.csv**
+   - Invalid CSV: No module named 'pandas'
 
-✅ **csv_sample.csv**
-   - Valid CSV with 3 columns
+⚠️ **csv_sample.csv**
+   - Invalid CSV: No module named 'pandas'
 
-✅ **csv_sample_crypto_ohlcv.csv**
-   - Valid CSV with 7 columns
+⚠️ **csv_sample_crypto_ohlcv.csv**
+   - Invalid CSV: No module named 'pandas'
 
-✅ **csv_sample_stocks_daily.csv**
-   - Valid CSV with 7 columns
+⚠️ **csv_sample_stocks_daily.csv**
+   - Invalid CSV: No module named 'pandas'
 
-✅ **csv_indicator_macd_baseline.csv**
-   - Valid CSV with 7 columns
+⚠️ **csv_indicator_macd_baseline.csv**
+   - Invalid CSV: No module named 'pandas'
 
 ### Documentation
 **Status:** 6/6 passed
@@ -249,47 +253,52 @@
    - checksum: 20ea2827a4def9948bb26552a94cf7eeebce80c765893aea94fd53e60b3077c1
 
 ### Git Repository
-**Status:** 4/4 passed
+**Status:** 3/4 passed
+**Failed:** 1
+**Warnings:** 1
 
 ✅ **git_status**
-   - Git repository is accessible (1 changed files)
-   - changed_files: 1
+   - Git repository is accessible (4 changed files)
+   - changed_files: 4
 
 ✅ **commit_sha**
-   - Current commit: 75d2b91e
-   - commit_sha: 75d2b91e63f96287729c00777c1bc6d3f745fd1b
+   - Current commit: 941b0e5c
+   - commit_sha: 941b0e5c6001968b2e875cd8275e1c814ecdb025
 
 ✅ **branch**
    - Current branch: copilot/validate-repository-authenticity
    - branch: copilot/validate-repository-authenticity
 
-✅ **uncommitted_changes**
-   - Working tree is clean
+⚠️ **uncommitted_changes**
+   - Has uncommitted changes
 
 ### Module Imports
-**Status:** 0/5 passed
-**Failed:** 5
-**Warnings:** 5
+**Status:** 1/5 passed
+**Failed:** 4
+**Warnings:** 4
 
 ⚠️ **import_core.indicators**
-   - Failed to import core.indicators: No module named 'core'
-   - error: No module named 'core'
+   - Failed to import core.indicators: No module named 'numpy'
+   - error: No module named 'numpy'
+   - alternate_error: No module named 'numpy'
 
 ⚠️ **import_backtest.event_driven**
-   - Failed to import backtest.event_driven: No module named 'backtest'
-   - error: No module named 'backtest'
+   - Failed to import backtest.event_driven: No module named 'numpy'
+   - error: No module named 'numpy'
+   - alternate_error: No module named 'numpy'
 
 ⚠️ **import_execution.oms**
-   - Failed to import execution.oms: No module named 'execution'
-   - error: No module named 'execution'
+   - Failed to import execution.oms: No module named 'pydantic'
+   - error: No module named 'pydantic'
+   - alternate_error: No module named 'numpy'
 
 ⚠️ **import_analytics**
-   - Failed to import analytics: No module named 'analytics'
-   - error: No module named 'analytics'
+   - Failed to import analytics: No module named 'numpy'
+   - error: No module named 'numpy'
+   - alternate_error: No module named 'numpy'
 
-⚠️ **import_domain**
-   - Failed to import domain: No module named 'domain'
-   - error: No module named 'domain'
+✅ **import_domain**
+   - Successfully imported domain
 
 ### Security
 **Status:** 1/3 passed
@@ -300,8 +309,7 @@
    - Security constraints file exists
 
 ⚠️ **pip_audit**
-   - pip-audit failed: Found 23 known vulnerabilities in 10 packages
-
+   - pip-audit failed: [Errno 2] No such file or directory: 'pip-audit'
 
 ⚠️ **hardcoded_secrets**
    - Potential hardcoded secrets in 1 files
@@ -312,16 +320,5 @@
 **Failed:** 1
 **Warnings:** 1
 
-⚠️ **pytest_discovery**
-   - Test discovery failed (exit code: 4)
-   - stderr: SciPy stats module unavailable for drift monitoring; using NumPy fallback
-ImportError while loading conftest '/home/runner/work/TradePulse/TradePulse/tests/conftest.py'.
-tests/conftest.py:16: in <module>
-    from observability.audit.trail import (
-observability/__init__.py:39: in <module>
-    from .drift import (  # noqa: F401
-observability/drift.py:13: in <module>
-    from .notifications import NotificationDispatcher
-observability/notifications.py:12: in <module>
-    import httpx
-E   ModuleNotF
+⚠️ **pytest_available**
+   - pytest not available
