@@ -67,7 +67,10 @@ lint-go:
 	@if command -v golangci-lint >/dev/null 2>&1; then \
 		golangci-lint run ./...; \
 	else \
-		echo "⚠️  golangci-lint not installed, skipping Go linting"; \
+		echo "⚠️  golangci-lint not installed"; \
+		echo "    Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		echo "    Or via package manager: brew install golangci-lint"; \
+		echo "    Skipping Go linting in local development (required in CI)"; \
 	fi
 
 .PHONY: lint-shell
@@ -76,7 +79,11 @@ lint-shell:
 	@if command -v shellcheck >/dev/null 2>&1; then \
 		find scripts/ -name "*.sh" -type f -exec shellcheck {} +; \
 	else \
-		echo "⚠️  shellcheck not installed, skipping shell linting"; \
+		echo "⚠️  shellcheck not installed"; \
+		echo "    Install: apt-get install shellcheck (Ubuntu/Debian)"; \
+		echo "    Or: brew install shellcheck (macOS)"; \
+		echo "    Or: https://github.com/koalaman/shellcheck#installing"; \
+		echo "    Skipping shell linting in local development (required in CI)"; \
 	fi
 
 .PHONY: format
@@ -90,7 +97,8 @@ format:
 .PHONY: audit
 audit:
 	@echo "🔒 Running security audits..."
-	python -m pip_audit --require-hashes -r requirements.txt -r requirements-dev.txt || true
+	@echo "Note: pip-audit may report vulnerabilities that need review"
+	python -m pip_audit -r requirements.txt -r requirements-dev.txt || echo "⚠️  pip-audit found issues - review above output"
 	python -m bandit -r core/ backtest/ execution/ src/ -ll -q
 	@echo "✅ Security audit complete"
 

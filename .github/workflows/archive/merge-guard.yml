@@ -1,3 +1,4 @@
+# ARCHIVED: Workflow disabled and moved to archive/
 # DISABLED: This workflow checks for CI jobs that only run on push to main, not on PRs
 # The required checks (coverage guardrail, mutation testing gate) are from ci.yml which
 # only triggers on push to main. This makes the PR check meaningless.
@@ -6,7 +7,7 @@
 # - pr-release-gate.yml: risk assessment and labeling
 name: Merge Guard - Block on Quality Gate Failure (DISABLED)
 
-on:
+# on: (triggers disabled)
   workflow_dispatch:  # Only manual trigger
     inputs:
       dummy:

@@ -1,13 +1,16 @@
-# DISABLED: Redundant with test comments in tests.yml
-# This workflow provides duplicate information already shown in PR test comments
-name: PR Quality Summary Report (DISABLED)
+# ARCHIVED: Redundant with test comments in tests.yml
+# This workflow provided duplicate information already shown in PR test comments
+# Archived on: 2025-12-08
+# Reason: Replaced by tests.yml workflow comments
+name: PR Quality Summary Report (ARCHIVED)
 
-on:
-  workflow_dispatch:  # Only manual trigger, no automatic runs
-    inputs:
-      dummy:
-        description: 'Workflow disabled - use tests.yml comments instead'
-        required: false
+# Triggers disabled to prevent accidental execution
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       dummy:
+#         description: 'Workflow archived - use tests.yml comments instead'
+#         required: false
 
 permissions:
   contents: read

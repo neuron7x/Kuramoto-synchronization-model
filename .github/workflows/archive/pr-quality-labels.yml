@@ -1,8 +1,9 @@
+# ARCHIVED: Workflow disabled and moved to archive/
 # DISABLED: Label management consolidated in pr-release-gate.yml and tests.yml
 # This reduces redundancy and CI minutes usage
 name: PR Quality Labels (DISABLED)
 
-on:
+# on: (triggers disabled)
   workflow_dispatch:  # Only manual trigger
     inputs:
       dummy:
