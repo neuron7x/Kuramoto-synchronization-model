@@ -67,4 +67,4 @@ setuptools>=78.1.1
 # twisted: Fix XSS and request ordering vulnerabilities PYSEC-2024-75, GHSA-c8m8-j448-xjx7
 # Version 24.7.0+ fixes these vulnerabilities
 # NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
-twisted==24.7.0
+twisted==25.5.0
