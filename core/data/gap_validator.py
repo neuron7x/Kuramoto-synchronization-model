@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Time series gap detection and validation for data import blocking.
 
-This module implements the requirement REQ-002 from project.md:
+This module implements the requirement REQ-002 from docs/requirements/product_specification.md:
 "Репозиторій повинен забезпечувати автоматичний контроль якості, що
 призводить до блокування імпорту при виявленні розривів у часових рядах."
 

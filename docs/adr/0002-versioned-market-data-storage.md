@@ -212,7 +212,7 @@ We will implement a **Versioned Market Data Storage System** using:
 - [Apache Iceberg Documentation](https://iceberg.apache.org/)
 - [MiFID II Data Retention Requirements](https://www.esma.europa.eu/policy-rules/mifid-ii)
 - [SEC Rule 17a-4: Electronic Storage](https://www.sec.gov/rules/interp/2003/34-47806.htm)
-- SEC-001: Versioned storage requirement from project.md
+- SEC-001: Versioned storage requirement from docs/requirements/product_specification.md
 
 ## Notes
 

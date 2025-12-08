@@ -1,6 +1,6 @@
 """Requirement extraction utility for TradePulse.
 
-This script parses a markdown specification (default: ``project.md``) and
+This script parses a markdown specification (default: ``docs/requirements/product_specification.md``) and
 derives a structured backlog. It focuses on Ukrainian key phrases that signal
 requirements (``повинно``, ``має``, ``необхідно`` …) and produces:
 
@@ -428,12 +428,12 @@ def ensure_output_dir(path: Path) -> None:
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Виділення вимог із project.md")
+    parser = argparse.ArgumentParser(description="Виділення вимог із product specification")
     parser.add_argument(
         "--input",
         type=Path,
-        default=Path("project.md"),
-        help="Шлях до markdown-файлу зі специфікацією (default: project.md)",
+        default=Path("docs/requirements/product_specification.md"),
+        help="Шлях до markdown-файлу зі специфікацією (default: docs/requirements/product_specification.md)",
     )
     parser.add_argument(
         "--output-dir",

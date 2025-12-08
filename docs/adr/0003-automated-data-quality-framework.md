@@ -427,7 +427,7 @@ def ingest_market_data(data: pd.DataFrame, source: str) -> IngestionResult:
 - [Data Quality Dimensions](https://en.wikipedia.org/wiki/Data_quality)
 - [Great Expectations](https://greatexpectations.io/) - Similar framework for inspiration
 - [Deequ](https://github.com/awslabs/deequ) - AWS data quality library
-- REQ-002: Quality control requirement from project.md
+- REQ-002: Quality control requirement from docs/requirements/product_specification.md
 
 ## Notes
 

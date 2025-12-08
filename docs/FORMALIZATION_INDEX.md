@@ -184,7 +184,7 @@ Without formal documentation, organizations face:
 
 ### Summary
 
-Formal specification of all 13 platform requirements extracted from [`project.md`](../project.md), with:
+Formal specification of all 13 platform requirements extracted from [`docs/requirements/product_specification.md`](../docs/requirements/product_specification.md), with:
 - Pre-conditions and post-conditions
 - Acceptance criteria with measurable metrics
 - Implementation guidance and constraints
