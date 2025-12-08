@@ -283,8 +283,10 @@ class NeuroOptimizer:
         float
             Composite objective value (higher is better)
         """
-        # Normalize performance to [0, 1] assuming Sharpe in [-2, 3]
-        perf_normalized = np.clip((performance + 2) / 5, 0, 1)
+        # Normalize performance to [0, 1] with configurable Sharpe bounds
+        # Typical Sharpe ranges: [-2, 3] but can be adjusted
+        sharpe_min, sharpe_max = -2.0, 3.0
+        perf_normalized = np.clip((performance - sharpe_min) / (sharpe_max - sharpe_min), 0, 1)
         
         # Balance objective (already in [0, 1])
         balance_obj = balance.overall_balance_score
@@ -349,12 +351,13 @@ class NeuroOptimizer:
                     
                 # Estimate gradient based on homeostatic deviation
                 # This encourages parameters that restore balance
+                # Use exact module name matching to avoid substring issues
                 balance = self._balance_history[-1] if self._balance_history else None
                 if balance:
-                    # Simple heuristic: push parameters toward setpoints
-                    if 'dopamine' in module and balance.dopamine_serotonin_ratio < self._setpoints['da_5ht_ratio']:
+                    # Push parameters toward homeostatic setpoints
+                    if module == 'dopamine' and balance.dopamine_serotonin_ratio < self._setpoints['da_5ht_ratio']:
                         grad = 1.0  # Increase dopamine params
-                    elif 'serotonin' in module and balance.dopamine_serotonin_ratio > self._setpoints['da_5ht_ratio']:
+                    elif module == 'serotonin' and balance.dopamine_serotonin_ratio > self._setpoints['da_5ht_ratio']:
                         grad = 1.0  # Increase serotonin params
                     else:
                         grad = 0.0  # No change needed

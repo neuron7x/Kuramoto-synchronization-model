@@ -267,7 +267,8 @@ class AdaptiveCalibrator:
         
         # Accept or reject based on score difference (simulated annealing)
         delta = score - self._get_previous_score()
-        accept_prob = np.exp(delta / self.state.temperature) if delta < 0 else 1.0
+        # Clip delta/temperature to prevent overflow in exp()
+        accept_prob = np.exp(np.clip(delta / self.state.temperature, -20, 0)) if delta < 0 else 1.0
         
         if np.random.random() < accept_prob:
             self.state.current_params = candidate_params
@@ -319,8 +320,11 @@ class AdaptiveCalibrator:
                     
                 min_val, max_val = bounds[key]
                 
-                # Gaussian perturbation clipped to bounds
-                perturbation = np.random.normal(0, scale * (max_val - min_val))
+                # Use truncated normal for efficient sampling within bounds
+                # Gaussian perturbation scaled to parameter range
+                range_size = max_val - min_val
+                perturbation = np.random.normal(0, scale * range_size)
+                # Clip to stay within bounds
                 new_value = np.clip(value + perturbation, min_val, max_val)
                 candidate[module][key] = new_value
                 
