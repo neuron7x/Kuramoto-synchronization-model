@@ -73,13 +73,15 @@ class ValidationReport:
         """Calculate health score (0-100)."""
         if self.total_checks == 0:
             return 0
-        # Weight critical failures heavily
-        critical_failures = sum(
-            1 for c in self.checks if not c.passed and c.severity == "CRITICAL"
-        )
-        error_failures = sum(
-            1 for c in self.checks if not c.passed and c.severity == "ERROR"
-        )
+        # Weight critical failures heavily - single pass calculation
+        critical_failures = 0
+        error_failures = 0
+        for check in self.checks:
+            if not check.passed:
+                if check.severity == "CRITICAL":
+                    critical_failures += 1
+                elif check.severity == "ERROR":
+                    error_failures += 1
         
         base_score = self.success_rate
         penalties = (critical_failures * 10) + (error_failures * 5) + (self.warnings * 1)
