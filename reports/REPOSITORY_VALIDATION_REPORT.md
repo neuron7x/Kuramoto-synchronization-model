@@ -1,9 +1,9 @@
 # TradePulse Comprehensive Repository Validation Report
 
-**Validation Date:** 2025-12-08T11:20:37.399818+00:00
+**Validation Date:** 2025-12-08T11:45:25.223852+00:00
 **Repository:** https://github.com/neuron7x/TradePulse
 **Branch:** copilot/validate-repository-authenticity
-**Commit SHA:** 941b0e5c6001968b2e875cd8275e1c814ecdb025
+**Commit SHA:** e345b78321896f313b94bac85589e4a1e8212515
 **Health Score:** 66/100 ⭐⭐⭐
 
 ---
@@ -258,12 +258,12 @@
 **Warnings:** 1
 
 ✅ **git_status**
-   - Git repository is accessible (4 changed files)
-   - changed_files: 4
+   - Git repository is accessible (1 changed files)
+   - changed_files: 1
 
 ✅ **commit_sha**
-   - Current commit: 941b0e5c
-   - commit_sha: 941b0e5c6001968b2e875cd8275e1c814ecdb025
+   - Current commit: e345b783
+   - commit_sha: e345b78321896f313b94bac85589e4a1e8212515
 
 ✅ **branch**
    - Current branch: copilot/validate-repository-authenticity
@@ -278,24 +278,28 @@
 **Warnings:** 4
 
 ⚠️ **import_core.indicators**
-   - Failed to import core.indicators: No module named 'numpy'
+   - Module core.indicators requires dependencies: numpy
+   - reason: environment_missing_dependencies
+   - missing_dependencies: ['numpy']
    - error: No module named 'numpy'
-   - alternate_error: No module named 'numpy'
 
 ⚠️ **import_backtest.event_driven**
-   - Failed to import backtest.event_driven: No module named 'numpy'
+   - Module backtest.event_driven requires dependencies: numpy
+   - reason: environment_missing_dependencies
+   - missing_dependencies: ['numpy']
    - error: No module named 'numpy'
-   - alternate_error: No module named 'numpy'
 
 ⚠️ **import_execution.oms**
-   - Failed to import execution.oms: No module named 'pydantic'
+   - Module execution.oms requires dependencies: pydantic
+   - reason: environment_missing_dependencies
+   - missing_dependencies: ['pydantic']
    - error: No module named 'pydantic'
-   - alternate_error: No module named 'numpy'
 
 ⚠️ **import_analytics**
-   - Failed to import analytics: No module named 'numpy'
+   - Module analytics requires dependencies: numpy
+   - reason: environment_missing_dependencies
+   - missing_dependencies: ['numpy']
    - error: No module named 'numpy'
-   - alternate_error: No module named 'numpy'
 
 ✅ **import_domain**
    - Successfully imported domain
@@ -313,7 +317,8 @@
 
 ⚠️ **hardcoded_secrets**
    - Potential hardcoded secrets in 1 files
-   - suspicious_files: ['/home/runner/work/TradePulse/TradePulse/admin/api.py']
+   - suspicious_files: [{'file': 'admin/api.py', 'pattern': 'Token'}]
+   - recommendation: Review these files and move secrets to environment variables or .env files
 
 ### Test Suite
 **Status:** 0/1 passed
@@ -321,4 +326,5 @@
 **Warnings:** 1
 
 ⚠️ **pytest_available**
-   - pytest not available
+   - pytest not available (install requirements-dev.txt)
+   - reason: environment_missing_test_tool

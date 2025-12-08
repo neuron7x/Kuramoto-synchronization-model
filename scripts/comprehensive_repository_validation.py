@@ -372,7 +372,13 @@ class RepositoryValidator:
             )
 
     def validate_core_imports(self) -> None:
-        """Validate that core modules can be imported."""
+        """Validate that core modules can be imported.
+        
+        Classifies failures into:
+        - INFO: Module doesn't exist (not a problem)
+        - WARNING: Environment missing dependencies (expected without full install)
+        - ERROR: Real code issues
+        """
         # List of core modules to validate - these should exist in the repository
         core_modules = [
             "core.indicators",
@@ -386,6 +392,7 @@ class RepositoryValidator:
             start = time.perf_counter()
             imported = False
             error_msg = None
+            missing_deps = []
             
             # Try direct import first
             try:
@@ -399,8 +406,13 @@ class RepositoryValidator:
                     f"Successfully imported {module}",
                     duration_ms=duration,
                 )
-            except Exception as e1:
+            except ModuleNotFoundError as e1:
                 error_msg = str(e1)
+                # Check if it's a missing dependency issue
+                if "No module named" in error_msg:
+                    missing_module = error_msg.split("'")[1] if "'" in error_msg else "unknown"
+                    missing_deps.append(missing_module)
+                
                 # Try with tradepulse prefix
                 try:
                     alternate_module = f"tradepulse.{module}"
@@ -429,8 +441,24 @@ class RepositoryValidator:
                             details={"note": "Module directory does not exist"},
                             severity="INFO",
                         )
+                    elif missing_deps:
+                        # Module exists but missing dependencies - WARNING
+                        duration = (time.perf_counter() - start) * 1000
+                        self.add_result(
+                            "Module Imports",
+                            f"import_{module}",
+                            False,
+                            f"Module {module} requires dependencies: {', '.join(missing_deps)}",
+                            duration_ms=duration,
+                            details={
+                                "reason": "environment_missing_dependencies",
+                                "missing_dependencies": missing_deps,
+                                "error": error_msg
+                            },
+                            severity="WARNING",
+                        )
                     else:
-                        # Module exists but can't import - WARNING
+                        # Other import error
                         duration = (time.perf_counter() - start) * 1000
                         self.add_result(
                             "Module Imports",
@@ -441,6 +469,19 @@ class RepositoryValidator:
                             details={"error": error_msg, "alternate_error": str(e2)},
                             severity="WARNING",
                         )
+            except Exception as e1:
+                # Other exceptions (not ModuleNotFoundError)
+                duration = (time.perf_counter() - start) * 1000
+                error_msg = str(e1)
+                self.add_result(
+                    "Module Imports",
+                    f"import_{module}",
+                    False,
+                    f"Failed to import {module}: {error_msg}",
+                    duration_ms=duration,
+                    details={"error": error_msg, "error_type": type(e1).__name__},
+                    severity="ERROR",  # Real code issue
+                )
 
     def validate_configurations(self) -> None:
         """Validate configuration files."""
@@ -518,33 +559,79 @@ class RepositoryValidator:
                 severity="WARNING",
             )
 
-        # Run pip-audit if available
+        # Run pip-audit if available with JSON format for structured parsing
         start = time.perf_counter()
         returncode, stdout, stderr = self.run_command(
-            ["pip-audit", "--desc", "on"], timeout=120, check=False
+            ["pip-audit", "--format=json"], timeout=120, check=False
         )
         duration = (time.perf_counter() - start) * 1000
 
         if returncode == 0:
-            if "No known vulnerabilities found" in stdout:
+            try:
+                audit_data = json.loads(stdout) if stdout.strip() else {"dependencies": []}
+                vulnerabilities = audit_data.get("dependencies", [])
+                
+                if not vulnerabilities:
+                    self.add_result(
+                        "Security",
+                        "pip_audit",
+                        True,
+                        "No known vulnerabilities found in dependencies",
+                        duration_ms=duration,
+                    )
+                else:
+                    # Categorize by severity
+                    critical = []
+                    high = []
+                    medium = []
+                    low = []
+                    
+                    for dep in vulnerabilities:
+                        pkg_name = dep.get("name", "unknown")
+                        vulns = dep.get("vulns", [])
+                        for vuln in vulns:
+                            vuln_id = vuln.get("id", "")
+                            # Estimate severity from description or use default
+                            desc = vuln.get("description", "").lower()
+                            if "critical" in desc or "remote code execution" in desc:
+                                critical.append(f"{pkg_name}: {vuln_id}")
+                            elif "high" in desc or "arbitrary" in desc:
+                                high.append(f"{pkg_name}: {vuln_id}")
+                            elif "medium" in desc:
+                                medium.append(f"{pkg_name}: {vuln_id}")
+                            else:
+                                low.append(f"{pkg_name}: {vuln_id}")
+                    
+                    total = len(critical) + len(high) + len(medium) + len(low)
+                    severity = "CRITICAL" if critical else "ERROR" if high else "WARNING"
+                    
+                    self.add_result(
+                        "Security",
+                        "pip_audit",
+                        False,
+                        f"Found {total} vulnerabilities: {len(critical)} critical, {len(high)} high, {len(medium)} medium, {len(low)} low",
+                        duration_ms=duration,
+                        details={
+                            "total": total,
+                            "critical": critical[:5],  # Limit to first 5
+                            "high": high[:5],
+                            "medium": medium[:5],
+                            "low": low[:5],
+                            "recommendation": "Run 'pip-audit' for full details and update vulnerable packages"
+                        },
+                        severity=severity,
+                    )
+            except json.JSONDecodeError:
+                # Fallback to text parsing
+                vuln_count = stdout.count("ID:") if stdout else 0
                 self.add_result(
                     "Security",
                     "pip_audit",
-                    True,
-                    "No known vulnerabilities found in dependencies",
+                    False if vuln_count > 0 else True,
+                    f"Found {vuln_count} vulnerabilities (text parse)" if vuln_count > 0 else "No vulnerabilities found",
                     duration_ms=duration,
-                )
-            else:
-                # Parse vulnerability count
-                vuln_count = stdout.count("ID:")
-                self.add_result(
-                    "Security",
-                    "pip_audit",
-                    False,
-                    f"Found {vuln_count} known vulnerabilities in dependencies",
-                    duration_ms=duration,
-                    details={"output": stdout[:500], "vulnerability_count": vuln_count},
-                    severity="WARNING",  # Changed from CRITICAL to WARNING
+                    details={"output": stdout[:500]},
+                    severity="WARNING" if vuln_count > 0 else "INFO",
                 )
         else:
             if "command not found" in stderr or "No module named" in stderr:
@@ -554,7 +641,7 @@ class RepositoryValidator:
                     True,
                     "pip-audit not installed (skipped)",
                     duration_ms=duration,
-                    severity="INFO",  # Changed from WARNING to INFO
+                    severity="INFO",
                 )
             else:
                 self.add_result(
@@ -568,13 +655,13 @@ class RepositoryValidator:
 
         # Check for hardcoded secrets (basic check)
         start = time.perf_counter()
-        secret_patterns = [
-            b"password",
-            b"api_key",
-            b"secret_key",
-            b"private_key",
-            b"token",
-        ]
+        secret_patterns = {
+            b"password": "Password-like variable",
+            b"api_key": "API key",
+            b"secret_key": "Secret key",
+            b"private_key": "Private key",
+            b"token": "Token",
+        }
         suspicious_files = []
 
         py_files = list(self.root.glob("**/*.py"))[:100]  # Sample first 100
@@ -585,10 +672,12 @@ class RepositoryValidator:
                 with open(py_file, "rb") as f:
                     content = f.read().lower()
                     # Check for assignments with these patterns
-                    for pattern in secret_patterns:
+                    for pattern, desc in secret_patterns.items():
                         if pattern + b" = " in content or pattern + b"=" in content:
                             if b"example" not in content and b"test" not in content:
-                                suspicious_files.append(str(py_file))
+                                # Use relative path from repo root
+                                rel_path = py_file.relative_to(self.root)
+                                suspicious_files.append({"file": str(rel_path), "pattern": desc})
                                 break
             except Exception:
                 pass
@@ -609,7 +698,10 @@ class RepositoryValidator:
                 False,
                 f"Potential hardcoded secrets in {len(suspicious_files)} files",
                 duration_ms=duration,
-                details={"suspicious_files": suspicious_files[:10]},
+                details={
+                    "suspicious_files": suspicious_files[:10],
+                    "recommendation": "Review these files and move secrets to environment variables or .env files"
+                },
                 severity="WARNING",
             )
 
@@ -663,7 +755,13 @@ class RepositoryValidator:
                     )
 
     def validate_tests(self) -> None:
-        """Validate test suite."""
+        """Validate test suite.
+        
+        Distinguishes between:
+        - Missing test tools (WARNING, environment issue)
+        - Missing optional dependencies (WARNING, environment issue)
+        - Real test failures (ERROR, code issue)
+        """
         start = time.perf_counter()
 
         # Check if pytest is available
@@ -676,7 +774,8 @@ class RepositoryValidator:
                 "Test Suite",
                 "pytest_available",
                 False,
-                "pytest not available",
+                "pytest not available (install requirements-dev.txt)",
+                details={"reason": "environment_missing_test_tool"},
                 severity="WARNING",
             )
             return
@@ -696,7 +795,7 @@ class RepositoryValidator:
         )
         duration = (time.perf_counter() - start) * 1000
 
-        # Parse pytest output
+        # Parse pytest output and errors
         if returncode == 0 or returncode == 5:  # 5 means no tests collected
             # Extract test counts from output
             lines = stdout.split("\n")
@@ -723,16 +822,45 @@ class RepositoryValidator:
                     duration_ms=duration,
                 )
         else:
-            # Test discovery failed - this is more serious
-            self.add_result(
-                "Test Suite",
-                "pytest_discovery",
-                False,
-                f"Test discovery failed (exit code: {returncode})",
-                duration_ms=duration,
-                details={"stderr": stderr[:500]},
-                severity="WARNING",  # Changed from ERROR to WARNING
-            )
+            # Analyze failure reason
+            missing_deps = []
+            if "ModuleNotFoundError" in stderr or "ImportError" in stderr:
+                # Extract missing module names
+                for line in stderr.split("\n"):
+                    if "No module named" in line:
+                        try:
+                            module_name = line.split("'")[1]
+                            missing_deps.append(module_name)
+                        except IndexError:
+                            pass
+            
+            if missing_deps:
+                # Missing dependencies - environment issue
+                self.add_result(
+                    "Test Suite",
+                    "pytest_discovery",
+                    False,
+                    f"Test discovery requires dependencies: {', '.join(set(missing_deps))}",
+                    duration_ms=duration,
+                    details={
+                        "reason": "environment_missing_optional_dependency",
+                        "missing_dependencies": list(set(missing_deps)),
+                        "stderr_preview": stderr[:300],
+                        "recommendation": "Install missing dependencies or run in CI with full environment"
+                    },
+                    severity="WARNING",
+                )
+            else:
+                # Real test collection failure
+                self.add_result(
+                    "Test Suite",
+                    "pytest_discovery",
+                    False,
+                    f"Test discovery failed (exit code: {returncode})",
+                    duration_ms=duration,
+                    details={"stderr": stderr[:500]},
+                    severity="ERROR",  # Real code issue
+                )
 
     def validate_build_system(self) -> None:
         """Validate build system and linters."""
