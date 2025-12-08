@@ -1,10 +1,11 @@
 # TradePulse Comprehensive Repository Validation Report
 
-**Validation Date:** 2025-12-08T11:45:25.223852+00:00
+**Validation Date:** 2025-12-08T15:51:40.409061+00:00
 **Repository:** https://github.com/neuron7x/TradePulse
 **Branch:** copilot/validate-repository-authenticity
-**Commit SHA:** e345b78321896f313b94bac85589e4a1e8212515
-**Health Score:** 66/100 ⭐⭐⭐
+**Commit SHA:** e22b9448fd5afe522eba01f2f337a57888e798b7
+**Health Score:** 37/100 ⭐
+**Overall Status:** WARN
 
 ---
 
@@ -16,7 +17,57 @@
 - **Warnings:** ⚠️ 15
 - **Success Rate:** 81.2%
 
-## Validation Results by Category
+## Health Score Calculation
+
+The health score uses **weighted categories** where security and testing have higher impact:
+
+| Category | Weight | Impact |
+|----------|--------|--------|
+| Security | 0.25 | 25% (1/3 passed) |
+| Test Suite | 0.20 | 20% (0/1 passed) |
+| Module Imports | 0.15 | 15% (1/5 passed) |
+| Code Integrity | 0.15 | 15% (1/1 passed) |
+| Configuration | 0.10 | 10% (47/47 passed) |
+| Build System | 0.05 | 5% (2/4 passed) |
+| Data Integrity | 0.05 | 5% (1/6 passed) |
+| Documentation | 0.03 | 3% (6/6 passed) |
+| File Integrity | 0.02 | 2% (3/3 passed) |
+| Git Repository | 0.00 | 0% (3/4 passed) |
+
+**Notes:**
+- Critical failures cap score at 60/100
+- ERROR failures: -3 points each
+- WARNING failures: -0.5 points each
+
+## Known Issues & TODOs
+
+### 🟡 Warnings (Environment/Optional)
+
+**Missing Dependencies (expected without full install):**
+- `core.indicators` requires: numpy
+- `backtest.event_driven` requires: numpy
+- `execution.oms` requires: pydantic
+- `analytics` requires: numpy
+
+**Missing Development Tools:**
+- pytest not available (install requirements-dev.txt)
+
+**Security Findings:**
+- pip-audit failed: [Errno 2] No such file or directory: 'pip-audit'
+- Potential hardcoded secrets in 1 files
+  - `admin/api.py`: Token
+
+**Other Warnings:**
+- **Git Repository**: Has uncommitted changes
+- **Data Integrity**: Invalid CSV: No module named 'pandas'
+- **Data Integrity**: Invalid CSV: No module named 'pandas'
+- **Data Integrity**: Invalid CSV: No module named 'pandas'
+- **Data Integrity**: Invalid CSV: No module named 'pandas'
+- **Data Integrity**: Invalid CSV: No module named 'pandas'
+- **Build System**: Ruff linter not available
+- **Build System**: Mypy type checker not available
+
+## Detailed Validation Results by Category
 
 ### Build System
 **Status:** 2/4 passed
@@ -262,8 +313,8 @@
    - changed_files: 1
 
 ✅ **commit_sha**
-   - Current commit: e345b783
-   - commit_sha: e345b78321896f313b94bac85589e4a1e8212515
+   - Current commit: e22b9448
+   - commit_sha: e22b9448fd5afe522eba01f2f337a57888e798b7
 
 ✅ **branch**
    - Current branch: copilot/validate-repository-authenticity
@@ -318,7 +369,6 @@
 ⚠️ **hardcoded_secrets**
    - Potential hardcoded secrets in 1 files
    - suspicious_files: [{'file': 'admin/api.py', 'pattern': 'Token'}]
-   - recommendation: Review these files and move secrets to environment variables or .env files
 
 ### Test Suite
 **Status:** 0/1 passed

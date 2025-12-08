@@ -1,16 +1,89 @@
 {
-  "timestamp": "2025-12-08T11:45:25.223852+00:00",
+  "timestamp": "2025-12-08T15:51:40.409061+00:00",
   "repository": "https://github.com/neuron7x/TradePulse",
   "branch": "copilot/validate-repository-authenticity",
-  "commit_sha": "e345b78321896f313b94bac85589e4a1e8212515",
+  "commit_sha": "e22b9448fd5afe522eba01f2f337a57888e798b7",
   "summary": {
     "total_checks": 80,
     "passed": 65,
     "failed": 15,
     "warnings": 15,
     "success_rate": 81.25,
-    "health_score": 66
+    "health_score": 37,
+    "overall_status": "WARN"
   },
+  "category_breakdown": [
+    {
+      "category": "Security",
+      "passed": 1,
+      "total": 3,
+      "weight": 0.25,
+      "impact": 25.0
+    },
+    {
+      "category": "Test Suite",
+      "passed": 0,
+      "total": 1,
+      "weight": 0.2,
+      "impact": 20.0
+    },
+    {
+      "category": "Module Imports",
+      "passed": 1,
+      "total": 5,
+      "weight": 0.15,
+      "impact": 15.0
+    },
+    {
+      "category": "Code Integrity",
+      "passed": 1,
+      "total": 1,
+      "weight": 0.15,
+      "impact": 15.0
+    },
+    {
+      "category": "Configuration",
+      "passed": 47,
+      "total": 47,
+      "weight": 0.1,
+      "impact": 10.0
+    },
+    {
+      "category": "Build System",
+      "passed": 2,
+      "total": 4,
+      "weight": 0.05,
+      "impact": 5.0
+    },
+    {
+      "category": "Data Integrity",
+      "passed": 1,
+      "total": 6,
+      "weight": 0.05,
+      "impact": 5.0
+    },
+    {
+      "category": "Documentation",
+      "passed": 6,
+      "total": 6,
+      "weight": 0.03,
+      "impact": 3.0
+    },
+    {
+      "category": "File Integrity",
+      "passed": 3,
+      "total": 3,
+      "weight": 0.02,
+      "impact": 2.0
+    },
+    {
+      "category": "Git Repository",
+      "passed": 3,
+      "total": 4,
+      "weight": 0.0,
+      "impact": 0.0
+    }
+  ],
   "checks": [
     {
       "category": "Git Repository",
@@ -18,7 +91,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Git repository is accessible (1 changed files)",
-      "duration_ms": 175.23,
+      "duration_ms": 175.38,
       "details": {
         "changed_files": 1
       }
@@ -28,10 +101,10 @@
       "name": "commit_sha",
       "passed": true,
       "severity": "INFO",
-      "message": "Current commit: e345b783",
+      "message": "Current commit: e22b9448",
       "duration_ms": 0.0,
       "details": {
-        "commit_sha": "e345b78321896f313b94bac85589e4a1e8212515"
+        "commit_sha": "e22b9448fd5afe522eba01f2f337a57888e798b7"
       }
     },
     {
@@ -60,7 +133,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "All 1755 Python files have valid syntax",
-      "duration_ms": 2034.25,
+      "duration_ms": 1990.5,
       "details": {
         "files_checked": 1755
       }
@@ -71,7 +144,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Module core.indicators requires dependencies: numpy",
-      "duration_ms": 34.75,
+      "duration_ms": 34.01,
       "details": {
         "reason": "environment_missing_dependencies",
         "missing_dependencies": [
@@ -86,7 +159,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Module backtest.event_driven requires dependencies: numpy",
-      "duration_ms": 2.13,
+      "duration_ms": 2.11,
       "details": {
         "reason": "environment_missing_dependencies",
         "missing_dependencies": [
@@ -101,7 +174,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Module execution.oms requires dependencies: pydantic",
-      "duration_ms": 48.45,
+      "duration_ms": 37.89,
       "details": {
         "reason": "environment_missing_dependencies",
         "missing_dependencies": [
@@ -116,7 +189,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Module analytics requires dependencies: numpy",
-      "duration_ms": 169.47,
+      "duration_ms": 159.88,
       "details": {
         "reason": "environment_missing_dependencies",
         "missing_dependencies": [
@@ -131,7 +204,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Successfully imported domain",
-      "duration_ms": 14.88,
+      "duration_ms": 14.69,
       "details": {}
     },
     {
@@ -140,7 +213,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 17.71,
+      "duration_ms": 17.34,
       "details": {}
     },
     {
@@ -149,7 +222,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.63,
+      "duration_ms": 0.62,
       "details": {}
     },
     {
@@ -158,7 +231,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.17,
+      "duration_ms": 2.06,
       "details": {}
     },
     {
@@ -167,7 +240,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.55,
+      "duration_ms": 0.56,
       "details": {}
     },
     {
@@ -176,7 +249,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 4.78,
+      "duration_ms": 4.75,
       "details": {}
     },
     {
@@ -185,7 +258,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 6.86,
+      "duration_ms": 6.96,
       "details": {}
     },
     {
@@ -194,7 +267,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 3.13,
+      "duration_ms": 3.15,
       "details": {}
     },
     {
@@ -212,7 +285,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.12,
+      "duration_ms": 2.11,
       "details": {}
     },
     {
@@ -230,7 +303,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.52,
+      "duration_ms": 0.51,
       "details": {}
     },
     {
@@ -239,7 +312,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.28,
+      "duration_ms": 1.25,
       "details": {}
     },
     {
@@ -248,7 +321,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.77,
+      "duration_ms": 1.75,
       "details": {}
     },
     {
@@ -257,7 +330,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.55,
+      "duration_ms": 0.54,
       "details": {}
     },
     {
@@ -266,7 +339,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.96,
+      "duration_ms": 2.93,
       "details": {}
     },
     {
@@ -275,7 +348,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.63,
+      "duration_ms": 0.62,
       "details": {}
     },
     {
@@ -284,7 +357,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.43,
+      "duration_ms": 1.41,
       "details": {}
     },
     {
@@ -293,7 +366,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.59,
+      "duration_ms": 2.55,
       "details": {}
     },
     {
@@ -302,7 +375,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.59,
+      "duration_ms": 0.56,
       "details": {}
     },
     {
@@ -311,7 +384,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 11.15,
+      "duration_ms": 11.11,
       "details": {}
     },
     {
@@ -320,7 +393,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.73,
+      "duration_ms": 1.76,
       "details": {}
     },
     {
@@ -329,7 +402,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.32,
+      "duration_ms": 2.37,
       "details": {}
     },
     {
@@ -338,7 +411,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.98,
+      "duration_ms": 0.97,
       "details": {}
     },
     {
@@ -347,7 +420,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 3.32,
+      "duration_ms": 3.29,
       "details": {}
     },
     {
@@ -356,7 +429,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.85,
+      "duration_ms": 0.83,
       "details": {}
     },
     {
@@ -365,7 +438,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.61,
+      "duration_ms": 1.57,
       "details": {}
     },
     {
@@ -374,7 +447,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 4.63,
+      "duration_ms": 4.62,
       "details": {}
     },
     {
@@ -383,7 +456,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 7.71,
+      "duration_ms": 7.67,
       "details": {}
     },
     {
@@ -410,7 +483,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid TOML configuration",
-      "duration_ms": 3.91,
+      "duration_ms": 13.23,
       "details": {}
     },
     {
@@ -419,7 +492,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid TOML configuration",
-      "duration_ms": 0.27,
+      "duration_ms": 0.26,
       "details": {}
     },
     {
@@ -428,7 +501,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.36,
+      "duration_ms": 1.33,
       "details": {}
     },
     {
@@ -437,7 +510,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.12,
+      "duration_ms": 1.13,
       "details": {}
     },
     {
@@ -455,7 +528,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.47,
+      "duration_ms": 0.45,
       "details": {}
     },
     {
@@ -464,7 +537,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 1.06,
+      "duration_ms": 1.05,
       "details": {}
     },
     {
@@ -473,7 +546,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.91,
+      "duration_ms": 0.9,
       "details": {}
     },
     {
@@ -482,7 +555,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.36,
+      "duration_ms": 2.34,
       "details": {}
     },
     {
@@ -491,7 +564,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.45,
+      "duration_ms": 0.43,
       "details": {}
     },
     {
@@ -500,7 +573,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 0.57,
+      "duration_ms": 0.58,
       "details": {}
     },
     {
@@ -509,7 +582,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 3.18,
+      "duration_ms": 3.12,
       "details": {}
     },
     {
@@ -518,7 +591,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 4.57,
+      "duration_ms": 4.45,
       "details": {}
     },
     {
@@ -527,7 +600,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 2.18,
+      "duration_ms": 2.16,
       "details": {}
     },
     {
@@ -536,7 +609,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 3.51,
+      "duration_ms": 3.48,
       "details": {}
     },
     {
@@ -545,7 +618,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 3.45,
+      "duration_ms": 3.47,
       "details": {}
     },
     {
@@ -554,7 +627,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "Valid YAML configuration",
-      "duration_ms": 3.12,
+      "duration_ms": 3.2,
       "details": {}
     },
     {
@@ -572,7 +645,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "pip-audit failed: [Errno 2] No such file or directory: 'pip-audit'",
-      "duration_ms": 0.58,
+      "duration_ms": 0.56,
       "details": {}
     },
     {
@@ -581,7 +654,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Potential hardcoded secrets in 1 files",
-      "duration_ms": 38.85,
+      "duration_ms": 30.48,
       "details": {
         "suspicious_files": [
           {
@@ -609,7 +682,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Invalid CSV: No module named 'pandas'",
-      "duration_ms": 0.13,
+      "duration_ms": 0.1,
       "details": {}
     },
     {
@@ -674,7 +747,7 @@
       "passed": true,
       "severity": "INFO",
       "message": "pyproject.toml is valid",
-      "duration_ms": 1.36,
+      "duration_ms": 1.64,
       "details": {}
     },
     {
@@ -683,7 +756,7 @@
       "passed": false,
       "severity": "WARNING",
       "message": "Ruff linter not available",
-      "duration_ms": 0.34,
+      "duration_ms": 0.35,
       "details": {}
     },
     {

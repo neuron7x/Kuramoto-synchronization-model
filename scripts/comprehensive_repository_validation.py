@@ -56,7 +56,7 @@ class ValidationResult:
 
 @dataclass
 class ValidationReport:
-    """Complete validation report."""
+    """Complete validation report with weighted health scoring."""
 
     timestamp: str
     repository: str
@@ -67,6 +67,20 @@ class ValidationReport:
     failed: int
     warnings: int
     checks: list[ValidationResult] = field(default_factory=list)
+    
+    # Category weights for health score calculation
+    CATEGORY_WEIGHTS = {
+        "Security": 0.25,  # Highest priority
+        "Test Suite": 0.20,
+        "Module Imports": 0.15,
+        "Code Integrity": 0.15,
+        "Configuration": 0.10,
+        "Build System": 0.05,
+        "Data Integrity": 0.05,
+        "Documentation": 0.03,
+        "File Integrity": 0.02,
+        "Git Repository": 0.00,  # Informational only
+    }
 
     @property
     def success_rate(self) -> float:
@@ -74,29 +88,105 @@ class ValidationReport:
         if self.total_checks == 0:
             return 0.0
         return (self.passed / self.total_checks) * 100
+    
+    @property
+    def overall_status(self) -> str:
+        """Calculate overall status based on failures.
+        
+        Returns:
+            PASS: No critical or error failures
+            WARN: Only warnings, no errors
+            FAIL_CRITICAL: Has critical or error failures
+        """
+        has_critical = any(
+            not c.passed and c.severity == "CRITICAL" for c in self.checks
+        )
+        has_error = any(
+            not c.passed and c.severity == "ERROR" for c in self.checks
+        )
+        
+        if has_critical or has_error:
+            return "FAIL_CRITICAL"
+        elif self.warnings > 0:
+            return "WARN"
+        else:
+            return "PASS"
+    
+    def get_category_stats(self) -> dict[str, dict[str, int]]:
+        """Get pass/fail statistics by category."""
+        stats = {}
+        for check in self.checks:
+            if check.category not in stats:
+                stats[check.category] = {"passed": 0, "failed": 0, "total": 0}
+            stats[check.category]["total"] += 1
+            if check.passed:
+                stats[check.category]["passed"] += 1
+            else:
+                stats[check.category]["failed"] += 1
+        return stats
 
     @property
     def health_score(self) -> int:
-        """Calculate health score (0-100)."""
+        """Calculate weighted health score (0-100).
+        
+        Uses category-based weighting where Security, Tests, and Module Imports
+        have the highest impact. Critical failures cap the score at 60.
+        
+        Returns:
+            int: Health score from 0-100
+        """
         if self.total_checks == 0:
             return 0
-        # Weight critical failures heavily - single pass calculation
-        critical_failures = 0
-        error_failures = 0
-        for check in self.checks:
-            if not check.passed:
-                if check.severity == "CRITICAL":
-                    critical_failures += 1
-                elif check.severity == "ERROR":
-                    error_failures += 1
         
-        base_score = self.success_rate
-        penalties = (critical_failures * 10) + (error_failures * 5) + (self.warnings * 1)
+        # Count failures by severity
+        critical_failures = sum(
+            1 for c in self.checks if not c.passed and c.severity == "CRITICAL"
+        )
+        error_failures = sum(
+            1 for c in self.checks if not c.passed and c.severity == "ERROR"
+        )
         
-        return max(0, min(100, int(base_score - penalties)))
+        # Critical failures cap score at 60
+        if critical_failures > 0:
+            max_score = 60
+        else:
+            max_score = 100
+        
+        # Calculate weighted score by category
+        category_stats = self.get_category_stats()
+        weighted_score = 0.0
+        
+        for category, weight in self.CATEGORY_WEIGHTS.items():
+            if category in category_stats:
+                stats = category_stats[category]
+                if stats["total"] > 0:
+                    category_rate = stats["passed"] / stats["total"]
+                    weighted_score += category_rate * weight * 100
+        
+        # Apply additional penalties
+        penalties = (error_failures * 3) + (self.warnings * 0.5)
+        final_score = weighted_score - penalties
+        
+        return max(0, min(max_score, int(final_score)))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert report to dictionary for JSON serialization."""
+        category_stats = self.get_category_stats()
+        
+        # Build category breakdown with weights
+        category_breakdown = []
+        for category, weight in sorted(self.CATEGORY_WEIGHTS.items(), 
+                                       key=lambda x: x[1], reverse=True):
+            if category in category_stats:
+                stats = category_stats[category]
+                category_breakdown.append({
+                    "category": category,
+                    "passed": stats["passed"],
+                    "total": stats["total"],
+                    "weight": weight,
+                    "impact": round(weight * 100, 1)
+                })
+        
         return {
             "timestamp": self.timestamp,
             "repository": self.repository,
@@ -109,7 +199,9 @@ class ValidationReport:
                 "warnings": self.warnings,
                 "success_rate": round(self.success_rate, 2),
                 "health_score": self.health_score,
+                "overall_status": self.overall_status,
             },
+            "category_breakdown": category_breakdown,
             "checks": [
                 {
                     "category": c.category,
@@ -125,7 +217,7 @@ class ValidationReport:
         }
 
     def to_markdown(self) -> str:
-        """Convert report to markdown format."""
+        """Convert report to markdown format with weighted scoring and known issues."""
         lines = [
             "# TradePulse Comprehensive Repository Validation Report",
             "",
@@ -134,6 +226,7 @@ class ValidationReport:
             f"**Branch:** {self.branch}",
             f"**Commit SHA:** {self.commit_sha}",
             f"**Health Score:** {self.health_score}/100 {'⭐' * (self.health_score // 20)}",
+            f"**Overall Status:** {self.overall_status}",
             "",
             "---",
             "",
@@ -145,7 +238,108 @@ class ValidationReport:
             f"- **Warnings:** ⚠️ {self.warnings}",
             f"- **Success Rate:** {self.success_rate:.1f}%",
             "",
+            "## Health Score Calculation",
+            "",
+            "The health score uses **weighted categories** where security and testing have higher impact:",
+            "",
+            "| Category | Weight | Impact |",
+            "|----------|--------|--------|",
         ]
+        
+        # Add category breakdown table
+        category_stats = self.get_category_stats()
+        for category, weight in sorted(self.CATEGORY_WEIGHTS.items(), 
+                                       key=lambda x: x[1], reverse=True):
+            if category in category_stats:
+                stats = category_stats[category]
+                impact = f"{weight * 100:.0f}%"
+                status = f"{stats['passed']}/{stats['total']}"
+                lines.append(f"| {category} | {weight:.2f} | {impact} ({status} passed) |")
+        
+        lines.extend([
+            "",
+            "**Notes:**",
+            "- Critical failures cap score at 60/100",
+            "- ERROR failures: -3 points each",
+            "- WARNING failures: -0.5 points each",
+            "",
+        ])
+        
+        # Add Known Issues section
+        lines.extend([
+            "## Known Issues & TODOs",
+            "",
+        ])
+        
+        # Collect issues by severity
+        critical_issues = [c for c in self.checks if not c.passed and c.severity == "CRITICAL"]
+        error_issues = [c for c in self.checks if not c.passed and c.severity == "ERROR"]
+        warning_issues = [c for c in self.checks if not c.passed and c.severity == "WARNING"]
+        
+        if critical_issues:
+            lines.append("### 🔴 Critical Issues (Must Fix)")
+            lines.append("")
+            for issue in critical_issues:
+                lines.append(f"- **{issue.category}**: {issue.message}")
+                if "recommendation" in issue.details:
+                    lines.append(f"  - **Action:** {issue.details['recommendation']}")
+            lines.append("")
+        
+        if error_issues:
+            lines.append("### 🟠 Error Issues (Should Fix)")
+            lines.append("")
+            for issue in error_issues:
+                lines.append(f"- **{issue.category}**: {issue.message}")
+                if "recommendation" in issue.details:
+                    lines.append(f"  - **Action:** {issue.details['recommendation']}")
+            lines.append("")
+        
+        if warning_issues:
+            lines.append("### 🟡 Warnings (Environment/Optional)")
+            lines.append("")
+            
+            # Group warnings by reason
+            env_deps = [w for w in warning_issues if w.details.get("reason") == "environment_missing_dependencies"]
+            env_tools = [w for w in warning_issues if w.details.get("reason") == "environment_missing_test_tool"]
+            security_warns = [w for w in warning_issues if w.category == "Security"]
+            other_warns = [w for w in warning_issues if w not in env_deps + env_tools + security_warns]
+            
+            if env_deps:
+                lines.append("**Missing Dependencies (expected without full install):**")
+                for w in env_deps:
+                    deps = w.details.get("missing_dependencies", [])
+                    lines.append(f"- `{w.name.replace('import_', '')}` requires: {', '.join(deps)}")
+                lines.append("")
+            
+            if env_tools:
+                lines.append("**Missing Development Tools:**")
+                for w in env_tools:
+                    lines.append(f"- {w.message}")
+                lines.append("")
+            
+            if security_warns:
+                lines.append("**Security Findings:**")
+                for w in security_warns:
+                    lines.append(f"- {w.message}")
+                    if "suspicious_files" in w.details:
+                        files = w.details["suspicious_files"]
+                        if isinstance(files, list) and len(files) > 0:
+                            for f in files[:3]:  # Show first 3
+                                if isinstance(f, dict):
+                                    lines.append(f"  - `{f.get('file')}`: {f.get('pattern')}")
+                                else:
+                                    lines.append(f"  - `{f}`")
+                lines.append("")
+            
+            if other_warns:
+                lines.append("**Other Warnings:**")
+                for w in other_warns:
+                    lines.append(f"- **{w.category}**: {w.message}")
+                lines.append("")
+        
+        if not critical_issues and not error_issues and not warning_issues:
+            lines.append("✅ **No issues found!** Repository is in excellent condition.")
+            lines.append("")
 
         # Group by category
         categories: dict[str, list[ValidationResult]] = {}
@@ -154,7 +348,7 @@ class ValidationReport:
                 categories[check.category] = []
             categories[check.category].append(check)
 
-        lines.append("## Validation Results by Category")
+        lines.append("## Detailed Validation Results by Category")
         lines.append("")
 
         for category, checks in sorted(categories.items()):
@@ -178,7 +372,8 @@ class ValidationReport:
                 lines.append(f"   - {check.message}")
                 if check.details:
                     for key, value in check.details.items():
-                        lines.append(f"   - {key}: {value}")
+                        if key not in ["recommendation"]:  # Already shown in Known Issues
+                            lines.append(f"   - {key}: {value}")
                 lines.append("")
 
         return "\n".join(lines)
