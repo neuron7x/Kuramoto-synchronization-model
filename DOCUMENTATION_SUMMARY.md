@@ -80,7 +80,15 @@ TradePulse/
 │   ├── documentation_quality_metrics.md ✅ Quality tracking
 │   │
 │   ├── requirements/                 📁 Requirements specifications
+│   │   ├── product_specification.md  ✅ Product specification (moved from root)
 │   │   └── requirements-specification.md ✅ Formal requirements
+│   │
+│   ├── releases/                     📁 Release documentation
+│   │   └── release-notes.md          ✅ Release notes (moved from root)
+│   │
+│   ├── architecture/                 📁 Architecture documentation
+│   │   ├── configuration_structure.md ✅ Config directory guide (new)
+│   │   └── ...                       ✅ Architecture guides
 │   │
 │   ├── adr/                          📁 Architecture Decision Records
 │   │   ├── 0001-*.md                ✅ 3 published ADRs

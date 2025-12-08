@@ -7,7 +7,7 @@
 
 ## Document Purpose
 
-This document provides a formal specification of TradePulse platform requirements extracted from `project.md`. Each requirement includes:
+This document provides a formal specification of TradePulse platform requirements extracted from `docs/requirements/product_specification.md`. Each requirement includes:
 - Unique identifier and traceability
 - Formal description and rationale
 - Acceptance criteria with measurable metrics
@@ -33,7 +33,7 @@ This document provides a formal specification of TradePulse platform requirement
 **Category:** Functional
 **Priority:** Must
 **Status:** Accepted
-**Source:** project.md, Section: Архітектурні принципи, Line: 5
+**Source:** docs/requirements/product_specification.md, Section: Архітектурні принципи, Line: 5
 
 #### Description
 The platform MUST support fractal composition of technical indicators, enabling researchers to reuse indicator blocks across different time horizons without code duplication.
@@ -103,7 +103,7 @@ Quantitative researchers need to apply the same analytical logic across multiple
 **Category:** Functional
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Керування даними, Line: 9
+**Source:** docs/requirements/product_specification.md, Section: Керування даними, Line: 9
 
 #### Description
 The repository MUST provide automatic quality control that blocks data imports when gaps in time series are detected.
@@ -180,7 +180,7 @@ gap_detected = ∃i : |tᵢ₊₁ - tᵢ - expected_interval| > tolerance
 **Category:** Functional
 **Priority:** Should
 **Status:** Proposed
-**Source:** project.md, Section: Аналітика та дослідження, Line: 13
+**Source:** docs/requirements/product_specification.md, Section: Аналітика та дослідження, Line: 13
 
 #### Description
 Research pipelines SHOULD offer course synchronization and fractal resampling so teams can evaluate hypotheses on aligned time grids.
@@ -268,7 +268,7 @@ Without synchronization, strategies face:
 **Category:** Functional
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Бектестинг, Line: 17
+**Source:** docs/requirements/product_specification.md, Section: Бектестинг, Line: 17
 
 #### Description
 When strategy changes commission configuration, the engine MUST re-execute only the necessary time range fragments rather than the entire backtest.
@@ -363,7 +363,7 @@ def affected_ranges(change, original_backtest):
 **Category:** Functional
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Операційне виконання, Line: 21
+**Source:** docs/requirements/product_specification.md, Section: Операційне виконання, Line: 21
 
 #### Description
 The platform MUST recover from communication channel failures and retry order submission without duplication.
@@ -471,7 +471,7 @@ for attempt in range(max_attempts):
 **Category:** Security
 **Priority:** Should
 **Status:** Accepted
-**Source:** project.md, Section: Керування даними, Line: 9
+**Source:** docs/requirements/product_specification.md, Section: Керування даними, Line: 9
 
 #### Description
 The system SHOULD store primary market data streams in versioned storage to track signal provenance and prevent data loss risk.
@@ -527,7 +527,7 @@ Key metrics:
 **Category:** Security
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Бектестинг, Line: 17
+**Source:** docs/requirements/product_specification.md, Section: Бектестинг, Line: 17
 
 #### Description
 The backtesting engine core MUST guarantee deterministic result reproduction and MUST support scenarios with varying execution costs.
@@ -629,7 +629,7 @@ class DeterministicBacktest:
 **Category:** Security
 **Priority:** Should
 **Status:** Proposed
-**Source:** project.md, Section: Операційне виконання, Line: 21
+**Source:** docs/requirements/product_specification.md, Section: Операційне виконання, Line: 21
 
 #### Description
 The trading engine SHOULD conduct pre-trade checks that warn about risk of exceeding position limits and automatically block orders with incorrect parameters.
@@ -742,7 +742,7 @@ else:
 **Category:** Security
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Захист та комплаєнс, Line: 29
+**Source:** docs/requirements/product_specification.md, Section: Захист та комплаєнс, Line: 29
 
 #### Description
 The platform MUST encrypt secrets in transit and at rest to minimize risk of key compromise.
@@ -836,7 +836,7 @@ audit_log = all key access events logged
 **Category:** Security
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Захист та комплаєнс, Line: 29
+**Source:** docs/requirements/product_specification.md, Section: Захист та комплаєнс, Line: 29
 
 #### Description
 All processes MUST comply with MiFID II regulatory policies, and authorization mechanisms MUST log every access to critical operations.
@@ -960,7 +960,7 @@ All processes MUST comply with MiFID II regulatory policies, and authorization m
 **Category:** Non-Functional
 **Priority:** Should
 **Status:** Proposed
-**Source:** project.md, Section: Спостережуваність, Line: 25
+**Source:** docs/requirements/product_specification.md, Section: Спостережуваність, Line: 25
 
 #### Description
 Services SHOULD ensure complete event logging and productive metrics collection so operational teams can track process stability.
@@ -1097,7 +1097,7 @@ when_enabled(diagnostic_mode):
 **Category:** Non-Functional
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Нефункціональні вимоги, Line: 33
+**Source:** docs/requirements/product_specification.md, Section: Нефункціональні вимоги, Line: 33
 
 #### Description
 Interfaces MUST support latency of no more than 50ms for critical requests to ensure stable performance.
@@ -1230,7 +1230,7 @@ Total 50ms budget for order submission:
 **Category:** Legal  *(Note: Should be Non-Functional)*
 **Priority:** Must
 **Status:** Proposed
-**Source:** project.md, Section: Нефункціональні вимоги, Line: 33
+**Source:** docs/requirements/product_specification.md, Section: Нефункціональні вимоги, Line: 33
 
 **Category Correction:** This is a Non-Functional requirement, not Legal. The backlog categorization appears incorrect.
 
@@ -1431,7 +1431,7 @@ spec:
 
 ### B. References
 
-- [project.md](../../project.md) - Original requirements source
+- [docs/requirements/product_specification.md](../../docs/requirements/product_specification.md) - Original requirements source
 - [backlog/requirements.json](../../backlog/requirements.json) - Structured requirements
 - [docs/ARCHITECTURE.md](../ARCHITECTURE.md) - System architecture
 - [MiFID II Regulation](https://www.esma.europa.eu/policy-rules/mifid-ii)
@@ -1441,7 +1441,7 @@ spec:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0.0 | 2025-11-18 | Principal System Architect | Initial formalization from project.md |
+| 1.0.0 | 2025-11-18 | Principal System Architect | Initial formalization from docs/requirements/product_specification.md |
 
 ---
 
