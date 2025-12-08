@@ -67,22 +67,14 @@ jobs:
       
       - name: Display validation summary
         if: always()
+        shell: bash
         run: |
-          echo "## Validation Summary" >> $GITHUB_STEP_SUMMARY
-          if [ -f reports/repository_validation.json ]; then
-            python -c "
-import json
-with open('reports/repository_validation.json') as f:
-    data = json.load(f)
-    summary = data['summary']
-    print(f\"**Health Score:** {summary['health_score']}/100\")
-    print(f\"**Total Checks:** {summary['total_checks']}\")
-    print(f\"**Passed:** ✅ {summary['passed']}\")
-    print(f\"**Failed:** ❌ {summary['failed']}\")
-    print(f\"**Warnings:** ⚠️ {summary['warnings']}\")
-    print(f\"**Success Rate:** {summary['success_rate']:.1f}%\")
-            " >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            echo "## Validation Summary"
+            if [ -f reports/repository_validation.json ]; then
+              python3 -c 'import json; d=json.load(open("reports/repository_validation.json")); s=d["summary"]; print(f"**Health Score:** {s[\"health_score\"]}/100\n**Total Checks:** {s[\"total_checks\"]}\n**Passed:** ✅ {s[\"passed\"]}\n**Failed:** ❌ {s[\"failed\"]}\n**Warnings:** ⚠️ {s[\"warnings\"]}\n**Success Rate:** {s[\"success_rate\"]:.1f}%")'
+            fi
+          } >> $GITHUB_STEP_SUMMARY
       
       - name: Comment PR with validation results
         if: github.event_name == 'pull_request' && always()
@@ -95,29 +87,20 @@ with open('reports/repository_validation.json') as f:
               const summary = data.summary;
               
               const stars = '⭐'.repeat(Math.floor(summary.health_score / 20));
-              const body = `## 🔍 Repository Validation Results
-
-**Health Score:** ${summary.health_score}/100 ${stars}
-
-| Metric | Value |
-|--------|-------|
-| Total Checks | ${summary.total_checks} |
-| Passed | ✅ ${summary.passed} |
-| Failed | ❌ ${summary.failed} |
-| Warnings | ⚠️ ${summary.warnings} |
-| Success Rate | ${summary.success_rate.toFixed(1)}% |
-
-<details>
-<summary>📊 View detailed breakdown</summary>
-
-${fs.readFileSync('reports/REPOSITORY_VALIDATION_REPORT.md', 'utf8').substring(0, 20000)}
-
-</details>
-
-🔗 [Full validation report available in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-_Note: Report truncated to 20,000 characters for PR comment. Download artifacts for full report._
-`;
+              const body = '## 🔍 Repository Validation Results\n\n' +
+              '**Health Score:** ' + summary.health_score + '/100 ' + stars + '\n\n' +
+              '| Metric | Value |\n' +
+              '|--------|-------|\n' +
+              '| Total Checks | ' + summary.total_checks + ' |\n' +
+              '| Passed | ✅ ' + summary.passed + ' |\n' +
+              '| Failed | ❌ ' + summary.failed + ' |\n' +
+              '| Warnings | ⚠️ ' + summary.warnings + ' |\n' +
+              '| Success Rate | ' + summary.success_rate.toFixed(1) + '% |\n\n' +
+              '<details>\n<summary>📊 View detailed breakdown</summary>\n\n' +
+              fs.readFileSync('reports/REPOSITORY_VALIDATION_REPORT.md', 'utf8').substring(0, 20000) +
+              '\n\n</details>\n\n' +
+              '🔗 [Full validation report available in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n' +
+              '_Note: Report truncated to 20,000 characters for PR comment. Download artifacts for full report._';
               
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -126,3 +109,5 @@ _Note: Report truncated to 20,000 characters for PR comment. Download artifacts 
                 body: body
               });
             }
+
+
