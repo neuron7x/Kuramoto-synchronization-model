@@ -204,42 +204,45 @@ tests/property/
 tests/fuzz/
 
 # Run tests locally
-pytest tests/
-
-# Run with coverage
-pytest tests/ \
-  --cov=core --cov=backtest --cov=execution \
-  --cov-config=configs/quality/critical_surface.coveragerc \
-  --cov-report=term-missing --cov-report=xml
-
-python -m tools.coverage.guardrail \
-  --config configs/quality/critical_surface.toml \
-  --coverage coverage.xml
+make test           # Fast core test suite (recommended for local development)
+make test-all       # Full test suite with coverage enforcement
+make test-fast      # Fast unit tests only
+make test-heavy     # Slow/heavy tests
+make e2e            # End-to-end smoke tests
+make perf           # Performance benchmarks
 ```
 
 See [TESTING.md](TESTING.md) for detailed testing guidelines.
 
 ### 5. Check Code Quality
 
+Use the standardized `make` commands for consistent quality checks:
+
 ```bash
-# Run Python linters
-ruff check .
-black .
-make lint:python
-
-# Run Go linters
-make lint:go
-
-# Auto-fix issues
-ruff check --fix .
-
-# Security scan
-bandit -r core/ backtest/ execution/
-
-# Run all checks
+# Run all linters (Python + Go + shell)
 make lint
-make fpma-check  # Cyclomatic complexity
-python -m scripts lint  # Full lint suite
+
+# Run formatters
+make format
+
+# Run security audit
+make audit
+
+# Or run individual checks
+make lint-python    # Python: ruff, flake8, mypy
+make lint-go        # Go: golangci-lint
+make lint-shell     # Shell: shellcheck
+```
+
+**Auto-fix issues**:
+```bash
+make format         # Auto-format with black, isort, ruff
+```
+
+**Advanced checks**:
+```bash
+make fpma-check     # Cyclomatic complexity
+python -m scripts lint  # Full lint suite with environment setup
 ```
 
 ### 6. Create Pull Request

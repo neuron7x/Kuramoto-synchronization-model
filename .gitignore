@@ -80,6 +80,11 @@ dist/
 *.egg-info/
 # <<< SANITY CLEANUP
 
+# Additional cache files from linters and formatters
+.isort.cfg.cache
+.mutmut-cache
+.tox/
+
 actionlint
 
 # Obsolete files - prevent from being committed in root directory

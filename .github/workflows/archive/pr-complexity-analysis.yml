@@ -1,3 +1,4 @@
+# ARCHIVED: Workflow disabled and moved to archive/
 # DISABLED: Complexity analysis is redundant with pr-release-gate.yml risk assessment
 # This reduces CI overhead for solo developer workflow
 name: PR Complexity & Size Analysis (DISABLED)
@@ -7,7 +8,7 @@ permissions:
   pull-requests: write
   issues: write
 
-on:
+# on: (triggers disabled)
   workflow_dispatch:  # Only manual trigger
     inputs:
       dummy:

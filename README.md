@@ -575,21 +575,44 @@ risk_manager = RiskManager(
 
 We welcome contributions! Whether bug fixes, new features, or documentation improvements — every contribution matters.
 
-### Quick Start for Contributors
+### Developer Workflow & Automation
+
+TradePulse provides standardized `make` commands for all development tasks:
 
 ```bash
 # Setup development environment
 git clone https://github.com/neuron7x/TradePulse.git
 cd TradePulse
 python -m venv .venv
-source .venv/bin/activate
-pip install -c constraints/security.txt -r requirements-dev.lock
-pre-commit install
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Run quality checks
-ruff check .     # Lint code
-pytest           # Run tests
+# Core commands
+make install       # Install all dependencies
+make test          # Run core test suite (fast, CI-safe)
+make lint          # Run all linters (Python + Go + shell)
+make format        # Auto-format code (black, isort, ruff)
+make audit         # Run security audits (bandit, pip-audit)
+make clean         # Remove cache and build artifacts
+
+# Extended commands
+make test-all      # Full test suite with coverage
+make test-fast     # Fast unit tests only
+make perf          # Performance benchmarks
+make e2e           # End-to-end smoke tests
+make docs          # Build documentation
+make release       # Local release build helper
+
+# View all available commands
+make help
 ```
+
+**CI/CD Pipelines**:
+- 🧪 **tests.yml** — Comprehensive test suite for all PRs (lint, type-check, unit, integration, property tests)
+- 📊 **ci.yml** — Coverage tracking and mutation testing on main branch
+- 🔒 **security-policy-enforcement.yml** — Security scans for PRs
+- 🚀 **publish-python.yml** / **publish-image.yml** — Release automation on tagged versions
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
 ### First-Time Contributors
 
