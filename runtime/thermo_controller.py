@@ -1391,17 +1391,85 @@ class FHMC:
             ):
                 self.state = "SLEEP"
 
+    def _stable_sigmoid(self, x: float) -> float:
+        """Numerically stable sigmoid function.
+        
+        Uses conditional logic to avoid overflow/underflow in exp():
+        - For x ≥ 0: σ(x) = 1 / (1 + e^(-x))
+        - For x < 0: σ(x) = e^x / (1 + e^x)
+        
+        This ensures that we never compute exp() of a large positive number,
+        which would overflow to inf.
+        """
+        if x >= 0:
+            return float(1.0 / (1.0 + np.exp(-x)))
+        else:
+            exp_x = np.exp(x)
+            return float(exp_x / (1.0 + exp_x))
+
     def compute_orexin(self, exp_return: float, novelty: float, load: float) -> float:
+        """Compute orexin level from arousal signals.
+        
+        Orexin (hypocretin) is a neuropeptide that promotes wakefulness and arousal.
+        In the FHMC model, it integrates expected returns, novelty, and cognitive load:
+        
+        .. math::
+        
+            OX(t) = \sigma(k_1 \cdot \mathbb{E}[r|\pi_t] + k_2 \cdot \\text{novelty}(t) + k_3 \cdot \\text{load}(t))
+        
+        where σ is the sigmoid function providing bounded output in (0, 1).
+        
+        Parameters
+        ----------
+        exp_return : float
+            Expected return given current policy
+        novelty : float
+            Novelty signal (e.g., from graph embedding distance)
+        load : float
+            Cognitive/computational load indicator
+        
+        Returns
+        -------
+        float
+            Orexin level in (0, 1), stored in self._ox
+        """
         orexin_cfg = self.cfg["orexin"]
         stimulus = (
             orexin_cfg.get("k1", 1.0) * exp_return
             + orexin_cfg.get("k2", 0.7) * novelty
             + orexin_cfg.get("k3", 0.3) * load
         )
-        self._ox = float(1.0 / (1.0 + np.exp(-stimulus)))
+        self._ox = self._stable_sigmoid(stimulus)
         return self._ox
 
     def compute_threat(self, maxdd: float, volshock: float, cp_score: float) -> float:
+        """Compute threat-imminence level from risk indicators.
+        
+        Threat-imminence in the FHMC model integrates multiple risk signals to
+        determine whether the system should enter a defensive (SLEEP) state:
+        
+        .. math::
+        
+            TH(t) = \\tanh(w_1 \cdot \max(0, \\text{MaxDD}) + w_2 \cdot \max(0, \\text{VolShock}) + w_3 \cdot \max(0, \\text{CPScore}))
+        
+        The tanh function provides natural bounding to (-1, 1), with high positive
+        values indicating imminent threat.
+        
+        Parameters
+        ----------
+        maxdd : float
+            Maximum drawdown indicator (typically normalized)
+        volshock : float
+            Volatility shock indicator (z-score of recent volatility)
+        cp_score : float
+            Change-point detection score (CUSUM statistic)
+        
+        Returns
+        -------
+        float
+            Threat level in (-1, 1), stored in self._th
+            High positive values (> 0.7) trigger defensive responses
+        """
         threat_cfg = self.cfg["threat"]
         weighted = (
             threat_cfg.get("w_dd", 0.5) * max(0.0, maxdd)
@@ -1412,6 +1480,37 @@ class FHMC:
         return self._th
 
     def flipflop_step(self) -> str:
+        """Execute one step of the sleep-wake flip-flop state machine.
+        
+        The flip-flop implements hysteresis-based state transitions between WAKE
+        and SLEEP states, based on threat-imminence (TH) and orexin (OX) levels:
+        
+        .. math::
+        
+            \\text{State}_{t+1} = \\begin{cases}
+                \\text{SLEEP}, & \\text{if } TH(t) > \\theta_{hi} \\lor OX(t) < \\omega_{lo} \\\\
+                \\text{WAKE}, & \\text{if } TH(t) < \\theta_{lo} \\land OX(t) > \\omega_{hi} \\\\
+                \\text{State}_t, & \\text{otherwise (hysteresis)}
+            \\end{cases}
+        
+        The hysteresis prevents rapid oscillations between states, providing
+        stability in the transition regions.
+        
+        Returns
+        -------
+        str
+            Current state after transition: "WAKE" or "SLEEP"
+        
+        Notes
+        -----
+        Configuration parameters (from self.cfg["flipflop"]):
+        - theta_lo: Lower threat threshold (default: 0.6)
+        - theta_hi: Upper threat threshold (default: 0.8)
+        - omega_lo: Lower orexin threshold (default: 0.4)
+        - omega_hi: Upper orexin threshold (default: 0.6)
+        
+        Hysteresis width: (theta_hi - theta_lo) and (omega_hi - omega_lo)
+        """
         theta_lo = self.cfg["flipflop"].get("theta_lo", 0.6)
         theta_hi = self.cfg["flipflop"].get("theta_hi", 0.8)
         omega_lo = self.cfg["flipflop"].get("omega_lo", 0.4)
@@ -1419,7 +1518,7 @@ class FHMC:
         if self.state == "WAKE":
             if self._th > theta_hi or self._ox < omega_lo:
                 self.state = "SLEEP"
-        else:
+        else:  # SLEEP state
             if self._th < theta_lo and self._ox > omega_hi:
                 self.state = "WAKE"
         return self.state
