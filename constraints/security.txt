@@ -11,8 +11,9 @@
 # ============================================================================
 # certifi: CA certificate bundle for SSL/TLS verification
 # PYSEC-2024-230: Removed GLOBALTRUST root certificates due to compliance issues
-# Version 2024.7.4+ removes problematic root certificates
-certifi>=2024.7.4
+# Version 2025.11.12 is the current secure version
+# NOTE: Using exact pin (==) for security-critical package to ensure consistent behavior
+certifi==2025.11.12
 charset-normalizer==3.4.4
 idna==3.11
 requests==2.32.5
