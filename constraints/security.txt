@@ -9,7 +9,10 @@
 # ============================================================================
 # HTTP Stack - Network security critical
 # ============================================================================
-certifi==2025.10.5
+# certifi: CA certificate bundle for SSL/TLS verification
+# PYSEC-2024-230: Removed GLOBALTRUST root certificates due to compliance issues
+# Version 2024.7.4+ removes problematic root certificates
+certifi>=2024.7.4
 charset-normalizer==3.4.4
 idna==3.11
 requests==2.32.5
@@ -64,7 +67,15 @@ configobj==5.0.9
 # Version 78.1.1+ fixes these vulnerabilities
 setuptools>=78.1.1
 
-# twisted: Fix XSS and request ordering vulnerabilities PYSEC-2024-75, GHSA-c8m8-j448-xjx7
-# Version 24.7.0+ fixes these vulnerabilities
+# twisted: Fix XSS and request ordering vulnerabilities PYSEC-2024-75, GHSA-c8m8-j448-xjx7, CVE-2024-41671
+# CVE-2024-41671: HTTP request pipelining out-of-order processing vulnerability
+# Version 24.7.0 (non-RC) fixes these vulnerabilities
 # NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
 twisted==24.7.0
+
+# ============================================================================
+# Additional Brotli encoding support - Required for urllib3 decompression
+# ============================================================================
+# Brotli: Compression algorithm support, required for secure decompression
+# Version 1.2.0+ required for urllib3 2.6.0 security fixes
+Brotli>=1.2.0
