@@ -1,3 +1,6 @@
+# EXPERIMENTAL: MLOps orchestration for production deployments
+# This workflow does not block merges - see .github/workflows/release-gate.yml for core gates
+# Runs on schedule and manual dispatch only
 name: MLOps Orchestration
 
 on:

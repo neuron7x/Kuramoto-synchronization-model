@@ -1,9 +1,43 @@
-# TradePulse Regression Test Matrix
+# TradePulse Test Plan - Current Reality vs Aspirations
 
-This matrix maps core capabilities to automated coverage so reviewers can verify that
-critical behaviours are exercised before a release. It is derived from the initiatives
-outlined in [`docs/improvement_plan.md`](../docs/improvement_plan.md) under the "Testing
-Practices" track and is intended to stay synchronized with that roadmap.
+This document maps test coverage across TradePulse capabilities. **As of December 2025**, 
+we have consolidated to a minimal, always-green CI pipeline focused on the core engine.
+
+## Status Legend
+- ✅ **ENFORCED NOW** - Running in `.github/workflows/release-gate.yml` (required for merge)
+- ⚠️ **IMPLEMENTED BUT NOT ENFORCED** - Tests exist but not in release gate (too slow/flaky)
+- 📋 **PLANNED** - Aspirational, not yet implemented or not yet stable
+
+---
+
+## Implemented Now (CI Enforced)
+
+These tests run in the release-gate workflow and MUST pass for merge:
+
+### Core Engine Tests
+| Capability | Test Files | Status |
+|-----------|------------|--------|
+| **Backtest unit tests** | `tests/unit/backtest/` | ✅ ENFORCED |
+| **Execution unit tests** | `tests/unit/execution/` | ✅ ENFORCED |
+| **Execution integration** | `tests/execution/` | ✅ ENFORCED |
+| **Core runtime** | `tests/core/` (excluding agent/orchestrator) | ✅ ENFORCED |
+| **Backtest integration** | `tests/integration/test_backtest.py` | ✅ ENFORCED |
+
+### Code Quality
+| Check | Tool | Status |
+|-------|------|--------|
+| **Python linting** | ruff, black | ✅ ENFORCED |
+| **Type checking (core)** | mypy on core modules | ✅ ENFORCED |
+
+**Exclusions:** Tests marked as `slow`, `heavy_math`, `nightly`, or `flaky` are NOT run in release gate.
+
+---
+
+## Implemented But Not Enforced (Exists, Too Heavy for Gate)
+
+These capabilities have tests but are excluded from the release gate due to speed/flakiness:
+
+### Previous Comprehensive Matrix
 
 | Capability | Primary Risks Covered | Automated Suites | Key Fixtures / Data | Notes |
 | --- | --- | --- | --- | --- |
@@ -18,15 +52,56 @@ Practices" track and is intended to stay synchronized with that roadmap.
 | Performance envelopes | Regression thresholds, chunking heuristics | `tests/performance/test_indicator_portability.py`, `tests/unit/test_performance_optimizations.py`, `tests/nightly/test_heavy_workflows.py` | Performance fixtures under `tests/performance/fixtures/` | Benchmarks key algorithms and asserts guardrail metrics when optional plugins are available. |
 | Resilience scenarios | Restart safety, cache recovery | `tests/integration/test_market_cassettes.py`, `tests/unit/test_kuramoto_ricci_composite.py`, `tests/nightly/test_heavy_workflows.py::test_failover_recovery` | Market cassette recordings in `tests/fixtures/market_cassettes/` | Simulates degraded network and verifies signal history idempotency. |
 
-## How to use this matrix
+### Legacy Capabilities (Aspirational)
+| Capability | Status | Notes |
+|-----------|--------|-------|
+| Market data ingestion | ⚠️ Implemented | Not in release gate - too many dependencies |
+| Backfill & resampling | ⚠️ Implemented | Not in release gate - flaky |
+| Feature engineering & signals | ⚠️ Implemented | Not in release gate - heavy |
+| Strategy evaluation | ⚠️ Implemented | Partially covered by enforced backtest tests |
+| Execution connectors & risk | ⚠️ Implemented | Partially covered by enforced execution tests |
+| Indicator accelerators | ⚠️ Implemented | Not in release gate - optional dependencies |
+| Portfolio accounting | ⚠️ Implemented | Partially covered by enforced execution tests |
+| Governance & security checks | ⚠️ Implemented | Separate security workflow |
+| Performance envelopes | ⚠️ Implemented | Not in release gate - experimental |
+| Resilience scenarios | ⚠️ Implemented | Not in release gate - slow |
 
-1. **Before feature work** – identify the capability row(s) impacted and ensure the
-   corresponding suites run in CI for your branch.
-2. **During review** – reference the relevant rows in PR descriptions and document new
-   coverage if you add or deprecate tests.
-3. **Release readiness** – the release captain should verify every capability row has
-   green builds on the target release branch. If a suite is flaky or blocked by missing
-   dependencies (e.g. optional Hypothesis-based property tests), document the reason in
-   the release checklist and link to follow-up remediation tasks.
+---
 
-Update this matrix whenever tests move, new capabilities are added, or coverage shifts.
+## Planned (Future Roadmap)
+
+These items are aspirational goals from `docs/improvement_plan.md`:
+
+- 📋 Property-based testing with Hypothesis (exists but flaky)
+- 📋 Mutation testing enforcement (90% kill rate)
+- 📋 Coverage enforcement (98% for critical modules) 
+- 📋 Full E2E scenarios with docker-compose
+- 📋 Golden dataset regression tests
+- 📋 Performance budget enforcement
+
+---
+
+## How to Use This Plan
+
+### For Developers
+1. **Before pushing:** Run the release gate locally:
+   ```bash
+   # See docs/RELEASE_GATES.md for exact commands
+   make test  # or use the pytest command from RELEASE_GATES.md
+   ```
+2. **For feature work:** If your changes touch core engine, ensure relevant tests pass
+3. **For experimental work:** Tests outside release gate scope won't block merge
+
+### For Reviewers
+1. Verify release gate passes (check PR status)
+2. For core engine changes, ensure appropriate test coverage exists
+3. Risk assessment provided by `pr-release-gate.yml` (informational only)
+
+### For Release Captains
+1. Verify release-gate workflow is green on target branch
+2. Optionally run experimental workflows manually before release
+3. All required checks must pass (see `docs/RELEASE_GATES.md`)
+
+---
+
+**Last Updated:** 2025-12-09 - Separated enforced vs aspirational test coverage

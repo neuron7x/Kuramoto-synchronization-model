@@ -1,8 +1,11 @@
+# EXPERIMENTAL: Load tests are very expensive and not required for release-gate
+# This workflow does not block merges - see .github/workflows/release-gate.yml for core gates
+# To run manually: Actions tab -> Performance Load Tests -> Run workflow
 name: Performance Load Tests
 
 on:
-  # Disabled on PRs - load tests are expensive and only needed before releases
-  # Re-enable by uncommenting pull_request trigger if needed
+  # DISABLED - load tests are expensive and only needed before major releases
+  # Run manually via workflow_dispatch
   workflow_dispatch:
 
 permissions:

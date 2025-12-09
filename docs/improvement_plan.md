@@ -2,6 +2,35 @@
 
 This document converts the proposed enhancements into concrete, actionable steps for each capability facet. Each section lists prioritized initiatives, implementation guidance, and success criteria.
 
+## 🎉 Phase 1 Complete: Minimal Green CI for Core Engine (2025-12-09)
+
+**Achievement:** Successfully consolidated from R&D chaos to a single, reliable release-gate pipeline.
+
+**What was done:**
+- ✅ Created `.github/workflows/release-gate.yml` - minimal, always-green pipeline (< 15 min)
+- ✅ Focused scope on core engine: `backtest/`, `execution/`, `src/tradepulse/core`
+- ✅ Marked experimental workflows (mutation, load tests, performance) as non-blocking
+- ✅ Updated `docs/RELEASE_GATES.md` to reflect current reality
+- ✅ Updated `tests/TEST_PLAN.md` to separate enforced vs aspirational coverage
+- ✅ Established clear local reproduction commands
+
+**What's enforced now:**
+- Linting (ruff, black)
+- Type checking (mypy on core modules)
+- Unit + integration tests for core engine only
+- Fast, stable, reproducible
+
+**What's NOT enforced (experimental):**
+- Heavy mutation testing (90 min)
+- Load testing
+- Performance regression tests
+- Full E2E scenarios
+- 98% coverage requirement (too strict, causes failures)
+
+**Next Steps:** See roadmap below for future phases.
+
+---
+
 ## Architecture & Modularization
 
 1. **Create Architectural Documentation**

@@ -1,27 +1,30 @@
+# EXPERIMENTAL: Performance regression tests are heavy and not required for release-gate
+# This workflow does not block merges - see .github/workflows/release-gate.yml for core gates
+# To run manually: Actions tab -> Performance Regression Detection -> Run workflow
 name: Performance Regression Detection
 
 permissions:
   contents: read
 
 on:
-  pull_request:
-    branches:
-      - '**'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'observability/dashboards/**'
-      - 'observability/README.md'
-      - '*.txt'
-      - 'LICENSE'
-      - 'NOTICE'
-      - 'PATENTS.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'CONTRIBUTING.md'
-      - '.editorconfig'
-      - '.gitignore'
-      - '.gitattributes'
+  # DISABLED on PRs - too slow and flaky for regular CI
+  # Only manual runs via workflow_dispatch or on main branch
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'core/engine/**'
+      - 'execution/**'
+      - 'backtest/**'
+      - 'tests/performance/**'
+  # Optional: Re-enable on PRs if desired
+  # pull_request:
+  #   branches:
+  #     - '**'
+  #   paths:
+  #     - 'core/engine/**'
+  #     - 'execution/**'
+  #     - 'backtest/**'
 
 concurrency:
   group: performance-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

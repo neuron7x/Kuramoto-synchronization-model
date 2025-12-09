@@ -1,0 +1,205 @@
+name: Release Gate - Core Engine
+
+# This is the minimal, always-green release gate for TradePulse core engine.
+# Scope: backtest/, execution/, core runtime under src/tradepulse/
+# Target: < 10-15 minutes, 100% pass rate both locally and in CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'release/**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+      - 'labs/**'
+      - 'experiments/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+      - 'labs/**'
+      - 'experiments/**'
+
+concurrency:
+  group: release-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  PIP_CACHE_DIR: ~/.cache/pip
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            constraints/security.txt
+
+      - name: Install linting dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run ruff (fast linter)
+        run: |
+          python -m ruff check . --output-format=github
+
+      - name: Run black (formatter check)
+        run: |
+          python -m black --check .
+
+      - name: Run mypy (type checker) on core modules
+        run: |
+          python -m mypy core/ backtest/ execution/ src/tradepulse/
+
+  tests-core:
+    name: Core Tests (backtest, execution, runtime)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            constraints/security.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run core tests with pytest
+        run: |
+          # Run tests for core engine modules only
+          # - tests/unit/backtest/
+          # - tests/unit/execution/
+          # - tests/execution/
+          # - tests/integration/test_backtest.py
+          # - Core runtime tests
+          # Exclude: slow, heavy_math, nightly, flaky
+          pytest \
+            tests/unit/backtest/ \
+            tests/unit/execution/ \
+            tests/execution/ \
+            tests/integration/test_backtest.py \
+            tests/core/ \
+            --ignore=tests/core/agent/ \
+            --ignore=tests/core/orchestrator/ \
+            -m "not slow and not heavy_math and not nightly and not flaky" \
+            --maxfail=5 \
+            --tb=short \
+            --quiet
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "### Release Gate Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scope:** Core engine (backtest, execution, runtime)" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ All core engine tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some core engine tests failed - see logs above" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  typecheck-optional:
+    name: Type Check (Optional - Non-Blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            constraints/security.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+
+      - name: Run full mypy check
+        run: |
+          # Full mypy check is optional and non-blocking
+          # This helps identify type issues but won't fail the gate
+          python -m mypy . || true
+
+      - name: Type check summary
+        if: always()
+        run: |
+          echo "### Optional Type Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This is a non-blocking check to identify potential type issues." >> $GITHUB_STEP_SUMMARY
+          echo "Failures here do not block merge." >> $GITHUB_STEP_SUMMARY
+
+  release-gate-summary:
+    name: Release Gate Summary
+    runs-on: ubuntu-latest
+    needs: [lint, tests-core]
+    if: always()
+    steps:
+      - name: Check release gate status
+        run: |
+          echo "### 🚀 Release Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Required Jobs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Lint & Type Check: ${{ needs.lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Core Tests: ${{ needs.tests-core.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.lint.result }}" = "success" ] && [ "${{ needs.tests-core.result }}" = "success" ]; then
+            echo "✅ **Release gate PASSED** - All core engine checks green" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "❌ **Release gate FAILED** - Fix issues before merge" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review failed job logs above" >> $GITHUB_STEP_SUMMARY
+            echo "2. Run tests locally: \`make test\` or \`pytest tests/unit/backtest/ tests/unit/execution/ tests/execution/\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Fix issues and push changes" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

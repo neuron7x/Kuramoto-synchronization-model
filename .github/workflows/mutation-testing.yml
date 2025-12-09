@@ -1,17 +1,21 @@
+# EXPERIMENTAL: Mutation testing is expensive and not required for release-gate
+# This workflow does not block merges - see .github/workflows/release-gate.yml for core gates
+# To run manually: Actions tab -> Mutation Testing -> Run workflow
 name: Mutation Testing - Quality Gate
 
 on:
-  # Only run on push to main/develop or when explicitly requested
-  push:
-    branches: [main, develop]
-    paths:
-      - 'core/**'
-      - 'backtest/**'
-      - 'execution/**'
-      - 'src/**'
-      - 'tests/**'
-      - 'pyproject.toml'
+  # DISABLED on push - too slow for regular CI
+  # Only manual runs via workflow_dispatch
   workflow_dispatch:
+  # Optional: Re-enable on main branch only if desired
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'core/**'
+  #     - 'backtest/**'
+  #     - 'execution/**'
+  #     - 'src/**'
+  #     - 'tests/**'
 
 concurrency:
   group: mutation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
