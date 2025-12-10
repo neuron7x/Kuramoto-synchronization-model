@@ -74,8 +74,8 @@ def generate_synthetic_data(
     phase2_len = n_bars // 3
     phase2 = phase1[-1] + 0.03 * np.arange(phase2_len) + rng.normal(0, 0.3, phase2_len)
 
-    # Phase 3: Mean reversion (remaining)
-    phase3_len = n_bars - 2 * (n_bars // 3)
+    # Phase 3: Mean reversion (remaining - ensures total equals n_bars)
+    phase3_len = n_bars - phase1_len - phase2_len
     phase3 = phase2[-1] + np.cumsum(rng.normal(0, 0.4, phase3_len))
 
     # Combine and normalize to realistic price range
@@ -112,8 +112,13 @@ def simple_momentum_signal(prices: np.ndarray, window: int = 20) -> np.ndarray:
     n = len(prices)
     signals = np.zeros(n)
 
+    # Use cumsum for efficient rolling mean calculation
+    # This avoids recalculating overlapping windows
+    cumsum = np.cumsum(np.insert(prices, 0, 0))
+
     for i in range(window, n):
-        ma = np.mean(prices[i - window : i])
+        # Efficient rolling mean via cumsum
+        ma = (cumsum[i] - cumsum[i - window]) / window
         if prices[i] > ma * 1.01:  # 1% above MA = long
             signals[i] = 1.0
         elif prices[i] < ma * 0.99:  # 1% below MA = short
@@ -188,10 +193,11 @@ def save_results(
     print(f"📈 PnL data saved: {pnl_path}")
 
     # Try to generate plot
+    # Note: matplotlib backend must be set before importing pyplot
     try:
         import matplotlib
 
-        matplotlib.use("Agg")  # Non-interactive backend
+        matplotlib.use("Agg")  # Non-interactive backend - set before importing pyplot
         import matplotlib.pyplot as plt
 
         fig, axes = plt.subplots(2, 1, figsize=(12, 8))
