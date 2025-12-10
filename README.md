@@ -386,7 +386,7 @@ TradePulse is designed for low-latency, high-throughput trading operations.
 
 ### Design Goals
 
-All claims below have status `design_target` (see [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)):
+All claims below have status `design_target`. See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for definitions.
 
 - **Backtesting**: 1M+ bars/second throughput
 - **Live Trading**: Sub-5ms order latency (exchange dependent)
