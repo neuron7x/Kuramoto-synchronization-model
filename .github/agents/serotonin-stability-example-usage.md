@@ -235,9 +235,11 @@ Before accepting review request:
 
 ## CLI Integration Example
 
+> **Note**: This is an illustrative example. Production implementations should use proper JSON encoding, input validation, and error handling.
+
 ```bash
 #!/bin/bash
-# 5ht-check.sh - Quick serotonin stability check
+# 5ht-check.sh - Quick serotonin stability check (EXAMPLE ONLY)
 
 echo "Current tasks:"
 cat tasks.txt
@@ -251,6 +253,7 @@ echo "Hours worked today:"
 read hours
 
 # Send to 5-HT agent (via API or LLM integration)
+# NOTE: In production, properly encode JSON and validate inputs
 curl -X POST https://api.agent.local/5ht/check \
   -d '{"tasks": "'$(cat tasks.txt)'", "stress": '$stress', "hours": '$hours'}' \
   | jq '.stabilizing_moves'
@@ -260,6 +263,8 @@ curl -X POST https://api.agent.local/5ht/check \
 
 ## Metrics Dashboard Integration
 
+> **Note**: This is an illustrative example. Production implementations should include proper error handling, configuration management, and data validation.
+
 Track 5-HT scores over time to identify patterns:
 
 ```python
@@ -267,6 +272,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Load 5-HT scores from logs
+# NOTE: In production, add error handling for missing files and invalid data
 df = pd.read_csv('5ht_scores.csv')
 df['date'] = pd.to_datetime(df['date'])
 
