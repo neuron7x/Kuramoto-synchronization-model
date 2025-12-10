@@ -56,18 +56,18 @@ scripts/
 
 ## Coverage Requirements
 
-**Target Coverage: 98%** *(current CI gate: 80% while Kuramoto/Ricci suites stabilize)*
+**CI Gate**: 98% coverage enforced on all PRs (via `--cov-fail-under=98` in `.github/workflows/tests.yml`)
 
-Current module coverage targets:
-- `backtest/`: 100% (ACHIEVED)
-- `execution/`: 100% (ACHIEVED)
-- `core/agent/`: ≥95%
-- `core/data/`: ≥95%
-- `core/indicators/`: ≥90%
-- `core/metrics/`: ≥95%
-- `core/phase/`: ≥95%
+Module coverage goals (not enforced, verify with `make test-coverage`):
+- `backtest/`: 100% (goal)
+- `execution/`: 100% (goal)
+- `core/agent/`: ≥95% (goal)
+- `core/data/`: ≥95% (goal)
+- `core/indicators/`: ≥90% (goal)
+- `core/metrics/`: ≥95% (goal)
+- `core/phase/`: ≥95% (goal)
 
-Coverage is measured using `pytest-cov` and enforced in CI.
+📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ## Running Tests Locally
 

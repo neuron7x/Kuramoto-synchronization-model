@@ -1,5 +1,10 @@
 # Security Policy
 
+> ⚠️ **No External Audit**: TradePulse has not undergone external security audit, penetration testing,
+> SOC 2 examination, or formal compliance certification. All security claims refer to design patterns only.
+>
+> 📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
+
 For a cross-functional "digital risk" playbook that consolidates confidentiality, integrity, availability, identity hardening, and legal/ethical controls (including the first 72-hour stabilization checklist), see [docs/digital_risk_action_plan.md](docs/digital_risk_action_plan.md).
 
 ## Thermodynamic Autonomic Control Layer (TACL)
@@ -8,17 +13,17 @@ For a cross-functional "digital risk" playbook that consolidates confidentiality
 
 **Type**: Autonomic Control System with Formal Safety Guarantees  
 **Purpose**: Self-regulating topology optimization for distributed trading infrastructure  
-**Compliance**: SEC, FINRA, EU AI Act, SOC 2, ISO 27001
+**Compliance Alignment**: Controls designed to align with SEC, FINRA, EU AI Act, SOC 2, ISO 27001 (status: `design_aligned`, no external audit)
 
 ### Core Function
 TACL treats the entire TradePulse topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
 
 ### Safety Guarantee
-**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/tradepulse/thermo_audit.jsonl`, with rotation and archival guaranteeing ≥7 years of retention.
+**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/tradepulse/thermo_audit.jsonl`, with rotation and archival designed for ≥7 years of retention (configuration present, production validation pending).
 
 ### Audit & Compliance
 - Telemetry: Real-time metrics via REST API
-- Audit Trail: `/var/log/tradepulse/thermo_audit.jsonl` with automated rotation and ≥7-year retention
+- Audit Trail: `/var/log/tradepulse/thermo_audit.jsonl` with automated rotation (designed for 7-year retention)
 - CI Gates: Automated safety checks in deployment pipeline
 - Human Oversight: Hardware circuit breaker halts topology evolution until an authorised manual override clears the halt state
 
@@ -552,6 +557,47 @@ In case of a security incident:
 4. **Remediate**: Apply fixes and patches
 5. **Review**: Post-mortem and lessons learned
 6. **Disclose**: Responsible disclosure to users
+
+---
+
+## Compliance Controls Status
+
+> **⚠️ IMPORTANT DISCLAIMER**: This table documents internal design intentions only.
+> TradePulse has **NOT** undergone external security audit, penetration testing,
+> SOC 2 examination, or formal compliance certification.
+
+All controls below have status `design_aligned` unless otherwise noted. See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for status definitions.
+
+| Control | Standard Reference | Status | Notes |
+|---------|-------------------|--------|-------|
+| Access Control | NIST AC-*, ISO A.9 | `design_aligned` | RBAC patterns implemented |
+| Audit Logging | NIST AU-*, ISO A.12.4 | `design_aligned` | Audit trail code present |
+| Encryption at Rest | NIST SC-28, ISO A.10 | `design_aligned` | AES-256 configuration |
+| Encryption in Transit | NIST SC-8, ISO A.13.1 | `design_aligned` | TLS 1.3 enforced |
+| Secrets Management | NIST SC-12, ISO A.10.1 | `enforced` | Vault/AWS SM in CI |
+| Input Validation | OWASP A03 | `enforced` | Pydantic schemas in CI |
+| Dependency Scanning | NIST SI-7, OWASP A06 | `enforced` | pip-audit in CI |
+| Static Analysis | NIST SI-10 | `enforced` | Bandit, CodeQL in CI |
+| Container Scanning | NIST SI-7 | `enforced` | Trivy/Grype in CI |
+| MFA Support | NIST IA-2 | `design_aligned` | Admin operations only |
+| Circuit Breaker | Custom | `enforced` | Kill-switch in code |
+| Incident Response | NIST IR-* | `design_aligned` | Playbooks documented |
+
+### What This Table Does NOT Mean
+
+- ❌ Does NOT mean TradePulse is "compliant" with any standard
+- ❌ Does NOT replace the need for a proper security audit
+- ❌ Does NOT constitute a security guarantee
+- ❌ Does NOT imply readiness for production use with sensitive data
+
+### Recommended Actions Before Production Use
+
+1. Engage a qualified security firm for penetration testing
+2. Conduct a formal compliance gap assessment
+3. Perform threat modeling for your specific use case
+4. Review all `design_aligned` controls for your environment
+
+📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 

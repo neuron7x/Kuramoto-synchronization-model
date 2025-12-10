@@ -18,6 +18,7 @@ help:
 	@echo "  make clean         - Remove cache files and build artifacts"
 	@echo ""
 	@echo "Extended Commands:"
+	@echo "  make test-coverage - Generate HTML/XML coverage reports"
 	@echo "  make test-all      - Run full test suite with coverage"
 	@echo "  make test-fast     - Run fast unit tests only"
 	@echo "  make test-heavy    - Run slow/heavy tests"
@@ -116,6 +117,20 @@ clean:
 # ============================================================================
 # Extended Test Targets
 # ============================================================================
+
+.PHONY: test-coverage
+test-coverage:
+	@echo "📊 Generating coverage report..."
+	@mkdir -p reports/coverage
+	pytest tests/ \
+		--cov=core --cov=backtest --cov=execution \
+		--cov-report=term-missing \
+		--cov-report=html:reports/coverage \
+		--cov-report=xml:reports/coverage/coverage.xml \
+		-m "not slow and not heavy_math and not nightly"
+	@echo "✅ Coverage report generated"
+	@echo "📂 HTML report: reports/coverage/index.html"
+	@echo "📄 XML report: reports/coverage/coverage.xml"
 
 .PHONY: test-all
 test-all:
