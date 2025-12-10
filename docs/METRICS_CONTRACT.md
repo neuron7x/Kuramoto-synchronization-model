@@ -1,35 +1,37 @@
 # Metrics Contract: Claims vs Evidence
 
-> **Purpose**: This document is the single source of truth for all claims made in TradePulse documentation.
-> All coverage, performance, security, and compliance claims in README.md, TESTING.md, and SECURITY.md
-> must reference this document for their evidence status.
+> **Purpose**: Single source of truth for TradePulse quality/performance/security claims.
+>
+> All coverage, performance, security, and compliance claims in README.md, TESTING.md, SECURITY.md,
+> and docs/** must reference this document for their evidence status.
 >
 > **Last Updated**: 2025-12-10
 > **Maintainer**: TradePulse Team
 
-## ⚠️ Important Notice
+## ⚠️ Important Disclaimers
 
-This document requires regular maintenance. Claims and their statuses must be updated:
-- When documentation changes
-- After each release
-- When evidence is collected or validated
-
-**Do not rely on this document if it has not been updated in the last 30 days.**
+1. **This is NOT a legal document.** It does not constitute a warranty, guarantee, or contractual commitment.
+2. **This document requires regular maintenance.** Claims and statuses must be updated after documentation changes, releases, and evidence collection.
+3. **Do not rely on this document if it has not been updated in the last 30 days.**
+4. **Claims with status other than `proven` or `enforced` require independent verification before production decisions.**
 
 ---
 
-## Evidence Status Definitions
-
-All claims use exactly one of these statuses:
+## Status Definitions
 
 | Status | Meaning | CI Verified? |
 |--------|---------|--------------|
-| `enforced` | Enforced by CI with `--cov-fail-under` or equivalent gate | ✅ Yes |
-| `goal` | Stated module-level goal, not enforced in CI | ❌ No |
-| `design_target` | Architecture target, not yet measured | ❌ No |
-| `planned` | On roadmap, not implemented | ❌ No |
-| `design_aligned` | Implementation follows framework, NO external audit | ❌ No |
-| `internal_claim` | Internal assessment, no external validation | ❌ No |
+| `proven` | Real report/log exists AND live script/test reproduces it | ✅ Yes |
+| `partial` | Partial evidence (old log, not in CI, or incomplete coverage) | ⚠️ Partial |
+| `goal` | Target/roadmap item, no technical proof yet | ❌ No |
+| `remove` | Claim too bold/unprovable, should be removed from docs | ❌ N/A |
+
+**Legacy statuses** (mapped to above):
+- `enforced` → `proven` (CI gate active)
+- `design_target` → `goal`
+- `design_aligned` → `partial` (code present, no external audit)
+- `internal_claim` → `partial`
+- `planned` → `goal`
 
 ---
 
@@ -37,60 +39,116 @@ All claims use exactly one of these statuses:
 
 ### Coverage Claims
 
-| Claim | Status | How to Verify | Notes |
-|-------|--------|---------------|-------|
-| 98% CI coverage gate | `enforced` | `.github/workflows/tests.yml` uses `--cov-fail-under=98` | Blocks PR if below 98% |
-| backtest/ 100% | `goal` | `pytest --cov=backtest tests/` | Module goal, not enforced |
-| execution/ 100% | `goal` | `pytest --cov=execution tests/` | Module goal, not enforced |
-| core modules 90-95% | `goal` | `pytest --cov=core tests/` | Module goal, not enforced |
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| COV_98_CI_GATE | coverage | 98% CI coverage gate enforced on all PRs | `pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98` | `.github/workflows/tests.yml`, `reports/coverage/` | proven | Active in CI, blocks PRs below 98% |
+| COV_BACKTEST_100 | coverage | backtest/ module 100% coverage | `pytest --cov=backtest tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
+| COV_EXECUTION_100 | coverage | execution/ module 100% coverage | `pytest --cov=execution tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
+| COV_CORE_90_95 | coverage | core modules 90-95% coverage | `pytest --cov=core tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
+| COV_AGENT_95 | coverage | core/agent/ ≥95% coverage | `pytest --cov=core/agent tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
+| COV_DATA_95 | coverage | core/data/ ≥95% coverage | `pytest --cov=core/data tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
+| COV_INDICATORS_90 | coverage | core/indicators/ ≥90% coverage | `pytest --cov=core/indicators tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
+| COV_METRICS_95 | coverage | core/metrics/ ≥95% coverage | `pytest --cov=core/metrics tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
+| COV_PHASE_95 | coverage | core/phase/ ≥95% coverage | `pytest --cov=core/phase tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
+| MUTATION_90_KILL | coverage | 90% mutation kill rate | `mutmut run --use-coverage && python -m tools.mutation.kill_rate_guard --threshold 0.9` | `reports/mutmut/summary.json` | partial | Configured in pyproject.toml, CI workflow exists but experimental |
 
 ### Performance Claims
 
-| Claim | Status | How to Verify | Notes |
-|-------|--------|---------------|-------|
-| 1M+ bars/second | `design_target` | `pytest tests/performance/` | No verified benchmark |
-| Sub-5ms order latency | `design_target` | Exchange-dependent | Needs live testing |
-| Sub-1ms signal generation | `design_target` | `pytest tests/performance/test_indicator_benchmarks.py` | Benchmark exists |
-| ~200MB memory | `design_target` | Memory profiling | Not automated |
-| GPU acceleration | `planned` | — | CUDA kernels not implemented |
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| PERF_1M_BARS_SEC | performance | 1M+ bars/second backtesting throughput | `pytest tests/performance/ --benchmark-enable` | `reports/perf/` | goal | Architecture target, no verified benchmark |
+| PERF_SUB5MS_ORDER | performance | Sub-5ms order latency (exchange dependent) | Live trading benchmark | N/A | goal | Depends on exchange latency, needs live testing |
+| PERF_SUB1MS_SIGNAL | performance | Sub-1ms signal generation with cached indicators | `pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable` | `reports/perf/` | partial | Benchmark exists but not enforced in CI |
+| PERF_200MB_MEMORY | performance | ~200MB steady-state memory for live trading | Memory profiling | N/A | goal | Not automated |
+| PERF_GPU_ACCEL | performance | GPU acceleration (5-50x speedup) | `python -c "import cupy"` + benchmark | N/A | goal | CuPy integration exists, CUDA kernels not fully implemented |
+| PERF_FLOAT32_50PCT | performance | Float32 reduces memory by 50% | `pytest tests/performance/` | docs/performance.md | partial | Documented, basic tests exist |
+| PERF_FRONTEND_LCP | performance | LCP ≤ 2.0s desktop, ≤ 2.5s mobile | `npx lighthouse-ci` | N/A | goal | Per docs/performance.md |
+| PERF_FRONTEND_TTFB | performance | TTFB ≤ 500ms | `npx lighthouse-ci` | N/A | goal | Per docs/performance.md |
+| PERF_LATENCY_P95_85MS | performance | p95 latency ≤ 85ms for release gate | TACL validator | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
+| PERF_LATENCY_P99_120MS | performance | p99 latency ≤ 120ms for release gate | TACL validator | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
 
 ### Reliability Claims
 
-| Claim | Status | Notes |
-|-------|--------|-------|
-| production-grade | `design_target` | Live trading in beta |
-| Enterprise-Grade | `design_aligned` | Patterns implemented, not battle-tested |
-| TRL7 | `internal_claim` | Internal assessment only |
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| REL_PRODUCTION_GRADE | reliability | Production-grade algorithmic trading platform | N/A | README.md | goal | Live trading in beta status |
+| REL_ENTERPRISE_GRADE | reliability | Enterprise-grade security and reliability | N/A | README.md | partial | Patterns implemented, not battle-tested at scale |
+| REL_TRL7 | reliability | TRL7 (internal post-staging assessment) | N/A | docs/TACL.md | partial | Internal assessment only, no external validation |
+| REL_API_AVAIL_995 | reliability | Client API availability ≥99.5% SLA | Prometheus/Grafana | docs/reliability.md | goal | SLA target documented, production metrics TBD |
+| REL_API_AVAIL_999 | reliability | Client API availability 99.9% SLO | Prometheus/Grafana | docs/reliability.md | goal | Internal SLO target |
+| REL_STRATEGY_997 | reliability | Strategy runtime 99.7% success rate | Prometheus/Grafana | docs/reliability.md | goal | SLO target documented |
+| REL_ORDER_EXEC_999 | reliability | Order execution 99.9% within broker SLA | Prometheus/Grafana | docs/reliability.md | goal | SLO target documented |
+| REL_MARKET_DATA_998 | reliability | Market data freshness 99.8% < 1.5s | Prometheus/Grafana | docs/reliability.md | goal | SLO target documented |
 
 ### Security & Compliance Claims
 
-| Claim | Status | Notes |
-|-------|--------|-------|
-| NIST SP 800-53 aligned | `design_aligned` | Controls designed, NO external audit |
-| ISO 27001 aligned | `design_aligned` | Framework followed, NO certification |
-| SEC/FINRA patterns | `design_aligned` | Controls present, NO regulatory audit |
-| GDPR/CCPA patterns | `design_aligned` | Privacy controls, NO formal audit |
-| SOC 2 | `design_aligned` | Telemetry present, NO SOC 2 examination |
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| SEC_NO_EXTERNAL_AUDIT | security | No external security audit performed | N/A | SECURITY.md | proven | Explicitly stated disclaimer |
+| SEC_NIST_800_53 | compliance | Controls aligned with NIST SP 800-53 | N/A | docs/security/, SECURITY.md | partial | Design patterns present, NO external audit |
+| SEC_ISO_27001 | compliance | Controls aligned with ISO 27001 | N/A | docs/security/, SECURITY.md | partial | Framework followed, NO certification |
+| SEC_SEC_FINRA | compliance | Patterns for SEC/FINRA compliance | N/A | SECURITY.md | partial | Controls present, NO regulatory audit |
+| SEC_GDPR_CCPA | compliance | Privacy controls for GDPR/CCPA | N/A | docs/security/ | partial | Privacy patterns implemented, NO formal audit |
+| SEC_SOC2 | compliance | SOC 2-aligned telemetry and controls | N/A | SECURITY.md | partial | Telemetry present, NO SOC 2 examination |
+| SEC_EU_AI_ACT | compliance | EU AI Act alignment (human oversight) | N/A | SECURITY.md, docs/TACL.md | partial | Manual reset endpoints documented |
+| SEC_PIP_AUDIT | security | Python dependencies vulnerability-free | `make audit` | `pip-audit` output | proven | CI enforced via pip-audit |
+| SEC_BANDIT_SCAN | security | Static security analysis passes | `bandit -r core/ backtest/ execution/ src/ -ll -q` | CI output | proven | CI enforced |
+| SEC_SECRETS_SCAN | security | No secrets in codebase | `detect-secrets scan` | CI output | proven | CI enforced in tests.yml |
+| SEC_CONTAINER_SCAN | security | Container images scanned for vulnerabilities | Trivy/Grype in CI | Security workflow | partial | Workflow exists, critical vulns block |
+| SEC_TLS_13 | security | TLS 1.3 enforced for all connections | `sslyze` scan | docs/security/ | partial | Documented requirement, weekly scan |
+| SEC_AES_256 | security | AES-256 encryption at rest | N/A | SECURITY.md | partial | Configuration documented, no audit |
+| SEC_VAULT_SECRETS | security | HashiCorp Vault for secrets management | N/A | SECURITY.md | partial | Integration documented |
+| SEC_MFA_ADMIN | security | MFA support for admin operations | N/A | SECURITY.md, README.md | partial | Code present, not validated |
+| SEC_AUDIT_400_DAY | security | 400-day audit log retention | N/A | SECURITY.md | partial | Configuration documented |
+| SEC_7_YEAR_THERMO | security | 7-year TACL audit retention | N/A | SECURITY.md, docs/TACL.md | partial | Design documented, production TBD |
+
+### TACL (Thermodynamic Autonomic Control Layer) Claims
+
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| TACL_FREE_ENERGY_135 | reliability | Free energy ≤ 1.35 for rollout | `python scripts/validate_energy.py` | `.ci_artifacts/energy_validation.json` | partial | CI gate exists in release workflow |
+| TACL_MONOTONIC_DESCENT | reliability | Monotonic free energy descent constraint | N/A | runtime/thermo_controller.py | partial | Code implemented, no production validation |
+| TACL_CRISIS_RECOVERY | reliability | Adaptive crisis recovery with GA/RL | N/A | runtime/thermo_controller.py | partial | Code implemented |
+| TACL_PROTOCOL_HOTSWAP | reliability | Zero-downtime protocol hot-swap | N/A | tacl/ | partial | Code present |
+| TACL_CIRCUIT_BREAKER | reliability | Hardware circuit breaker for human override | N/A | SECURITY.md | partial | Documented design |
+
+### Product Claims
+
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| PROD_50_INDICATORS | product | 50+ geometric/technical indicators | `find core/indicators -name "*.py" | wc -l` | core/indicators/ | partial | Directory exists, count needs verification |
+| PROD_MULTI_EXCHANGE | product | Multi-exchange support (Binance, Coinbase, Kraken, Alpaca) | N/A | execution/adapters/ | partial | Adapters exist, live testing TBD |
+| PROD_KILL_SWITCH | product | Emergency kill switch for trading halt | N/A | runtime/, SECURITY.md | partial | Code present |
+| PROD_PAPER_TRADING | product | Paper trading mode | N/A | execution/paper_trading.py | partial | Code exists |
+| PROD_WALK_FORWARD | product | Walk-forward optimization | N/A | backtest/ | partial | Documented capability |
+| PROD_PROPERTY_TESTS | product | Property-based testing with Hypothesis | `pytest tests/property/` | tests/property/ | proven | Tests exist and run in CI |
+| PROD_FUZZ_TESTS | product | Fuzz testing | `pytest tests/fuzz/` | tests/fuzz/ | proven | Tests exist and run in CI |
+| PROD_RISK_GUARDIAN | product | Risk Guardian drawdown protection | `tp risk-guardian simulate` | money_proof/ | partial | Scripts present, no production data |
+
+### Other Claims
+
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| OTHER_CORE_STABLE | other | Core Engine production ready | N/A | README.md | partial | Per component maturity table |
+| OTHER_LIVE_BETA | other | Live Trading in beta | N/A | README.md | proven | Explicitly stated as beta |
+| OTHER_DASHBOARD_ALPHA | other | Web Dashboard in alpha | N/A | README.md | proven | Explicitly stated as early preview |
+| OTHER_DOCS_85PCT | other | Documentation 85% complete | N/A | README.md | partial | Self-reported estimate |
 
 ---
 
-## Verification Commands
+## Verification Commands Quick Reference
 
 ### Coverage
 
 ```bash
-# Generate coverage report
+# Generate full coverage report
 make test-coverage
 
 # View HTML report
 open reports/coverage/index.html
-```
 
-### Security
-
-```bash
-# Run security audits (pip-audit + bandit)
-make audit
+# Run with CI gate threshold
+pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98
 ```
 
 ### Performance
@@ -99,8 +157,45 @@ make audit
 # Run performance benchmarks
 make perf
 
-# Run specific benchmark tests
+# Run specific indicator benchmarks
 pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable
+
+# Run microbenchmarks
+python bench/bench_indicators.py --repeat 10 --warmup 5
+```
+
+### Security
+
+```bash
+# Run security audits (pip-audit + bandit)
+make audit
+
+# Run full security test suite
+make security-test
+
+# Scan for secrets
+.venv/bin/detect-secrets scan core backtest execution src application
+```
+
+### TACL Energy Validation
+
+```bash
+# Validate energy metrics
+python scripts/validate_energy.py --metric latency_p95=75.0 --metric cpu_burn=0.65
+
+# Show TACL configuration
+python scripts/validate_energy.py --show-config
+```
+
+### Mutation Testing
+
+```bash
+# Run mutation testing
+make mutation-test
+
+# Or manually
+mutmut run --use-coverage
+python -m tools.mutation.kill_rate_guard --threshold 0.9
 ```
 
 ---
@@ -108,12 +203,23 @@ pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable
 ## Maintenance Requirements
 
 1. **After each PR**: Update claims if documentation changes
-2. **After each release**: Review all `goal` items
-3. **Quarterly**: Review compliance claims with security team
-4. **Annually**: Consider external audit for `design_aligned` items
+2. **After each release**: Review all `goal` items and update statuses
+3. **Monthly**: Verify `partial` claims still have valid evidence
+4. **Quarterly**: Review compliance claims with security team
+5. **Annually**: Consider external audit for `partial` security/compliance items
+
+---
+
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2025-12-10 | Expanded to full table format with id, domain, measurement_command, evidence_path, notes |
+| 2025-12-10 | Added TACL, product, and other domain claims |
+| 2025-12-10 | Consolidated status definitions (proven/partial/goal/remove) |
 
 ---
 
 **⚠️ WARNING**: This document does NOT constitute a security audit, compliance certification,
-or performance guarantee. All claims with status other than `enforced` require independent
+or performance guarantee. All claims with status other than `proven` require independent
 verification before relying on them for production decisions.
