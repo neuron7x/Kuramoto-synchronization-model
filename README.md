@@ -103,7 +103,7 @@ Code: [`observability/`](observability/), [`infra/`](infra/)
 
 > ⚠️ **No External Audit**: TradePulse has not undergone external security audit or compliance certification.
 
-**Security Framework** — Controls aligned with NIST SP 800-53 and ISO 27001 (design only, no audit)  
+**Security Framework** — Controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)  
 **Secrets Management** — HashiCorp Vault and AWS Secrets Manager integration  
 **Encrypted Storage** — AES-256 at rest, TLS 1.3 in transit  
 **MFA Support** — Multi-factor authentication for admin operations  
