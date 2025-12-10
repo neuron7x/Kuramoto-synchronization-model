@@ -397,7 +397,7 @@ class TestBacktestEngineEdgeCases:
         prices = np.array([100.0, 101.0, 102.0, 103.0, 104.0])
         
         def wrong_length_signal(p: np.ndarray) -> np.ndarray:
-            return np.ones(len(p) - 1)  # Wrong length
+            return np.ones(len(p) - 1)
         
         with pytest.raises(ValueError, match="same length"):
             walk_forward(prices, wrong_length_signal, fee=0.0)

@@ -448,11 +448,13 @@ class TestPaperTradingEngine:
             ideal_price=49000.0,  # Paid more than ideal
         )
         
-        # For buy: realized_value = +quantity * execution_price
-        # deviation = realized_value - ideal_value
-        # Since execution_price > ideal_price, deviation > 0 (we spent more)
-        assert report.pnl.realized_value > 0
-        assert report.pnl.deviation > 0  # Paid more than ideal
+        # For buy: side_factor = 1.0
+        # realized_value = 1.0 * 1.0 * 50000.0 = 50000.0
+        # ideal_value = 1.0 * 1.0 * 49000.0 = 49000.0
+        # deviation = realized_value - ideal_value = 1000.0
+        assert report.pnl.realized_value == pytest.approx(50000.0)
+        assert report.pnl.ideal_value == pytest.approx(49000.0)
+        assert report.pnl.deviation == pytest.approx(1000.0)
 
     def test_pnl_calculation_sell_order(self, engine: PaperTradingEngine) -> None:
         """Test PnL calculation for sell order."""
@@ -464,9 +466,13 @@ class TestPaperTradingEngine:
             ideal_price=51000.0,  # Sold for less than ideal
         )
         
-        # For sell: realized_value = -quantity * execution_price
-        assert report.pnl.realized_value < 0  # Selling reduces value
-        assert report.pnl.deviation > 0  # Lost value by selling at lower price
+        # For sell: side_factor = -1.0
+        # realized_value = -1.0 * 1.0 * 50000.0 = -50000.0
+        # ideal_value = -1.0 * 1.0 * 51000.0 = -51000.0
+        # deviation = realized_value - ideal_value = -50000.0 - (-51000.0) = 1000.0
+        assert report.pnl.realized_value == pytest.approx(-50000.0)
+        assert report.pnl.ideal_value == pytest.approx(-51000.0)
+        assert report.pnl.deviation == pytest.approx(1000.0)
 
 
 # ============================================================================
