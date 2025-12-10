@@ -56,15 +56,20 @@
 
 | id | domain | claim | measurement_command | evidence_path | status | notes |
 |----|--------|-------|---------------------|---------------|--------|-------|
-| COV_98_CI_GATE | coverage | 98% CI coverage gate enforced on all PRs | `pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98` | `.github/workflows/tests.yml`, `reports/coverage/` | proven | Active in CI, blocks PRs below 98%. Skipped for docs-only changes. |
-| COV_BACKTEST_100 | coverage | backtest/ module 100% coverage | `pytest --cov=backtest tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
-| COV_EXECUTION_100 | coverage | execution/ module 100% coverage | `pytest --cov=execution tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
-| COV_CORE_90_95 | coverage | core modules 90-95% coverage | `pytest --cov=core tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
+| COV_98_CI_GATE | coverage | 98% CI coverage gate enforced on all PRs | `pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98` | `.github/workflows/tests.yml`, `reports/coverage/` | goal | Target gate, currently not met. See actual coverage below. |
+| COV_BACKTEST_73 | coverage | backtest/ module ~73% coverage | `pytest tests/unit/backtest tests/integration/test_backtest.py tests/integration/test_golden_path_backtest.py --cov=backtest --cov-report=term` | `reports/coverage/index.html` | proven | Measured 2025-12-10: 73.10%. Key files: engine.py (88%), performance.py (96%), dopamine_td.py (92%) |
+| COV_EXECUTION_44 | coverage | execution/ module ~44% coverage | `pytest tests/unit/execution tests/integration/ --cov=execution --cov-report=term -m "not slow"` | `reports/coverage/index.html` | proven | Measured 2025-12-10: 43.61%. Key files: paper_trading.py (98%), connectors.py (68%), order_lifecycle.py (74%) |
+| COV_CORE_32 | coverage | core modules ~32% coverage | `pytest tests/unit/core tests/integration/ --cov=core --cov-report=term -m "not slow"` | `reports/coverage/index.html` | proven | Measured 2025-12-10: 32.05%. High coverage: engine/core.py (95%), orchestrator (96%), maintenance/backups (95%) |
+| COV_BACKTEST_100 | coverage | backtest/ module 100% coverage | `pytest --cov=backtest tests/` | `reports/coverage/index.html` | goal | Long-term target, not enforced in CI |
+| COV_EXECUTION_100 | coverage | execution/ module 100% coverage | `pytest --cov=execution tests/` | `reports/coverage/index.html` | goal | Long-term target, not enforced in CI |
+| COV_CORE_90_95 | coverage | core modules 90-95% coverage | `pytest --cov=core tests/` | `reports/coverage/index.html` | goal | Long-term target, not enforced in CI |
 | COV_AGENT_95 | coverage | core/agent/ ≥95% coverage | `pytest --cov=core/agent tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
 | COV_DATA_95 | coverage | core/data/ ≥95% coverage | `pytest --cov=core/data tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
 | COV_INDICATORS_90 | coverage | core/indicators/ ≥90% coverage | `pytest --cov=core/indicators tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
 | COV_METRICS_95 | coverage | core/metrics/ ≥95% coverage | `pytest --cov=core/metrics tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
 | COV_PHASE_95 | coverage | core/phase/ ≥95% coverage | `pytest --cov=core/phase tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
+| COV_GOLDEN_PATH | coverage | Golden path backtest workflow covered | `pytest tests/integration/test_golden_path_backtest.py -v` | `tests/integration/test_golden_path_backtest.py` | proven | 21 deterministic integration tests covering backtest workflow |
+| COV_PAPER_TRADING | coverage | Paper trading engine >95% coverage | `pytest tests/unit/execution/test_paper_trading.py --cov=execution.paper_trading` | `tests/unit/execution/test_paper_trading.py` | proven | 44 unit tests, 98% coverage of paper_trading.py |
 | MUTATION_90_KILL | coverage | 90% mutation kill rate | `mutmut run --use-coverage && python -m tools.mutation.kill_rate_guard --threshold 0.9` | `reports/mutmut/summary.json` | partial | Configured in pyproject.toml, CI workflow exists but experimental |
 
 ### Performance Claims
@@ -229,6 +234,9 @@ python -m tools.mutation.kill_rate_guard --threshold 0.9
 
 | Date | Change |
 |------|--------|
+| 2025-12-10 | Added realistic coverage measurements: backtest (73%), execution (44%), core (32%) |
+| 2025-12-10 | Added COV_GOLDEN_PATH and COV_PAPER_TRADING claims with proven status |
+| 2025-12-10 | Updated COV_98_CI_GATE to goal status (target, not currently enforced at 98%) |
 | 2025-12-10 | Added CI Workflow Notes section explaining workflow trigger behavior |
 | 2025-12-10 | Expanded to full table format with id, domain, measurement_command, evidence_path, notes |
 | 2025-12-10 | Added TACL, product, and other domain claims |
