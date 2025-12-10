@@ -56,10 +56,9 @@ scripts/
 
 ## Coverage Requirements
 
-**CI Gate**: 80% minimum coverage enforced on all PRs  
-**v1.0 Target**: 98% (roadmap goal)
+**CI Gate**: 98% coverage enforced on all PRs (via `--cov-fail-under=98` in `.github/workflows/tests.yml`)
 
-Current module coverage goals (verify with `make test-coverage`):
+Module coverage goals (not enforced, verify with `make test-coverage`):
 - `backtest/`: 100% (goal)
 - `execution/`: 100% (goal)
 - `core/agent/`: ≥95% (goal)
@@ -68,10 +67,7 @@ Current module coverage goals (verify with `make test-coverage`):
 - `core/metrics/`: ≥95% (goal)
 - `core/phase/`: ≥95% (goal)
 
-Coverage is measured using `pytest-cov` and enforced in CI. Run `make test-coverage` to generate
-a reproducible coverage report at `reports/coverage/index.html`.
-
-See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for evidence status of all claims.
+📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ## Running Tests Locally
 

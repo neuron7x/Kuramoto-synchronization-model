@@ -52,9 +52,9 @@
 - **Observability**: Prometheus metrics, OpenTelemetry tracing, and comprehensive logging
 
 ### For Infrastructure Engineers
-- **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (designed, not externally audited)
+- **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)
 - **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
-- **Comprehensive Testing**: 80%+ CI coverage gate with unit, integration, property-based, and fuzz testing (98% target for v1.0)
+- **Comprehensive Testing**: 98% CI coverage gate with unit, integration, property-based, and fuzz testing
 
 ---
 
@@ -365,8 +365,7 @@ mutmut run --use-coverage
 
 ### Coverage Status
 
-**CI Gate**: 80% minimum coverage enforced on all PRs  
-**v1.0 Target**: 98% coverage (roadmap goal)  
+**CI Gate**: 98% coverage enforced on all PRs (via `--cov-fail-under=98`)  
 **Module Goals**: backtest (100%), execution (100%), core modules (90-95%)
 
 To verify current coverage:
@@ -375,8 +374,7 @@ make test-coverage
 # View report: reports/coverage/index.html
 ```
 
-📖 **Testing Guide**: [TESTING.md](TESTING.md)  
-📊 **Metrics Contract**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
+📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 
@@ -384,37 +382,29 @@ make test-coverage
 
 TradePulse is designed for low-latency, high-throughput trading operations.
 
-> ⚠️ **Unverified Claims**: Performance metrics below are architecture targets, NOT measured results.
-> Always run your own benchmarks before making production decisions.
+> ⚠️ **Design Targets Only**: Performance metrics below are architecture targets (status: `design_target`), NOT measured results.
 
-### Design Goals (Targets, Not Measured)
+### Design Goals
 
-The following are architecture design targets. Actual measurements require running benchmarks on your hardware:
+All claims below have status `design_target` (see [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)):
 
-- **Backtesting**: 1M+ bars/second throughput (target, not verified)
-- **Live Trading**: Sub-5ms order latency (target, exchange dependent)
-- **Signal Generation**: Sub-1ms with cached indicators (target)
-- **Memory**: ~200MB steady-state for live trading (target)
-- **GPU Acceleration**: Planned feature; CUDA kernels in development (not implemented)
+- **Backtesting**: 1M+ bars/second throughput
+- **Live Trading**: Sub-5ms order latency (exchange dependent)
+- **Signal Generation**: Sub-1ms with cached indicators
+- **Memory**: ~200MB steady-state for live trading
+- **GPU Acceleration**: `planned` — CUDA kernels not implemented
 
 ### Benchmarks
 
-Performance benchmarks are maintained in the `benchmarks/` directory and validated through CI:
-
 ```bash
 # Run performance benchmarks
-pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable
+make perf
 
-# Generate performance report
-python scripts/performance/generate_replay_report.py \
-    --output-dir reports/performance \
-    --generate-charts
+# Run specific benchmark tests
+pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable
 ```
 
-📖 **Performance Guide**: [PERFORMANCE_REGRESSION_GUIDE.md](PERFORMANCE_REGRESSION_GUIDE.md)
-
-> **⚠️ Important**: Performance claims are design goals until validated with reproducible benchmarks.
-> Do not rely on these numbers for production capacity planning without running your own tests.
+📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 

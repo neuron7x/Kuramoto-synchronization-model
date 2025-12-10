@@ -1,5 +1,10 @@
 # Security Policy
 
+> ⚠️ **No External Audit**: TradePulse has not undergone external security audit, penetration testing,
+> SOC 2 examination, or formal compliance certification. All security claims refer to design patterns only.
+>
+> 📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
+
 For a cross-functional "digital risk" playbook that consolidates confidentiality, integrity, availability, identity hardening, and legal/ethical controls (including the first 72-hour stabilization checklist), see [docs/digital_risk_action_plan.md](docs/digital_risk_action_plan.md).
 
 ## Thermodynamic Autonomic Control Layer (TACL)
@@ -8,7 +13,7 @@ For a cross-functional "digital risk" playbook that consolidates confidentiality
 
 **Type**: Autonomic Control System with Formal Safety Guarantees  
 **Purpose**: Self-regulating topology optimization for distributed trading infrastructure  
-**Compliance Alignment**: Controls designed for SEC, FINRA, EU AI Act, SOC 2, ISO 27001 (not externally audited or certified)
+**Compliance Alignment**: Controls designed to align with SEC, FINRA, EU AI Act, SOC 2, ISO 27001 (status: `design_aligned`, no external audit)
 
 ### Core Function
 TACL treats the entire TradePulse topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
@@ -559,31 +564,24 @@ In case of a security incident:
 
 > **⚠️ IMPORTANT DISCLAIMER**: This table documents internal design intentions only.
 > TradePulse has **NOT** undergone external security audit, penetration testing,
-> SOC 2 examination, or formal compliance certification. Do not rely on this table
-> for production security decisions without independent verification.
+> SOC 2 examination, or formal compliance certification.
 
-The following table tracks the implementation and verification status of security controls:
+All controls below have status `design_aligned` unless otherwise noted. See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for status definitions.
 
-| Control | Standard Reference | Status | Proof/Notes |
-|---------|-------------------|--------|-------------|
-| Access Control | NIST AC-*, ISO A.9 | `designed` | RBAC patterns implemented |
-| Audit Logging | NIST AU-*, ISO A.12.4 | `designed` | Audit trail code present |
-| Encryption at Rest | NIST SC-28, ISO A.10 | `designed` | AES-256 configuration |
-| Encryption in Transit | NIST SC-8, ISO A.13.1 | `designed` | TLS 1.3 enforced |
-| Secrets Management | NIST SC-12, ISO A.10.1 | `implemented` | Vault/AWS SM integration |
-| Input Validation | OWASP A03 | `implemented` | Pydantic schemas |
-| Dependency Scanning | NIST SI-7, OWASP A06 | `implemented` | pip-audit in CI |
-| Static Analysis | NIST SI-10 | `implemented` | Bandit, CodeQL in CI |
-| Container Scanning | NIST SI-7 | `implemented` | Trivy/Grype in CI |
-| MFA Support | NIST IA-2 | `designed` | Admin operations only |
-| Circuit Breaker | Custom | `implemented` | Kill-switch pattern |
-| Incident Response | NIST IR-* | `designed` | Playbooks documented |
-
-**Status Definitions:**
-- `implemented` — Code exists and is exercised in CI
-- `designed` — Patterns/config exist but NOT externally validated
-- `planned` — On roadmap, not yet implemented
-- `audited` — Verified by external audit (**none currently**)
+| Control | Standard Reference | Status | Notes |
+|---------|-------------------|--------|-------|
+| Access Control | NIST AC-*, ISO A.9 | `design_aligned` | RBAC patterns implemented |
+| Audit Logging | NIST AU-*, ISO A.12.4 | `design_aligned` | Audit trail code present |
+| Encryption at Rest | NIST SC-28, ISO A.10 | `design_aligned` | AES-256 configuration |
+| Encryption in Transit | NIST SC-8, ISO A.13.1 | `design_aligned` | TLS 1.3 enforced |
+| Secrets Management | NIST SC-12, ISO A.10.1 | `enforced` | Vault/AWS SM in CI |
+| Input Validation | OWASP A03 | `enforced` | Pydantic schemas in CI |
+| Dependency Scanning | NIST SI-7, OWASP A06 | `enforced` | pip-audit in CI |
+| Static Analysis | NIST SI-10 | `enforced` | Bandit, CodeQL in CI |
+| Container Scanning | NIST SI-7 | `enforced` | Trivy/Grype in CI |
+| MFA Support | NIST IA-2 | `design_aligned` | Admin operations only |
+| Circuit Breaker | Custom | `enforced` | Kill-switch in code |
+| Incident Response | NIST IR-* | `design_aligned` | Playbooks documented |
 
 ### What This Table Does NOT Mean
 
@@ -597,9 +595,9 @@ The following table tracks the implementation and verification status of securit
 1. Engage a qualified security firm for penetration testing
 2. Conduct a formal compliance gap assessment
 3. Perform threat modeling for your specific use case
-4. Review all `designed` controls for your environment
+4. Review all `design_aligned` controls for your environment
 
-See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for complete evidence tracking.
+📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 
