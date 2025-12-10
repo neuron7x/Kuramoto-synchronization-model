@@ -20,8 +20,6 @@ omit =
     src/**
     tools/**
     conftest.py
-    backtest/**
-    execution/**
     core/accelerators/**
     core/agent/**
     core/altdata/**
@@ -57,8 +55,6 @@ omit =
     src/**
     tools/**
     conftest.py
-    backtest/**
-    execution/**
     core/accelerators/**
     core/agent/**
     core/altdata/**
