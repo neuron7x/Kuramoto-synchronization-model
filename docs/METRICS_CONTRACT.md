@@ -13,7 +13,7 @@
 1. **This is NOT a legal document.** It does not constitute a warranty, guarantee, or contractual commitment.
 2. **This document requires regular maintenance.** Claims and statuses must be updated after documentation changes, releases, and evidence collection.
 3. **Do not rely on this document if it has not been updated in the last 30 days.**
-4. **Claims with status other than `proven` or `enforced` require independent verification before production decisions.**
+4. **Claims with status other than `proven` require independent verification before production decisions.**
 
 ---
 
@@ -64,8 +64,8 @@
 | PERF_FLOAT32_50PCT | performance | Float32 reduces memory by 50% | `pytest tests/performance/` | docs/performance.md | partial | Documented, basic tests exist |
 | PERF_FRONTEND_LCP | performance | LCP ≤ 2.0s desktop, ≤ 2.5s mobile | `npx lighthouse-ci` | N/A | goal | Per docs/performance.md |
 | PERF_FRONTEND_TTFB | performance | TTFB ≤ 500ms | `npx lighthouse-ci` | N/A | goal | Per docs/performance.md |
-| PERF_LATENCY_P95_85MS | performance | p95 latency ≤ 85ms for release gate | TACL validator | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
-| PERF_LATENCY_P99_120MS | performance | p99 latency ≤ 120ms for release gate | TACL validator | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
+| PERF_LATENCY_P95_85MS | performance | p95 latency ≤ 85ms for release gate | `python scripts/validate_energy.py --metric latency_p95=<value>` | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
+| PERF_LATENCY_P99_120MS | performance | p99 latency ≤ 120ms for release gate | `python scripts/validate_energy.py --metric latency_p99=<value>` | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
 
 ### Reliability Claims
 
@@ -116,7 +116,7 @@
 
 | id | domain | claim | measurement_command | evidence_path | status | notes |
 |----|--------|-------|---------------------|---------------|--------|-------|
-| PROD_50_INDICATORS | product | 50+ geometric/technical indicators | `find core/indicators -name "*.py" | wc -l` | core/indicators/ | partial | Directory exists, count needs verification |
+| PROD_50_INDICATORS | product | 50+ geometric/technical indicators | `find core/indicators -name "*.py" ! -name "__init__.py" \| wc -l` | core/indicators/ | partial | Directory exists, exact count needs verification |
 | PROD_MULTI_EXCHANGE | product | Multi-exchange support (Binance, Coinbase, Kraken, Alpaca) | N/A | execution/adapters/ | partial | Adapters exist, live testing TBD |
 | PROD_KILL_SWITCH | product | Emergency kill switch for trading halt | N/A | runtime/, SECURITY.md | partial | Code present |
 | PROD_PAPER_TRADING | product | Paper trading mode | N/A | execution/paper_trading.py | partial | Code exists |
