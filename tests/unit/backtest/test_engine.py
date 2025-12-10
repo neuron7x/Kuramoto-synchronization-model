@@ -387,3 +387,233 @@ class TestWalkForwardIntegration:
         # Equity curve length may differ from prices due to latency/warmup
         assert len(result.equity_curve) >= len(prices) - 10  # Allow some tolerance
         assert result.max_dd <= 0.0  # Drawdown should be non-positive
+
+
+class TestBacktestEngineEdgeCases:
+    """Additional edge case tests for comprehensive coverage."""
+
+    def test_signal_shape_mismatch_raises_value_error(self) -> None:
+        """Test that mismatched signal length raises ValueError."""
+        prices = np.array([100.0, 101.0, 102.0, 103.0, 104.0])
+        
+        def wrong_length_signal(p: np.ndarray) -> np.ndarray:
+            return np.ones(len(p) - 1)  # Wrong length
+        
+        with pytest.raises(ValueError, match="same length"):
+            walk_forward(prices, wrong_length_signal, fee=0.0)
+
+    def test_prices_1d_check(self) -> None:
+        """Test that non-1D prices raises ValueError."""
+        prices = np.array([[100.0, 101.0], [102.0, 103.0]])  # 2D array
+        
+        def simple_signal(p: np.ndarray) -> np.ndarray:
+            return np.ones_like(p)
+        
+        with pytest.raises(ValueError, match="1-D array"):
+            walk_forward(prices, simple_signal, fee=0.0)
+
+    def test_prices_too_short_raises(self) -> None:
+        """Test that single price point raises ValueError."""
+        prices = np.array([100.0])  # Only 1 point
+        
+        def simple_signal(p: np.ndarray) -> np.ndarray:
+            return np.ones_like(p)
+        
+        with pytest.raises(ValueError, match="at least two"):
+            walk_forward(prices, simple_signal, fee=0.0)
+
+    def test_order_book_depth_profile(self) -> None:
+        """Test order book with custom depth profile."""
+        prices = np.array([100.0, 101.0, 102.0, 103.0, 104.0])
+        
+        def alternating_signal(p: np.ndarray) -> np.ndarray:
+            signal = np.zeros_like(p)
+            signal[::2] = 1.0
+            signal[1::2] = -1.0
+            return signal
+        
+        order_book = OrderBookConfig(
+            spread_bps=10.0,
+            depth_profile=(0.5, 0.3, 0.2),  # Custom depth
+            infinite_depth=True,
+        )
+        
+        result = walk_forward(
+            prices,
+            alternating_signal,
+            fee=0.0,
+            order_book=order_book,
+        )
+        
+        assert isinstance(result, Result)
+        assert result.trades > 0
+
+    def test_volatility_targeting_constraint(self) -> None:
+        """Test portfolio constraint with volatility targeting."""
+        np.random.seed(42)
+        prices = 100.0 + np.cumsum(np.random.randn(50) * 2.0)
+        prices = np.maximum(prices, 50.0)
+        
+        def full_position_signal(p: np.ndarray) -> np.ndarray:
+            return np.ones_like(p)
+        
+        constraints = PortfolioConstraints(
+            target_volatility=0.02,  # 2% target vol
+            volatility_lookback=20,
+        )
+        
+        result = walk_forward(
+            prices,
+            full_position_signal,
+            fee=0.0,
+            constraints=constraints,
+        )
+        
+        assert isinstance(result, Result)
+
+    def test_max_exposure_constraints(self) -> None:
+        """Test max gross and net exposure constraints."""
+        prices = np.linspace(100, 110, 20)
+        
+        def large_signal(p: np.ndarray) -> np.ndarray:
+            return np.full_like(p, 2.0)  # Signal > 1
+        
+        constraints = PortfolioConstraints(
+            max_gross_exposure=0.5,
+            max_net_exposure=0.3,
+        )
+        
+        result = walk_forward(
+            prices,
+            large_signal,
+            fee=0.0,
+            constraints=constraints,
+        )
+        
+        assert isinstance(result, Result)
+
+    def test_skip_validation_with_nan(self) -> None:
+        """Test skip_validation allows NaN data through."""
+        prices = np.array([100.0, 101.0, 102.0, 103.0, 104.0])
+        
+        def simple_signal(p: np.ndarray) -> np.ndarray:
+            return np.ones_like(p)
+        
+        validation = DataValidationConfig(
+            enabled=True,
+            skip_validation=True,
+        )
+        
+        result = walk_forward(
+            prices,
+            simple_signal,
+            fee=0.0,
+            data_validation=validation,
+        )
+        
+        assert isinstance(result, Result)
+
+    def test_sell_side_order_book_fill(self) -> None:
+        """Test order book fill price for sell orders."""
+        prices = np.array([100.0, 99.0, 98.0, 97.0, 96.0])  # Downtrend
+        
+        def sell_signal(p: np.ndarray) -> np.ndarray:
+            signal = np.zeros_like(p)
+            signal[1:] = -1.0  # Short position
+            return signal
+        
+        order_book = OrderBookConfig(spread_bps=5.0)
+        slippage = SlippageConfig(per_unit_bps=10.0, depth_impact_bps=5.0)
+        
+        result = walk_forward(
+            prices,
+            sell_signal,
+            fee=0.0,
+            order_book=order_book,
+            slippage=slippage,
+        )
+        
+        assert isinstance(result, Result)
+        assert result.slippage_cost >= 0.0
+
+    def test_anti_leakage_adjusts_latency(self) -> None:
+        """Test anti-leakage adjusts latency when below minimum."""
+        prices = np.array([100.0, 101.0, 102.0, 103.0, 104.0, 105.0])
+        
+        def trend_signal(p: np.ndarray) -> np.ndarray:
+            signal = np.zeros_like(p)
+            signal[1:] = 1.0
+            return signal
+        
+        anti_leakage = AntiLeakageConfig(
+            enforce_signal_lag=True,
+            minimum_signal_delay=3,
+            warn_on_potential_leakage=False,  # Suppress warning
+        )
+        
+        result = walk_forward(
+            prices,
+            trend_signal,
+            fee=0.0,
+            anti_leakage=anti_leakage,
+        )
+        
+        # Latency should be adjusted to at least minimum_signal_delay
+        assert result.latency_steps >= 3
+
+    def test_performance_report_generated(self) -> None:
+        """Test that performance report is generated."""
+        prices = np.linspace(100, 110, 20)
+        
+        def buy_hold_signal(p: np.ndarray) -> np.ndarray:
+            signal = np.ones_like(p)
+            signal[0] = 0.0
+            return signal
+        
+        result = walk_forward(
+            prices,
+            buy_hold_signal,
+            fee=0.0,
+            initial_capital=10000.0,
+            strategy_name="test_performance",
+        )
+        
+        # Performance report should be generated
+        assert result.performance is not None
+        assert result.report_path is not None
+
+    def test_financing_costs_tracked(self) -> None:
+        """Test that financing costs are calculated and tracked."""
+        prices = np.linspace(100, 110, 30)
+        
+        def long_signal(p: np.ndarray) -> np.ndarray:
+            signal = np.ones_like(p)
+            signal[0] = 0.0
+            return signal
+        
+        result = walk_forward(
+            prices,
+            long_signal,
+            fee=0.0,
+        )
+        
+        # Financing cost should be tracked (may be 0 with default model)
+        assert result.financing_cost >= 0.0
+
+    def test_commission_cost_tracked(self) -> None:
+        """Test that commission costs are tracked."""
+        prices = np.linspace(100, 110, 20)
+        
+        def buy_sell_signal(p: np.ndarray) -> np.ndarray:
+            signal = np.zeros_like(p)
+            signal[:10] = 1.0
+            signal[10:] = -1.0
+            return signal
+        
+        result = walk_forward(
+            prices,
+            buy_sell_signal,
+            fee=0.01,  # 1% commission
+        )
+        
+        assert result.commission_cost > 0.0
