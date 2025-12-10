@@ -42,6 +42,14 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
 
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-ci-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            pip-ci-${{ runner.os }}-py3.11-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -70,6 +78,7 @@ jobs:
             .coverage.${{ matrix.shard }}
             coverage-${{ matrix.shard }}.xml
 
+          retention-days: 14
   coverage-aggregate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -93,6 +102,14 @@ jobs:
             requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-coverage-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            pip-coverage-${{ runner.os }}-py3.11-
 
       - name: Install coverage tooling
         run: |
@@ -132,6 +149,7 @@ jobs:
             coverage_html
           if-no-files-found: error
 
+          retention-days: 14
       - name: Upload coverage to Codecov
         if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
@@ -223,6 +241,7 @@ jobs:
             .mutmut-cache
           if-no-files-found: warn
 
+          retention-days: 14
   publish-containers:
     if: github.event_name == 'push'
     needs: [coverage-aggregate, mutation-testing-gate]
