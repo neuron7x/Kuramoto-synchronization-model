@@ -92,6 +92,7 @@ def plot_equity_curve(
     ax.legend(loc="best", framealpha=0.9)
 
     # Add statistics box
+    # total_return_pct is already in percentage form (e.g., 0.80 for 0.80%)
     stats_text = (
         f"Initial: ${metrics['initial_capital']:,.0f}\n"
         f"Final: ${metrics['final_equity']:,.0f}\n"

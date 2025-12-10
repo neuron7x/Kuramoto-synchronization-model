@@ -12,10 +12,21 @@ Usage:
     tradepulse hero-scenario all
 """
 
+import importlib.util
 import sys
 from pathlib import Path
 
 import click
+
+
+def _load_module(module_name: str, file_path: Path):
+    """Load a Python module dynamically from a file path."""
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load module from {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 @click.group(name="hero-scenario")
@@ -66,13 +77,10 @@ def run(data_source, output_dir, capital):
     # Step 1: Prepare data
     click.echo("\n[1/2] Preparing data...")
     try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
+        prepare_module = _load_module(
             "prepare_data",
             repo_root / "examples" / "hero_scenario" / "01_prepare_data.py"
         )
-        prepare_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(prepare_module)
         prepare_module.prepare_hero_data(data_source, data_path, "BTC")
     except Exception as e:
         click.echo(f"✗ Data preparation failed: {e}", err=True)
@@ -81,12 +89,10 @@ def run(data_source, output_dir, capital):
     # Step 2: Run backtest
     click.echo("\n[2/2] Running backtest...")
     try:
-        spec = importlib.util.spec_from_file_location(
+        backtest_module = _load_module(
             "run_backtest",
             repo_root / "examples" / "hero_scenario" / "02_run_backtest.py"
         )
-        backtest_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(backtest_module)
         backtest_module.run_hero_backtest(data_path, output_dir, capital)
     except Exception as e:
         click.echo(f"✗ Backtest failed: {e}", err=True)
@@ -134,13 +140,10 @@ def plot(results_dir, output):
     click.echo(f"Generating equity curve plot from {results_dir}...")
 
     try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
+        plot_module = _load_module(
             "plot_equity",
             repo_root / "examples" / "hero_scenario" / "03_plot_equity.py"
         )
-        plot_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(plot_module)
         plot_module.plot_equity_curve(results_dir, output)
     except Exception as e:
         click.echo(f"✗ Plotting failed: {e}", err=True)
