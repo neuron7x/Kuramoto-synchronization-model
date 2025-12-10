@@ -1,0 +1,102 @@
+{
+  "task": "Neuro-optimization with 100 iterations",
+  "completed_iterations": 100,
+  "elapsed_time_seconds": 0.017863988876342773,
+  "iterations_per_second": 5597.853911140176,
+  "calibration_report": {
+    "status": "active",
+    "iteration": 9,
+    "best_score": 0.48000000000000004,
+    "current_temperature": 0.8337477621301497,
+    "iterations_since_improvement": 9,
+    "best_params": {
+      "dopamine": {
+        "discount_gamma": 0.99,
+        "learning_rate": 0.01,
+        "burst_factor": 1.5,
+        "base_temperature": 1.0,
+        "invigoration_threshold": 0.6
+      },
+      "serotonin": {
+        "stress_threshold": 0.15,
+        "release_threshold": 0.1,
+        "desensitization_rate": 0.01,
+        "floor_min": 0.2
+      },
+      "gaba": {
+        "k_inhibit": 0.4,
+        "impulse_threshold": 0.5,
+        "stdp_lr": 0.01,
+        "max_inhibition": 0.85
+      },
+      "na_ach": {
+        "arousal_gain": 1.2,
+        "attention_gain": 1.0,
+        "risk_min": 0.5,
+        "risk_max": 1.5
+      }
+    },
+    "recent_performance": {
+      "avg_sharpe": 0.0,
+      "avg_drawdown": 0.0,
+      "avg_win_rate": 0.5,
+      "dopamine_stability": 0.3
+    },
+    "exploration_state": "exploring",
+    "recommendations": [
+      "Low Sharpe ratio. Consider adjusting dopamine learning rate or exploration temperature for better risk-adjusted returns."
+    ]
+  },
+  "optimization_report": {
+    "status": "active",
+    "iteration": 9,
+    "best_objective": 0.5902347842917146,
+    "current_objective": 0.5570746365727539,
+    "performance_trend": "stable",
+    "avg_balance_score": 0.7021602773404535,
+    "avg_homeostatic_dev": 0.4312564584074226,
+    "convergence": {
+      "converged": false,
+      "reason": "insufficient_data"
+    },
+    "health_status": {
+      "status": "acceptable",
+      "message": "Minor imbalances detected but within acceptable range",
+      "balance_score": 0.6682132473507255,
+      "homeostatic_deviation": 0.4965282474789509,
+      "issues": [
+        "Excessive excitation - impulsive behavior risk"
+      ]
+    }
+  },
+  "best_parameters": {
+    "dopamine": {
+      "discount_gamma": 0.99,
+      "learning_rate": 0.01,
+      "burst_factor": 1.5,
+      "base_temperature": 1.0,
+      "invigoration_threshold": 0.6
+    },
+    "serotonin": {
+      "stress_threshold": 0.15,
+      "release_threshold": 0.1,
+      "desensitization_rate": 0.01,
+      "floor_min": 0.2
+    },
+    "gaba": {
+      "k_inhibit": 0.4,
+      "impulse_threshold": 0.5,
+      "stdp_lr": 0.01,
+      "max_inhibition": 0.85
+    },
+    "na_ach": {
+      "arousal_gain": 1.2,
+      "attention_gain": 1.0,
+      "risk_min": 0.5,
+      "risk_max": 1.5
+    }
+  },
+  "final_capital": 100000.0,
+  "total_trades": 1,
+  "profit_loss": 0.0
+}
