@@ -191,6 +191,36 @@ cp .env.example .env
 
 📖 **Detailed Setup**: [SETUP.md](SETUP.md)
 
+### Hero Backtest Scenario (Recommended First Step)
+
+**Run a simple, reproducible BTC backtest in 3 commands:**
+
+```bash
+cd examples/hero_scenario/
+python 01_prepare_data.py    # Extract BTC data (< 1 sec)
+python 02_run_backtest.py     # Run backtest (< 5 sec)
+python 03_plot_equity.py      # Generate plot (optional)
+```
+
+**Expected output:**
+```
+============================================================
+HERO SCENARIO: Backtest Execution
+============================================================
+P&L: $827.93 (+0.83%)
+Max Drawdown: $2,946.93 (2.95%)
+Number of Trades: 15
+Sharpe Ratio (annualized): 0.521
+============================================================
+```
+
+**What you get:**
+- ✅ Equity curve saved to `results/hero/equity_curve.csv`
+- ✅ Metrics saved to `results/hero/metrics.json`
+- ✅ Visualization at `results/hero/equity_curve.png`
+
+📖 **Full Guide**: [docs/HERO_SCENARIO.md](docs/HERO_SCENARIO.md)
+
 ### Your First Analysis
 
 ```bash

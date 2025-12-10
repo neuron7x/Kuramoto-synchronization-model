@@ -1,0 +1,11 @@
+{
+  "pnl": 827.928399999997,
+  "pnl_pct": 0.827928399999997,
+  "max_drawdown": -2946.9315512999747,
+  "max_drawdown_pct": -2.9469315512999747,
+  "num_trades": 15,
+  "sharpe_ratio": 0.5214221122425166,
+  "initial_capital": 100000.0,
+  "final_equity": 100827.9284,
+  "commission_cost": 662.5214430999999
+}
