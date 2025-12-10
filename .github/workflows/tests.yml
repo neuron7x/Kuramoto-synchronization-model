@@ -641,7 +641,6 @@ jobs:
       - name: Install dependencies
         if: steps.venv-cache-security.outputs.cache-hit != 'true'
         run: |
-          python -m venv .venv
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.txt
           .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
@@ -672,7 +671,6 @@ jobs:
       - tests
     name: Targeted Mutation Testing (Trading Engine)
     steps:
-          retention-days: 7
       - uses: actions/checkout@v5
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -743,7 +741,6 @@ jobs:
     env:
       TP_BENCHMARK_ARTIFACT_DIR: reports/benchmarks
     steps:
-          retention-days: 7
       - uses: actions/checkout@v5
       - name: Set up Python
         uses: actions/setup-python@v6

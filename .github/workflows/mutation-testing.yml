@@ -80,7 +80,6 @@ jobs:
         id: check_mutations
         run: |
           if [ -f .mutmut-cache ]; then
-          retention-days: 14
             echo "mutations_exist=true" >> $GITHUB_OUTPUT
           else
             echo "mutations_exist=false" >> $GITHUB_OUTPUT

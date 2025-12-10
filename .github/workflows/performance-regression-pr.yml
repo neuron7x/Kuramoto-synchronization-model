@@ -228,7 +228,6 @@ jobs:
             pr-memory.txt
             base-memory.txt
           if-no-files-found: warn
-
           retention-days: 7
       - name: Post performance analysis to PR
         if: always()
