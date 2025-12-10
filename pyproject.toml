@@ -127,6 +127,7 @@ gpu = [
 ]
 
 [project.scripts]
+tradepulse = "cli.main:main"
 tradepulse-sync = "scripts.resilient_data_sync:main"
 tradepulse-db = "scripts.db_migrate:cli"
 

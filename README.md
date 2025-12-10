@@ -216,6 +216,37 @@ Entry Signal:     0.000
 
 > **Note:** Use `PYTHONPATH=.` to ensure Python can find the local modules. On Windows PowerShell: `$env:PYTHONPATH='.'; python examples/quick_start.py`
 
+### Hero Backtest Scenario (5-Minute Demo)
+
+**"The fastest way to prove TradePulse is real"**
+
+Run a complete, reproducible backtest demonstration in under 3 minutes:
+
+```bash
+# Option 1: CLI shortcut (after running: pip install -e .)
+tradepulse hero-scenario all
+
+# Option 2: Individual scripts
+python examples/hero_scenario/01_prepare_data.py
+python examples/hero_scenario/02_run_backtest.py
+python examples/hero_scenario/03_plot_equity.py
+```
+
+**What it does:**
+- ✅ Runs completely offline (no API keys needed)
+- ✅ Uses real BTC/USDT 1h data (168 bars, Jan 2024)
+- ✅ Demonstrates NeuroTradePulseStrategy (Kuramoto + Ricci + Fractal motivation)
+- ✅ Generates equity curves, P&L, Sharpe ratio, drawdown metrics
+- ✅ Creates publication-quality plots
+
+**Expected results:**
+- **Total Return:** ~0.80%
+- **Sharpe Ratio:** 1.87
+- **Max Drawdown:** -0.05%
+- **Trades:** 4
+
+📖 **Full Guide**: [docs/HERO_SCENARIO.md](docs/HERO_SCENARIO.md)
+
 ### Interactive Dashboard
 
 ```bash

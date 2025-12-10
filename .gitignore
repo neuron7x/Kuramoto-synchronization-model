@@ -39,6 +39,11 @@ Thumbs.db
 .venv/
 venv/
 
+# Hero scenario generated results (can be regenerated)
+results/hero/*.csv
+results/hero/*.png
+results/hero/*.pdf
+
 # GitHub Actions local testing (act)
 .github/act/tests.secrets
 .github/act/tests.env
