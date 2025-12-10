@@ -101,7 +101,9 @@ Code: [`observability/`](observability/), [`infra/`](infra/)
 
 ### 🔐 Enterprise Security
 
-**Security Framework** — Controls aligned with NIST SP 800-53 and ISO 27001 (designed, no external audit)  
+> ⚠️ **No External Audit**: TradePulse has not undergone external security audit or compliance certification.
+
+**Security Framework** — Controls aligned with NIST SP 800-53 and ISO 27001 (design only, no audit)  
 **Secrets Management** — HashiCorp Vault and AWS Secrets Manager integration  
 **Encrypted Storage** — AES-256 at rest, TLS 1.3 in transit  
 **MFA Support** — Multi-factor authentication for admin operations  
@@ -382,15 +384,18 @@ make test-coverage
 
 TradePulse is designed for low-latency, high-throughput trading operations.
 
+> ⚠️ **Unverified Claims**: Performance metrics below are architecture targets, NOT measured results.
+> Always run your own benchmarks before making production decisions.
+
 ### Design Goals (Targets, Not Measured)
 
 The following are architecture design targets. Actual measurements require running benchmarks on your hardware:
 
-- **Backtesting**: 1M+ bars/second throughput (target)
+- **Backtesting**: 1M+ bars/second throughput (target, not verified)
 - **Live Trading**: Sub-5ms order latency (target, exchange dependent)
 - **Signal Generation**: Sub-1ms with cached indicators (target)
 - **Memory**: ~200MB steady-state for live trading (target)
-- **GPU Acceleration**: Planned feature; CUDA kernels in development (not yet measured)
+- **GPU Acceleration**: Planned feature; CUDA kernels in development (not implemented)
 
 ### Benchmarks
 
@@ -408,7 +413,8 @@ python scripts/performance/generate_replay_report.py \
 
 📖 **Performance Guide**: [PERFORMANCE_REGRESSION_GUIDE.md](PERFORMANCE_REGRESSION_GUIDE.md)
 
-> **Note**: Performance claims are design goals until validated with reproducible benchmarks. Actual performance depends on hardware, dataset size, and configuration. Run benchmarks on your system and report results to contribute to verified metrics.
+> **⚠️ Important**: Performance claims are design goals until validated with reproducible benchmarks.
+> Do not rely on these numbers for production capacity planning without running your own tests.
 
 ---
 

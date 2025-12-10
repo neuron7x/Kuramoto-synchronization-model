@@ -557,6 +557,11 @@ In case of a security incident:
 
 ## Compliance Controls Status
 
+> **⚠️ IMPORTANT DISCLAIMER**: This table documents internal design intentions only.
+> TradePulse has **NOT** undergone external security audit, penetration testing,
+> SOC 2 examination, or formal compliance certification. Do not rely on this table
+> for production security decisions without independent verification.
+
 The following table tracks the implementation and verification status of security controls:
 
 | Control | Standard Reference | Status | Proof/Notes |
@@ -576,12 +581,23 @@ The following table tracks the implementation and verification status of securit
 
 **Status Definitions:**
 - `implemented` — Code exists and is exercised in CI
-- `designed` — Patterns/config exist but not externally validated
+- `designed` — Patterns/config exist but NOT externally validated
 - `planned` — On roadmap, not yet implemented
-- `audited` — Verified by external audit (none currently)
+- `audited` — Verified by external audit (**none currently**)
 
-> **Note**: TradePulse has NOT undergone external security audit, SOC 2 examination, or formal certification.
-> All compliance claims refer to design alignment with frameworks, not certified compliance.
+### What This Table Does NOT Mean
+
+- ❌ Does NOT mean TradePulse is "compliant" with any standard
+- ❌ Does NOT replace the need for a proper security audit
+- ❌ Does NOT constitute a security guarantee
+- ❌ Does NOT imply readiness for production use with sensitive data
+
+### Recommended Actions Before Production Use
+
+1. Engage a qualified security firm for penetration testing
+2. Conduct a formal compliance gap assessment
+3. Perform threat modeling for your specific use case
+4. Review all `designed` controls for your environment
 
 See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for complete evidence tracking.
 
