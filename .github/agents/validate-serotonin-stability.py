@@ -113,12 +113,22 @@ def validate_constraints(content: str) -> tuple[bool, list[str]]:
     if "do not" not in content.lower():
         issues.append("No explicit constraints found")
 
-    # Check for medical disclaimer
-    if "not" not in content.lower() or "medical" not in content.lower():
+    # Check for medical disclaimer with specific patterns
+    # Remove markdown formatting for pattern matching
+    content_clean = content.replace("**", "").replace("*", "")
+    medical_patterns = [
+        "not a doctor",
+        "not provide medical",
+        "not give medical",
+        "do not give medical",
+        "do not provide medical",
+    ]
+    if not any(pattern in content_clean.lower() for pattern in medical_patterns):
         issues.append("Medical disclaimer may be missing or unclear")
 
     # Check for therapy disclaimer
-    if "therapy" not in content.lower():
+    therapy_patterns = ["not analyze trauma", "not diagnose", "no hidden therapy"]
+    if not any(pattern in content_clean.lower() for pattern in therapy_patterns):
         issues.append("Therapy disclaimer may be missing")
 
     return len(issues) == 0, issues

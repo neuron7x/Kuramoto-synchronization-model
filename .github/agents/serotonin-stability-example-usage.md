@@ -105,7 +105,7 @@ with a better design pattern?
 * `main_risk:` Infinite refactoring with no concrete value delivered
 
 #### Stabilizing Moves (Next 30–90 minutes)
-1. Define "done" right now: "code works, has basic tests, is readable"
+1. Define "done" right now: "code works, has basic tests, and is readable"
 2. Commit current state with message "Refactor module X (incremental)"
 3. Open PR with title "Refactor X - Part 1 of 3 (maybe)"
 4. List future improvements in PR description as "Future work" section
