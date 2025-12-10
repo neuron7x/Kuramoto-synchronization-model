@@ -18,7 +18,7 @@ maintain engineering integrity.
 
 | Claim | Location | Type | Status | How to Prove | Notes |
 |-------|----------|------|--------|--------------|-------|
-| "98% coverage target" | README.md:57, TESTING.md:59 | coverage | `target_not_current` | `make test-coverage` | Target for v1.0; current CI gate is 80% |
+| "98% coverage target" | README.md:57,367, TESTING.md:60 | coverage | `target_not_current` | `make test-coverage` | Target for v1.0; current CI gate is 80% |
 | "backtest/: 100%" | TESTING.md:64 | coverage | `partial_evidence` | Run coverage on backtest/ | Verify with actual coverage run |
 | "execution/: 100%" | TESTING.md:65 | coverage | `partial_evidence` | Run coverage on execution/ | Verify with actual coverage run |
 
@@ -26,11 +26,11 @@ maintain engineering integrity.
 
 | Claim | Location | Type | Status | How to Prove | Notes |
 |-------|----------|------|--------|--------------|-------|
-| "1M+ bars/second throughput" | README.md:382 | perf_throughput | `design_goal` | Benchmark required | Design goal, not measured |
-| "Sub-5ms order latency" | README.md:383 | perf_latency | `design_goal` | Benchmark with mock exchange | Exchange-dependent; design target |
-| "Sub-1ms signal generation" | README.md:384 | perf_latency | `design_goal` | Indicator benchmark | With cached indicators only |
-| "~200MB steady-state memory" | README.md:385 | memory | `design_goal` | Memory profiling | For live trading |
-| "10-50x GPU speedup" | README.md:386 | perf_throughput | `planned` | GPU benchmark required | CUDA operations only |
+| "1M+ bars/second throughput" | README.md:389 | perf_throughput | `design_goal` | Benchmark required | Design goal, not measured |
+| "Sub-5ms order latency" | README.md:390 | perf_latency | `design_goal` | Benchmark with mock exchange | Exchange-dependent; design target |
+| "Sub-1ms signal generation" | README.md:391 | perf_latency | `design_goal` | Indicator benchmark | With cached indicators only |
+| "~200MB steady-state memory" | README.md:392 | memory | `design_goal` | Memory profiling | For live trading |
+| "GPU speedup" | README.md:393 | perf_throughput | `planned` | GPU benchmark required | CUDA operations in development |
 
 ### Reliability Claims
 
@@ -38,7 +38,7 @@ maintain engineering integrity.
 |-------|----------|------|--------|--------------|-------|
 | "production-grade" | README.md:14 | reliability | `qualified` | — | Beta status acknowledged in roadmap |
 | "Enterprise-Grade" | README.md:55 | reliability | `qualified` | — | Patterns implemented, not production-proven |
-| "TRL7 (post-staging)" | README.md:323 | reliability | `claimed` | Review TACL implementation | Internal classification |
+| "TRL7 (internal assessment)" | README.md:323 | reliability | `claimed` | Review TACL implementation | Internal classification, post-staging design |
 
 ### Security & Compliance Claims
 
