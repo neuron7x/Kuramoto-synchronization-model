@@ -52,9 +52,9 @@
 - **Observability**: Prometheus metrics, OpenTelemetry tracing, and comprehensive logging
 
 ### For Infrastructure Engineers
-- **Enterprise-Grade**: Production-ready with security compliance (NIST, ISO 27001)
-- **Scalable Architecture**: Event-driven design, GPU acceleration, Kubernetes-ready
-- **Comprehensive Testing**: 98% coverage target with unit, integration, property-based, and fuzz testing
+- **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (designed, not externally audited)
+- **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
+- **Comprehensive Testing**: 80%+ CI coverage gate with unit, integration, property-based, and fuzz testing (98% target for v1.0)
 
 ---
 
@@ -101,11 +101,11 @@ Code: [`observability/`](observability/), [`infra/`](infra/)
 
 ### 🔐 Enterprise Security
 
-**Security Framework** — 93 controls aligned with NIST SP 800-53 and ISO 27001  
+**Security Framework** — Controls aligned with NIST SP 800-53 and ISO 27001 (designed, no external audit)  
 **Secrets Management** — HashiCorp Vault and AWS Secrets Manager integration  
 **Encrypted Storage** — AES-256 at rest, TLS 1.3 in transit  
 **MFA Support** — Multi-factor authentication for admin operations  
-**Compliance** — GDPR, CCPA, SEC, FINRA ready  
+**Compliance Controls** — GDPR, CCPA, SEC, FINRA patterns implemented (not certified)  
 
 Code: [Security Documentation](docs/security/), [`SECURITY.md`](SECURITY.md)
 
@@ -320,9 +320,9 @@ TACL is a self-regulating control system that manages the TradePulse topology as
 
 ### Technical Details
 
-- **Classification**: TRL7 (post-staging)
+- **Classification**: TRL7 (internal assessment, post-staging design)
 - **Adaptation**: GA/RL with runtime monotonic gates
-- **Audit**: Full decision logging for 7-year compliance
+- **Audit**: Decision logging designed for 7-year retention (configuration present, production validation pending)
 - **Crisis Handling**: Adaptive recovery with multiple severity modes
 
 📖 **TACL Documentation**: [docs/TACL.md](docs/TACL.md), [`tacl/`](tacl/), [`runtime/thermo_controller.py`](runtime/thermo_controller.py)
@@ -363,11 +363,18 @@ mutmut run --use-coverage
 
 ### Coverage Status
 
-**Target**: 98% for v1.0 release (configured in pyproject.toml)  
-**Current CI Gate**: 80% minimum while Kuramoto/Ricci suites stabilize  
-**Module Targets**: backtest (100% ✅), execution (100% ✅), core modules (90-95%)
+**CI Gate**: 80% minimum coverage enforced on all PRs  
+**v1.0 Target**: 98% coverage (roadmap goal)  
+**Module Goals**: backtest (100%), execution (100%), core modules (90-95%)
 
-📖 **Testing Guide**: [TESTING.md](TESTING.md)
+To verify current coverage:
+```bash
+make test-coverage
+# View report: reports/coverage/index.html
+```
+
+📖 **Testing Guide**: [TESTING.md](TESTING.md)  
+📊 **Metrics Contract**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 
@@ -375,13 +382,15 @@ mutmut run --use-coverage
 
 TradePulse is designed for low-latency, high-throughput trading operations.
 
-### Design Goals
+### Design Goals (Targets, Not Measured)
 
-- **Backtesting**: 1M+ bars/second throughput
-- **Live Trading**: Sub-5ms order latency (exchange dependent)
-- **Signal Generation**: Sub-1ms with cached indicators
-- **Memory**: ~200MB steady-state for live trading
-- **GPU Acceleration**: 10-50x speedup on CUDA-enabled operations
+The following are architecture design targets. Actual measurements require running benchmarks on your hardware:
+
+- **Backtesting**: 1M+ bars/second throughput (target)
+- **Live Trading**: Sub-5ms order latency (target, exchange dependent)
+- **Signal Generation**: Sub-1ms with cached indicators (target)
+- **Memory**: ~200MB steady-state for live trading (target)
+- **GPU Acceleration**: Planned feature; CUDA kernels in development (not yet measured)
 
 ### Benchmarks
 
@@ -399,7 +408,7 @@ python scripts/performance/generate_replay_report.py \
 
 📖 **Performance Guide**: [PERFORMANCE_REGRESSION_GUIDE.md](PERFORMANCE_REGRESSION_GUIDE.md)
 
-> **Note**: Actual performance depends on hardware, dataset size, and configuration. Run benchmarks on your system for accurate measurements.
+> **Note**: Performance claims are design goals until validated with reproducible benchmarks. Actual performance depends on hardware, dataset size, and configuration. Run benchmarks on your system and report results to contribute to verified metrics.
 
 ---
 

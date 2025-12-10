@@ -56,18 +56,22 @@ scripts/
 
 ## Coverage Requirements
 
-**Target Coverage: 98%** *(current CI gate: 80% while Kuramoto/Ricci suites stabilize)*
+**CI Gate**: 80% minimum coverage enforced on all PRs  
+**v1.0 Target**: 98% (roadmap goal)
 
-Current module coverage targets:
-- `backtest/`: 100% (ACHIEVED)
-- `execution/`: 100% (ACHIEVED)
-- `core/agent/`: ≥95%
-- `core/data/`: ≥95%
-- `core/indicators/`: ≥90%
-- `core/metrics/`: ≥95%
-- `core/phase/`: ≥95%
+Current module coverage goals (verify with `make test-coverage`):
+- `backtest/`: 100% (goal)
+- `execution/`: 100% (goal)
+- `core/agent/`: ≥95% (goal)
+- `core/data/`: ≥95% (goal)
+- `core/indicators/`: ≥90% (goal)
+- `core/metrics/`: ≥95% (goal)
+- `core/phase/`: ≥95% (goal)
 
-Coverage is measured using `pytest-cov` and enforced in CI.
+Coverage is measured using `pytest-cov` and enforced in CI. Run `make test-coverage` to generate
+a reproducible coverage report at `reports/coverage/index.html`.
+
+See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for evidence status of all claims.
 
 ## Running Tests Locally
 

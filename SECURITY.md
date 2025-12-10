@@ -8,17 +8,17 @@ For a cross-functional "digital risk" playbook that consolidates confidentiality
 
 **Type**: Autonomic Control System with Formal Safety Guarantees  
 **Purpose**: Self-regulating topology optimization for distributed trading infrastructure  
-**Compliance**: SEC, FINRA, EU AI Act, SOC 2, ISO 27001
+**Compliance Alignment**: Controls designed for SEC, FINRA, EU AI Act, SOC 2, ISO 27001 (not externally audited or certified)
 
 ### Core Function
 TACL treats the entire TradePulse topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
 
 ### Safety Guarantee
-**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/tradepulse/thermo_audit.jsonl`, with rotation and archival guaranteeing ≥7 years of retention.
+**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/tradepulse/thermo_audit.jsonl`, with rotation and archival designed for ≥7 years of retention (configuration present, production validation pending).
 
 ### Audit & Compliance
 - Telemetry: Real-time metrics via REST API
-- Audit Trail: `/var/log/tradepulse/thermo_audit.jsonl` with automated rotation and ≥7-year retention
+- Audit Trail: `/var/log/tradepulse/thermo_audit.jsonl` with automated rotation (designed for 7-year retention)
 - CI Gates: Automated safety checks in deployment pipeline
 - Human Oversight: Hardware circuit breaker halts topology evolution until an authorised manual override clears the halt state
 
@@ -552,6 +552,38 @@ In case of a security incident:
 4. **Remediate**: Apply fixes and patches
 5. **Review**: Post-mortem and lessons learned
 6. **Disclose**: Responsible disclosure to users
+
+---
+
+## Compliance Controls Status
+
+The following table tracks the implementation and verification status of security controls:
+
+| Control | Standard Reference | Status | Proof/Notes |
+|---------|-------------------|--------|-------------|
+| Access Control | NIST AC-*, ISO A.9 | `designed` | RBAC patterns implemented |
+| Audit Logging | NIST AU-*, ISO A.12.4 | `designed` | Audit trail code present |
+| Encryption at Rest | NIST SC-28, ISO A.10 | `designed` | AES-256 configuration |
+| Encryption in Transit | NIST SC-8, ISO A.13.1 | `designed` | TLS 1.3 enforced |
+| Secrets Management | NIST SC-12, ISO A.10.1 | `implemented` | Vault/AWS SM integration |
+| Input Validation | OWASP A03 | `implemented` | Pydantic schemas |
+| Dependency Scanning | NIST SI-7, OWASP A06 | `implemented` | pip-audit in CI |
+| Static Analysis | NIST SI-10 | `implemented` | Bandit, CodeQL in CI |
+| Container Scanning | NIST SI-7 | `implemented` | Trivy/Grype in CI |
+| MFA Support | NIST IA-2 | `designed` | Admin operations only |
+| Circuit Breaker | Custom | `implemented` | Kill-switch pattern |
+| Incident Response | NIST IR-* | `designed` | Playbooks documented |
+
+**Status Definitions:**
+- `implemented` — Code exists and is exercised in CI
+- `designed` — Patterns/config exist but not externally validated
+- `planned` — On roadmap, not yet implemented
+- `audited` — Verified by external audit (none currently)
+
+> **Note**: TradePulse has NOT undergone external security audit, SOC 2 examination, or formal certification.
+> All compliance claims refer to design alignment with frameworks, not certified compliance.
+
+See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for complete evidence tracking.
 
 ---
 
