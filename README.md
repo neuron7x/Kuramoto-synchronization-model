@@ -333,6 +333,8 @@ TACL is a self-regulating control system that manages the TradePulse topology as
 
 ## 🧪 Testing & Quality
 
+> 📊 **Claims Registry**: All high-level quality, performance, and security claims are tracked in [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md).
+
 TradePulse maintains comprehensive test coverage with multiple testing strategies:
 
 ### Test Types

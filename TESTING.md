@@ -5,6 +5,8 @@ This document describes the testing strategy, coverage requirements, and instruc
 > **Quick Start**: Run `pytest tests/unit -m "not slow"` for fast feedback during development.
 > 
 > **See Also**: [Test Architecture Guide](docs/TEST_ARCHITECTURE.md) for patterns and best practices.
+>
+> 📊 **Claims Registry**: All coverage and quality claims are tracked in [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md).
 
 ## Overview
 
