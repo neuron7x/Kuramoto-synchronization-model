@@ -16,7 +16,10 @@ from pathlib import Path
 def read_agent_config(config_path: Path) -> str:
     """Read the agent configuration file."""
     if not config_path.exists():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        raise FileNotFoundError(
+            f"Configuration file not found: {config_path} "
+            f"(expected: serotonin-stability-controller.md)"
+        )
     return config_path.read_text()
 
 
@@ -147,36 +150,43 @@ def validate_example_scenarios(content: str) -> tuple[bool, list[str]]:
 
     # Check that each scenario has required components
     for i, scenario in enumerate(scenarios):
-        start_idx = content.index(scenario)
-        
-        # Find next scenario or next top-level section
-        if i < len(scenarios) - 1:
-            # Look for next scenario
-            next_scenario = scenarios[i + 1]
-            end_idx = content.index(next_scenario)
-        else:
-            # Last scenario - look for next top-level section (## but not ###)
-            remaining = content[start_idx + len(scenario):]
-            next_section_match = re.search(r'\n## [^#]', remaining)
-            if next_section_match:
-                end_idx = start_idx + len(scenario) + next_section_match.start()
+        try:
+            start_idx = content.index(scenario)
+            
+            # Find next scenario or next top-level section
+            if i < len(scenarios) - 1:
+                # Look for next scenario
+                next_scenario = scenarios[i + 1]
+                try:
+                    end_idx = content.index(next_scenario)
+                except ValueError:
+                    # Fallback if next scenario not found as exact string
+                    end_idx = len(content)
             else:
-                end_idx = len(content)
-        
-        scenario_section = content[start_idx:end_idx]
+                # Last scenario - look for next top-level section (## but not ###)
+                remaining = content[start_idx + len(scenario):]
+                next_section_match = re.search(r'\n## [^#]', remaining)
+                if next_section_match:
+                    end_idx = start_idx + len(scenario) + next_section_match.start()
+                else:
+                    end_idx = len(content)
+            
+            scenario_section = content[start_idx:end_idx]
 
-        required_components = [
-            "**Input:**",
-            "**Output:**",
-            "#### Serotonin Snapshot",
-            "#### Stabilizing Moves",
-            "#### Medium-Horizon Guardrails",
-            "#### Language Reframe",
-        ]
+            required_components = [
+                "**Input:**",
+                "**Output:**",
+                "#### Serotonin Snapshot",
+                "#### Stabilizing Moves",
+                "#### Medium-Horizon Guardrails",
+                "#### Language Reframe",
+            ]
 
-        for component in required_components:
-            if component not in scenario_section:
-                issues.append(f"{scenario} missing component: {component}")
+            for component in required_components:
+                if component not in scenario_section:
+                    issues.append(f"{scenario} missing component: {component}")
+        except ValueError as e:
+            issues.append(f"Error processing {scenario}: {e}")
 
     return len(issues) == 0, issues
 
