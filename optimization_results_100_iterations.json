@@ -1,8 +1,8 @@
 {
   "task": "Neuro-optimization with 100 iterations",
   "completed_iterations": 100,
-  "elapsed_time_seconds": 0.017863988876342773,
-  "iterations_per_second": 5597.853911140176,
+  "elapsed_time_seconds": 0.01663827896118164,
+  "iterations_per_second": 6010.237010288596,
   "calibration_report": {
     "status": "active",
     "iteration": 9,
@@ -50,11 +50,11 @@
   "optimization_report": {
     "status": "active",
     "iteration": 9,
-    "best_objective": 0.5902347842917146,
-    "current_objective": 0.5570746365727539,
-    "performance_trend": "stable",
-    "avg_balance_score": 0.7021602773404535,
-    "avg_homeostatic_dev": 0.4312564584074226,
+    "best_objective": 0.6079570054329574,
+    "current_objective": 0.5836231840086318,
+    "performance_trend": "improving",
+    "avg_balance_score": 0.7159798021685794,
+    "avg_homeostatic_dev": 0.4124971768050571,
     "convergence": {
       "converged": false,
       "reason": "insufficient_data"
@@ -62,10 +62,10 @@
     "health_status": {
       "status": "acceptable",
       "message": "Minor imbalances detected but within acceptable range",
-      "balance_score": 0.6682132473507255,
-      "homeostatic_deviation": 0.4965282474789509,
+      "balance_score": 0.7440662400246623,
+      "homeostatic_deviation": 0.34396636510057865,
       "issues": [
-        "Excessive excitation - impulsive behavior risk"
+        "No issues detected"
       ]
     }
   },

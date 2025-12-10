@@ -13,6 +13,13 @@ from pathlib import Path
 
 import numpy as np
 
+# Configuration constants
+N_ITERATIONS = 100
+OPTIMIZATION_FREQUENCY = 10  # Run optimization every N iterations
+POSITION_SIZE = 0.1  # Position size as fraction of capital
+TRADING_DAYS_PER_YEAR = 252
+NUMERICAL_EPSILON = 1e-6
+
 # Add src to path - import modules directly to avoid package dependencies
 src_path = Path(__file__).parent / "src"
 neuro_path = src_path / "tradepulse" / "core" / "neuro"
@@ -84,14 +91,14 @@ class TradingSimulator:
         # Execute trade
         price = market_data['price']
         if action == 'buy' and self.position == 0:
-            self.position = self.capital * 0.1 / price
+            self.position = self.capital * POSITION_SIZE / price
             self.trades.append({
                 'action': 'buy',
                 'price': price,
                 'quantity': self.position,
             })
         elif action == 'sell' and self.position > 0:
-            pnl = self.position * price - (self.capital * 0.1)
+            pnl = self.position * price - (self.capital * POSITION_SIZE)
             self.pnl_history.append(pnl)
             self.capital += pnl
             self.trades.append({
@@ -125,7 +132,7 @@ class TradingSimulator:
             )
             
         returns = np.array(self.pnl_history) / self.capital
-        sharpe = np.mean(returns) / (np.std(returns) + 1e-6) * np.sqrt(252)
+        sharpe = np.mean(returns) / (np.std(returns) + NUMERICAL_EPSILON) * np.sqrt(TRADING_DAYS_PER_YEAR)
         
         cumulative = np.cumsum(returns)
         running_max = np.maximum.accumulate(cumulative)
@@ -250,15 +257,14 @@ def main():
     print("✓ Market and Trading simulators initialized")
     
     # Run optimization iterations
-    print("\n\nPhase 2: Running 100 Optimization Iterations")
+    print(f"\n\nPhase 2: Running {N_ITERATIONS} Optimization Iterations")
     print("-" * 80)
     
-    n_iterations = 100
     current_params = initial_params.copy()
     
     start_time = time.time()
     
-    for i in range(n_iterations):
+    for i in range(N_ITERATIONS):
         # Simulate market step
         market_data = market.step()
         
@@ -270,8 +276,8 @@ def main():
         # Execute trade
         trade_result = trader.execute_trade(market_data, neuro_state)
         
-        # Run optimization every 10 steps
-        if i > 0 and i % 10 == 0:
+        # Run optimization at configured frequency
+        if i > 0 and i % OPTIMIZATION_FREQUENCY == 0:
             # Get performance metrics
             perf_metrics = trader.get_performance_metrics()
             
@@ -291,15 +297,15 @@ def main():
             trader.params = current_params
             
             # Progress update
-            print(f"  Iteration {i:3d}/100: "
+            print(f"  Iteration {i:3d}/{N_ITERATIONS}: "
                   f"Sharpe={perf_metrics.sharpe_ratio:.2f}, "
                   f"Balance={balance.overall_balance_score:.2f}, "
                   f"Trades={perf_metrics.total_trades}")
     
     elapsed_time = time.time() - start_time
     
-    print(f"\n✓ Completed 100 iterations in {elapsed_time:.2f} seconds")
-    print(f"  ({n_iterations/elapsed_time:.1f} iterations/second)")
+    print(f"\n✓ Completed {N_ITERATIONS} iterations in {elapsed_time:.2f} seconds")
+    print(f"  ({N_ITERATIONS/elapsed_time:.1f} iterations/second)")
     
     # Final report
     print("\n\nPhase 3: Final Results")
@@ -339,10 +345,10 @@ def main():
     
     # Save results
     results = {
-        'task': 'Neuro-optimization with 100 iterations',
-        'completed_iterations': n_iterations,
+        'task': f'Neuro-optimization with {N_ITERATIONS} iterations',
+        'completed_iterations': N_ITERATIONS,
         'elapsed_time_seconds': elapsed_time,
-        'iterations_per_second': n_iterations / elapsed_time,
+        'iterations_per_second': N_ITERATIONS / elapsed_time,
         'calibration_report': cal_report,
         'optimization_report': opt_report,
         'best_parameters': best_params,
@@ -368,7 +374,7 @@ def main():
     
     print("\n" + "=" * 80)
     print("  Optimization Complete!")
-    print("  100 iterations successfully executed")
+    print(f"  {N_ITERATIONS} iterations successfully executed")
     print("=" * 80 + "\n")
 
 
