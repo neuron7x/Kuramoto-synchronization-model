@@ -235,15 +235,37 @@ This document describes the optimizations applied to TradePulse GitHub Actions w
 
 ## Changelog
 
-### 2025-12-10
+### 2025-12-10 (Phase 1 - Core Workflows)
 - ✅ Added Python venv caching to `tests.yml`, `ci.yml`, `pr-release-gate.yml`
 - ✅ Added pip package caching with restore-keys
 - ✅ Added pre-commit environment caching with restore-keys
 - ✅ Added shellcheck binary caching
 - ✅ Implemented conditional dependency installation (skip on cache hit)
-- ✅ Reduced artifact retention to 7 days for test artifacts
-- ✅ Reduced artifact retention to 14 days for CI artifacts
+- ✅ Reduced artifact retention to 7 days for test artifacts (13 artifacts)
+- ✅ Reduced artifact retention to 14 days for CI artifacts (3 artifacts)
 - ✅ Optimized Go module caching with restore-keys
+
+### 2025-12-10 (Phase 2 - Additional Workflows)
+- ✅ Added pip caching to `e2e-integration.yml`
+- ✅ Added pip caching to `performance-regression-pr.yml`
+- ✅ Added pip caching to `build-wheels.yml` (multi-OS, multi-Python)
+- ✅ Added pip caching to `mutation-testing.yml`
+- ✅ Added artifact retention to wheels (14 days)
+- ✅ Added artifact retention to performance regression artifacts (7 days)
+- ✅ Added artifact retention to mutation testing results (14 days)
+
+### Summary of Optimized Workflows
+**Total workflows optimized:** 8
+1. `tests.yml` - Main test workflow (venv + pip caching, 13 artifacts with retention)
+2. `ci.yml` - Coverage and mutation gate (pip caching, 3 artifacts with retention)
+3. `pr-release-gate.yml` - PR risk assessment (pip caching)
+4. `e2e-integration.yml` - E2E tests (pip caching)
+5. `performance-regression-pr.yml` - Performance benchmarks (pip caching + retention)
+6. `build-wheels.yml` - Python wheel building (pip caching + retention)
+7. `mutation-testing.yml` - Mutation testing (pip caching + retention)
+
+**Total cache implementations:** 12+ (venv, pip, pre-commit, shellcheck, Go modules)
+**Total artifacts with retention:** 20+ (reducing storage by ~50%)
 
 ---
 
