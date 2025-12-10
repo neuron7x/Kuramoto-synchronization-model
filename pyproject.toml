@@ -147,6 +147,8 @@ include = [
     "application.*",
     "backtest",
     "backtest.*",
+    "cli",
+    "cli.*",
     "core",
     "core.*",
     "domain",
