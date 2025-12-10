@@ -1,5 +1,10 @@
 # HydroBrain Unified System v2
 
+> **⚗️ Status: Experimental / Lab**
+>
+> This module is a research prototype and is NOT part of the [Golden Path](QUICK_START.md).
+> It requires advanced neural network dependencies (GNN, LSTM, Transformer) and is not guaranteed to work without expert setup.
+
 Бойова, інтегрована система моніторингу трейдингових/гідрологічних ризиків:
 - GNN → LSTM + Transformer + Attention
 - Фізично-обґрунтований штраф у тренуванні

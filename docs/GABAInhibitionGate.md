@@ -1,5 +1,10 @@
 # GABA Inhibition Gate — Technical Specification
 
+> **⚗️ Status: Experimental / Lab**
+>
+> This module is a research prototype and is NOT part of the [Golden Path](QUICK_START.md).
+> It requires advanced neural network dependencies and is not guaranteed to work without expert setup.
+
 ## 1. Purpose and Scope
 The **`GABAInhibitionGate`** module converts threat and timing information into a risk-aware action multiplier. It models dual-time-constant GABAergic inhibition, spike-timing-dependent plasticity (STDP), and long-term potentiation/depression (LTP/LTD) to regulate trading aggressiveness. This specification formalises the biophysical assumptions, the discrete-time implementation, interfaces, telemetry, and validation requirements for the gate.
 

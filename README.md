@@ -25,6 +25,7 @@
 - [Feature Highlights](#-feature-highlights)
 - [System Architecture](#-system-architecture)
 - [Quick Start](#-quick-start)
+- [Golden Path (Research Beta)](#-golden-path-research-beta)
 - [Usage Examples](#-usage-examples)
 - [TACL: Thermodynamic Control Layer](#-tacl-thermodynamic-autonomic-control-layer)
 - [Testing & Quality](#-testing--quality)
@@ -226,6 +227,71 @@ PYTHONPATH=. streamlit run interfaces/dashboard_streamlit.py
 > **Note:** The dashboard requires streamlit to be installed. It provides interactive market analysis and visualization.
 
 📖 **Dashboard Guide**: [docs/ui_logical_structure.md](docs/ui_logical_structure.md)
+
+---
+
+## 🌟 Golden Path (Research Beta)
+
+**This is TradePulse's guaranteed reproducible demo — the "golden core" that works out of the box.**
+
+Status: ✅ **Guaranteed to work as of 2025-01-01**
+
+The Golden Path provides a single command that:
+1. Generates synthetic market data (no external dependencies needed)
+2. Runs a simple momentum strategy backtest
+3. Outputs PnL metrics and an equity curve plot
+
+### Quick Run
+
+```bash
+# From repository root, after installation:
+make golden-path
+
+# Or directly:
+PYTHONPATH=. python scripts/golden_path_backtest.py
+```
+
+### Expected Output
+
+```
+============================================================
+🌟 TradePulse Golden Path Backtest
+============================================================
+
+📥 Step 1: Generating synthetic market data...
+   Generated 1000 price bars
+
+⚙️  Step 2: Running backtest...
+   Backtest completed successfully
+
+📊 Step 3: Results
+----------------------------------------
+   PnL:           $70.40
+   Max Drawdown:  -1.06%
+   Total Trades:  123
+   Sharpe Ratio:  4.445
+
+✅ Golden Path backtest completed successfully!
+```
+
+### Output Files
+
+After running, check `reports/golden_path/`:
+- **`metrics.json`** — Performance metrics (PnL, Sharpe, drawdown)
+- **`pnl.csv`** — Equity curve data for analysis
+- **`plot.png`** — Visual equity curve (requires matplotlib)
+
+### Why Use This?
+
+The Golden Path is your **single source of truth** for verifying TradePulse works correctly. Use it to:
+- ✅ Verify installation
+- ✅ Understand the basic backtest workflow
+- ✅ Get a reproducible baseline for experiments
+- ✅ Demo the system to stakeholders
+
+> **Note:** All other complex features (live trading, GPU acceleration, advanced neuromodulators) are marked as **experimental/lab** and may require additional setup.
+
+📖 **Full Documentation**: [docs/QUICK_START.md](docs/QUICK_START.md)
 
 ---
 

@@ -26,6 +26,9 @@ help:
 	@echo "  make docs          - Build documentation"
 	@echo "  make release       - Helper for local release builds"
 	@echo ""
+	@echo "Golden Path (Research Beta):"
+	@echo "  make golden-path   - Run guaranteed reproducible backtest demo"
+	@echo ""
 	@echo "Specialized Commands:"
 	@echo "  make fpma-check    - Run FPM-A architecture checks"
 	@echo "  make mutation-test - Run mutation testing"
@@ -43,6 +46,16 @@ install:
 	pip install -c constraints/security.txt -r requirements.txt
 	pip install -c constraints/security.txt -r requirements-dev.txt
 	@echo "✅ Dependencies installed"
+
+# ============================================================================
+# Golden Path (Research Beta) — Guaranteed Reproducible Demo
+# ============================================================================
+
+.PHONY: golden-path
+golden-path:
+	@echo "🌟 Running Golden Path backtest (Research Beta)..."
+	PYTHONPATH=. python scripts/golden_path_backtest.py
+	@echo "✅ Golden Path completed. Check reports/golden_path/"
 
 .PHONY: test
 test:

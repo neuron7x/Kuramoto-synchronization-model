@@ -1,5 +1,10 @@
 # Thermodynamic Autonomic Control Layer (TACL)
 
+> **⚗️ Status: Experimental / Lab**
+>
+> This module is a research prototype and is NOT part of the [Golden Path](QUICK_START.md).
+> It may require additional configuration and is not guaranteed to work without expert setup.
+
 The Thermodynamic Autonomic Control Layer is responsible for validating that the
 TradePulse execution graph operates inside the safe energy envelope before a
 rollout progresses beyond the laboratory environment.  The validator ingests a

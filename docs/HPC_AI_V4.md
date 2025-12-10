@@ -1,5 +1,10 @@
 # HPC-AI v4: Hierarchical Predictive Coding with Active Inference for Adaptive Trading
 
+> **⚗️ Status: Experimental / Lab**
+>
+> This module is a research prototype and is NOT part of the [Golden Path](QUICK_START.md).
+> It requires advanced dependencies (GPU, neural libraries) and is not guaranteed to work without expert setup.
+
 ## Overview
 
 The HPC-AI v4 module implements a neurobiologically-inspired framework that combines Hierarchical Predictive Coding (HPC) with Active Inference (AI) and Self-Rewarding Deep Reinforcement Learning (SRDRL) for adaptive trading in non-stationary market environments.
