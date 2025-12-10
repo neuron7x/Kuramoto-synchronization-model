@@ -69,13 +69,6 @@ jobs:
           key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
             lint-pre-commit-${{ runner.os }}-
-      - name: Cache shellcheck
-        uses: actions/cache@v4
-        with:
-          path: /usr/bin/shellcheck
-          key: shellcheck-${{ runner.os }}
-          restore-keys: |
-            shellcheck-${{ runner.os }}
       - name: Cache Python virtual environment
         uses: actions/cache@v4
         id: venv-cache-lint
@@ -98,10 +91,8 @@ jobs:
         run: .venv/bin/python scripts/localization/sync_translations.py --check
       - name: Install shellcheck
         run: |
-          if ! command -v shellcheck &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y shellcheck
-          fi
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
       - name: Run ruff
         run: .venv/bin/ruff check .
       - name: Run black

@@ -46,9 +46,9 @@ This document describes the optimizations applied to TradePulse GitHub Actions w
 - **Implementation:** Cache `~/.cache/go-build` and `~/go/pkg/mod`
 - **Workflows:** `tests.yml`
 
-#### Shellcheck Binary Caching
-- **Impact:** Skip apt install when cached
-- **Implementation:** Cache `/usr/bin/shellcheck`
+#### System Tools
+- **Shellcheck:** Installed via apt-get (fast enough without caching)
+- **Impact:** No caching needed for system packages
 - **Workflows:** `tests.yml` (lint job)
 
 ### 2. Artifact Optimization
@@ -239,7 +239,6 @@ This document describes the optimizations applied to TradePulse GitHub Actions w
 - ✅ Added Python venv caching to `tests.yml`, `ci.yml`, `pr-release-gate.yml`
 - ✅ Added pip package caching with restore-keys
 - ✅ Added pre-commit environment caching with restore-keys
-- ✅ Added shellcheck binary caching
 - ✅ Implemented conditional dependency installation (skip on cache hit)
 - ✅ Reduced artifact retention to 7 days for test artifacts (13 artifacts)
 - ✅ Reduced artifact retention to 14 days for CI artifacts (3 artifacts)
@@ -264,7 +263,7 @@ This document describes the optimizations applied to TradePulse GitHub Actions w
 6. `build-wheels.yml` - Python wheel building (pip caching + retention)
 7. `mutation-testing.yml` - Mutation testing (pip caching + retention)
 
-**Total cache implementations:** 12+ (venv, pip, pre-commit, shellcheck, Go modules)
+**Total cache implementations:** 11+ (venv, pip, pre-commit, Go modules)
 **Total artifacts with retention:** 20+ (reducing storage by ~50%)
 
 ---
