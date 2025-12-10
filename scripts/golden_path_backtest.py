@@ -222,6 +222,9 @@ def save_results(
             axes[1].set_xlabel("Step")
             axes[1].legend()
             axes[1].grid(True, alpha=0.3)
+            # Disable offset notation for clearer y-axis labels
+            axes[1].get_yaxis().get_major_formatter().set_useOffset(False)
+            axes[1].get_yaxis().get_major_formatter().set_scientific(False)
 
         plt.tight_layout()
         plot_path = output_dir / "plot.png"
