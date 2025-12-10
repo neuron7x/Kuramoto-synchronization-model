@@ -35,13 +35,28 @@
 
 ---
 
+## CI Workflow Notes
+
+> **Note on workflow status reporting**: Some workflows may show as "failure" with 0 jobs
+> on documentation-only PRs or feature branches. This is expected GitHub Actions behavior:
+>
+> - **tests.yml**: Skips runs for `.md` and `docs/**` changes (paths-ignore filter)
+> - **sbom.yml**: Only runs on push to `main`/`develop` branches
+> - **ci.yml**: Only runs on push to `main`
+> - **deploy-environments.yml**: Only runs on `staging`/`production` branches
+> - **ci-hardening.yml**: Only runs when `.github/workflows/**` files change
+>
+> When code changes are present, these workflows execute correctly.
+
+---
+
 ## Claims Registry
 
 ### Coverage Claims
 
 | id | domain | claim | measurement_command | evidence_path | status | notes |
 |----|--------|-------|---------------------|---------------|--------|-------|
-| COV_98_CI_GATE | coverage | 98% CI coverage gate enforced on all PRs | `pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98` | `.github/workflows/tests.yml`, `reports/coverage/` | proven | Active in CI, blocks PRs below 98% |
+| COV_98_CI_GATE | coverage | 98% CI coverage gate enforced on all PRs | `pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98` | `.github/workflows/tests.yml`, `reports/coverage/` | proven | Active in CI, blocks PRs below 98%. Skipped for docs-only changes. |
 | COV_BACKTEST_100 | coverage | backtest/ module 100% coverage | `pytest --cov=backtest tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
 | COV_EXECUTION_100 | coverage | execution/ module 100% coverage | `pytest --cov=execution tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
 | COV_CORE_90_95 | coverage | core modules 90-95% coverage | `pytest --cov=core tests/` | `reports/coverage/index.html` | goal | Module-level target, not enforced in CI |
@@ -214,6 +229,7 @@ python -m tools.mutation.kill_rate_guard --threshold 0.9
 
 | Date | Change |
 |------|--------|
+| 2025-12-10 | Added CI Workflow Notes section explaining workflow trigger behavior |
 | 2025-12-10 | Expanded to full table format with id, domain, measurement_command, evidence_path, notes |
 | 2025-12-10 | Added TACL, product, and other domain claims |
 | 2025-12-10 | Consolidated status definitions (proven/partial/goal/remove) |
