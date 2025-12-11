@@ -21,10 +21,16 @@ TradePulse employs multiple controllers and modules that work together to make t
 
 - **NAK Controller**: Manages neuro-energetic state and trading limits
 - **Dopamine Controller**: Handles reward prediction and action selection
+- **Serotonin Controller**: Models chronic stress and produces hold decisions
 - **Risk Engine**: Enforces position limits and loss thresholds
-- **Adaptive Calibrator**: Automatically tunes parameters based on performance
+- **Regime Adaptive Guard**: Dynamically scales exposure based on volatility
+- **Rate Limiter**: Controls API and execution rate limits
+- **GABA Controller**: Provides inhibitory control against impulsive actions
+- **Desensitization**: Manages receptor adaptation under repeated stimulation
 
 Each controller has configurable parameters that affect its behavior. This guide explains how to calibrate these parameters for your specific trading scenario.
+
+For detailed parameter ranges and defaults, see [CALIBRATION_PARAMETER_REFERENCE.md](CALIBRATION_PARAMETER_REFERENCE.md).
 
 ## Key Concepts
 
@@ -128,11 +134,37 @@ python scripts/calibrate_controllers.py --controller nak --profile balanced
 # Apply a profile to Dopamine controller
 python scripts/calibrate_controllers.py --controller dopamine --profile aggressive
 
+# Apply a profile to Serotonin controller
+python scripts/calibrate_controllers.py --controller serotonin --profile conservative
+
+# Apply a profile to Risk Engine
+python scripts/calibrate_controllers.py --controller risk_engine --profile balanced
+
+# Apply a profile to Regime Adaptive Guard
+python scripts/calibrate_controllers.py --controller regime_adaptive --profile aggressive
+
 # Validate an existing configuration
 python scripts/calibrate_controllers.py --validate conf/nak/default.yaml
 
 # Apply with custom output path
 python scripts/calibrate_controllers.py --controller nak --profile conservative --output conf/nak/custom.yaml
+```
+
+**Supported Controllers:**
+- `nak` - NAK (Neuro-Arousal-Ketosis) Controller
+- `dopamine` - Dopamine Controller
+- `serotonin` - Serotonin Controller
+- `risk_engine` - Risk Engine
+- `regime_adaptive` - Regime Adaptive Exposure Guard
+
+**Makefile Shortcuts:**
+```bash
+# Using make for convenience
+make calibrate-list           # List all profiles
+make calibrate-validate       # Validate current configs
+make calibrate-conservative   # Apply conservative profile (all controllers)
+make calibrate-balanced       # Apply balanced profile (all controllers)
+make calibrate-aggressive     # Apply aggressive profile (all controllers)
 ```
 
 ### Manual Calibration Steps
@@ -437,20 +469,78 @@ symbol_limits:
     max_leverage: 4.0
 ```
 
+## Calibration Constants Module
+
+All parameter ranges, defaults, and invariants are defined in the **calibration_constants** module:
+
+**Location**: `core/neuro/calibration_constants.py`
+
+This module serves as the single source of truth for:
+- Parameter range definitions (min/max bounds)
+- Default values for all controllers
+- Invariant relationships (e.g., low < high)
+- Validation functions
+
+**Key Features:**
+- **Zero Magic Numbers**: All hardcoded values eliminated
+- **Centralized Validation**: One function validates all controller types
+- **Clear Error Messages**: Violations specify parameter, value, and constraint
+- **Type Safety**: Frozen dataclasses prevent accidental modification
+
+**Example Usage:**
+```python
+from core.neuro.calibration_constants import (
+    NAKParameterRanges,
+    validate_parameter_invariants,
+)
+
+# Get parameter ranges
+ranges = NAKParameterRanges()
+print(f"EI range: {ranges.EI_RANGE}")
+print(f"EI_low default: {ranges.EI_LOW_DEFAULT}")
+
+# Validate parameters
+params = {"EI_low": 0.35, "EI_high": 0.65, "EI_crit": 0.15}
+is_valid, errors = validate_parameter_invariants("nak", params)
+if not is_valid:
+    for error in errors:
+        print(f"Error: {error}")
+```
+
+**Extending the System:**
+
+To add a new controller or parameter:
+
+1. Add parameter ranges in a new dataclass (e.g., `MyControllerParameterRanges`)
+2. Add validation function (e.g., `_validate_my_controller_invariants`)
+3. Register in `validate_parameter_invariants()` function
+4. Add calibration profiles in `scripts/calibrate_controllers.py`
+5. Add tests in `tests/core/neuro/test_calibration_constants.py`
+
 ## References
 
+- [Calibration Parameter Reference](CALIBRATION_PARAMETER_REFERENCE.md) - Complete parameter tables
 - [NAK Controller Documentation](../nak_controller/README.md)
 - [Dopamine Controller Specification](dopamine_v1_enhancements.md)
 - [Neuro-Optimization Guide](neuro_optimization_guide.md)
 - [Risk Management Architecture](../SECURITY.md)
 - [Adaptive Calibrator API](../src/tradepulse/core/neuro/README_OPTIMIZATION.md)
+- [Calibration Constants Source](../core/neuro/calibration_constants.py)
 
 ## Changelog
 
+- **2024-12-11**: Enhanced calibration system
+  - Added calibration_constants module with all parameter ranges
+  - Extended support to 8 controller types
+  - Added comprehensive validation with clear error messages
+  - Created detailed parameter reference documentation
+  - Added 60+ test cases for validation
+  - Three calibration profiles now available for 5 controllers
+
 - **2024-12-11**: Initial calibration guide created
-- Added three calibration profiles (conservative, balanced, aggressive)
-- Added calibration utility script
-- Added validation checks for NAK and Dopamine controllers
+  - Three calibration profiles (conservative, balanced, aggressive)
+  - Calibration utility script
+  - Validation checks for NAK and Dopamine controllers
 
 ---
 
