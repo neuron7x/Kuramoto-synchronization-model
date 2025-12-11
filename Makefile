@@ -32,6 +32,13 @@ help:
 	@echo "  make mutation-test - Run mutation testing"
 	@echo "  make sbom          - Generate SBOM"
 	@echo ""
+	@echo "Calibration Commands:"
+	@echo "  make calibrate-list       - List available calibration profiles"
+	@echo "  make calibrate-validate   - Validate current configurations"
+	@echo "  make calibrate-conservative - Apply conservative profile (low risk)"
+	@echo "  make calibrate-balanced   - Apply balanced profile (moderate risk)"
+	@echo "  make calibrate-aggressive - Apply aggressive profile (high risk)"
+	@echo ""
 
 # ============================================================================
 # Standard Targets
@@ -225,6 +232,55 @@ sbom:
 	@echo "📋 Generating SBOM..."
 	python -m scripts supply-chain generate-sbom --include-dev --output sbom/cyclonedx-sbom.json
 	@echo "✅ SBOM generated"
+
+# ============================================================================
+# Calibration Targets
+# ============================================================================
+
+.PHONY: calibrate-list
+calibrate-list:
+	@echo "📊 Available calibration profiles:"
+	@python scripts/calibrate_controllers.py --list-profiles
+
+.PHONY: calibrate-validate
+calibrate-validate:
+	@echo "✓ Validating NAK controller configuration..."
+	@python scripts/calibrate_controllers.py --validate nak_controller/conf/nak.yaml
+	@echo ""
+	@echo "✓ Validating Dopamine controller configuration..."
+	@python scripts/calibrate_controllers.py --validate config/dopamine.yaml
+	@echo ""
+	@echo "✅ All configurations validated"
+
+.PHONY: calibrate-conservative
+calibrate-conservative:
+	@echo "⚙️  Applying CONSERVATIVE calibration profile..."
+	@echo ""
+	@python scripts/calibrate_controllers.py --controller nak --profile conservative --output conf/nak/conservative.yaml
+	@echo ""
+	@python scripts/calibrate_controllers.py --controller dopamine --profile conservative --output config/profiles/conservative_calibrated.yaml
+	@echo ""
+	@echo "✅ Conservative profile applied. Review conf/nak/conservative.yaml and config/profiles/conservative_calibrated.yaml"
+
+.PHONY: calibrate-balanced
+calibrate-balanced:
+	@echo "⚙️  Applying BALANCED calibration profile..."
+	@echo ""
+	@python scripts/calibrate_controllers.py --controller nak --profile balanced --output conf/nak/balanced.yaml
+	@echo ""
+	@python scripts/calibrate_controllers.py --controller dopamine --profile balanced --output config/profiles/balanced_calibrated.yaml
+	@echo ""
+	@echo "✅ Balanced profile applied. Review conf/nak/balanced.yaml and config/profiles/balanced_calibrated.yaml"
+
+.PHONY: calibrate-aggressive
+calibrate-aggressive:
+	@echo "⚙️  Applying AGGRESSIVE calibration profile..."
+	@echo ""
+	@python scripts/calibrate_controllers.py --controller nak --profile aggressive --output conf/nak/aggressive.yaml
+	@echo ""
+	@python scripts/calibrate_controllers.py --controller dopamine --profile aggressive --output config/profiles/aggressive_calibrated.yaml
+	@echo ""
+	@echo "✅ Aggressive profile applied. Review conf/nak/aggressive.yaml and config/profiles/aggressive_calibrated.yaml"
 
 # ============================================================================
 # Advanced/Specialized Targets (kept for backward compatibility)

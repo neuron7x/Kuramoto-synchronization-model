@@ -1,0 +1,53 @@
+nak:
+  L_min: 0.0
+  L_max: 1.0
+  E_max: 1.0
+  EI_low: 0.4
+  EI_high: 0.7
+  EI_crit: 0.2
+  EI_hysteresis: 0.05
+  I_max: 0.8
+  r_min: 0.2
+  r_max: 1.8
+  f_min: 0.25
+  f_max: 1.5
+  delta_r_limit: 0.15
+  w_n: 0.15
+  w_v: 0.25
+  w_d: 0.3
+  w_e: 0.1
+  w_l: 0.1
+  w_s: 0.1
+  a_p: 0.4
+  a_n: 0.25
+  a_v: 0.25
+  a_g: 0.2
+  a_da: 0.1
+  u_e: 0.55
+  u_l: 0.35
+  u_p: 0.1
+  Kp: 0.6
+  Ki: 0.08
+  beta_DA: 0.8
+  eta_ACh: 0.6
+  da_gain: 0.25
+  na_vol_gain: 1.0
+  na_scale: 0.6
+  ht_dd_gain: 1.0
+  vol_amber: 0.6
+  vol_red: 0.8
+  dd_amber: 0.3
+  dd_red: 0.6
+  risk_mult:
+    GREEN: 1.0
+    AMBER: 0.6
+    RED: 0.0
+  activity_mult:
+    GREEN: 1.1
+    AMBER: 0.85
+    RED: 0.5
+  band_expand:
+    GREEN: 1.0
+    AMBER: 1.25
+    RED: 1.5
+  noise_sigma: 0.01
