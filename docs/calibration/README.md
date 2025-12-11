@@ -4,6 +4,27 @@
 
 The TradePulse Calibration System provides tools and workflows for configuring accuracy, thresholds, and sensitivity parameters across all controllers and modules.
 
+## Golden Path Example
+
+**Recommended workflow for first-time calibration:**
+
+```bash
+# 1. List available profiles
+make calibrate-list
+
+# 2. Validate current configurations  
+make calibrate-validate
+
+# 3. Apply balanced profile (recommended starting point)
+python scripts/calibrate_controllers.py --controller nak --profile balanced
+
+# 4. Validate the generated configuration
+python scripts/calibrate_controllers.py --validate conf/nak/balanced.yaml
+
+# 5. Review before deployment
+cat conf/nak/balanced.yaml
+```
+
 ## Quick Start
 
 ```bash
