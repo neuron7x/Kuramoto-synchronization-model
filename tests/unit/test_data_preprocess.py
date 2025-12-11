@@ -25,6 +25,22 @@ def test_normalize_df_orders_and_interpolates() -> None:
     assert normalized.index.tolist() == [0, 1, 2]
 
 
+def test_normalize_df_infers_millisecond_timestamps() -> None:
+    base_ms = 1_700_000_000_000
+    raw = pd.DataFrame(
+        {
+            "ts": [base_ms, base_ms + 1_000, base_ms + 2_000],
+            "price": [1.0, 2.0, 3.0],
+        }
+    )
+
+    normalized = normalize_df(raw)
+
+    assert str(normalized["ts"].dt.tz) == "UTC"
+    deltas = normalized["ts"].diff().dt.total_seconds().dropna()
+    assert deltas.tolist() == [1.0, 1.0]
+
+
 def test_scale_series_zscore_and_minmax() -> None:
     data = np.array([1.0, 2.0, 3.0])
     z = scale_series(data, method="zscore")

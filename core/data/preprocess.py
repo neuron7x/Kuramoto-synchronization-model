@@ -53,8 +53,21 @@ def normalize_df(
         if timestamp_col in normalized.columns:
             timestamps = normalized[timestamp_col]
             if np.issubdtype(timestamps.dtype, np.number):
+                numeric_ts = pd.to_numeric(timestamps, errors="coerce")
+                finite = numeric_ts[np.isfinite(numeric_ts)]
+
+                unit = "s"
+                if not finite.empty:
+                    max_abs = float(np.nanmax(np.abs(finite)))
+                    if max_abs >= 1e18:
+                        unit = "ns"
+                    elif max_abs >= 1e15:
+                        unit = "us"
+                    elif max_abs >= 1e12:
+                        unit = "ms"
+
                 normalized[timestamp_col] = pd.to_datetime(
-                    timestamps, unit="s", errors="coerce", utc=True
+                    numeric_ts, unit=unit, errors="coerce", utc=True
                 )
             else:
                 normalized[timestamp_col] = pd.to_datetime(
