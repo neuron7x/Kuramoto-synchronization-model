@@ -342,3 +342,82 @@ class TestProfileCharacteristics:
         # Aggressive should have lowest gating thresholds
         assert aggressive_da["invigoration_threshold"] <= balanced_da["invigoration_threshold"]
         assert aggressive_da["no_go_threshold"] <= balanced_da["no_go_threshold"]
+
+
+class TestErrorPaths:
+    """Tests for error conditions and edge cases."""
+    
+    def test_validate_missing_nak_params(self):
+        """Test validation fails when NAK parameters are missing."""
+        config = {
+            "nak": {
+                "EI_low": 0.35,
+                # Missing other required params
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            temp_path = Path(f.name)
+            yaml.dump(config, f)
+        
+        try:
+            assert validate_config(temp_path) is False
+        finally:
+            temp_path.unlink()
+    
+    def test_validate_missing_dopamine_params(self):
+        """Test validation fails when dopamine parameters are missing."""
+        config = {
+            "learning_rate_v": 0.1,
+            # Missing other required params
+        }
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            temp_path = Path(f.name)
+            yaml.dump(config, f)
+        
+        try:
+            assert validate_config(temp_path) is False
+        finally:
+            temp_path.unlink()
+    
+    def test_validate_vol_amber_greater_than_red(self):
+        """Test validation fails when vol_amber > vol_red."""
+        config = {
+            "nak": {
+                "EI_low": 0.35,
+                "EI_high": 0.65,
+                "EI_crit": 0.15,
+                "vol_amber": 0.9,  # Greater than vol_red
+                "vol_red": 0.7,
+                "dd_amber": 0.4,
+                "dd_red": 0.7,
+                "delta_r_limit": 0.2,
+                "r_min": 0.2,
+                "r_max": 1.8,
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            temp_path = Path(f.name)
+            yaml.dump(config, f)
+        
+        try:
+            assert validate_config(temp_path) is False
+        finally:
+            temp_path.unlink()
+    
+    def test_validate_nonexistent_file(self):
+        """Test validation fails gracefully for nonexistent file."""
+        result = validate_config(Path("/nonexistent/file.yaml"))
+        assert result is False
+    
+    def test_apply_profile_with_controller_not_in_profile(self):
+        """Test applying profile without controller exits with error."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "test.yaml"
+            
+            with pytest.raises(SystemExit) as exc_info:
+                # This should fail because 'unknown' is not a valid controller
+                apply_calibration_profile("unknown", "balanced", output_path)
+            assert exc_info.value.code == 1
