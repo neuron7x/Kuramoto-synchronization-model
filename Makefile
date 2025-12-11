@@ -162,6 +162,14 @@ perf:
 	pytest benchmarks/ --benchmark-only
 	@echo "✅ Benchmarks complete"
 
+.PHONY: perf-golden-path
+perf-golden-path:
+	@echo "⚡ Running golden path performance benchmark..."
+	@mkdir -p reports/perf
+	pytest tests/perf/test_golden_path_backtest_perf.py -v
+	@echo "✅ Golden path performance benchmark complete"
+	@echo "📊 Results available at: reports/perf/golden_path_backtest.json"
+
 .PHONY: e2e
 e2e:
 	@echo "🔄 Running end-to-end tests..."
