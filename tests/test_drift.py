@@ -285,6 +285,19 @@ def test_drift_detector_summary():
     ), "Each feature summary should contain 'jsd' and 'psi' metrics"
 
 
+def test_compute_psi_accepts_unsorted_bins():
+    """Explicit bin edges should be sanitised before histogramming."""
+
+    baseline = [0.0, 0.5, 1.0, 1.5]
+    current = [0.1, 0.4, 1.2, 1.4]
+
+    unsorted_bins = [2.0, 0.0, 1.0]
+
+    psi_value = compute_psi(baseline, current, bins=unsorted_bins)
+
+    assert np.isfinite(psi_value)
+
+
 def test_generate_synthetic_data_categorical():
     """Test synthetic data generation includes categorical features.
 
