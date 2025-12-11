@@ -1,5 +1,7 @@
 # DOC PR COPILOT v2 User Guide
 
+> **Internal LLM Prompt**: This document contains configuration and usage instructions for an LLM-based documentation agent used during TradePulse development. It is not part of the runtime system.
+
 This guide explains how to use the DOC PR COPILOT v2 agent system for automated documentation maintenance.
 
 ## Overview
