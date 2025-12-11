@@ -227,8 +227,8 @@ calibrator = AdaptiveCalibrator(initial_params)
 
 - [Full Calibration Guide](CALIBRATION_GUIDE.md) - Complete documentation
 - [NAK Controller Spec](../nak_controller/README.md) - NAK controller details
-- [Dopamine Controller](dopamine_v1_enhancements.md) - Dopamine mechanics
 - [Neuro-Optimization Guide](neuro_optimization_guide.md) - Advanced optimization
+- [Dopamine Enhancements](neuromodulators/dopamine_v1_enhancements.md) - Dopamine mechanics
 
 ## Support
 

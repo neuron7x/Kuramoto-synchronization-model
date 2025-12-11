@@ -94,6 +94,9 @@ class TestCalibrationProfiles:
             assert nak["EI_low"] < nak["EI_high"], (
                 f"{profile_name}: EI_low must be less than EI_high"
             )
+            assert nak["EI_crit"] >= 0, (
+                f"{profile_name}: EI_crit must be non-negative"
+            )
             assert nak["EI_crit"] <= nak["EI_low"], (
                 f"{profile_name}: EI_crit should be <= EI_low"
             )

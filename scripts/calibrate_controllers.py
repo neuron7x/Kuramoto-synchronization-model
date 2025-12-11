@@ -123,19 +123,29 @@ def validate_config(config_path: Path) -> bool:
             nak = config["nak"]
             print(f"\n=== Validating NAK Configuration: {config_path} ===\n")
             
+            # Check for required parameters
+            required_params = ["EI_low", "EI_high", "EI_crit", "vol_amber", "vol_red", 
+                              "dd_amber", "dd_red", "delta_r_limit", "r_min", "r_max"]
+            missing = [p for p in required_params if p not in nak]
+            if missing:
+                print(f"✗ FAIL: Missing required parameters: {', '.join(missing)}")
+                return False
+            
             # Validate critical parameters
             checks = [
-                (nak.get("EI_low", 0) < nak.get("EI_high", 1), 
+                (nak["EI_low"] < nak["EI_high"], 
                  "EI_low must be less than EI_high"),
-                (nak.get("EI_crit", 0) >= 0, 
+                (nak["EI_crit"] >= 0, 
                  "EI_crit must be non-negative"),
-                (nak.get("vol_amber", 0) <= nak.get("vol_red", 1), 
+                (nak["EI_crit"] <= nak["EI_low"],
+                 "EI_crit must be less than or equal to EI_low"),
+                (nak["vol_amber"] <= nak["vol_red"], 
                  "vol_amber must be less than or equal to vol_red"),
-                (nak.get("dd_amber", 0) <= nak.get("dd_red", 1), 
+                (nak["dd_amber"] <= nak["dd_red"], 
                  "dd_amber must be less than or equal to dd_red"),
-                (0 < nak.get("delta_r_limit", 0.2) <= 1.0,
+                (0 < nak["delta_r_limit"] <= 1.0,
                  "delta_r_limit must be in (0, 1]"),
-                (nak.get("r_min", 0) < nak.get("r_max", 1),
+                (nak["r_min"] < nak["r_max"],
                  "r_min must be less than r_max"),
             ]
             
@@ -157,14 +167,21 @@ def validate_config(config_path: Path) -> bool:
         elif "discount_gamma" in config or "learning_rate_v" in config:
             print(f"\n=== Validating Dopamine Configuration: {config_path} ===\n")
             
+            # Check for required dopamine parameters
+            required_params = ["discount_gamma", "learning_rate_v", "burst_factor", "base_temperature"]
+            missing = [p for p in required_params if p not in config]
+            if missing:
+                print(f"✗ FAIL: Missing required parameters: {', '.join(missing)}")
+                return False
+            
             checks = [
-                (0 < config.get("discount_gamma", 0.98) < 1.0,
+                (0 < config["discount_gamma"] < 1.0,
                  "discount_gamma must be in (0, 1)"),
-                (config.get("learning_rate_v", 0.1) > 0,
+                (config["learning_rate_v"] > 0,
                  "learning_rate_v must be positive"),
-                (config.get("burst_factor", 1) >= 1.0,
+                (config["burst_factor"] >= 1.0,
                  "burst_factor must be >= 1.0"),
-                (config.get("base_temperature", 1) > 0,
+                (config["base_temperature"] > 0,
                  "base_temperature must be positive"),
             ]
             
