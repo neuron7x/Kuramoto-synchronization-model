@@ -10,12 +10,18 @@ help:
 	@echo "================================"
 	@echo ""
 	@echo "Core Commands:"
-	@echo "  make install       - Install all dependencies (dev + runtime)"
+	@echo "  make install       - Install runtime dependencies only"
+	@echo "  make dev-install   - Install all dependencies (dev + runtime)"
 	@echo "  make test          - Run core test suite (fast, CI-safe)"
 	@echo "  make lint          - Run all linters (Python + Go + shell)"
 	@echo "  make format        - Auto-format code (black, isort, ruff)"
 	@echo "  make audit         - Run security audits (bandit, pip-audit)"
 	@echo "  make clean         - Remove cache files and build artifacts"
+	@echo ""
+	@echo "Dependency Management:"
+	@echo "  make deps-update   - Regenerate lock files from requirements.txt"
+	@echo "  make deps-audit    - Audit dependencies for vulnerabilities"
+	@echo "  make clean-deps    - Clean dependency caches"
 	@echo ""
 	@echo "Extended Commands:"
 	@echo "  make test-coverage - Generate HTML/XML coverage reports"
@@ -46,11 +52,38 @@ help:
 
 .PHONY: install
 install:
-	@echo "📦 Installing dependencies..."
+	@echo "📦 Installing runtime dependencies..."
 	python -m pip install --upgrade pip setuptools wheel
-	pip install -c constraints/security.txt -r requirements.txt
-	pip install -c constraints/security.txt -r requirements-dev.txt
-	@echo "✅ Dependencies installed"
+	pip install -c constraints/security.txt -r requirements.lock
+	@echo "✅ Runtime dependencies installed"
+
+.PHONY: dev-install
+dev-install:
+	@echo "📦 Installing development dependencies..."
+	python -m pip install --upgrade pip setuptools wheel
+	pip install -c constraints/security.txt -r requirements.lock
+	pip install -c constraints/security.txt -r requirements-dev.lock
+	@echo "✅ Development dependencies installed"
+
+.PHONY: deps-update
+deps-update:
+	@echo "🔄 Updating lock files from requirements.txt..."
+	@echo "This will regenerate requirements.lock and requirements-dev.lock with pinned versions"
+	python -m pip install --upgrade pip-tools
+	pip-compile --constraint=constraints/security.txt --no-annotate --output-file=requirements.lock --strip-extras requirements.txt
+	pip-compile --constraint=constraints/security.txt --no-annotate --output-file=requirements-dev.lock --strip-extras requirements-dev.txt
+	@echo "✅ Lock files updated"
+	@echo "⚠️  Review changes with: git diff requirements*.lock"
+	@echo "⚠️  Run 'make deps-audit' to check for vulnerabilities"
+
+.PHONY: clean-deps
+clean-deps:
+	@echo "🧹 Cleaning dependency caches..."
+	rm -rf ~/.cache/pip
+	rm -rf .eggs/
+	find . -name '*.egg-info' -exec rm -rf {} + 2>/dev/null || true
+	find . -name '*.egg' -exec rm -f {} + 2>/dev/null || true
+	@echo "✅ Dependency caches cleaned"
 
 .PHONY: test
 test:
@@ -109,6 +142,18 @@ audit:
 	python -m pip_audit -r requirements.txt -r requirements-dev.txt || echo "⚠️  pip-audit found issues - review above output"
 	python -m bandit -r core/ backtest/ execution/ src/ -ll -q
 	@echo "✅ Security audit complete"
+
+.PHONY: deps-audit
+deps-audit:
+	@echo "🔒 Auditing Python dependencies for known vulnerabilities..."
+	@echo "Checking runtime dependencies (requirements.lock)..."
+	python -m pip_audit -r requirements.lock --desc || true
+	@echo ""
+	@echo "Checking dev dependencies (requirements-dev.lock)..."
+	python -m pip_audit -r requirements-dev.lock --desc || true
+	@echo ""
+	@echo "✅ Dependency audit complete"
+	@echo "📖 See https://pypi.org/project/pip-audit/ for more info"
 
 .PHONY: clean
 clean:
