@@ -87,6 +87,21 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 
 
+def _resolve_level(level: int | str) -> int:
+    """Resolve a logging level from either a string name or numeric value."""
+
+    if isinstance(level, str):
+        numeric_level = logging.getLevelName(level.upper())
+        if isinstance(numeric_level, str):
+            raise ValueError(f"Unknown log level: {level}")
+        return int(numeric_level)
+
+    try:
+        return int(level)
+    except (TypeError, ValueError):
+        raise ValueError(f"Invalid log level: {level}")
+
+
 class StructuredLogger:
     """Wrapper around standard logger with structured logging capabilities."""
 
@@ -230,17 +245,17 @@ class StructuredLogger:
 
 
 def configure_logging(
-    level: str = "INFO", use_json: bool = True, stream: Any = None
+    level: int | str = logging.INFO, use_json: bool = True, stream: Any = None
 ) -> None:
     """Configure application-wide logging.
 
     Args:
-        level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        level: Logging level as an integer or name
         use_json: Whether to use JSON formatting
         stream: Output stream (defaults to sys.stdout)
     """
     root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, level.upper()))
+    root_logger.setLevel(_resolve_level(level))
 
     # Remove handlers previously attached by TradePulse without disturbing
     # external handlers such as pytest's log capture fixtures.
