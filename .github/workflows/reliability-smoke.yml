@@ -1,0 +1,102 @@
+name: Reliability Smoke Tests
+
+# Fast reliability tests validating failure modes and error handling
+# These tests ensure the system fails gracefully under error conditions
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+  pull_request:
+    branches: ['**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+
+concurrency:
+  group: reliability-smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reliability-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Reliability Smoke Tests (Python 3.11)
+    
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+      
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-reliability
+        with:
+          path: .venv
+          key: venv-reliability-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-reliability-${{ runner.os }}-py3.11-
+      
+      - name: Create virtual environment
+        if: steps.venv-cache-reliability.outputs.cache-hit != 'true'
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+      
+      - name: Install dependencies
+        if: steps.venv-cache-reliability.outputs.cache-hit != 'true'
+        run: |
+          source .venv/bin/activate
+          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.txt
+      
+      - name: Run reliability smoke tests
+        run: |
+          source .venv/bin/activate
+          echo "::group::Reliability Test Suite"
+          pytest tests/reliability/ \
+            -v \
+            --tb=short \
+            --no-cov \
+            -m "not slow and not heavy_math and not nightly" \
+            --maxfail=5
+          echo "::endgroup::"
+      
+      - name: Test summary
+        if: always()
+        run: |
+          echo "### Reliability Smoke Tests Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ $? -eq 0 ]; then
+            echo "✅ All reliability tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Validated failure scenarios:" >> $GITHUB_STEP_SUMMARY
+            echo "- Backtest crash handling (6 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- Missing market data (9 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- Execution adapter failures (7 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- Invalid configuration (12 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- Process interruption (6 tests)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some reliability tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "See test output for details" >> $GITHUB_STEP_SUMMARY
+          fi

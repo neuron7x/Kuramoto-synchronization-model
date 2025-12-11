@@ -99,6 +99,12 @@
 | REL_STRATEGY_997 | reliability | Strategy runtime 99.7% success rate | Prometheus/Grafana | docs/reliability.md | goal | SLO target documented |
 | REL_ORDER_EXEC_999 | reliability | Order execution 99.9% within broker SLA | Prometheus/Grafana | docs/reliability.md | goal | SLO target documented |
 | REL_MARKET_DATA_998 | reliability | Market data freshness 99.8% < 1.5s | Prometheus/Grafana | docs/reliability.md | goal | SLO target documented |
+| REL_BACKTEST_CRASH_001 | reliability | Backtest exception handling validated | `pytest tests/reliability/test_backtest_crash_handling.py -v` | tests/reliability/test_backtest_crash_handling.py, .github/workflows/reliability-smoke.yml | proven | 6 tests validate graceful failure on exceptions |
+| REL_DATA_MISSING_001 | reliability | NaN/missing data detection validated | `pytest tests/reliability/test_missing_market_data.py -v` | tests/reliability/test_missing_market_data.py, .github/workflows/reliability-smoke.yml | proven | 9 tests validate data quality checks before backtest |
+| REL_EXEC_TIMEOUT_001 | reliability | Execution timeout handling validated | `pytest tests/reliability/test_execution_adapter_failures.py -v` | tests/reliability/test_execution_adapter_failures.py, .github/workflows/reliability-smoke.yml | proven | 7 tests validate timeout/connection error handling |
+| REL_CONFIG_INVALID_001 | reliability | Invalid configuration handling validated | `pytest tests/reliability/test_invalid_config.py -v` | tests/reliability/test_invalid_config.py, .github/workflows/reliability-smoke.yml | proven | 12 tests validate configuration error detection |
+| REL_PROCESS_INT_001 | reliability | Process interruption handling validated | `pytest tests/reliability/test_process_interruption.py -v` | tests/reliability/test_process_interruption.py, .github/workflows/reliability-smoke.yml | partial | 6 tests validate cleanup logic (simplified signal handling) |
+| REL_SCENARIOS_DOC | reliability | Failure scenarios documented | N/A | docs/RELIABILITY_SCENARIOS.md | proven | 13 canonical failure scenarios documented with reproduction steps |
 
 ### Security & Compliance Claims
 
@@ -234,6 +240,10 @@ python -m tools.mutation.kill_rate_guard --threshold 0.9
 
 | Date | Change |
 |------|--------|
+| 2025-12-11 | Added 6 reliability claims with proven status: failure scenario tests (40 tests), documentation |
+| 2025-12-11 | Created tests/reliability/ with comprehensive failure mode validation |
+| 2025-12-11 | Added docs/RELIABILITY_SCENARIOS.md documenting 13 canonical failure scenarios |
+| 2025-12-11 | Created .github/workflows/reliability-smoke.yml for fast failure mode testing |
 | 2025-12-10 | Added realistic coverage measurements: backtest (73%), execution (44%), core (32%) |
 | 2025-12-10 | Added COV_GOLDEN_PATH and COV_PAPER_TRADING claims with proven status |
 | 2025-12-10 | Updated COV_98_CI_GATE to goal status (target, not currently enforced at 98%) |

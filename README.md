@@ -96,8 +96,9 @@ Code: [`execution/`](execution/), [`runtime/`](runtime/), [`interfaces/live_runn
 **Circuit Breakers** — Auto trading halt after failures  
 **Audit Logging** — 400-day retention with compliance support  
 **Health Checks** — Kubernetes-ready liveness and readiness probes  
+**Reliability Testing** — 40+ tests validating graceful failure modes ([docs/RELIABILITY_SCENARIOS.md](docs/RELIABILITY_SCENARIOS.md))
 
-Code: [`observability/`](observability/), [`infra/`](infra/)
+Code: [`observability/`](observability/), [`infra/`](infra/), [`tests/reliability/`](tests/reliability/)
 
 ### 🔐 Enterprise Security
 
