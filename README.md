@@ -183,16 +183,24 @@ cd TradePulse
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies with security constraints
-pip install --upgrade pip
-pip install -c constraints/security.txt -r requirements.lock
+# Install dependencies (choose one):
+make install           # Runtime dependencies only
+make dev-install       # Full development environment
 
 # Configure environment variables
 cp .env.example .env
 # Edit .env with your settings (see SETUP.md for details)
 ```
 
-📖 **Detailed Setup**: [SETUP.md](SETUP.md)
+**Alternative installation** (without Make):
+```bash
+pip install --upgrade pip setuptools wheel
+pip install -c constraints/security.txt -r requirements.lock          # Runtime only
+pip install -c constraints/security.txt -r requirements-dev.lock      # Add dev tools
+```
+
+📖 **Detailed Setup**: [SETUP.md](SETUP.md)  
+🔐 **Security**: All dependencies are pinned to exact versions with security constraints applied
 
 ### Your First Analysis
 
