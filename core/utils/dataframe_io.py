@@ -190,10 +190,18 @@ def write_dataframe(
     """Serialize ``frame`` to ``destination`` using the first available backend."""
 
     base, explicit_suffix = _normalize_destination(destination)
-    require_parquet = (
-        destination.suffix.lower() == _PARQUET_SUFFIX if explicit_suffix else False
-    )
-    backend = _select_backend(require_parquet, allow_json_fallback)
+    suffix = destination.suffix.lower() if explicit_suffix else None
+
+    if suffix not in (None, _PARQUET_SUFFIX, _JSON_SUFFIX):
+        raise ValueError(
+            "Unsupported dataframe suffix. Expected .parquet or .json"
+        )
+
+    if suffix == _JSON_SUFFIX:
+        backend = _json_backend()
+    else:
+        require_parquet = suffix == _PARQUET_SUFFIX if suffix else False
+        backend = _select_backend(require_parquet, allow_json_fallback)
     target = base.with_suffix(backend.suffix)
     target.parent.mkdir(parents=True, exist_ok=True)
     backend.write_fn(frame, target, index)
