@@ -264,6 +264,13 @@ def compute_psi(
         return float("nan")
     if isinstance(bins, Sequence) and not isinstance(bins, (str, bytes)):
         bin_edges = np.asarray(bins, dtype=float)
+        if bin_edges.size < 2 or not np.all(np.isfinite(bin_edges)):
+            raise ValueError("bins must contain at least two finite edges")
+        if np.any(np.diff(bin_edges) <= 0):
+            logger.warning("Non-monotonic bin edges provided; sorting for stability")
+            bin_edges = np.unique(bin_edges)
+            if bin_edges.size < 2:
+                raise ValueError("bins must contain at least two unique edges")
     else:
         combined = np.concatenate([ref, cur])
         bin_edges = np.linspace(combined.min(), combined.max(), int(bins) + 1)
