@@ -33,6 +33,13 @@ jobs:
             requirements.txt
             requirements-dev.txt
             requirements-dev.lock
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-e2e-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            pip-e2e-${{ runner.os }}-py3.11-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

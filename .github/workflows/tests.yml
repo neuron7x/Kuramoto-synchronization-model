@@ -67,9 +67,21 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            lint-pre-commit-${{ runner.os }}-
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-lint
+        with:
+          path: .venv
+          key: venv-lint-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-lint-${{ runner.os }}-py${{ matrix.python-version }}-
       - name: Create virtual environment
+        if: steps.venv-cache-lint.outputs.cache-hit != 'true'
         run: python -m venv .venv
       - name: Install Python dependencies
+        if: steps.venv-cache-lint.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.txt
@@ -182,6 +194,7 @@ jobs:
           name: go-services-coverage
           path: reports/go/services.coverage.out
           if-no-files-found: warn
+          retention-days: 7
       - name: Run Terraform validation tests
         continue-on-error: true
         working-directory: infra/terraform/tests
@@ -205,9 +218,19 @@ jobs:
             requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-${{ runner.os }}-py${{ matrix.python-version }}-
       - name: Create virtual environment
+        if: steps.venv-cache.outputs.cache-hit != 'true'
         run: python -m venv .venv
       - name: Install dependencies
+        if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.txt
@@ -285,6 +308,7 @@ jobs:
           name: localization-coverage
           path: reports/localization/coverage.json
           if-no-files-found: warn
+          retention-days: 7
       - name: Run test quality validation
         id: test_quality
         continue-on-error: true
@@ -525,6 +549,7 @@ jobs:
             reports/unit-integration-tests.xml
             reports/property-tests.xml
           if-no-files-found: warn
+          retention-days: 7
       - name: Upload HTML test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -535,6 +560,7 @@ jobs:
             reports/property-tests-report.html
             reports/e2e-report.html
           if-no-files-found: warn
+          retention-days: 7
       - name: Upload flaky manifest
         if: always()
         uses: actions/upload-artifact@v4
@@ -542,6 +568,7 @@ jobs:
           name: flaky-tests-skipped-${{ matrix.python-version }}
           path: reports/flaky-tests-skipped.json
           if-no-files-found: warn
+          retention-days: 7
       - name: Upload test quality and performance reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -553,6 +580,7 @@ jobs:
             reports/test-performance-baseline.json
             reports/test-results.json
           if-no-files-found: warn
+          retention-days: 7
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -562,6 +590,7 @@ jobs:
             coverage.xml
             coverage_html
           if-no-files-found: warn
+          retention-days: 7
       - name: Upload coverage to Codecov (with token)
         if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
@@ -589,11 +618,25 @@ jobs:
             requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-security
+        with:
+          path: .venv
+          key: venv-security-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-security-${{ runner.os }}-py${{ matrix.python-version }}-
+      - name: Create virtual environment
+        if: steps.venv-cache-security.outputs.cache-hit != 'true'
+        run: python -m venv .venv
       - name: Install dependencies
+        if: steps.venv-cache-security.outputs.cache-hit != 'true'
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -c constraints/security.txt -r requirements.txt
-          python -m pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+      - name: Activate virtual environment
+        run: echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
       - name: Run static security analysis (Bandit)
         run: |
           python -m tools.security.sast \
@@ -638,6 +681,7 @@ jobs:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
+          retention-days: 7
       - name: Upload coverage to Codecov (OIDC)
         if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
@@ -818,6 +862,7 @@ jobs:
             reports/benchmarks
             .benchmarks
           if-no-files-found: warn
+          retention-days: 7
       - name: Find existing benchmark comment
         if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork }}
         id: find_benchmark_comment
@@ -874,6 +919,7 @@ jobs:
           name: pytest-profiling
           path: reports/profiling
           if-no-files-found: warn
+          retention-days: 7
 
   ui-smoke:
     name: Playwright UI smoke tests
@@ -908,6 +954,7 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report
           if-no-files-found: warn
+          retention-days: 7
 
   flaky-tests:
     name: Quarantined flaky tests
