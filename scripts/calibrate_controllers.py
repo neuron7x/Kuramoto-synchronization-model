@@ -19,7 +19,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Tuple
 
 import yaml
 
@@ -117,7 +117,7 @@ CALIBRATION_PROFILES = {
 }
 
 
-def load_config(config_path: Path) -> Dict[str, Any]:
+def load_config(config_path: Path) -> dict[str, Any]:
     """Load YAML configuration file.
     
     Args:
@@ -172,7 +172,7 @@ def create_backup(file_path: Path) -> Path:
         raise
 
 
-def save_config(config: Dict[str, Any], config_path: Path, create_backup_file: bool = True) -> None:
+def save_config(config: dict[str, Any], config_path: Path, create_backup_file: bool = True) -> None:
     """Save YAML configuration file with optional backup.
     
     Args:
@@ -186,7 +186,7 @@ def save_config(config: Dict[str, Any], config_path: Path, create_backup_file: b
     """
     # Ensure parent directory exists and is writable
     # Note: User-provided paths via --output are allowed anywhere
-    # Default paths are within safe repo directories (conf/, config/, artifacts/)
+    # Default paths are within safe repo directories (conf/, config/)
     
     # Create backup if file exists and requested
     if create_backup_file and config_path.exists():
@@ -218,7 +218,7 @@ def list_profiles() -> None:
         print()
 
 
-def validate_nak_config(nak: Dict[str, Any], config_path: Path) -> Tuple[bool, List[str]]:
+def validate_nak_config(nak: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
     """Validate NAK controller configuration.
     
     Args:
@@ -239,7 +239,7 @@ def validate_nak_config(nak: Dict[str, Any], config_path: Path) -> Tuple[bool, L
         return False, errors
     
     # Validate critical parameters using constants
-    checks: List[Tuple[bool, str, str]] = [
+    checks: list[tuple[bool, str, str]] = [
         (nak["EI_low"] < nak["EI_high"],
          "EI_low must be less than EI_high",
          f"EI_low={nak['EI_low']}, EI_high={nak['EI_high']}"),
@@ -274,7 +274,7 @@ def validate_nak_config(nak: Dict[str, Any], config_path: Path) -> Tuple[bool, L
     return all_passed, errors
 
 
-def validate_dopamine_config(config: Dict[str, Any], config_path: Path) -> Tuple[bool, List[str]]:
+def validate_dopamine_config(config: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
     """Validate Dopamine controller configuration.
     
     Args:
@@ -293,7 +293,7 @@ def validate_dopamine_config(config: Dict[str, Any], config_path: Path) -> Tuple
         errors.append(f"Missing required parameters: {', '.join(missing)}")
         return False, errors
     
-    checks: List[Tuple[bool, str, str]] = [
+    checks: list[tuple[bool, str, str]] = [
         (ParameterRanges.DISCOUNT_GAMMA_RANGE[0] < config["discount_gamma"] < ParameterRanges.DISCOUNT_GAMMA_RANGE[1],
          f"discount_gamma must be in {ParameterRanges.DISCOUNT_GAMMA_RANGE}",
          f"discount_gamma={config['discount_gamma']}"),
