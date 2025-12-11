@@ -176,3 +176,18 @@ def test_configure_logging_emits_json_payload() -> None:
     assert payload["logger"] == "tradepulse.tests"
     assert payload["message"] == "hello world"
     assert "timestamp" in payload
+
+
+def test_configure_logging_accepts_numeric_level() -> None:
+    stream = io.StringIO()
+
+    configure_logging(level=logging.DEBUG, use_json=False, stream=stream)
+    logging.getLogger("tradepulse.tests").debug("debug message")
+
+    assert logging.getLogger().level == logging.DEBUG
+    assert "debug message" in stream.getvalue()
+
+
+def test_configure_logging_rejects_invalid_level() -> None:
+    with pytest.raises(ValueError):
+        configure_logging(level="not-a-level")
