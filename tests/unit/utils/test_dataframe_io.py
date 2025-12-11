@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -238,6 +239,39 @@ def test_write_dataframe_uses_json_extension(monkeypatch, tmp_path):
     written = dataframe_io.write_dataframe(frame, destination, allow_json_fallback=True)
     assert written.suffix == ".json"
     assert written.read_text()
+
+
+def test_write_dataframe_honors_explicit_json_when_parquet_available(
+    monkeypatch, tmp_path
+):
+    writes: list[str] = []
+
+    def _write_parquet(frame: pd.DataFrame, path: Path, index: bool) -> None:
+        writes.append(path.suffix)
+        path.write_text("parquet")
+
+    parquet_backend = dataframe_io._Backend(
+        "dummy_parquet",
+        ".parquet",
+        _write_parquet,
+        lambda path: pd.DataFrame(),
+        lambda frame, index: b"parquet",
+    )
+    json_backend = dataframe_io._json_backend()
+    monkeypatch.setattr(
+        dataframe_io, "_available_backends", lambda: [parquet_backend, json_backend]
+    )
+
+    frame = pd.DataFrame({"x": [1]})
+    destination = tmp_path / "dataset.json"
+
+    written = dataframe_io.write_dataframe(frame, destination)
+
+    assert written.suffix == ".json"
+    payload = json.loads(written.read_text())
+    assert payload["columns"] == ["x"]
+    assert payload["data"] == [[1]]
+    assert ".parquet" not in writes
 
 
 def test_write_dataframe_requires_parquet_suffix(monkeypatch, tmp_path):
