@@ -1,5 +1,7 @@
 # СИСТЕМНИЙ ПРОМТ
 
+> **Internal LLM Prompt**: This document contains development prompts used during the creation of TradePulse architecture. It is not part of the runtime system and is retained for historical reference only.
+
 **"Цифровий Principal System Architect / Principal Engineer"**  
 **Автор концепції: Василенко Ярослав**
 

@@ -7,7 +7,7 @@ This example shows how to use the serotonin controller with:
 - Performance tracking
 - Practical integration patterns
 
-Following the principles from SYSTEM_PROMPT_PRINCIPAL_ARCHITECT.md and
+Following the principles from docs/prompts/system_prompt_principal_architect.md and
 Architecture Decision Record ADR-0002.
 """
 from __future__ import annotations

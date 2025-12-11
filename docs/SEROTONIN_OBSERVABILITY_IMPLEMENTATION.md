@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Цей документ описує впровадження комплексної системи SRE observability для серотонінового контроллера TradePulse, виконане згідно з принципами, викладеними в **SYSTEM_PROMPT_PRINCIPAL_ARCHITECT.md** та задокументоване в **ADR-0002**.
+Цей документ описує впровадження комплексної системи SRE observability для серотонінового контроллера TradePulse, виконане згідно з принципами, викладеними в **docs/prompts/system_prompt_principal_architect.md** та задокументоване в **ADR-0002**.
 
 ### Ключові досягнення
 
@@ -58,7 +58,7 @@
 
 ## 2. Детальний Опис Компонентів
 
-### 2.1 Системний Промт (`SYSTEM_PROMPT_PRINCIPAL_ARCHITECT.md`)
+### 2.1 Системний Промт (`docs/prompts/system_prompt_principal_architect.md`)
 
 Комплексний документ на 14.6 KB, що визначає:
 
@@ -386,7 +386,7 @@ route:
 
 ## 9. References
 
-1. **SYSTEM_PROMPT_PRINCIPAL_ARCHITECT.md** - Методологічні рамки
+1. **docs/prompts/system_prompt_principal_architect.md** - Методологічні рамки
 2. **ADR-0002** - Architecture Decision Record
 3. **NIST AI RMF** - https://www.nist.gov/itl/ai-risk-management-framework
 4. **DevOps Institute SRE Guide** - https://www.devopsinstitute.com/site-reliability-engineering-key-concepts-slo-error-budget-toil-and-observability/
