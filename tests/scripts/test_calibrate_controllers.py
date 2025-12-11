@@ -166,9 +166,9 @@ class TestCalibrationProfiles:
             )
             
             # Delta r limit
-            assert 0 < nak["delta_r_limit"] <= 1.0, (
-                f"{profile_name}: delta_r_limit must be in (0, 1]"
-            )
+            assert (
+                0 < nak["delta_r_limit"] <= 1.0
+            ), f"{profile_name}: delta_r_limit must be in (0, 1]"
     
     def test_serotonin_threshold_relationships(self):
         """Verify Serotonin thresholds maintain valid relationships."""

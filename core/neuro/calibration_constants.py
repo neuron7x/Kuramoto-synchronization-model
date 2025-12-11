@@ -461,7 +461,9 @@ def _validate_dopamine_invariants(params: Dict[str, Any]) -> list[str]:
         val = params["discount_gamma"]
         if not (ranges.DISCOUNT_GAMMA_RANGE[0] < val < ranges.DISCOUNT_GAMMA_RANGE[1]):
             errors.append(
-                f"discount_gamma ({val}) must be in range {ranges.DISCOUNT_GAMMA_RANGE} (exclusive)"
+                f"discount_gamma ({val}) must be in range {ranges.DISCOUNT_GAMMA_RANGE} "
+                f"(exclusive: value must be strictly greater than {ranges.DISCOUNT_GAMMA_RANGE[0]} "
+                f"and strictly less than {ranges.DISCOUNT_GAMMA_RANGE[1]})"
             )
     
     # Learning rate

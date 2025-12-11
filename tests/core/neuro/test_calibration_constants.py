@@ -244,13 +244,15 @@ class TestDopamineInvariants:
     
     def test_dopamine_discount_gamma_boundary_fails(self):
         """Dopamine validation fails when discount_gamma is at boundary."""
+        ranges = DopamineParameterRanges()
+        
         # Test at 0.0 (must be > 0)
-        params = {"discount_gamma": 0.0}
+        params = {"discount_gamma": ranges.DISCOUNT_GAMMA_RANGE[0]}
         is_valid, errors = validate_parameter_invariants("dopamine", params)
         assert not is_valid
         
         # Test at 1.0 (must be < 1)
-        params = {"discount_gamma": 1.0}
+        params = {"discount_gamma": ranges.DISCOUNT_GAMMA_RANGE[1]}
         is_valid, errors = validate_parameter_invariants("dopamine", params)
         assert not is_valid
     

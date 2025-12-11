@@ -23,16 +23,29 @@ from typing import Any, Tuple
 
 import yaml
 
-# Add parent to path to import calibration_constants
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from core.neuro.calibration_constants import (
-    NAKParameterRanges,
-    DopamineParameterRanges,
-    SerotoninParameterRanges,
-    RiskEngineParameterRanges,
-    RegimeAdaptiveParameterRanges,
-    validate_parameter_invariants,
-)
+# Import calibration_constants module
+# Note: This script is intended to be run from the repository root
+# For development, use: pip install -e .
+try:
+    from core.neuro.calibration_constants import (
+        NAKParameterRanges,
+        DopamineParameterRanges,
+        SerotoninParameterRanges,
+        RiskEngineParameterRanges,
+        RegimeAdaptiveParameterRanges,
+        validate_parameter_invariants,
+    )
+except ImportError:
+    # Fallback for when running directly from scripts directory
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from core.neuro.calibration_constants import (
+        NAKParameterRanges,
+        DopamineParameterRanges,
+        SerotoninParameterRanges,
+        RiskEngineParameterRanges,
+        RegimeAdaptiveParameterRanges,
+        validate_parameter_invariants,
+    )
 
 # Configure logging
 logging.basicConfig(
@@ -432,7 +445,7 @@ def validate_config(config_path: Path) -> bool:
     elif "discount_gamma" in config or "learning_rate_v" in config:
         print(f"\n=== Validating Dopamine Configuration: {config_path} ===\n")
         is_valid, errors = validate_dopamine_config(config, config_path)
-    elif "kill_switch_loss_threshold" in config or "max_leverage" in config:
+    elif "kill_switch_loss_streak" in config or "max_leverage" in config or "max_daily_loss_percent" in config:
         print(f"\n=== Validating Risk Engine Configuration: {config_path} ===\n")
         is_valid, errors = validate_risk_engine_config(config, config_path)
     elif "calm_threshold" in config and "critical_threshold" in config:
