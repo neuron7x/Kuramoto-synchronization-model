@@ -93,7 +93,8 @@ def test_infinite_position_handled() -> None:
     # Current behavior: NaN propagates through to results
     assert isinstance(result, Result)
     # This shows the failure mode - equity curve contains NaN
-    assert np.all(np.isnan(result.equity_curve[:-1]))  # Most values are NaN
+    # (excluding last element which might be initial capital)
+    assert np.all(np.isnan(result.equity_curve[:-1]))
     assert np.isnan(result.pnl)
     # TODO: Engine should validate signals and raise clear error for NaN
 

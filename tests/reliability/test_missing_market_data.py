@@ -111,7 +111,8 @@ def test_high_less_than_low_detected() -> None:
     dates = pd.date_range("2020-01-01", periods=5, freq="D")
     prices = pd.DataFrame({
         "open": [100, 101, 102, 103, 104],
-        "high": [101, 102, 101, 104, 105],  # high < low on day 3
+        # Day 3 (index 2): high=101 < low=103 (invalid OHLC)
+        "high": [101, 102, 101, 104, 105],
         "low": [99, 100, 103, 102, 103],
         "close": [100.5, 101.5, 102.5, 103.5, 104.5],
         "volume": [1000] * 5,

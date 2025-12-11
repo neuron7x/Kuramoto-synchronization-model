@@ -166,11 +166,9 @@ def test_error_message_quality() -> None:
         error_msg = error_response.get("message", "Unknown error")
         details = error_response.get("details", {})
         
-        message = f"API Error [{error_code}]: {error_msg}"
         if details:
-            message += f" | Details: {details}"
-        
-        return message
+            return f"API Error [{error_code}]: {error_msg} | Details: {details}"
+        return f"API Error [{error_code}]: {error_msg}"
     
     # Test error parsing
     error = {

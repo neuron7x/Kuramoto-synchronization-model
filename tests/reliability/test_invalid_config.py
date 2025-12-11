@@ -188,13 +188,14 @@ def test_yaml_type_coercion_safe() -> None:
         assert isinstance(config["strategy"]["threshold"], str)
         assert isinstance(config["strategy"]["lookback"], str)
         
-        # Application should validate types and convert or reject
-        # This would fail if we try to use string where float expected
-        with pytest.raises((TypeError, ValueError)):
-            float_val = config["strategy"]["threshold"]
-            if not isinstance(float_val, (int, float)):
-                # In real code, validation would happen here
-                raise TypeError(f"Expected number, got {type(float_val).__name__}")
+        # Demonstrate that type validation is needed
+        # In real application code, this would raise clear validation error
+        threshold_val = config["strategy"]["threshold"]
+        assert isinstance(threshold_val, str), "YAML parsed string as expected"
+        
+        # Type conversion would be needed
+        threshold_float = float(threshold_val)
+        assert threshold_float == 0.5
     finally:
         Path(config_path).unlink()
 

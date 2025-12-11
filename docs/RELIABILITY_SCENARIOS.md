@@ -35,7 +35,7 @@ This document defines the key failure modes for TradePulse's core workflows and 
 | REL_DATA_MISSING_003 | Completely empty dataset | `pytest tests/reliability/test_missing_market_data.py::test_empty_dataset_handling -v` | Clear error message indicating no data available, suggests checking data source configuration | proven | Common misconfiguration scenario |
 | REL_EXEC_TIMEOUT_001 | Execution adapter timeout (slow broker API) | `pytest tests/reliability/test_execution_adapter_failures.py::test_order_timeout_handling -v` | Order marked as timed out, no silent hang, timeout error logged with duration | proven | Prevents infinite waits on external systems |
 | REL_EXEC_TIMEOUT_002 | Connection failure to broker | `pytest tests/reliability/test_execution_adapter_failures.py::test_connection_failure_handling -v` | Connection error caught, retries exhaust quickly, clear error message with broker details | proven | Validates error handling for network issues |
-| REL_EXEC_TIMEOUT_003 | Partial fills with timeout | `pytest tests/reliability/test_execution_adapter_failures.py::test_partial_fill_timeout -v` | System tracks partial fill accurately, does not assume full execution, logs partial state | proven | Prevents position tracking corruption |
+| REL_EXEC_TIMEOUT_003 | Partial fills with timeout | `pytest tests/reliability/test_execution_adapter_failures.py::test_partial_fill_tracking -v` | System tracks partial fill accurately, does not assume full execution, logs partial state | proven | Prevents position tracking corruption |
 | REL_CONFIG_INVALID_001 | Malformed YAML configuration | `pytest tests/reliability/test_invalid_config.py::test_yaml_parse_error -v` | Parse error with line number, no stack trace spam, suggests fix | proven | Common user error scenario |
 | REL_CONFIG_INVALID_002 | Missing required configuration fields | `pytest tests/reliability/test_invalid_config.py::test_missing_required_fields -v` | Validation lists all missing fields, clear error message | proven | Fail-fast on incomplete config |
 | REL_CONFIG_INVALID_003 | Invalid value types (string where number expected) | `pytest tests/reliability/test_invalid_config.py::test_type_validation -v` | Type error with field name and expected type, actual value shown | proven | Schema validation catches type mismatches |
@@ -97,7 +97,7 @@ pytest tests/reliability/test_missing_market_data.py::test_nan_price_detection -
 
 **Reproduction**:
 ```bash
-pytest tests/reliability/test_execution_adapter_failures.py::test_order_timeout_handling -v
+pytest tests/reliability/test_execution_adapter_failures.py::test_partial_fill_tracking -v
 ```
 
 **Expected Behavior**:

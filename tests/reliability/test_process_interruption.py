@@ -198,8 +198,8 @@ def test_no_partial_output_files() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         output_file = Path(tmpdir) / "results.json"
         
-        # Simulate interrupted write
-        def write_results_atomically(data: dict, path: Path) -> None:
+        # Simulate interrupted write with flag
+        def write_results_atomically(data: dict, path: Path, interrupted: bool = False) -> None:
             """Write to temp file, then atomic rename."""
             temp_path = path.with_suffix('.tmp')
             
@@ -208,22 +208,23 @@ def test_no_partial_output_files() -> None:
             with open(temp_path, 'w') as f:
                 json.dump(data, f)
             
-            # Only rename to final if complete
-            # On interruption, temp file exists but final doesn't
-            # Cleanup would remove temp file
-            
             # Simulate interruption before rename
-            if False:  # Would be True on interruption
-                temp_path.unlink()
+            if interrupted:
+                temp_path.unlink()  # Cleanup temp file
                 return
             
             # Normal completion: atomic rename
             temp_path.rename(path)
         
-        # Simulate successful write
-        write_results_atomically({"status": "complete"}, output_file)
+        # Test successful write
+        write_results_atomically({"status": "complete"}, output_file, interrupted=False)
         assert output_file.exists()
-        
-        # Verify no temp files left behind
         temp_files = list(Path(tmpdir).glob("*.tmp"))
-        assert len(temp_files) == 0, "Temporary files should be cleaned up"
+        assert len(temp_files) == 0, "No temp files after successful write"
+        
+        # Test interrupted write
+        output_file2 = Path(tmpdir) / "results2.json"
+        write_results_atomically({"status": "incomplete"}, output_file2, interrupted=True)
+        assert not output_file2.exists(), "Final file should not exist after interruption"
+        temp_files = list(Path(tmpdir).glob("*.tmp"))
+        assert len(temp_files) == 0, "Temp files cleaned up after interruption"
