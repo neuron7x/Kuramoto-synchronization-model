@@ -27,8 +27,13 @@ This document outlines the rules and processes that enable fast and safe develop
    python -m venv .venv
    source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-   # Install dependencies
-   pip install -r requirements-dev.lock
+   # Install dependencies (recommended: use Make)
+   make dev-install       # Installs all dev dependencies with security constraints
+   
+   # Alternative: direct pip install
+   # pip install -c constraints/security.txt -r requirements-dev.lock
+   
+   # Set up pre-commit hooks
    pre-commit install
    ```
 
@@ -636,6 +641,104 @@ cd apps/web && npm run dev
 - Catch edge cases automatically
 
 See [TESTING.md](TESTING.md) for complete testing guide.
+
+---
+
+## Dependency Management
+
+TradePulse uses a **lock file approach** for reproducible builds with strict security controls.
+
+### Dependency Files Structure
+
+- **`pyproject.toml`** — Source of truth for abstract dependencies (with version ranges)
+- **`requirements.txt`** — Runtime dependencies (abstract, derived from pyproject.toml)
+- **`requirements-dev.txt`** — Development dependencies (abstract)
+- **`requirements.lock`** — Pinned runtime dependencies (generated, committed)
+- **`requirements-dev.lock`** — Pinned dev dependencies (generated, committed)
+- **`constraints/security.txt`** — Security-critical version pins (CVE fixes)
+
+### Adding a New Dependency
+
+1. **Add to `pyproject.toml`** in the appropriate section:
+   ```toml
+   dependencies = [
+       "new-package>=1.0.0,<2.0.0",  # Runtime dependency
+   ]
+   
+   [project.optional-dependencies]
+   dev = [
+       "new-dev-tool>=2.0.0",  # Dev/test dependency
+   ]
+   ```
+
+2. **Sync to requirements files**:
+   ```bash
+   # Update requirements.txt and requirements-dev.txt to match pyproject.toml
+   # (This step is manual - copy the dependency)
+   ```
+
+3. **Regenerate lock files**:
+   ```bash
+   make deps-update
+   ```
+
+4. **Run security audit**:
+   ```bash
+   make deps-audit
+   ```
+
+5. **Address any vulnerabilities** found:
+   - Update version constraints in `pyproject.toml`
+   - Add to `constraints/security.txt` if it's a transitive dependency
+   - Re-run `make deps-update`
+
+6. **Test the changes**:
+   ```bash
+   make dev-install  # Install updated dependencies
+   make test         # Run tests
+   ```
+
+7. **Commit the changes**:
+   ```bash
+   git add pyproject.toml requirements*.txt requirements*.lock constraints/security.txt
+   git commit -m "Add new-package dependency"
+   ```
+
+### Updating Dependencies
+
+To update all dependencies to latest compatible versions:
+
+```bash
+# Update lock files
+make deps-update
+
+# Check for vulnerabilities
+make deps-audit
+
+# Test thoroughly
+make test-all
+```
+
+### Security Policy
+
+- **All runtime dependencies** must be pinned in `requirements.lock`
+- **Security-critical packages** (cryptography, requests, etc.) have additional pins in `constraints/security.txt`
+- **HIGH/CRITICAL CVEs** must be fixed within 7 days
+- **MEDIUM/LOW CVEs** should be fixed in the next release
+- Run `make deps-audit` before every release
+
+### Troubleshooting
+
+**Lock file conflicts?**
+```bash
+# Regenerate from scratch
+make deps-update
+```
+
+**Dependency resolution fails?**
+- Check version constraints in `pyproject.toml` for conflicts
+- Review `constraints/security.txt` for overly restrictive pins
+- Consider if the new package is compatible with existing dependencies
 
 ---
 

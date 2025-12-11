@@ -75,6 +75,16 @@ setuptools>=78.1.1
 twisted==24.7.0
 
 # ============================================================================
+# Web Framework - Security-critical for API endpoints
+# ============================================================================
+# starlette: ASGI framework, DoS vulnerability in FileResponse fixed in 0.50.0
+# CVE-2025-52316: DoS via crafted Range header in FileResponse
+# fastapi: Web framework built on starlette, requires compatible starlette version
+# Pin to ensure secure versions are used
+starlette>=0.50.0
+fastapi>=0.119.0,<1.0.0
+
+# ============================================================================
 # Additional Brotli encoding support - Required for urllib3 decompression
 # ============================================================================
 # Brotli: Compression algorithm support, required for secure decompression
