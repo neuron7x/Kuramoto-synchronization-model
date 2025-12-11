@@ -485,12 +485,20 @@ def evaluate_backtest(
     else:
         equity = np.array([], dtype=float)
 
+    # If initial_capital was not provided, infer it from the first equity value
+    # to avoid infinite returns and incorrect PnL when users pass only an
+    # equity curve. Only infer when we have a positive starting equity to avoid
+    # division by zero issues.
+    starting_capital = initial_capital
+    if starting_capital <= 0.0 and len(equity) > 0 and equity[0] > 0:
+        starting_capital = float(equity[0])
+
     # Compute basic PnL metrics
     if len(equity) > 0:
         final_equity = float(equity[-1])
-        total_pnl = final_equity - initial_capital
-        if initial_capital > 0:
-            total_return_pct = (total_pnl / initial_capital) * 100
+        total_pnl = final_equity - starting_capital
+        if starting_capital > 0:
+            total_return_pct = (total_pnl / starting_capital) * 100
         else:
             total_return_pct = 0.0 if total_pnl == 0 else float("inf")
     else:
@@ -505,7 +513,7 @@ def evaluate_backtest(
     sortino_ratio: float | None = None
     if len(equity) > 1:
         # Compute period returns
-        prev_equity = np.concatenate(([initial_capital], equity[:-1]))
+        prev_equity = np.concatenate(([starting_capital], equity[:-1]))
         with np.errstate(divide="ignore", invalid="ignore"):
             returns = (equity - prev_equity) / prev_equity
         returns = returns[np.isfinite(returns)]

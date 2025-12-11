@@ -355,6 +355,16 @@ class TestEdgeCases:
         # Return should be infinite or handled gracefully
         assert report.total_pnl == pytest.approx(20.0)
 
+    def test_initial_capital_inferred_from_equity(self) -> None:
+        """Ensure initial capital defaults to the first equity value."""
+        equity = np.array([100.0, 102.0, 105.0])
+
+        # Do not provide initial_capital, it should be inferred from equity[0]
+        report = evaluate_backtest(equity_curve=equity)
+
+        assert report.total_pnl == pytest.approx(5.0)
+        assert report.total_return_pct == pytest.approx(5.0)
+
     def test_all_winning_trades(self) -> None:
         """Test with all winning trades."""
         trades = [
