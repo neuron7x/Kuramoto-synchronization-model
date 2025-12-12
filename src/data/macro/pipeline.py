@@ -8,13 +8,7 @@ from typing import Iterable, Mapping
 
 import pandas as pd
 
-from ..etl.stores import (
-    AuditEntry,
-    AuditLog,
-    CatalogEntry,
-    DataCatalog,
-    dataframe_signature,
-)
+from ..etl.stores import AuditEntry, AuditLog, CatalogEntry, DataCatalog, dataframe_signature
 from .clients import MacroDataClient
 from .feature_engineering import MacroFeatureBuilder
 from .models import MacroDataSet, MacroIndicatorConfig

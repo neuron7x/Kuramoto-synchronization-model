@@ -5,10 +5,7 @@ from datetime import datetime, timezone
 import pytest
 
 from src.data.knowledge.models import Document, DocumentMetadata
-from src.data.knowledge.segmenter import (
-    DocumentSegmenter,
-    SegmentationConfig,
-)
+from src.data.knowledge.segmenter import DocumentSegmenter, SegmentationConfig
 
 
 def _make_document(*, document_id: str, content: str) -> Document:

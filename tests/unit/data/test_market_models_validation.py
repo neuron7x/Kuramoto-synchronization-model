@@ -6,12 +6,7 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from core.data.models import (
-    AggregateMetric,
-    MarketMetadata,
-    OHLCVBar,
-    PriceTick,
-)
+from core.data.models import AggregateMetric, MarketMetadata, OHLCVBar, PriceTick
 
 
 def _assert_validation_error(

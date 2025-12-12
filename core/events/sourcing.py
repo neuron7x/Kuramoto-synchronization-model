@@ -15,16 +15,7 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import (
-    Any,
-    ClassVar,
-    Dict,
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    Protocol,
-)
+from typing import Any, ClassVar, Dict, Iterable, Iterator, Mapping, MutableMapping, Protocol
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field

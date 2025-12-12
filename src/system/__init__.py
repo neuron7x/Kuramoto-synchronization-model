@@ -24,11 +24,7 @@ from .api_messaging_integration import (
     IntegrationRouter,
     RouteDispatchResult,
 )
-from .integration import (
-    StreamingPipelineSettings,
-    TradePulsePlatform,
-    build_tradepulse_platform,
-)
+from .integration import StreamingPipelineSettings, TradePulsePlatform, build_tradepulse_platform
 from .module_orchestrator import (
     ModuleDefinition,
     ModuleExecutionDynamics,

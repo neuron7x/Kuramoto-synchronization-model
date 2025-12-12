@@ -7,11 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from analytics.regime.src.consensus.hncm_adapter import (
-    AgentVote,
-    HNCMConsensusAdapter,
-    ews_to_vote,
-)
+from analytics.regime.src.consensus.hncm_adapter import AgentVote, HNCMConsensusAdapter, ews_to_vote
 from application.microservices.hncm_consensus import build_signal_with_consensus
 from domain.signals import SignalAction
 

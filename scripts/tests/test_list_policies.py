@@ -6,8 +6,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
-
 from scripts import list_policies
 
 
@@ -108,7 +106,7 @@ def test_discover_policies_extracts_bases(tmp_path: Path) -> None:
     """Test that discover_policies extracts base classes."""
     module = tmp_path / "policies.py"
     module.write_text(
-        '''
+        """
 from abc import ABC
 
 class BasePolicy(ABC):
@@ -116,7 +114,7 @@ class BasePolicy(ABC):
 
 class DerivedPolicy(BasePolicy):
     pass
-''',
+""",
         encoding="utf-8",
     )
 
@@ -133,7 +131,7 @@ def test_discover_policies_extracts_docstring(tmp_path: Path) -> None:
         '''
 class DocumentedPolicy:
     """This is the first line.
-    
+
     More details here.
     """
     pass
@@ -151,10 +149,10 @@ def test_discover_policies_handles_no_docstring(tmp_path: Path) -> None:
     """Test that discover_policies handles missing docstrings."""
     module = tmp_path / "policies.py"
     module.write_text(
-        '''
+        """
 class UndocumentedPolicy:
     pass
-''',
+""",
         encoding="utf-8",
     )
 
@@ -240,7 +238,7 @@ def test_normalise_docstring_none() -> None:
 def test_normalise_docstring_multiline() -> None:
     """Test _normalise_docstring extracts first line."""
     doc = """First line.
-    
+
     More content.
     """
     result = list_policies._normalise_docstring(doc)
@@ -298,13 +296,13 @@ def test_discover_policies_sorts_results(tmp_path: Path) -> None:
     """Test that discover_policies returns sorted results."""
     module = tmp_path / "policies.py"
     module.write_text(
-        '''
+        """
 class ZPolicy:
     pass
 
 class APolicy:
     pass
-''',
+""",
         encoding="utf-8",
     )
 

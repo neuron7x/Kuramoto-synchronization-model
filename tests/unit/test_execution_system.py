@@ -10,27 +10,13 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from domain import Order, OrderSide, OrderStatus, OrderType
-from execution.algorithms import (
-    POVAlgorithm,
-    TWAPAlgorithm,
-    VWAPAlgorithm,
-    aggregate_fills,
-)
+from execution.algorithms import POVAlgorithm, TWAPAlgorithm, VWAPAlgorithm, aggregate_fills
 from execution.audit import ExecutionAuditLogger
 from execution.compliance import ComplianceMonitor, ComplianceViolation
 from execution.connectors import BinanceConnector, OrderError
-from execution.normalization import (
-    NormalizationError,
-    SymbolNormalizer,
-    SymbolSpecification,
-)
+from execution.normalization import NormalizationError, SymbolNormalizer, SymbolSpecification
 from execution.oms import OMSConfig, OrderManagementSystem
-from execution.risk import (
-    JsonRiskStateStore,
-    LimitViolation,
-    RiskLimits,
-    RiskManager,
-)
+from execution.risk import JsonRiskStateStore, LimitViolation, RiskLimits, RiskManager
 
 
 @pytest.fixture()

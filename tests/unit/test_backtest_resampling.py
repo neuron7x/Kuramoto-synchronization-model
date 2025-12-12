@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from backtest.resampling import (
-    bayesian_mcmc_performance_metrics,
-    bootstrap_performance_metrics,
-)
+from backtest.resampling import bayesian_mcmc_performance_metrics, bootstrap_performance_metrics
 
 
 def _make_equity(initial_capital: float, returns: np.ndarray) -> np.ndarray:

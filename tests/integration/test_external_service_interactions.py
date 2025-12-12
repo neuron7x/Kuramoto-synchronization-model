@@ -10,11 +10,7 @@ import pytest
 
 from core.data.adapters.polygon import PolygonIngestionAdapter
 from core.data.models import InstrumentType, PriceTick
-from core.features.realtime_store import (
-    FeatureDescriptor,
-    FeatureLineage,
-    RealTimeFeatureStore,
-)
+from core.features.realtime_store import FeatureDescriptor, FeatureLineage, RealTimeFeatureStore
 from src.data.kafka_ingestion import KafkaIngestionConfig
 from src.data.pipeline import StreamingIngestionPipeline
 

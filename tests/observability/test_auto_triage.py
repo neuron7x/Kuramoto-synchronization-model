@@ -9,11 +9,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from observability.auto_triage import (
-    AutoTriageConfig,
-    AutoTriageOrchestrator,
-    MetricThreshold,
-)
+from observability.auto_triage import AutoTriageConfig, AutoTriageOrchestrator, MetricThreshold
 
 
 def _incremental_clock(start: datetime):

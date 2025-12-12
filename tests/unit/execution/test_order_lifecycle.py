@@ -6,11 +6,7 @@ from datetime import datetime
 import pytest
 
 from domain import OrderStatus
-from execution.order_lifecycle import (
-    OrderEvent,
-    OrderLifecycle,
-    OrderLifecycleStore,
-)
+from execution.order_lifecycle import OrderEvent, OrderLifecycle, OrderLifecycleStore
 from libs.db import DataAccessLayer
 
 

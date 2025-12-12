@@ -1,11 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from analytics.signals.irreversibility import (
-    IGSConfig,
-    StreamingIGS,
-    compute_igs_features,
-)
+from analytics.signals.irreversibility import IGSConfig, StreamingIGS, compute_igs_features
 
 
 def test_entropy_adaptation_changes_k_with_loose_threshold():

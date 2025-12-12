@@ -16,13 +16,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class MarketFeedRecord(BaseModel):

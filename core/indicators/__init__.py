@@ -27,11 +27,7 @@ from .kuramoto import (
     kuramoto_order,
     multi_asset_kuramoto,
 )
-from .kuramoto_ricci_composite import (
-    KuramotoRicciComposite,
-    MarketPhase,
-    TradePulseCompositeEngine,
-)
+from .kuramoto_ricci_composite import KuramotoRicciComposite, MarketPhase, TradePulseCompositeEngine
 from .multiscale_kuramoto import (
     KuramotoResult,
     MultiScaleKuramoto,

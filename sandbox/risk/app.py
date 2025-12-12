@@ -10,12 +10,7 @@ from fastapi import Body, FastAPI, HTTPException
 from ..clients import ControlClient
 from ..models import AuditEvent, KillSwitchState, OrderTicket, TradingSignal
 from ..settings import RiskSettings, risk_settings
-from .engine import (
-    AuditLoggerProtocol,
-    KillSwitchProviderProtocol,
-    RiskEngine,
-    RiskLimits,
-)
+from .engine import AuditLoggerProtocol, KillSwitchProviderProtocol, RiskEngine, RiskLimits
 
 
 class ControlKillSwitchProvider(KillSwitchProviderProtocol):

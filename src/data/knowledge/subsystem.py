@@ -11,23 +11,12 @@ from .compression import SegmentCompressor
 from .embeddings import EmbeddingProvider
 from .graph import KnowledgeGraph
 from .indexer import HybridIndex, HybridIndexConfig
-from .models import (
-    CompletenessReport,
-    Document,
-    PipelineResult,
-    SearchQuery,
-    SearchResult,
-)
+from .models import CompletenessReport, Document, PipelineResult, SearchQuery, SearchResult
 from .pipeline import KnowledgeUpdatePipeline
 from .retrieval import HybridSearchEngine, SourcePrioritizer
 from .segmenter import DocumentSegmenter, SegmentationConfig
 from .sharding import ShardManager
-from .validators import (
-    CitationBuilder,
-    CompletenessController,
-    FreshnessPolicy,
-    LinkValidator,
-)
+from .validators import CitationBuilder, CompletenessController, FreshnessPolicy, LinkValidator
 
 
 @dataclass(slots=True)

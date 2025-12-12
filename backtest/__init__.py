@@ -7,11 +7,7 @@ from .dopamine_td import (
     run_vectorized_dopamine_td,
 )
 from .engine import LatencyConfig, OrderBookConfig
-from .performance import (
-    PerformanceReport,
-    compute_performance_metrics,
-    export_performance_report,
-)
+from .performance import PerformanceReport, compute_performance_metrics, export_performance_report
 from .synthetic import (
     ControlledExperiment,
     LiquidityShock,

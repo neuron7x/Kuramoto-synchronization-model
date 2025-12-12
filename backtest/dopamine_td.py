@@ -43,6 +43,7 @@ except ImportError:
 
     def njit(*args, **kwargs):
         """Fallback decorator when Numba is not available."""
+
         def decorator(func):
             return func
 

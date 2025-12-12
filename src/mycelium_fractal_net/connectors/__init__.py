@@ -36,13 +36,7 @@ from .kafka_source import KafkaIngestor
 from .metrics import IngestionMetrics
 from .rest_source import RestIngestor
 from .runner import IngestionRunner, LocalBackend, MFNBackend, RemoteBackend
-from .transform import (
-    MappingError,
-    MFNRequest,
-    NormalizationError,
-    NormalizedEvent,
-    Transformer,
-)
+from .transform import MappingError, MFNRequest, NormalizationError, NormalizedEvent, Transformer
 
 __all__ = [
     # Base abstractions

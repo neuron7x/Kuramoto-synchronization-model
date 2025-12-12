@@ -8,12 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cli.tradepulse_cli import (
-    _load_prices,
-    _resolve_strategy,
-    _run_backtest,
-    _write_frame,
-)
+from cli.tradepulse_cli import _load_prices, _resolve_strategy, _run_backtest, _write_frame
 from core.config.cli_models import (
     BacktestConfig,
     DataSourceConfig,
@@ -23,11 +18,7 @@ from core.config.cli_models import (
     ReportConfig,
     StrategyConfig,
 )
-from core.reporting import (
-    generate_markdown_report,
-    render_markdown_to_html,
-    render_markdown_to_pdf,
-)
+from core.reporting import generate_markdown_report, render_markdown_to_html, render_markdown_to_pdf
 from tests.tolerances import FLOAT_ABS_TOL
 
 

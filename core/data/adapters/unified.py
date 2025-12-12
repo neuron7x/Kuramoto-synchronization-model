@@ -25,16 +25,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from time import monotonic
-from typing import (
-    Any,
-    Callable,
-    Deque,
-    Iterable,
-    Iterator,
-    MutableMapping,
-    Optional,
-    Sequence,
-)
+from typing import Any, Callable, Deque, Iterable, Iterator, MutableMapping, Optional, Sequence
 
 
 class RateLimitExceededError(RuntimeError):

@@ -5,11 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from application import (
-    LiveLoopSettings,
-    TradePulseOrchestrator,
-    build_tradepulse_system,
-)
+from application import LiveLoopSettings, TradePulseOrchestrator, build_tradepulse_system
 from core.neuro.fractal_regulator import RegulatorMetrics
 
 

@@ -3,13 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel, ConfigDict
 
-from core.events import (
-    BarEvent,
-    FillEvent,
-    OrderEvent,
-    SignalEvent,
-    TickEvent,
-)
+from core.events import BarEvent, FillEvent, OrderEvent, SignalEvent, TickEvent
 from core.messaging.contracts import SchemaContractError, SchemaContractValidator
 from core.messaging.schema_registry import EventSchemaRegistry
 

@@ -6,14 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
-from typing import (
-    AsyncIterator,
-    Callable,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Sequence,
-)
+from typing import AsyncIterator, Callable, Iterable, Mapping, MutableMapping, Sequence
 
 import numpy as np
 import pandas as pd

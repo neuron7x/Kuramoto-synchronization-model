@@ -431,7 +431,10 @@ def main() -> None:
             file=sys.stderr,
         )
         for f in failures:
-            print(f"- {f.name} status={f.status} delta={f.delta_pct:.1f}%", file=sys.stderr)
+            print(
+                f"- {f.name} status={f.status} delta={f.delta_pct:.1f}%",
+                file=sys.stderr,
+            )
         sys.exit(1)
 
 

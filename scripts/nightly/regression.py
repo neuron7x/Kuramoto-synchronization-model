@@ -23,9 +23,7 @@ from core.pipelines.smoke_e2e import (
     seed_everything,
     summarise_result,
 )
-from core.pipelines.smoke_e2e import (
-    run_backtest as run_smoke_backtest,
-)
+from core.pipelines.smoke_e2e import run_backtest as run_smoke_backtest
 from observability.incidents import IncidentManager, IncidentRecord
 from observability.notifications import NotificationDispatcher
 from scripts.nightly.config import BaselineStore, MetricEvaluation

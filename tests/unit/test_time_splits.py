@@ -4,11 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest.time_splits import (
-    PurgedKFoldTimeSeriesSplit,
-    WalkForwardSplitter,
-    _to_timedelta,
-)
+from backtest.time_splits import PurgedKFoldTimeSeriesSplit, WalkForwardSplitter, _to_timedelta
 
 
 def _sample_frame():

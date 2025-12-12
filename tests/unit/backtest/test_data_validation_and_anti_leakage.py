@@ -6,12 +6,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from backtest.engine import (
-    AntiLeakageConfig,
-    DataValidationConfig,
-    LatencyConfig,
-    walk_forward,
-)
+from backtest.engine import AntiLeakageConfig, DataValidationConfig, LatencyConfig, walk_forward
 from tradepulse.data_quality import DataQualityError
 
 

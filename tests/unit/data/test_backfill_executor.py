@@ -6,12 +6,7 @@ from datetime import UTC
 
 import pandas as pd
 
-from core.data.backfill import (
-    BackfillPayload,
-    BackfillPlanner,
-    CacheKey,
-    LayerCache,
-)
+from core.data.backfill import BackfillPayload, BackfillPlanner, CacheKey, LayerCache
 
 
 def _frame(start: str, *, periods: int, freq: str = "1min") -> pd.DataFrame:

@@ -11,11 +11,7 @@ import contextlib
 import numpy as np
 import pytest
 
-from core.indicators.base import (
-    BaseFeature,
-    FeatureResult,
-    FunctionalFeature,
-)
+from core.indicators.base import BaseFeature, FeatureResult, FunctionalFeature
 
 
 class _ConstantFeature(BaseFeature):

@@ -22,9 +22,7 @@ def load_controller():
     """Load the serotonin controller module."""
     # Use proper package import instead of dynamic file loading
     # This ensures relative imports work correctly
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninController,
-    )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
     return SerotoninController
 

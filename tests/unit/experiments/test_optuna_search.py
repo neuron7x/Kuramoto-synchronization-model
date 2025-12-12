@@ -7,11 +7,7 @@ import numpy as np
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
 
-from core.experiments import (
-    ModelRegistry,
-    OptunaSearchConfig,
-    StrategyHyperparameterSearch,
-)
+from core.experiments import ModelRegistry, OptunaSearchConfig, StrategyHyperparameterSearch
 
 
 def _objective(params: dict[str, float], *, data: np.ndarray) -> float:

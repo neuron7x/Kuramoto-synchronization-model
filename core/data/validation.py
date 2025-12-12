@@ -97,14 +97,7 @@ else:  # pragma: no cover - alias for typing convenience when pandera is present
     DataFrameSchema = pa.DataFrameSchema
 
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    StrictStr,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator, model_validator
 
 try:  # Python >= 3.9 ships the ``zoneinfo`` module in the stdlib.
     from zoneinfo import ZoneInfo

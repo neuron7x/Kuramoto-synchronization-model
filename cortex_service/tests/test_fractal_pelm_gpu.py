@@ -46,9 +46,7 @@ class TestFractalPELMGPUImports:
 
     def test_is_torch_available_function(self):
         """Test that is_torch_available correctly reports torch status."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            is_torch_available,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import is_torch_available
 
         result = is_torch_available()
         assert result == TORCH_AVAILABLE
@@ -56,9 +54,7 @@ class TestFractalPELMGPUImports:
     @pytest.mark.skipif(not TORCH_AVAILABLE, reason="Requires PyTorch")
     def test_module_can_be_imported_with_torch(self):
         """Test that module can be imported when torch is available."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         assert FractalPELMGPU is not None
 
@@ -69,9 +65,7 @@ class TestFractalPELMGPUInitialization:
 
     def test_default_initialization(self):
         """Test default parameter initialization."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         memory = FractalPELMGPU(device="cpu")
 
@@ -82,9 +76,7 @@ class TestFractalPELMGPUInitialization:
 
     def test_custom_initialization(self):
         """Test custom parameter initialization."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         memory = FractalPELMGPU(
             dimension=128,
@@ -100,9 +92,7 @@ class TestFractalPELMGPUInitialization:
 
     def test_invalid_dimension_raises_error(self):
         """Test that invalid dimension raises ValueError."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         with pytest.raises(ValueError, match="dimension must be positive"):
             FractalPELMGPU(dimension=0, device="cpu")
@@ -112,18 +102,14 @@ class TestFractalPELMGPUInitialization:
 
     def test_invalid_capacity_raises_error(self):
         """Test that invalid capacity raises ValueError."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         with pytest.raises(ValueError, match="capacity must be positive"):
             FractalPELMGPU(capacity=0, device="cpu")
 
     def test_invalid_fractal_weight_raises_error(self):
         """Test that invalid fractal_weight raises ValueError."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         with pytest.raises(ValueError, match="fractal_weight must be in"):
             FractalPELMGPU(fractal_weight=-0.1, device="cpu")
@@ -188,9 +174,7 @@ class TestBatchEntangle:
 
     def test_batch_entangle_enforces_capacity(self):
         """Test that capacity limit is enforced."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         memory = FractalPELMGPU(dimension=16, capacity=10, device="cpu")
 
@@ -389,9 +373,7 @@ class TestPhaseAwareRetrieval:
 
     def test_phase_coherence_affects_ranking(self):
         """Test that phase coherence affects retrieval ranking."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         memory = FractalPELMGPU(
             dimension=64, capacity=100, device="cpu", fractal_weight=0.0
@@ -430,9 +412,7 @@ class TestFractalWeighting:
 
     def test_fractal_weight_zero_disables_fractal_scoring(self):
         """Test that fractal_weight=0 disables fractal component."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         np.random.seed(456)
         vectors = np.random.randn(10, 64).astype(np.float32)
@@ -500,9 +480,7 @@ class TestNumericalStability:
 
     def test_handles_large_batch(self):
         """Test handling of large batch operations."""
-        from cortex_service.app.memory.experimental.fractal_pelm_gpu import (
-            FractalPELMGPU,
-        )
+        from cortex_service.app.memory.experimental.fractal_pelm_gpu import FractalPELMGPU
 
         memory = FractalPELMGPU(dimension=128, capacity=10000, device="cpu")
 

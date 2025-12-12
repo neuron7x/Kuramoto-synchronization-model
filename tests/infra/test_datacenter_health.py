@@ -5,17 +5,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from infra.datacenter.health import (
-    DataCenterHealthMonitor,
-    HealthCheckResult,
-    HealthMonitorConfig,
-)
-from infra.datacenter.models import (
-    DataCenter,
-    DataCenterConfig,
-    DataCenterRegion,
-    DataCenterStatus,
-)
+from infra.datacenter.health import DataCenterHealthMonitor, HealthCheckResult, HealthMonitorConfig
+from infra.datacenter.models import DataCenter, DataCenterConfig, DataCenterRegion, DataCenterStatus
 
 
 class TestHealthCheckResult:

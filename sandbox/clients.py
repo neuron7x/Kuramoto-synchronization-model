@@ -8,13 +8,7 @@ from typing import Any, AsyncIterator, Mapping
 
 import httpx
 
-from .models import (
-    AuditEvent,
-    KillSwitchState,
-    OrderTicket,
-    RiskDecision,
-    TradingSignal,
-)
+from .models import AuditEvent, KillSwitchState, OrderTicket, RiskDecision, TradingSignal
 
 
 class SandboxHttpClient:

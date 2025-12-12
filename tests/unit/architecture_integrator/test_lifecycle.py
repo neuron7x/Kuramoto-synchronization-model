@@ -5,11 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.architecture_integrator.component import (
-    Component,
-    ComponentMetadata,
-    ComponentStatus,
-)
+from core.architecture_integrator.component import Component, ComponentMetadata, ComponentStatus
 from core.architecture_integrator.lifecycle import LifecycleManager
 from core.architecture_integrator.registry import ComponentRegistry
 
@@ -500,10 +496,7 @@ class TestLifecycleEventHooks:
 
     def test_add_event_handler(self) -> None:
         """Test adding an event handler."""
-        from core.architecture_integrator.lifecycle import (
-            LifecycleEvent,
-            LifecycleEventData,
-        )
+        from core.architecture_integrator.lifecycle import LifecycleEvent, LifecycleEventData
 
         registry = ComponentRegistry()
         manager = LifecycleManager(registry)
@@ -714,10 +707,7 @@ class TestConfigurationManagement:
 
     def test_reload_configuration(self) -> None:
         """Test reloading configuration for a component."""
-        from core.architecture_integrator.lifecycle import (
-            LifecycleEvent,
-            LifecycleEventData,
-        )
+        from core.architecture_integrator.lifecycle import LifecycleEvent, LifecycleEventData
 
         registry = ComponentRegistry()
         mock = MockComponent()

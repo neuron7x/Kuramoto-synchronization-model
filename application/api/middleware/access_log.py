@@ -13,11 +13,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
-from observability.audit.trail import (
-    AuditTrail,
-    AuditTrailError,
-    get_access_audit_trail,
-)
+from observability.audit.trail import AuditTrail, AuditTrailError, get_access_audit_trail
 
 
 def _resolve_ip_address(request: Request) -> str | None:

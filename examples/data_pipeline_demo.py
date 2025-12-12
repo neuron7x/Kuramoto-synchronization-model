@@ -35,9 +35,7 @@ sys.path.insert(0, str(project_root))
 from core.data.validation import validate_ohlcv  # noqa: E402
 
 # Import analysis engine
-from core.indicators.kuramoto_ricci_composite import (
-    TradePulseCompositeEngine,
-)  # noqa: E402
+from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine  # noqa: E402
 from scripts.generate_sample_ohlcv import generate_multi_asset_data  # noqa: E402
 
 # Configure logging

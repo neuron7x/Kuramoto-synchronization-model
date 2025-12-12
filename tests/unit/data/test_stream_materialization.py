@@ -6,11 +6,7 @@ from datetime import UTC
 import pandas as pd
 import pytest
 
-from core.data.materialization import (
-    Checkpoint,
-    InMemoryCheckpointStore,
-    StreamMaterializer,
-)
+from core.data.materialization import Checkpoint, InMemoryCheckpointStore, StreamMaterializer
 
 
 @pytest.fixture

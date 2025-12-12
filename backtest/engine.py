@@ -41,11 +41,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from backtest.transaction_costs import (
-    PerUnitCommission,
-    TransactionCostModel,
-    load_market_costs,
-)
+from backtest.transaction_costs import PerUnitCommission, TransactionCostModel, load_market_costs
 from core.utils.metrics import get_metrics_collector
 from interfaces.backtest import BacktestEngine
 from tradepulse.data_quality import (
@@ -55,11 +51,7 @@ from tradepulse.data_quality import (
     validate_historical_data,
 )
 
-from .performance import (
-    PerformanceReport,
-    compute_performance_metrics,
-    export_performance_report,
-)
+from .performance import PerformanceReport, compute_performance_metrics, export_performance_report
 
 
 @dataclass(slots=True)

@@ -7,24 +7,11 @@ from typing import Any, Iterable, List
 import pandas as pd
 import pytest
 
-from core.data.backfill import (
-    CacheEntry,
-    CacheKey,
-    GapFillPlanner,
-    LayerCache,
-    _resolve_cadence,
-)
+from core.data.backfill import CacheEntry, CacheKey, GapFillPlanner, LayerCache, _resolve_cadence
 from core.data.catalog import normalize_symbol
-from core.data.materialization import (
-    InMemoryCheckpointStore,
-    StreamMaterializer,
-)
+from core.data.materialization import InMemoryCheckpointStore, StreamMaterializer
 from core.data.path_guard import DataPathGuard
-from core.data.resampling import (
-    _ensure_datetime_index,
-    align_timeframes,
-    resample_order_book,
-)
+from core.data.resampling import _ensure_datetime_index, align_timeframes, resample_order_book
 
 
 def test_data_path_guard_enforces_limits(tmp_path: Path) -> None:

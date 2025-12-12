@@ -19,12 +19,7 @@ from packaging.version import InvalidVersion, Version
 from core.events import BarEvent, FillEvent, OrderEvent, SignalEvent, TickEvent
 from core.messaging.contracts import SchemaContractValidator
 from core.messaging.schema_registry import EventSchemaRegistry
-from scripts.commands.base import (
-    CommandError,
-    ensure_tools_exist,
-    register,
-    run_subprocess,
-)
+from scripts.commands.base import CommandError, ensure_tools_exist, register, run_subprocess
 
 LOGGER = logging.getLogger(__name__)
 

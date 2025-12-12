@@ -19,11 +19,7 @@ from .multi_exchange_replay import (
     discover_recordings,
     load_replay_recording,
 )
-from .performance_artifacts import (
-    PerformanceArtifactGenerator,
-    PerformanceReport,
-    PerformanceRun,
-)
+from .performance_artifacts import PerformanceArtifactGenerator, PerformanceReport, PerformanceRun
 
 # Load budgets from configuration
 _budget_loader = BudgetLoader()

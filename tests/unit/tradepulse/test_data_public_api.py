@@ -141,10 +141,7 @@ class TestValidateOHLCV:
 
     def test_validate_raises_on_error(self) -> None:
         """Test that raise_on_error=True raises exception."""
-        from tradepulse.data.validation import (
-            TimeSeriesValidationError,
-            validate_ohlcv,
-        )
+        from tradepulse.data.validation import TimeSeriesValidationError, validate_ohlcv
 
         df = pd.DataFrame()
 

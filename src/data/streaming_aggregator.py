@@ -17,13 +17,7 @@ import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import BaseOffset
 
-from core.data.backfill import (
-    BackfillPlan,
-    CacheKey,
-    Gap,
-    GapFillPlanner,
-    normalise_index,
-)
+from core.data.backfill import BackfillPlan, CacheKey, Gap, GapFillPlanner, normalise_index
 from core.data.catalog import normalize_symbol, normalize_venue
 from core.data.models import InstrumentType, PriceTick
 from core.data.timeutils import get_market_calendar, normalize_timestamp

@@ -5,11 +5,7 @@ from typing import Mapping
 import pytest
 
 from execution.canary import CanaryDecision
-from execution.rollout import (
-    BlueGreenRolloutOrchestrator,
-    RolloutAbortedError,
-    RolloutStep,
-)
+from execution.rollout import BlueGreenRolloutOrchestrator, RolloutAbortedError, RolloutStep
 
 
 class _FakeRouter:

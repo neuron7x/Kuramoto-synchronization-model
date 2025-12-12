@@ -12,11 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Awaitable, Callable, Dict, MutableMapping, Optional
 
-from .idempotency import (
-    EventIdempotencyStore,
-    InMemoryEventIdempotencyStore,
-    current_timestamp,
-)
+from .idempotency import EventIdempotencyStore, InMemoryEventIdempotencyStore, current_timestamp
 
 _LOGGER = logging.getLogger(__name__)
 

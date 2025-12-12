@@ -51,13 +51,7 @@ from .contracts import (
     ReplayTransition,
     TrainingStep,
 )
-from .facade import (
-    MLSDM,
-    create_agent,
-    create_fhmc,
-    create_optimizer,
-    create_replay_engine,
-)
+from .facade import MLSDM, create_agent, create_fhmc, create_optimizer, create_replay_engine
 
 __all__ = [
     # Configuration classes

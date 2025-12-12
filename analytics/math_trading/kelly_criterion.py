@@ -129,9 +129,7 @@ class KellyCriterion:
 
         # Expected log growth rate: g = p * log(1 + f*b) + q * log(1 - f)
         if optimal > 0 and optimal < 1:
-            growth_rate = (
-                p * np.log(1 + optimal * b) + q * np.log(1 - optimal)
-            )
+            growth_rate = p * np.log(1 + optimal * b) + q * np.log(1 - optimal)
         else:
             growth_rate = 0.0
 
@@ -275,9 +273,7 @@ class MultiAssetKelly:
             full_kelly = sigma_inv @ mu
 
         # Store full Kelly positions
-        full_kelly_dict = {
-            params.asset_names[i]: full_kelly[i] for i in range(n)
-        }
+        full_kelly_dict = {params.asset_names[i]: full_kelly[i] for i in range(n)}
 
         # Apply fractional Kelly
         scaled_kelly = full_kelly * params.fractional_kelly
@@ -335,9 +331,7 @@ class MultiAssetKelly:
         port_std = np.sqrt(port_var) if port_var > 0 else 0.0
 
         sharpe = (
-            (port_return - params.risk_free_rate) / port_std
-            if port_std > 0
-            else 0.0
+            (port_return - params.risk_free_rate) / port_std if port_std > 0 else 0.0
         )
 
         leverage = float(np.sum(np.abs(f_optimal)))
@@ -348,9 +342,7 @@ class MultiAssetKelly:
         else:
             growth_rate = port_return
 
-        optimal_dict = {
-            params.asset_names[i]: f_optimal[i] for i in range(n)
-        }
+        optimal_dict = {params.asset_names[i]: f_optimal[i] for i in range(n)}
 
         return MultiAssetKellyResult(
             optimal_positions=optimal_dict,

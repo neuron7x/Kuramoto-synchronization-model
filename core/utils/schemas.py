@@ -84,10 +84,7 @@ def _type_to_schema(typ: Any) -> Dict[str, Any]:
         return {"type": "null"}
 
     # Handle Annotated types (PEP 593)
-    from typing import (
-        Annotated,
-        Union,
-    )  # Local import to avoid circular deps at module import
+    from typing import Annotated, Union  # Local import to avoid circular deps at module import
 
     if origin is Annotated:
         return _type_to_schema(args[0])

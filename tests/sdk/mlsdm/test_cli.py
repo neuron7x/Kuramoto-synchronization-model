@@ -2,20 +2,13 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import logging
-from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tradepulse.sdk.mlsdm.__main__ import (
-    JSONFormatter,
-    build_arg_parser,
-    configure_logging,
-)
+from tradepulse.sdk.mlsdm.__main__ import JSONFormatter, build_arg_parser, configure_logging
 
 
 class TestJSONFormatter:
@@ -112,7 +105,7 @@ class TestConfigureLogging:
         root = logging.getLogger()
         root.handlers.clear()
 
-        logger = configure_logging(level=logging.DEBUG)
+        configure_logging(level=logging.DEBUG)
 
         assert root.level == logging.DEBUG
 
@@ -178,13 +171,19 @@ class TestBuildArgParser:
     def test_parser_all_args(self) -> None:
         """Test parser with all arguments."""
         parser = build_arg_parser()
-        args = parser.parse_args([
-            "--config", "test.yaml",
-            "--steps", "200",
-            "--api",
-            "--host", "localhost",
-            "--port", "3000",
-        ])
+        args = parser.parse_args(
+            [
+                "--config",
+                "test.yaml",
+                "--steps",
+                "200",
+                "--api",
+                "--host",
+                "localhost",
+                "--port",
+                "3000",
+            ]
+        )
 
         assert args.config == "test.yaml"
         assert args.steps == 200
@@ -247,20 +246,23 @@ class TestMainFunction:
     def test_main_api_mode(self) -> None:
         """Test main function in API mode."""
         import sys
+
         from tradepulse.sdk.mlsdm.__main__ import main
 
         # Create a mock uvicorn module and inject it
         mock_uvicorn = MagicMock()
         sys.modules["uvicorn"] = mock_uvicorn
-        
+
         # Also need to mock the app import
         mock_app = MagicMock()
-        
+
         try:
-            with patch("sys.argv", ["mlsdm", "--api", "--host", "localhost", "--port", "9000"]):
+            with patch(
+                "sys.argv", ["mlsdm", "--api", "--host", "localhost", "--port", "9000"]
+            ):
                 with patch("tradepulse.sdk.mlsdm.api.app.app", mock_app):
                     main()
-                
+
             # Verify uvicorn.run was called with correct parameters
             mock_uvicorn.run.assert_called_once()
             call_args = mock_uvicorn.run.call_args

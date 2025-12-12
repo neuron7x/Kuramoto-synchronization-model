@@ -404,8 +404,7 @@ def compute_minimum_variance_trades(
     # Compute variance change from full rebalance
     # Var(w + delta) - Var(w) = delta^T Sigma delta + 2 * w^T Sigma delta
     full_var_change = (
-        delta @ covariance_matrix @ delta +
-        2 * w_current @ covariance_matrix @ delta
+        delta @ covariance_matrix @ delta + 2 * w_current @ covariance_matrix @ delta
     )
 
     if abs(full_var_change) <= risk_budget:

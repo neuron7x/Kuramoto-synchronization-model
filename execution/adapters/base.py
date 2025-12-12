@@ -10,15 +10,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import (
-    Any,
-    AsyncContextManager,
-    Callable,
-    Deque,
-    Dict,
-    Mapping,
-    MutableMapping,
-)
+from typing import Any, AsyncContextManager, Callable, Deque, Dict, Mapping, MutableMapping
 
 import httpx
 
@@ -273,7 +265,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
     ) -> Mapping[str, Any] | list:
         if not self._connected or self._http_client is None:
             raise RuntimeError("Connector is not connected")
-        
+
         # Check circuit breaker before allowing request
         if not self._circuit_breaker.allow_request():
             state = self._circuit_breaker.state
@@ -290,7 +282,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
             raise TransientOrderError(
                 f"Circuit breaker {state.value} - service unavailable"
             )
-        
+
         request_weight = (
             weight if weight is not None else self._weight_for(method, path)
         )
@@ -338,7 +330,7 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 extra={"method": method, "path": path, "error": message},
             )
             raise TransientOrderError(f"HTTP request failed: {message}") from exc
-        
+
         # Record success/failure based on response status
         if response.status_code == 429:
             self._circuit_breaker.record_failure()
@@ -351,10 +343,10 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
         if response.is_error:
             self._circuit_breaker.record_failure()
             raise OrderError(f"HTTP {response.status_code}: {response.text}")
-        
+
         # Success case
         self._circuit_breaker.record_success()
-        
+
         try:
             payload = response.json()
         except json.JSONDecodeError as exc:  # pragma: no cover - defensive
@@ -432,15 +424,15 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
     # Circuit breaker and health monitoring
     def get_circuit_breaker_state(self) -> CircuitBreakerState:
         """Return the current circuit breaker state.
-        
+
         Returns:
             CircuitBreakerState: Current state (CLOSED, OPEN, or HALF_OPEN).
         """
         return self._circuit_breaker.state
-    
+
     def get_circuit_breaker_metrics(self) -> Dict[str, Any]:
         """Return circuit breaker health metrics.
-        
+
         Returns:
             Dict containing state, failure rate, and recovery information.
         """
@@ -450,10 +442,10 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
             "time_until_recovery": self._circuit_breaker.get_time_until_recovery(),
             "last_trip_reason": self._circuit_breaker.get_last_trip_reason(),
         }
-    
+
     def reset_circuit_breaker(self) -> None:
         """Manually reset circuit breaker to closed state.
-        
+
         Should only be used for administrative purposes or testing.
         """
         self._circuit_breaker.reset()

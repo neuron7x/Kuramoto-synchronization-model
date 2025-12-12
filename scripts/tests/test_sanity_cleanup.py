@@ -6,8 +6,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from scripts.sanity_cleanup import models, runner, utils
 
 
@@ -228,9 +226,7 @@ class TestRunner:
                 summary="Completed",
             )
 
-        context = models.TaskContext(
-            root=tmp_path, options=models.CleanupOptions()
-        )
+        context = models.TaskContext(root=tmp_path, options=models.CleanupOptions())
 
         report = runner._execute_task(successful_task, context)
 
@@ -243,9 +239,7 @@ class TestRunner:
         def failing_task(ctx: models.TaskContext) -> models.TaskReport:
             raise ValueError("Something went wrong")
 
-        context = models.TaskContext(
-            root=tmp_path, options=models.CleanupOptions()
-        )
+        context = models.TaskContext(root=tmp_path, options=models.CleanupOptions())
 
         report = runner._execute_task(failing_task, context)
 

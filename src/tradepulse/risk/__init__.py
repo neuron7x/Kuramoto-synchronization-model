@@ -32,13 +32,7 @@ from .automated_testing import (
     generate_market_stress_scenarios,
     validate_risk_metrics,
 )
-from .risk_core import (
-    RiskConfig,
-    check_risk_breach,
-    compute_final_size,
-    kelly_shrink,
-    var_es,
-)
+from .risk_core import RiskConfig, check_risk_breach, compute_final_size, kelly_shrink, var_es
 
 __all__ = [
     # Core risk functions

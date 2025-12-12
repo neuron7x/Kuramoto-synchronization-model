@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from core.data.normalization_pipeline import (
-    MarketNormalizationConfig,
-    normalize_market_data,
-)
+from core.data.normalization_pipeline import MarketNormalizationConfig, normalize_market_data
 
 
 def test_normalize_ticks_resamples_to_ohlcv() -> None:

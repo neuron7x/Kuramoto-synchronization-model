@@ -12,16 +12,7 @@ import os
 import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    Iterator,
-    Mapping,
-    Optional,
-    Sequence,
-)
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, Mapping, Optional, Sequence
 
 _NUMPY_AVAILABLE = False
 _accelerated_quantiles: Any | None = None
@@ -39,13 +30,7 @@ else:  # pragma: no cover - covered via normal test environment
     _accelerated_quantiles = _numpy_quantiles
 
 try:
-    from prometheus_client import (
-        Counter,
-        Gauge,
-        Histogram,
-        generate_latest,
-        start_http_server,
-    )
+    from prometheus_client import Counter, Gauge, Histogram, generate_latest, start_http_server
 
     PROMETHEUS_AVAILABLE = True
 except ImportError:
@@ -128,11 +113,7 @@ class MetricsCollector:
                 # Ensure the default collectors are registered on the provided registry
                 # so standard Prometheus process/platform metrics are emitted.
                 try:
-                    from prometheus_client import (
-                        GCCollector,
-                        PlatformCollector,
-                        ProcessCollector,
-                    )
+                    from prometheus_client import GCCollector, PlatformCollector, ProcessCollector
 
                     for collector_cls in (
                         ProcessCollector,

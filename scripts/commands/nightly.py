@@ -8,11 +8,7 @@ import logging
 from pathlib import Path
 
 from observability.incidents import IncidentManager
-from observability.notifications import (
-    EmailSender,
-    NotificationDispatcher,
-    SlackNotifier,
-)
+from observability.notifications import EmailSender, NotificationDispatcher, SlackNotifier
 from scripts.commands.base import CommandError, register
 from scripts.nightly import BaselineStore, NightlyRegressionRunner
 from scripts.runtime import EXIT_CODES, create_artifact_manager

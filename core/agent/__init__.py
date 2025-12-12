@@ -9,17 +9,8 @@ from .evaluator import (
     StrategyEvaluationError,
     evaluate_strategies,
 )
-from .orchestrator import (
-    StrategyFlow,
-    StrategyOrchestrationError,
-    StrategyOrchestrator,
-)
-from .registry import (
-    AgentRegistry,
-    AgentRegistryError,
-    AgentSpec,
-    global_agent_registry,
-)
+from .orchestrator import StrategyFlow, StrategyOrchestrationError, StrategyOrchestrator
+from .registry import AgentRegistry, AgentRegistryError, AgentSpec, global_agent_registry
 from .scheduler import StrategyJob, StrategyJobStatus, StrategyScheduler
 from .strategy import PiAgent, Strategy
 

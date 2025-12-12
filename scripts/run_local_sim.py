@@ -28,25 +28,12 @@ from typing import Mapping, MutableMapping
 import numpy as np
 import pandas as pd
 
-from core.indicators.kuramoto_ricci_composite import (
-    CompositeSignal,
-    TradePulseCompositeEngine,
-)
+from core.indicators.kuramoto_ricci_composite import CompositeSignal, TradePulseCompositeEngine
 from domain import Order, OrderSide, OrderType, Signal, SignalAction
 from execution.audit import ExecutionAuditLogger, get_execution_audit_logger
 from execution.connectors import SimulatedExchangeConnector
-from execution.paper_trading import (
-    DeterministicLatencyModel,
-    PaperOrderReport,
-    PaperTradingEngine,
-)
-from execution.risk import (
-    LimitViolation,
-    OrderRateExceeded,
-    RiskError,
-    RiskLimits,
-    RiskManager,
-)
+from execution.paper_trading import DeterministicLatencyModel, PaperOrderReport, PaperTradingEngine
+from execution.risk import LimitViolation, OrderRateExceeded, RiskError, RiskLimits, RiskManager
 
 LOGGER = logging.getLogger("tradepulse.local_sim")
 

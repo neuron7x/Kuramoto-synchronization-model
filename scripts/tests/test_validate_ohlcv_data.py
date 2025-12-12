@@ -5,8 +5,6 @@ from __future__ import annotations
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from pathlib import Path
 
-import pytest
-
 from scripts import validate_ohlcv_data
 
 
@@ -46,7 +44,9 @@ def test_validate_ohlcv_file_not_found(tmp_path: Path) -> None:
 def test_validate_ohlcv_file_empty(tmp_path: Path) -> None:
     """Test validation of empty CSV file."""
     empty_file = tmp_path / "empty.csv"
-    empty_file.write_text("timestamp,symbol,open,high,low,close,volume\n", encoding="utf-8")
+    empty_file.write_text(
+        "timestamp,symbol,open,high,low,close,volume\n", encoding="utf-8"
+    )
 
     report = validate_ohlcv_data.validate_ohlcv_file(empty_file)
 
@@ -57,7 +57,9 @@ def test_validate_ohlcv_file_empty(tmp_path: Path) -> None:
 def test_validate_ohlcv_file_missing_close_column(tmp_path: Path) -> None:
     """Test validation fails when close column is missing."""
     csv_file = tmp_path / "no_close.csv"
-    csv_file.write_text("timestamp,open,high,low,volume\n2024-01-01,100,105,98,1000\n", encoding="utf-8")
+    csv_file.write_text(
+        "timestamp,open,high,low,volume\n2024-01-01,100,105,98,1000\n", encoding="utf-8"
+    )
 
     report = validate_ohlcv_data.validate_ohlcv_file(csv_file)
 
@@ -78,9 +80,8 @@ def test_validate_ohlcv_file_nan_values(tmp_path: Path) -> None:
     report = validate_ohlcv_data.validate_ohlcv_file(csv_file)
 
     # Missing values should be detected - check for warnings about NaN
-    has_nan_issue = (
-        any("NaN" in e for e in report.errors)
-        or any("NaN" in w for w in report.warnings)
+    has_nan_issue = any("NaN" in e for e in report.errors) or any(
+        "NaN" in w for w in report.warnings
     )
     assert has_nan_issue, "Expected NaN detection in errors or warnings"
 
@@ -223,15 +224,19 @@ def test_parse_args_defaults() -> None:
 
 def test_parse_args_custom_values() -> None:
     """Test parse_args with custom values."""
-    args = validate_ohlcv_data.parse_args([
-        "file1.csv",
-        "file2.csv",
-        "--format", "json",
-        "--close-col", "price",
-        "--no-ohlc",
-        "--strict",
-        "-v",
-    ])
+    args = validate_ohlcv_data.parse_args(
+        [
+            "file1.csv",
+            "file2.csv",
+            "--format",
+            "json",
+            "--close-col",
+            "price",
+            "--no-ohlc",
+            "--strict",
+            "-v",
+        ]
+    )
 
     assert len(args.files) == 2
     assert args.format == "json"
@@ -329,6 +334,6 @@ def test_validate_ohlcv_file_invalid_timestamps(tmp_path: Path) -> None:
     has_timestamp_warning = any("timestamp" in w.lower() for w in report.warnings)
     # If the date is unparseable, the date_range will be empty
     has_empty_date_range = report.date_range == ""
-    assert has_timestamp_warning or has_empty_date_range, (
-        "Expected timestamp warning or empty date range for invalid timestamp"
-    )
+    assert (
+        has_timestamp_warning or has_empty_date_range
+    ), "Expected timestamp warning or empty date range for invalid timestamp"

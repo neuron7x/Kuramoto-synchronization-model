@@ -11,11 +11,7 @@ from typing import Dict, Iterable, Tuple
 
 import pytest
 
-from tools.testing.test_generator import (
-    analyze_component,
-    analyze_module,
-    generate_unit_tests,
-)
+from tools.testing.test_generator import analyze_component, analyze_module, generate_unit_tests
 
 
 @pytest.fixture()

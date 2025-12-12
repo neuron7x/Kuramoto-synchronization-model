@@ -4,15 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import (
-    Boolean,
-    CheckConstraint,
-    DateTime,
-    Index,
-    SmallInteger,
-    String,
-    func,
-)
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Index, SmallInteger, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 __all__ = ["Base", "KillSwitchState"]

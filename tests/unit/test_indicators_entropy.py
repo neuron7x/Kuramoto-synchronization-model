@@ -20,12 +20,7 @@ import asyncio
 import numpy as np
 import pytest
 
-from core.indicators.entropy import (
-    DeltaEntropyFeature,
-    EntropyFeature,
-    delta_entropy,
-    entropy,
-)
+from core.indicators.entropy import DeltaEntropyFeature, EntropyFeature, delta_entropy, entropy
 
 
 def test_entropy_uniform_distribution_matches_log_bins(

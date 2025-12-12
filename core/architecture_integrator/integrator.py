@@ -17,10 +17,7 @@ from core.architecture_integrator.component import (
 )
 from core.architecture_integrator.lifecycle import LifecycleManager
 from core.architecture_integrator.registry import ComponentRegistry
-from core.architecture_integrator.validator import (
-    ArchitectureValidator,
-    ValidationResult,
-)
+from core.architecture_integrator.validator import ArchitectureValidator, ValidationResult
 
 logger = logging.getLogger(__name__)
 

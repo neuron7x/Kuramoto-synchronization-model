@@ -5,11 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from execution.normalization import (
-    NormalizationError,
-    SymbolNormalizer,
-    SymbolSpecification,
-)
+from execution.normalization import NormalizationError, SymbolNormalizer, SymbolSpecification
 
 
 def _build_normalizer() -> SymbolNormalizer:

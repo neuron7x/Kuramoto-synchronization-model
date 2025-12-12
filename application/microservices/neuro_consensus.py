@@ -6,10 +6,7 @@ from __future__ import annotations
 from typing import Mapping, Optional
 
 # Local import path in repository context:
-from analytics.regime.src.consensus.hncm_neuro import (
-    AgentVote,
-    NeuroConsensusAdapter,
-)
+from analytics.regime.src.consensus.hncm_neuro import AgentVote, NeuroConsensusAdapter
 from domain.signals import Signal, SignalAction
 
 

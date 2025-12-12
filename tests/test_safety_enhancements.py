@@ -20,11 +20,7 @@ from runtime.dual_approval import (
     get_required_approval_actions,
     requires_dual_approval,
 )
-from runtime.kill_switch import (
-    KillSwitchManager,
-    KillSwitchReason,
-    is_kill_switch_active,
-)
+from runtime.kill_switch import KillSwitchManager, KillSwitchReason, is_kill_switch_active
 from runtime.thermo_config import (
     ConfigValidationError,
     ConfigValidationIssue,

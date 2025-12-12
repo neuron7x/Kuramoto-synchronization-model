@@ -4,11 +4,7 @@ import numpy as np
 import pandas as pd
 
 from core.data.backfill import CacheKey, GapFillPlanner, LayerCache, detect_gaps
-from core.data.resampling import (
-    align_timeframes,
-    resample_l1_to_ohlcv,
-    resample_ticks_to_l1,
-)
+from core.data.resampling import align_timeframes, resample_l1_to_ohlcv, resample_ticks_to_l1
 
 
 def make_index(start: str, periods: int, freq: str) -> pd.DatetimeIndex:

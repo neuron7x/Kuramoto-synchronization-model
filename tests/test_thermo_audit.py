@@ -7,11 +7,7 @@ import pytest
 
 from runtime.dual_approval import DualApprovalManager
 from runtime.recovery_agent import RecoveryState
-from runtime.thermo_controller import (
-    CrisisComputation,
-    ThermoController,
-    ToleranceCheck,
-)
+from runtime.thermo_controller import CrisisComputation, ThermoController, ToleranceCheck
 
 
 def _build_simple_graph() -> nx.DiGraph:

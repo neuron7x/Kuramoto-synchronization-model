@@ -7,7 +7,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from scripts import generate_sample_ohlcv
 
@@ -217,14 +216,22 @@ def test_parse_args_defaults() -> None:
 
 def test_parse_args_custom_values() -> None:
     """Test parse_args with custom values."""
-    args = generate_sample_ohlcv.parse_args([
-        "-o", "custom.csv",
-        "--symbols", "BTC", "ETH",
-        "-d", "30",
-        "-t", "4h",
-        "--seed", "123",
-        "-v",
-    ])
+    args = generate_sample_ohlcv.parse_args(
+        [
+            "-o",
+            "custom.csv",
+            "--symbols",
+            "BTC",
+            "ETH",
+            "-d",
+            "30",
+            "-t",
+            "4h",
+            "--seed",
+            "123",
+            "-v",
+        ]
+    )
 
     assert args.output == Path("custom.csv")
     assert args.symbols == ["BTC", "ETH"]
@@ -238,11 +245,16 @@ def test_main_success(tmp_path: Path, capsys) -> None:
     """Test main returns 0 on success."""
     output_path = tmp_path / "output.csv"
 
-    exit_code = generate_sample_ohlcv.main([
-        "-o", str(output_path),
-        "-d", "1",
-        "-t", "1h",
-    ])
+    exit_code = generate_sample_ohlcv.main(
+        [
+            "-o",
+            str(output_path),
+            "-d",
+            "1",
+            "-t",
+            "1h",
+        ]
+    )
 
     assert exit_code == 0
     assert output_path.exists()
@@ -255,12 +267,18 @@ def test_main_creates_output_file(tmp_path: Path) -> None:
     """Test that main creates the output file."""
     output_path = tmp_path / "generated.csv"
 
-    generate_sample_ohlcv.main([
-        "-o", str(output_path),
-        "--symbols", "BTC",
-        "-d", "1",
-        "-t", "1h",
-    ])
+    generate_sample_ohlcv.main(
+        [
+            "-o",
+            str(output_path),
+            "--symbols",
+            "BTC",
+            "-d",
+            "1",
+            "-t",
+            "1h",
+        ]
+    )
 
     assert output_path.exists()
     df = pd.read_csv(output_path)
@@ -272,12 +290,20 @@ def test_main_multiple_symbols(tmp_path: Path) -> None:
     """Test main with multiple symbols."""
     output_path = tmp_path / "multi.csv"
 
-    generate_sample_ohlcv.main([
-        "-o", str(output_path),
-        "--symbols", "BTC", "ETH", "SOL",
-        "-d", "1",
-        "-t", "1d",
-    ])
+    generate_sample_ohlcv.main(
+        [
+            "-o",
+            str(output_path),
+            "--symbols",
+            "BTC",
+            "ETH",
+            "SOL",
+            "-d",
+            "1",
+            "-t",
+            "1d",
+        ]
+    )
 
     df = pd.read_csv(output_path)
     assert len(df["symbol"].unique()) == 3
@@ -287,5 +313,13 @@ def test_constants_defined() -> None:
     """Test that module constants are defined."""
     assert generate_sample_ohlcv.DEFAULT_OUTPUT_PATH is not None
     assert generate_sample_ohlcv.DEFAULT_NUM_DAYS > 0
-    assert generate_sample_ohlcv.DEFAULT_TIMEFRAME in ["1m", "5m", "15m", "30m", "1h", "4h", "1d"]
+    assert generate_sample_ohlcv.DEFAULT_TIMEFRAME in [
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "4h",
+        "1d",
+    ]
     assert isinstance(generate_sample_ohlcv.DEFAULT_SEED, int)

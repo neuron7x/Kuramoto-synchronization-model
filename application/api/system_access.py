@@ -12,24 +12,14 @@ from typing import Any, Awaitable, Callable, Mapping, Sequence
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from application.api.authorization import (
-    get_authorization_gateway,
-    require_permission,
-)
+from application.api.authorization import get_authorization_gateway, require_permission
 from application.api.debug import install_debug_routes
 from application.api.errors import register_exception_handlers
 from application.api.middleware import AccessLogMiddleware
-from application.api.rate_limit import (
-    SlidingWindowRateLimiter,
-    build_rate_limiter,
-)
+from application.api.rate_limit import SlidingWindowRateLimiter, build_rate_limiter
 from application.api.security import verify_request_identity
 from application.security.rbac import AuthorizationGateway
-from application.settings import (
-    ApiRateLimitSettings,
-    BackendRuntimeSettings,
-    NotificationSettings,
-)
+from application.settings import ApiRateLimitSettings, BackendRuntimeSettings, NotificationSettings
 from application.system import TradePulseSystem
 from application.trading import order_to_dto
 from core.utils.debug import VariableInspector
@@ -41,11 +31,7 @@ from observability.audit.trail import (
     get_system_audit_trail,
 )
 from observability.logging import configure_logging
-from observability.notifications import (
-    EmailSender,
-    NotificationDispatcher,
-    SlackNotifier,
-)
+from observability.notifications import EmailSender, NotificationDispatcher, SlackNotifier
 from src.admin.remote_control import AdminIdentity
 from src.security import AccessDeniedError
 

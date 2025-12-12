@@ -193,9 +193,7 @@ def write_dataframe(
     suffix = destination.suffix.lower() if explicit_suffix else None
 
     if suffix not in (None, _PARQUET_SUFFIX, _JSON_SUFFIX):
-        raise ValueError(
-            "Unsupported dataframe suffix. Expected .parquet or .json"
-        )
+        raise ValueError("Unsupported dataframe suffix. Expected .parquet or .json")
 
     if suffix == _JSON_SUFFIX:
         backend = _json_backend()

@@ -81,6 +81,7 @@ def main() -> None:
     if args.api:
         try:
             import uvicorn  # type: ignore[import]
+
             from .api.app import app
         except (ImportError, ModuleNotFoundError) as exc:
             logger.exception("Failed to import API app or uvicorn: %s", exc)

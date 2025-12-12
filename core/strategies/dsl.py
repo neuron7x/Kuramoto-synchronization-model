@@ -28,14 +28,7 @@ from typing import Any, Callable, Dict, Iterable, Literal
 import numpy as np
 import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    PositiveInt,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator, model_validator
 
 __all__ = [
     "ComponentParameters",

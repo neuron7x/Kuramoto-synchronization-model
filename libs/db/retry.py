@@ -6,12 +6,7 @@ import logging
 from collections.abc import Callable
 
 from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
-from sqlalchemy.exc import (
-    DBAPIError,
-    DisconnectionError,
-    InterfaceError,
-    OperationalError,
-)
+from sqlalchemy.exc import DBAPIError, DisconnectionError, InterfaceError, OperationalError
 from tenacity import (
     Retrying,
     before_sleep_log,

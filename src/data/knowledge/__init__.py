@@ -24,12 +24,7 @@ from .retrieval import HybridSearchEngine, SourcePrioritizer
 from .segmenter import DocumentSegmenter, SegmentationConfig
 from .sharding import ShardManager
 from .subsystem import KnowledgeSearchConfig, KnowledgeSearchSubsystem
-from .validators import (
-    CitationBuilder,
-    CompletenessController,
-    FreshnessPolicy,
-    LinkValidator,
-)
+from .validators import CitationBuilder, CompletenessController, FreshnessPolicy, LinkValidator
 
 __all__ = [
     "AnswerCache",

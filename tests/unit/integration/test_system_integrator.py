@@ -94,7 +94,9 @@ class TestSystemIntegrator:
         integrator = SystemIntegrator()
         mock_coordinator = MagicMock()
         mock_coordinator.get_system_health.return_value = {"health_score": "100"}
-        mock_coordinator.get_coordination_summary.return_value = {"registered_agents": 0}
+        mock_coordinator.get_coordination_summary.return_value = {
+            "registered_agents": 0
+        }
 
         integrator.register_agent_coordinator(mock_coordinator)
 
@@ -351,12 +353,13 @@ class TestSystemIntegratorBuilder:
         """Test building with agent coordinator."""
         mock_coordinator = MagicMock()
         mock_coordinator.get_system_health.return_value = {"health_score": "100"}
-        mock_coordinator.get_coordination_summary.return_value = {"registered_agents": 0}
+        mock_coordinator.get_coordination_summary.return_value = {
+            "registered_agents": 0
+        }
 
         builder = SystemIntegratorBuilder()
         integrator = (
-            builder
-            .with_agent_coordinator(mock_coordinator)
+            builder.with_agent_coordinator(mock_coordinator)
             .with_auto_start(False)
             .build()
         )
@@ -370,10 +373,7 @@ class TestSystemIntegratorBuilder:
 
         builder = SystemIntegratorBuilder()
         integrator = (
-            builder
-            .with_service_registry(mock_registry)
-            .with_auto_start(False)
-            .build()
+            builder.with_service_registry(mock_registry).with_auto_start(False).build()
         )
 
         assert integrator.service_registry is mock_registry
@@ -390,11 +390,7 @@ class TestSystemIntegratorBuilder:
         """Test enabling fractal regulator."""
         builder = SystemIntegratorBuilder()
 
-        integrator = (
-            builder
-            .with_fractal_regulator(True, {"window_size": 150})
-            .build()
-        )
+        integrator = builder.with_fractal_regulator(True, {"window_size": 150}).build()
 
         assert integrator.config.enable_fractal_regulator is True
         assert integrator.config.regulator_config["window_size"] == 150
@@ -405,8 +401,7 @@ class TestSystemIntegratorBuilder:
         builder = SystemIntegratorBuilder()
 
         integrator = (
-            builder
-            .with_auto_start(False)
+            builder.with_auto_start(False)
             .add_custom_component("custom", mock_component, description="Test")
             .build()
         )
@@ -417,15 +412,16 @@ class TestSystemIntegratorBuilder:
         """Test that builder methods support chaining."""
         mock_coordinator = MagicMock()
         mock_coordinator.get_system_health.return_value = {"health_score": "100"}
-        mock_coordinator.get_coordination_summary.return_value = {"registered_agents": 0}
+        mock_coordinator.get_coordination_summary.return_value = {
+            "registered_agents": 0
+        }
 
         mock_registry = MagicMock()
         mock_registry.services.return_value = []
 
         builder = SystemIntegratorBuilder()
         integrator = (
-            builder
-            .with_config(IntegrationConfig())
+            builder.with_config(IntegrationConfig())
             .with_service_registry(mock_registry)
             .with_agent_coordinator(mock_coordinator)
             .with_auto_start(False)

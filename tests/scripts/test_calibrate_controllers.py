@@ -30,7 +30,7 @@ class TestCalibrationProfiles:
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             assert "description" in profile_data, f"{profile_name} missing description"
             assert isinstance(profile_data["description"], str)
-            
+
             # Should have at least one controller
             controllers = [k for k in profile_data if k != "description"]
             assert len(controllers) > 0, f"{profile_name} has no controller configs"
@@ -55,7 +55,7 @@ class TestCalibrationProfiles:
             "risk_mult",
             "activity_mult",
         }
-        
+
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "nak" in profile_data:
                 nak_params = set(profile_data["nak"].keys())
@@ -73,7 +73,7 @@ class TestCalibrationProfiles:
             "invigoration_threshold",
             "no_go_threshold",
         }
-        
+
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "dopamine" in profile_data:
                 da_params = set(profile_data["dopamine"].keys())
@@ -81,7 +81,7 @@ class TestCalibrationProfiles:
                     f"{profile_name} dopamine config missing parameters: "
                     f"{required_params - da_params}"
                 )
-    
+
     def test_serotonin_profile_parameters(self):
         """Verify serotonin profiles have required parameters."""
         required_params = {
@@ -91,7 +91,7 @@ class TestCalibrationProfiles:
             "cooldown_ticks",
             "stress_gain",
         }
-        
+
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "serotonin" in profile_data:
                 sero_params = set(profile_data["serotonin"].keys())
@@ -99,7 +99,7 @@ class TestCalibrationProfiles:
                     f"{profile_name} serotonin config missing parameters: "
                     f"{required_params - sero_params}"
                 )
-    
+
     def test_risk_engine_profile_parameters(self):
         """Verify risk_engine profiles have required parameters."""
         required_params = {
@@ -108,7 +108,7 @@ class TestCalibrationProfiles:
             "safe_mode_position_multiplier",
             "kill_switch_loss_streak",
         }
-        
+
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "risk_engine" in profile_data:
                 risk_params = set(profile_data["risk_engine"].keys())
@@ -116,7 +116,7 @@ class TestCalibrationProfiles:
                     f"{profile_name} risk_engine config missing parameters: "
                     f"{required_params - risk_params}"
                 )
-    
+
     def test_regime_adaptive_profile_parameters(self):
         """Verify regime_adaptive profiles have required parameters."""
         required_params = {
@@ -127,7 +127,7 @@ class TestCalibrationProfiles:
             "stressed_multiplier",
             "critical_multiplier",
         }
-        
+
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "regime_adaptive" in profile_data:
                 regime_params = set(profile_data["regime_adaptive"].keys())
@@ -141,109 +141,107 @@ class TestCalibrationProfiles:
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "nak" not in profile_data:
                 continue
-            
+
             nak = profile_data["nak"]
-            
+
             # EI thresholds
-            assert nak["EI_low"] < nak["EI_high"], (
-                f"{profile_name}: EI_low must be less than EI_high"
-            )
-            assert nak["EI_crit"] >= 0, (
-                f"{profile_name}: EI_crit must be non-negative"
-            )
-            assert nak["EI_crit"] <= nak["EI_low"], (
-                f"{profile_name}: EI_crit should be <= EI_low"
-            )
-            
+            assert (
+                nak["EI_low"] < nak["EI_high"]
+            ), f"{profile_name}: EI_low must be less than EI_high"
+            assert nak["EI_crit"] >= 0, f"{profile_name}: EI_crit must be non-negative"
+            assert (
+                nak["EI_crit"] <= nak["EI_low"]
+            ), f"{profile_name}: EI_crit should be <= EI_low"
+
             # Volatility thresholds
-            assert nak["vol_amber"] <= nak["vol_red"], (
-                f"{profile_name}: vol_amber must be <= vol_red"
-            )
-            
+            assert (
+                nak["vol_amber"] <= nak["vol_red"]
+            ), f"{profile_name}: vol_amber must be <= vol_red"
+
             # Drawdown thresholds
-            assert nak["dd_amber"] <= nak["dd_red"], (
-                f"{profile_name}: dd_amber must be <= dd_red"
-            )
-            
+            assert (
+                nak["dd_amber"] <= nak["dd_red"]
+            ), f"{profile_name}: dd_amber must be <= dd_red"
+
             # Delta r limit
             assert (
                 0 < nak["delta_r_limit"] <= 1.0
             ), f"{profile_name}: delta_r_limit must be in (0, 1]"
-    
+
     def test_serotonin_threshold_relationships(self):
         """Verify Serotonin thresholds maintain valid relationships."""
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "serotonin" not in profile_data:
                 continue
-            
+
             sero = profile_data["serotonin"]
-            
+
             # Stress thresholds
-            assert sero["release_threshold"] <= sero["stress_threshold"], (
-                f"{profile_name}: release_threshold must be <= stress_threshold"
-            )
-            
+            assert (
+                sero["release_threshold"] <= sero["stress_threshold"]
+            ), f"{profile_name}: release_threshold must be <= stress_threshold"
+
             # Hysteresis is reasonable
-            assert 0 <= sero["hysteresis"] <= 1.0, (
-                f"{profile_name}: hysteresis must be in [0, 1]"
-            )
-            
+            assert (
+                0 <= sero["hysteresis"] <= 1.0
+            ), f"{profile_name}: hysteresis must be in [0, 1]"
+
             # Cooldown is non-negative
-            assert sero["cooldown_ticks"] >= 0, (
-                f"{profile_name}: cooldown_ticks must be >= 0"
-            )
-    
+            assert (
+                sero["cooldown_ticks"] >= 0
+            ), f"{profile_name}: cooldown_ticks must be >= 0"
+
     def test_risk_engine_invariants(self):
         """Verify Risk Engine parameters maintain valid relationships."""
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "risk_engine" not in profile_data:
                 continue
-            
+
             risk = profile_data["risk_engine"]
-            
+
             # Loss percent is in (0, 1]
-            assert 0 < risk["max_daily_loss_percent"] <= 1.0, (
-                f"{profile_name}: max_daily_loss_percent must be in (0, 1]"
-            )
-            
+            assert (
+                0 < risk["max_daily_loss_percent"] <= 1.0
+            ), f"{profile_name}: max_daily_loss_percent must be in (0, 1]"
+
             # Leverage is positive
-            assert risk["max_leverage"] > 0, (
-                f"{profile_name}: max_leverage must be > 0"
-            )
-            
+            assert risk["max_leverage"] > 0, f"{profile_name}: max_leverage must be > 0"
+
             # Safe mode multiplier is in [0, 1]
-            assert 0 <= risk["safe_mode_position_multiplier"] <= 1.0, (
-                f"{profile_name}: safe_mode_position_multiplier must be in [0, 1]"
-            )
-            
+            assert (
+                0 <= risk["safe_mode_position_multiplier"] <= 1.0
+            ), f"{profile_name}: safe_mode_position_multiplier must be in [0, 1]"
+
             # Kill switch streak is positive
-            assert risk["kill_switch_loss_streak"] >= 1, (
-                f"{profile_name}: kill_switch_loss_streak must be >= 1"
-            )
-    
+            assert (
+                risk["kill_switch_loss_streak"] >= 1
+            ), f"{profile_name}: kill_switch_loss_streak must be >= 1"
+
     def test_regime_adaptive_threshold_ordering(self):
         """Verify Regime Adaptive thresholds maintain proper ordering."""
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "regime_adaptive" not in profile_data:
                 continue
-            
+
             regime = profile_data["regime_adaptive"]
-            
+
             # Threshold ordering: calm < stressed < critical
-            assert regime["calm_threshold"] < regime["stressed_threshold"] < regime["critical_threshold"], (
-                f"{profile_name}: thresholds must satisfy calm < stressed < critical"
-            )
-            
+            assert (
+                regime["calm_threshold"]
+                < regime["stressed_threshold"]
+                < regime["critical_threshold"]
+            ), f"{profile_name}: thresholds must satisfy calm < stressed < critical"
+
             # Multipliers are positive
-            assert regime["calm_multiplier"] > 0, (
-                f"{profile_name}: calm_multiplier must be > 0"
-            )
-            assert regime["stressed_multiplier"] > 0, (
-                f"{profile_name}: stressed_multiplier must be > 0"
-            )
-            assert regime["critical_multiplier"] > 0, (
-                f"{profile_name}: critical_multiplier must be > 0"
-            )
+            assert (
+                regime["calm_multiplier"] > 0
+            ), f"{profile_name}: calm_multiplier must be > 0"
+            assert (
+                regime["stressed_multiplier"] > 0
+            ), f"{profile_name}: stressed_multiplier must be > 0"
+            assert (
+                regime["critical_multiplier"] > 0
+            ), f"{profile_name}: critical_multiplier must be > 0"
 
 
 class TestConfigLoading:
@@ -258,11 +256,11 @@ class TestConfigLoading:
                 "risk_mult": {"GREEN": 1.0, "AMBER": 0.65, "RED": 0.0},
             }
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             save_config(test_config, temp_path)
-        
+
         try:
             loaded_config = load_config(temp_path)
             assert loaded_config == test_config
@@ -294,11 +292,11 @@ class TestValidation:
                 "r_max": 1.8,
             }
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is True
         finally:
@@ -320,11 +318,11 @@ class TestValidation:
                 "r_max": 1.8,
             }
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is False
         finally:
@@ -338,11 +336,11 @@ class TestValidation:
             "burst_factor": 2.5,
             "base_temperature": 1.0,
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is True
         finally:
@@ -356,11 +354,11 @@ class TestValidation:
             "burst_factor": 2.5,
             "base_temperature": 1.0,
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is False
         finally:
@@ -374,11 +372,12 @@ class TestProfileApplication:
         """Test applying balanced profile to NAK controller."""
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_nak.yaml"
-            
+
             # Need to mock the base config loading
             import calibrate_controllers
+
             original_load = calibrate_controllers.load_config
-            
+
             def mock_load(path):
                 if "nak.yaml" in str(path):
                     return {
@@ -389,15 +388,15 @@ class TestProfileApplication:
                         }
                     }
                 return original_load(path)
-            
+
             calibrate_controllers.load_config = mock_load
-            
+
             try:
                 apply_calibration_profile("nak", "balanced", output_path)
-                
+
                 assert output_path.exists()
                 config = load_config(output_path)
-                
+
                 assert "nak" in config
                 assert config["nak"]["EI_low"] == 0.35
                 assert config["nak"]["EI_high"] == 0.65
@@ -409,7 +408,7 @@ class TestProfileApplication:
         """Test applying nonexistent profile raises error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test.yaml"
-            
+
             with pytest.raises(SystemExit):
                 apply_calibration_profile("nak", "nonexistent", output_path)
 
@@ -417,7 +416,7 @@ class TestProfileApplication:
         """Test applying profile to unsupported controller raises error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test.yaml"
-            
+
             with pytest.raises(SystemExit):
                 apply_calibration_profile("unknown", "balanced", output_path)
 
@@ -429,53 +428,60 @@ class TestProfileCharacteristics:
         """Verify conservative profile has tightest constraints."""
         conservative_nak = CALIBRATION_PROFILES["conservative"]["nak"]
         balanced_nak = CALIBRATION_PROFILES["balanced"]["nak"]
-        aggressive_nak = CALIBRATION_PROFILES["aggressive"]["nak"]
-        
+        CALIBRATION_PROFILES["aggressive"]["nak"]
+
         # Conservative should have higher EI thresholds
         assert conservative_nak["EI_low"] >= balanced_nak["EI_low"]
         assert conservative_nak["EI_crit"] >= balanced_nak["EI_crit"]
-        
+
         # Conservative should have lower volatility/drawdown thresholds
         assert conservative_nak["vol_amber"] <= balanced_nak["vol_amber"]
         assert conservative_nak["dd_amber"] <= balanced_nak["dd_amber"]
-        
+
         # Conservative should have lower risk multipliers
-        assert conservative_nak["risk_mult"]["AMBER"] <= balanced_nak["risk_mult"]["AMBER"]
+        assert (
+            conservative_nak["risk_mult"]["AMBER"] <= balanced_nak["risk_mult"]["AMBER"]
+        )
 
     def test_aggressive_is_most_permissive(self):
         """Verify aggressive profile has loosest constraints."""
         balanced_nak = CALIBRATION_PROFILES["balanced"]["nak"]
         aggressive_nak = CALIBRATION_PROFILES["aggressive"]["nak"]
-        
+
         # Aggressive should have lower EI thresholds
         assert aggressive_nak["EI_low"] <= balanced_nak["EI_low"]
         assert aggressive_nak["EI_crit"] <= balanced_nak["EI_crit"]
-        
+
         # Aggressive should have higher volatility/drawdown thresholds
         assert aggressive_nak["vol_amber"] >= balanced_nak["vol_amber"]
         assert aggressive_nak["dd_amber"] >= balanced_nak["dd_amber"]
-        
+
         # Aggressive should have higher risk multipliers
-        assert aggressive_nak["risk_mult"]["AMBER"] >= balanced_nak["risk_mult"]["AMBER"]
+        assert (
+            aggressive_nak["risk_mult"]["AMBER"] >= balanced_nak["risk_mult"]["AMBER"]
+        )
 
     def test_dopamine_temperature_ordering(self):
         """Verify dopamine temperature follows expected ordering."""
         conservative_da = CALIBRATION_PROFILES["conservative"]["dopamine"]
         balanced_da = CALIBRATION_PROFILES["balanced"]["dopamine"]
         aggressive_da = CALIBRATION_PROFILES["aggressive"]["dopamine"]
-        
+
         # Aggressive should have highest exploration temperature
         assert conservative_da["base_temperature"] < balanced_da["base_temperature"]
         assert balanced_da["base_temperature"] < aggressive_da["base_temperature"]
-        
+
         # Aggressive should have lowest gating thresholds
-        assert aggressive_da["invigoration_threshold"] <= balanced_da["invigoration_threshold"]
+        assert (
+            aggressive_da["invigoration_threshold"]
+            <= balanced_da["invigoration_threshold"]
+        )
         assert aggressive_da["no_go_threshold"] <= balanced_da["no_go_threshold"]
 
 
 class TestErrorPaths:
     """Tests for error conditions and edge cases."""
-    
+
     def test_validate_missing_nak_params(self):
         """Test validation fails when NAK parameters are missing."""
         config = {
@@ -484,32 +490,32 @@ class TestErrorPaths:
                 # Missing other required params
             }
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is False
         finally:
             temp_path.unlink()
-    
+
     def test_validate_missing_dopamine_params(self):
         """Test validation fails when dopamine parameters are missing."""
         config = {
             "learning_rate_v": 0.1,
             # Missing other required params
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is False
         finally:
             temp_path.unlink()
-    
+
     def test_validate_vol_amber_greater_than_red(self):
         """Test validation fails when vol_amber > vol_red."""
         config = {
@@ -526,26 +532,26 @@ class TestErrorPaths:
                 "r_max": 1.8,
             }
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_path = Path(f.name)
             yaml.dump(config, f)
-        
+
         try:
             assert validate_config(temp_path) is False
         finally:
             temp_path.unlink()
-    
+
     def test_validate_nonexistent_file(self):
         """Test validation fails gracefully for nonexistent file."""
         result = validate_config(Path("/nonexistent/file.yaml"))
         assert result is False
-    
+
     def test_apply_profile_with_controller_not_in_profile(self):
         """Test applying profile without controller exits with error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test.yaml"
-            
+
             with pytest.raises(SystemExit) as exc_info:
                 # This should fail because 'unknown' is not a valid controller
                 apply_calibration_profile("unknown", "balanced", output_path)

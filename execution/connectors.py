@@ -14,11 +14,7 @@ from domain import Order, OrderSide, OrderStatus
 from .normalization import NormalizationError, SymbolNormalizer, SymbolSpecification
 
 try:  # pragma: no cover - optional import for live connectors
-    from execution.adapters import (
-        BinanceRESTConnector,
-        CoinbaseRESTConnector,
-        KrakenRESTConnector,
-    )
+    from execution.adapters import BinanceRESTConnector, CoinbaseRESTConnector, KrakenRESTConnector
 except (
     Exception
 ):  # pragma: no cover - adapters may not be available in minimal installs

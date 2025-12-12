@@ -23,13 +23,7 @@ from .analyzers import (
     rolling_average,
     save_snapshot,
 )
-from .models import (
-    FileMetrics,
-    FunctionMetrics,
-    RepositoryMetrics,
-    Thresholds,
-    TrendInsight,
-)
+from .models import FileMetrics, FunctionMetrics, RepositoryMetrics, Thresholds, TrendInsight
 
 
 class CodeMetricAggregator:

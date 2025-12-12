@@ -14,10 +14,7 @@ from core.altdata.social_listening import (
     SocialSignalFactory,
 )
 from src.data.event_bus import BrokerMessage, MessageBroker
-from src.data.social_listening import (
-    SocialListeningPipeline,
-    SocialPublicationConfig,
-)
+from src.data.social_listening import SocialListeningPipeline, SocialPublicationConfig
 
 
 def _ts(minutes: int) -> datetime:

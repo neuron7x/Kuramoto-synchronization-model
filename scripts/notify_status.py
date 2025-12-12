@@ -9,11 +9,7 @@ import os
 from dataclasses import dataclass
 from typing import Dict
 
-from observability.notifications import (
-    NotificationDispatcher,
-    SlackNotifier,
-    TeamsNotifier,
-)
+from observability.notifications import NotificationDispatcher, SlackNotifier, TeamsNotifier
 
 STATUS_LABELS = {
     "success": "Success",

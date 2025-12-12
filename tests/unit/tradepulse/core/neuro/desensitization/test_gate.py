@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from tradepulse.core.neuro.desensitization import (
-    DesensitizationGate,
-    integration,
-)
+from tradepulse.core.neuro.desensitization import DesensitizationGate, integration
 
 
 def test_desensitization_gate_step_returns_expected_shape() -> None:

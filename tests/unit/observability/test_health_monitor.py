@@ -2,11 +2,7 @@ from __future__ import annotations
 
 from prometheus_client import CollectorRegistry
 
-from observability.health_monitor import (
-    HealthCheck,
-    HealthCheckResult,
-    PeriodicHealthMonitor,
-)
+from observability.health_monitor import HealthCheck, HealthCheckResult, PeriodicHealthMonitor
 
 
 class _StubHealthServer:

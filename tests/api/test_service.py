@@ -26,10 +26,7 @@ os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "test-rbac-secret")
 
 from application.api import security as security_module
 from application.api import service as service_module
-from application.api.rate_limit import (
-    InMemorySlidingWindowBackend,
-    SlidingWindowRateLimiter,
-)
+from application.api.rate_limit import InMemorySlidingWindowBackend, SlidingWindowRateLimiter
 from application.api.service import DependencyProbeResult, create_app
 from application.security.two_factor import generate_totp_code
 from application.settings import (

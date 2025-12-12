@@ -41,14 +41,7 @@ import logging
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Protocol,
-    Sequence,
-    Union,
-)
+from typing import Dict, List, Optional, Protocol, Sequence, Union
 
 from .schema import Bar, FeatureVector, MarketSnapshot, Timeframe
 

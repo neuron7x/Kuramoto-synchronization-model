@@ -31,11 +31,7 @@ import pytest
 from core.data.preprocess import normalize_df, scale_series
 from core.indicators.entropy import EntropyFeature, entropy
 from core.indicators.hurst import HurstFeature, hurst_exponent
-from core.indicators.kuramoto import (
-    KuramotoOrderFeature,
-    compute_phase,
-    compute_phase_gpu,
-)
+from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase, compute_phase_gpu
 from core.indicators.ricci import MeanRicciFeature, build_price_graph, mean_ricci
 
 

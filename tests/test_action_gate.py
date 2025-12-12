@@ -6,10 +6,7 @@ import pytest
 import yaml
 
 from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
-from tradepulse.core.neuro.dopamine.action_gate import (
-    DopamineSnapshot,
-    SerotoninSnapshot,
-)
+from tradepulse.core.neuro.dopamine.action_gate import DopamineSnapshot, SerotoninSnapshot
 
 
 @pytest.fixture

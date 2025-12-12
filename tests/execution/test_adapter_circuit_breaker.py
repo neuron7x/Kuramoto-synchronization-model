@@ -11,10 +11,7 @@ import pytest
 from domain import Order, OrderSide, OrderType
 from execution.adapters.base import RESTWebSocketConnector
 from execution.connectors import TransientOrderError
-from execution.resilience.circuit_breaker import (
-    CircuitBreakerConfig,
-    CircuitBreakerState,
-)
+from execution.resilience.circuit_breaker import CircuitBreakerConfig, CircuitBreakerState
 
 
 class TestConnector(RESTWebSocketConnector):

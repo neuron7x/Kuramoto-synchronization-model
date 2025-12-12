@@ -123,7 +123,9 @@ class TestPortfolioRebalancer:
         assert result.total_turnover >= 0
         assert result.total_turnover <= 1.0
 
-    def test_transaction_cost_calculation(self, simple_request: RebalanceRequest) -> None:
+    def test_transaction_cost_calculation(
+        self, simple_request: RebalanceRequest
+    ) -> None:
         rebalancer = PortfolioRebalancer()
         result = rebalancer.optimize(simple_request)
 
@@ -243,11 +245,13 @@ class TestMinimumVarianceTrades:
     @pytest.fixture
     def simple_setup(self) -> tuple:
         asset_names = ["A", "B", "C"]
-        cov = np.array([
-            [0.04, 0.01, 0.005],
-            [0.01, 0.03, 0.01],
-            [0.005, 0.01, 0.02],
-        ])
+        cov = np.array(
+            [
+                [0.04, 0.01, 0.005],
+                [0.01, 0.03, 0.01],
+                [0.005, 0.01, 0.02],
+            ]
+        )
         current = {"A": 0.3, "B": 0.4, "C": 0.3}
         target = {"A": 0.4, "B": 0.3, "C": 0.3}
         return current, target, cov, asset_names

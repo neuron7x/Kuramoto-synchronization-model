@@ -27,15 +27,9 @@ try:  # pragma: no cover - optional dependency import guarded at runtime
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanProcessor
-    from opentelemetry.sdk.trace.sampling import (
-        Sampler,
-        SamplingResult,
-        TraceIdRatioBased,
-    )
+    from opentelemetry.sdk.trace.sampling import Sampler, SamplingResult, TraceIdRatioBased
     from opentelemetry.trace import Status, StatusCode
-    from opentelemetry.trace.propagation.tracecontext import (
-        TraceContextTextMapPropagator,
-    )
+    from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
     _TRACE_AVAILABLE = True
 except Exception as exc:  # pragma: no cover - the dependencies are optional

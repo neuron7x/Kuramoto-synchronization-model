@@ -24,10 +24,7 @@ from core.architecture_integrator import (
     ComponentStatus,
     ValidationResult,
 )
-from core.integration.adapters import (
-    AgentCoordinatorAdapter,
-    ServiceRegistryAdapter,
-)
+from core.integration.adapters import AgentCoordinatorAdapter, ServiceRegistryAdapter
 
 if TYPE_CHECKING:
     from application.microservices.registry import ServiceRegistry
@@ -443,12 +440,10 @@ class SystemIntegrator:
         total_components = len(health_map)
         healthy_components = sum(1 for h in health_map.values() if h.healthy)
         degraded_components = sum(
-            1 for h in health_map.values()
-            if h.status == ComponentStatus.DEGRADED
+            1 for h in health_map.values() if h.status == ComponentStatus.DEGRADED
         )
         failed_components = sum(
-            1 for h in health_map.values()
-            if h.status == ComponentStatus.FAILED
+            1 for h in health_map.values() if h.status == ComponentStatus.FAILED
         )
 
         # Calculate overall health score (0-100)
@@ -757,11 +752,13 @@ class SystemIntegratorBuilder:
         Returns:
             Self for method chaining
         """
-        self._custom_components.append({
-            "name": name,
-            "instance": instance,
-            **kwargs,
-        })
+        self._custom_components.append(
+            {
+                "name": name,
+                "instance": instance,
+                **kwargs,
+            }
+        )
         return self
 
     def build(self) -> SystemIntegrator:

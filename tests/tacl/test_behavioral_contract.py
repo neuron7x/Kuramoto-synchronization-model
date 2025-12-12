@@ -2,11 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tacl.behavioral_contract import (
-    BehavioralContract,
-    BehavioralContractViolation,
-    ContractBreach,
-)
+from tacl.behavioral_contract import BehavioralContract, BehavioralContractViolation, ContractBreach
 from tacl.energy_model import (
     EnergyMetrics,
     EnergyValidationError,

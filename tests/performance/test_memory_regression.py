@@ -10,10 +10,7 @@ import pandas as pd
 import pytest
 
 from core.indicators.entropy import EntropyFeature
-from core.indicators.hierarchical_features import (
-    FeatureBufferCache,
-    compute_hierarchical_features,
-)
+from core.indicators.hierarchical_features import FeatureBufferCache, compute_hierarchical_features
 from core.indicators.hurst import HurstFeature
 from core.indicators.kuramoto import KuramotoOrderFeature, compute_phase
 from core.indicators.pipeline import IndicatorPipeline

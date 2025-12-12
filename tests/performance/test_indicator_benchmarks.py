@@ -6,10 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.hierarchical_features import (
-    FeatureBufferCache,
-    compute_hierarchical_features,
-)
+from core.indicators.hierarchical_features import FeatureBufferCache, compute_hierarchical_features
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 
 pytestmark = [pytest.mark.slow, pytest.mark.heavy_math]

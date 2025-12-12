@@ -90,7 +90,9 @@ class TestAlmgrenChrissOptimizer:
         assert len(result.slices) == 10
         assert all(isinstance(s, ExecutionSlice) for s in result.slices)
 
-    def test_total_quantity_conserved(self, base_params: OptimalExecutionParams) -> None:
+    def test_total_quantity_conserved(
+        self, base_params: OptimalExecutionParams
+    ) -> None:
         optimizer = AlmgrenChrissOptimizer(base_params)
         result = optimizer.compute_schedule(num_slices=20)
 
@@ -123,7 +125,9 @@ class TestAlmgrenChrissOptimizer:
         assert times[0] == 0.0
         assert times[-1] < base_params.duration_seconds
 
-    def test_urgency_parameter_positive(self, base_params: OptimalExecutionParams) -> None:
+    def test_urgency_parameter_positive(
+        self, base_params: OptimalExecutionParams
+    ) -> None:
         optimizer = AlmgrenChrissOptimizer(base_params)
         assert optimizer.urgency_parameter > 0
 

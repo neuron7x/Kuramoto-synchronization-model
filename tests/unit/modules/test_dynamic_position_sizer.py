@@ -4,11 +4,7 @@ Tests for Dynamic Position Sizer Module
 
 import pytest
 
-from modules.dynamic_position_sizer import (
-    DynamicPositionSizer,
-    PositionSizeResult,
-    SizingMethod,
-)
+from modules.dynamic_position_sizer import DynamicPositionSizer, PositionSizeResult, SizingMethod
 
 
 class TestDynamicPositionSizer:

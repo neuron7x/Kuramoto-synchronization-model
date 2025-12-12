@@ -33,12 +33,7 @@ from ..core.state import EMHState
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
 from ..integration.adapter import MarketDataAdapter
-from ..integration.bridge import (
-    KuramotoSync,
-    NeuralMarketController,
-    NeuralTACLBridge,
-    TACLSystem,
-)
+from ..integration.bridge import KuramotoSync, NeuralMarketController, NeuralTACLBridge, TACLSystem
 from ..policy.controller import BasalGangliaController
 from ..risk.cvar import CVARGate, es_alpha
 from ..telemetry.metrics import DecisionMetricsExporter

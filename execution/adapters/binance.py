@@ -13,18 +13,8 @@ from urllib.parse import urlencode
 
 from domain import Order, OrderSide, OrderStatus, OrderType
 
-from .base import (
-    RESTWebSocketConnector,
-    _coerce_float,
-    _coerce_optional_float,
-    _first_present,
-)
-from .plugin import (
-    AdapterCheckResult,
-    AdapterContract,
-    AdapterDiagnostic,
-    AdapterPlugin,
-)
+from .base import RESTWebSocketConnector, _coerce_float, _coerce_optional_float, _first_present
+from .plugin import AdapterCheckResult, AdapterContract, AdapterDiagnostic, AdapterPlugin
 
 _STATUS_MAP = {
     "NEW": OrderStatus.OPEN,

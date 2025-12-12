@@ -152,7 +152,7 @@ def validate_example_scenarios(content: str) -> tuple[bool, list[str]]:
     for i, scenario in enumerate(scenarios):
         try:
             start_idx = content.index(scenario)
-            
+
             # Find next scenario or next top-level section
             if i < len(scenarios) - 1:
                 # Look for next scenario
@@ -164,13 +164,13 @@ def validate_example_scenarios(content: str) -> tuple[bool, list[str]]:
                     end_idx = len(content)
             else:
                 # Last scenario - look for next top-level section (## but not ###)
-                remaining = content[start_idx + len(scenario):]
-                next_section_match = re.search(r'\n## [^#]', remaining)
+                remaining = content[start_idx + len(scenario) :]
+                next_section_match = re.search(r"\n## [^#]", remaining)
                 if next_section_match:
                     end_idx = start_idx + len(scenario) + next_section_match.start()
                 else:
                     end_idx = len(content)
-            
+
             scenario_section = content[start_idx:end_idx]
 
             required_components = [

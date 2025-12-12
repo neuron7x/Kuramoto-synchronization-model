@@ -11,11 +11,7 @@ from .config import (
     NREConfig,
     PolicyBounds,
 )
-from .divergence import (
-    DivergenceConfig,
-    DivergenceOutput,
-    compute_divergence_convergence_phi,
-)
+from .divergence import DivergenceConfig, DivergenceOutput, compute_divergence_convergence_phi
 from .dpa import DopaminePredictionNetwork
 from .integrated import (
     CandidateGenerator,

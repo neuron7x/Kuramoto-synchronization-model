@@ -43,11 +43,7 @@ from core.metrics.dfa import dfa_alpha
 from evolution import bond_evolver
 from evolution.crisis_ga import CrisisAwareGA, CrisisMode, Topology
 from rl.replay.sleep_engine import SleepReplayEngine
-from runtime.behavior_contract import (
-    ActionClass,
-    get_current_state,
-    tacl_gate,
-)
+from runtime.behavior_contract import ActionClass, get_current_state, tacl_gate
 from runtime.cns_stabilizer import CNSStabilizer
 from runtime.dual_approval import DualApprovalManager
 from runtime.filters.vlpo_core_filter import VLPOCoreFilter

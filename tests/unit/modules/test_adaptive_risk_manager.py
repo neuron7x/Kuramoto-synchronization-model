@@ -4,10 +4,7 @@ Tests for Adaptive Risk Manager Module
 
 import numpy as np
 
-from modules.adaptive_risk_manager import (
-    AdaptiveRiskManager,
-    MarketCondition,
-)
+from modules.adaptive_risk_manager import AdaptiveRiskManager, MarketCondition
 
 
 class TestAdaptiveRiskManager:

@@ -11,16 +11,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import (
-    Callable,
-    Deque,
-    Dict,
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    Sequence,
-)
+from typing import Callable, Deque, Dict, Iterable, Iterator, Mapping, MutableMapping, Sequence
 
 try:  # pragma: no cover - optional dependency may not be available
     import psutil

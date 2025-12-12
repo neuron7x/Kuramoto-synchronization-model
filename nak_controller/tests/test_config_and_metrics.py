@@ -9,13 +9,7 @@ import yaml  # type: ignore[import-untyped]
 from pydantic import ValidationError
 
 from nak_controller.core.config import NakConfig
-from nak_controller.core.metrics import (
-    dd_norm,
-    lat_norm,
-    pnl_norm,
-    slippage_norm,
-    vol_norm,
-)
+from nak_controller.core.metrics import dd_norm, lat_norm, pnl_norm, slippage_norm, vol_norm
 from nak_controller.runtime.controller import NaKController
 
 CONFIG_PATH = Path("nak_controller/conf/nak.yaml")

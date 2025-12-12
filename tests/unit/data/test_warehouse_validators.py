@@ -5,11 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.data.warehouses._validators import (
-    ensure_identifier,
-    ensure_timezone,
-    literal,
-)
+from core.data.warehouses._validators import ensure_identifier, ensure_timezone, literal
 
 
 class TestEnsureIdentifier:

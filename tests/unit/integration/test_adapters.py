@@ -86,6 +86,7 @@ class TestServiceRegistryAdapter:
 
         # Import ServiceState at runtime (same as adapter to avoid circular imports)
         from application.microservices.base import ServiceState
+
         mock_service1.state = ServiceState.RUNNING
 
         mock_registry.services.return_value = [mock_service1]

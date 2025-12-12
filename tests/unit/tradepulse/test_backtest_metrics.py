@@ -6,11 +6,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from tradepulse.analytics.backtest_metrics import (
-    BacktestReport,
-    Trade,
-    evaluate_backtest,
-)
+from tradepulse.analytics.backtest_metrics import BacktestReport, Trade, evaluate_backtest
 
 
 class TestTrade:

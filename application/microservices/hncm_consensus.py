@@ -5,11 +5,7 @@ from __future__ import annotations
 
 from typing import Mapping, Optional
 
-from analytics.regime.src.consensus.hncm_adapter import (
-    AgentVote,
-    HNCMConsensusAdapter,
-    ews_to_vote,
-)
+from analytics.regime.src.consensus.hncm_adapter import AgentVote, HNCMConsensusAdapter, ews_to_vote
 from domain.signals import Signal, SignalAction
 
 

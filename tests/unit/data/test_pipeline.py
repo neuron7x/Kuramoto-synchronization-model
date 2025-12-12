@@ -7,12 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from core.data.backfill import (
-    BackfillPlan,
-    BackfillProgressSnapshot,
-    BackfillResult,
-    CacheKey,
-)
+from core.data.backfill import BackfillPlan, BackfillProgressSnapshot, BackfillResult, CacheKey
 from core.data.dead_letter import DeadLetterQueue, DeadLetterReason
 from core.data.feature_store import OnlineFeatureStore
 from core.data.pipeline import (

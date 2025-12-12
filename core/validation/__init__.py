@@ -15,11 +15,7 @@ across all data transformations.
 For more information, see the documentation at https://docs.tradepulse.io/validation
 """
 
-from .mathematical_logic import (
-    DataIntegrityReport,
-    MathematicalLogicValidator,
-    ValidationResult,
-)
+from .mathematical_logic import DataIntegrityReport, MathematicalLogicValidator, ValidationResult
 from .neuro_integrity import (
     NeuroIntegrity,
     NeuroIntegrityConfig,

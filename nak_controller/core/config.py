@@ -2,13 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    ValidationInfo,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator, model_validator
 
 
 class _BaseTriplet(BaseModel):

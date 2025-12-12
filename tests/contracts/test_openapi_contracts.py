@@ -12,14 +12,9 @@ os.environ.setdefault(
 os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "import-audit-secret")
 os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "import-rbac-secret")
 
-from application.api.service import (
-    create_app,
-)  # noqa: E402  - env vars must be set before import
+from application.api.service import create_app  # noqa: E402  - env vars must be set before import
 from application.settings import AdminApiSettings
-from tests.api.openapi_spec import (
-    EXPECTED_OPENAPI_VERSION,
-    load_expected_openapi_schema,
-)
+from tests.api.openapi_spec import EXPECTED_OPENAPI_VERSION, load_expected_openapi_schema
 
 
 @pytest.fixture()

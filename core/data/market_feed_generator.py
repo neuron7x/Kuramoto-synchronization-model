@@ -15,11 +15,7 @@ from typing import List, Literal, Optional
 
 import numpy as np
 
-from core.data.market_feed import (
-    MarketFeedMetadata,
-    MarketFeedRecord,
-    MarketFeedRecording,
-)
+from core.data.market_feed import MarketFeedMetadata, MarketFeedRecord, MarketFeedRecording
 
 MarketRegime = Literal[
     "trending_up", "trending_down", "mean_reverting", "volatile", "stable"

@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from tradepulse.core.neuro.dopamine import (
-    ActionGate,
-    DopamineController,
-    adapt_ddm_parameters,
-)
+from tradepulse.core.neuro.dopamine import ActionGate, DopamineController, adapt_ddm_parameters
 
 da_ctrl = DopamineController("config/dopamine.yaml")
 

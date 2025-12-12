@@ -26,12 +26,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from analytics.fpma.src.ports.ports import (
-    OptimizationPort,
-    PersistencePort,
-    RiskModelPort,
-    SumPort,
-)
+from analytics.fpma.src.ports.ports import OptimizationPort, PersistencePort, RiskModelPort, SumPort
 
 
 class LocalSum(SumPort):

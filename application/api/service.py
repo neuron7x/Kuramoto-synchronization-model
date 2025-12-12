@@ -41,11 +41,7 @@ from starlette.types import ASGIApp
 from analytics.signals.pipeline import FeaturePipelineConfig, SignalFeaturePipeline
 from application.api.authorization import require_permission
 from application.api.debug import install_debug_routes
-from application.api.errors import (
-    COMMON_ERROR_RESPONSES,
-    ApiErrorCode,
-    register_exception_handlers,
-)
+from application.api.errors import COMMON_ERROR_RESPONSES, ApiErrorCode, register_exception_handlers
 from application.api.graphql_api import create_graphql_router
 from application.api.idempotency import (
     IdempotencyCache,
@@ -53,10 +49,7 @@ from application.api.idempotency import (
     IdempotencySnapshot,
 )
 from application.api.metrics import MetricsSampler
-from application.api.middleware import (
-    AccessLogMiddleware,
-    PrometheusMetricsMiddleware,
-)
+from application.api.middleware import AccessLogMiddleware, PrometheusMetricsMiddleware
 from application.api.rate_limit import (
     RateLimiterSnapshot,
     SlidingWindowRateLimiter,
@@ -1595,9 +1588,7 @@ def create_app(
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
         from prometheus_client import REGISTRY as prometheus_registry
-        from prometheus_client import (
-            ProcessCollector,
-        )
+        from prometheus_client import ProcessCollector
     except Exception:  # pragma: no cover - optional dependency
         metrics_registry = None
     else:

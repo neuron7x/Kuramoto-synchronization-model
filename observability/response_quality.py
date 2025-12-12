@@ -15,16 +15,7 @@ from collections import Counter, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import (
-    Callable,
-    Deque,
-    Dict,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Sequence,
-    Tuple,
-)
+from typing import Callable, Deque, Dict, Iterable, Mapping, MutableMapping, Sequence, Tuple
 
 from core.utils.metrics import get_metrics_collector
 

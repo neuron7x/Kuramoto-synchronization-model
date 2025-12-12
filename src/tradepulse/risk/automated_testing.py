@@ -21,12 +21,7 @@ try:
 except ImportError:
     # Fallback for direct module loading in tests
     try:
-        from risk_core import (
-            check_risk_breach,
-            compute_final_size,
-            kelly_shrink,
-            var_es,
-        )
+        from risk_core import check_risk_breach, compute_final_size, kelly_shrink, var_es
     except ImportError:
         from pathlib import Path
 

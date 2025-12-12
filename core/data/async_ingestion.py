@@ -9,16 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import InvalidOperation
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    AsyncIterator,
-    Callable,
-    Iterable,
-    Mapping,
-    Optional,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Iterable, Mapping, Optional, Tuple
 
 from core.data.connectors.market import BaseMarketDataConnector
 from core.data.models import InstrumentType

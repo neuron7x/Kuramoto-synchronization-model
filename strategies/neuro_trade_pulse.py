@@ -6,10 +6,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from core.indicators.kuramoto_ricci_composite import (
-    CompositeSignal,
-    TradePulseCompositeEngine,
-)
+from core.indicators.kuramoto_ricci_composite import CompositeSignal, TradePulseCompositeEngine
 from core.neuro import FractalMotivationEngine
 
 

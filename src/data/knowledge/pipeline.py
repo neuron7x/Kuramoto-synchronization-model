@@ -8,13 +8,7 @@ from .compression import SegmentCompressor
 from .embeddings import EmbeddingProvider
 from .graph import KnowledgeGraph
 from .indexer import HybridIndex
-from .models import (
-    Document,
-    DocumentSegment,
-    IndexedSegment,
-    PipelineContext,
-    PipelineResult,
-)
+from .models import Document, DocumentSegment, IndexedSegment, PipelineContext, PipelineResult
 from .segmenter import DocumentSegmenter
 from .sharding import ShardManager
 from .validators import CitationBuilder, LinkValidator

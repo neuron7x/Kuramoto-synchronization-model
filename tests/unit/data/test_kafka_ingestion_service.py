@@ -11,11 +11,7 @@ from typing import Any, Iterable
 import pytest
 
 from core.data.models import InstrumentType
-from src.data.kafka_ingestion import (
-    KafkaIngestionConfig,
-    KafkaIngestionService,
-    LagReport,
-)
+from src.data.kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagReport
 
 
 @dataclass(frozen=True)

@@ -9,11 +9,7 @@ from fastapi.testclient import TestClient
 from application.api.system_access import create_system_app
 from application.security.rbac import AuthorizationGateway, build_authorization_gateway
 from application.settings import ApiRateLimitSettings, RateLimitPolicy
-from application.system import (
-    ExchangeAdapterConfig,
-    TradePulseSystem,
-    TradePulseSystemConfig,
-)
+from application.system import ExchangeAdapterConfig, TradePulseSystem, TradePulseSystemConfig
 from domain import Order
 from execution.connectors import SimulatedExchangeConnector
 from src.admin.remote_control import AdminIdentity

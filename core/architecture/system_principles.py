@@ -22,17 +22,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import (
-    Any,
-    Dict,
-    FrozenSet,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import Any, Dict, FrozenSet, List, Literal, Mapping, Optional, Set, Tuple
 
 __all__ = [
     "ArchitecturePrinciple",

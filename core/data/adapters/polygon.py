@@ -7,12 +7,7 @@ from typing import AsyncIterator, Iterable, Optional
 
 import httpx
 
-from core.data.adapters.base import (
-    IngestionAdapter,
-    RateLimitConfig,
-    RetryConfig,
-    TimeoutConfig,
-)
+from core.data.adapters.base import IngestionAdapter, RateLimitConfig, RetryConfig, TimeoutConfig
 from core.data.models import InstrumentType
 from core.data.models import PriceTick as Ticker
 from core.data.timeutils import normalize_timestamp

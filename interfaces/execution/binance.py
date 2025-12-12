@@ -13,11 +13,7 @@ import httpx
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import OrderError
 
-from .common import (
-    AuthenticatedRESTExecutionConnector,
-    CredentialError,
-    HMACSigner,
-)
+from .common import AuthenticatedRESTExecutionConnector, CredentialError, HMACSigner
 
 
 def _safe_float(value: Any) -> float | None:

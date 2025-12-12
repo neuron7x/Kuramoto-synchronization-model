@@ -4,12 +4,7 @@ from __future__ import annotations
 
 import os
 from collections import deque
-from concurrent.futures import (
-    FIRST_COMPLETED,
-    Future,
-    ThreadPoolExecutor,
-    wait,
-)
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from heapq import heappop, heappush
 from time import perf_counter

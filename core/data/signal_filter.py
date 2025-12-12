@@ -143,9 +143,7 @@ class SignalFilterConfig:
                     f"zscore_threshold must be positive, got {self.zscore_threshold}"
                 )
             if not np.isfinite(self.zscore_threshold):
-                raise SignalFilterConfigError(
-                    "zscore_threshold must be a finite value"
-                )
+                raise SignalFilterConfigError("zscore_threshold must be a finite value")
 
         # Validate quality_threshold if set
         if self.quality_threshold is not None:
@@ -607,7 +605,11 @@ def filter_dataframe(
                 working = working[~invalid_mask]
 
     # Filter duplicates
-    if config.remove_duplicates and timestamp_column and timestamp_column in working.columns:
+    if (
+        config.remove_duplicates
+        and timestamp_column
+        and timestamp_column in working.columns
+    ):
         dup_result = filter_duplicates(working, subset=timestamp_column, keep="first")
         working = dup_result.data  # type: ignore[assignment]
         all_removed_indices.extend(dup_result.removed_indices.tolist())
@@ -633,7 +635,11 @@ def filter_dataframe(
                 working = working.drop(outlier_indices, errors="ignore")
 
     # Filter by quality
-    if config.quality_threshold is not None and quality_column and quality_column in working.columns:
+    if (
+        config.quality_threshold is not None
+        and quality_column
+        and quality_column in working.columns
+    ):
         quality_result = filter_by_quality(
             working,
             quality_column,
@@ -688,11 +694,11 @@ def filter_signals(
         arr = np.asarray(signals, dtype=np.float64)
 
     original_count = arr.size
-    
+
     # Track which indices from the original array are removed
     # Use a boolean mask for accurate tracking
     removed_mask = np.zeros(original_count, dtype=bool)
-    
+
     # For non-REMOVE strategies, we modify in place
     working = arr.copy()
 
@@ -755,7 +761,11 @@ def filter_signals(
 
     return FilterResult(
         data=working,
-        removed_count=int(removed_mask.sum()) if config.strategy == FilterStrategy.REMOVE else int(removed_mask.sum()),
+        removed_count=(
+            int(removed_mask.sum())
+            if config.strategy == FilterStrategy.REMOVE
+            else int(removed_mask.sum())
+        ),
         removed_indices=all_removed_indices,
         original_count=original_count,
     )

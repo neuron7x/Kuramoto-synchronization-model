@@ -5,11 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from core.config.cli_models import ReportConfig
-from core.reporting import (
-    generate_markdown_report,
-    render_markdown_to_html,
-    render_markdown_to_pdf,
-)
+from core.reporting import generate_markdown_report, render_markdown_to_html, render_markdown_to_pdf
 
 
 def test_generate_markdown_report_concatenates_inputs(tmp_path: Path) -> None:

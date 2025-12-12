@@ -8,12 +8,7 @@ from argparse import Namespace, _SubParsersAction
 from pathlib import Path
 from typing import Iterable, Sequence
 
-from scripts.commands.base import (
-    CommandError,
-    ensure_tools_exist,
-    register,
-    run_subprocess,
-)
+from scripts.commands.base import CommandError, ensure_tools_exist, register, run_subprocess
 from scripts.supply_chain import (
     DependencyError,
     Severity,

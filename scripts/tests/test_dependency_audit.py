@@ -41,7 +41,9 @@ def test_parse_vulnerabilities_empty_output() -> None:
 
 def test_parse_vulnerabilities_no_vulns() -> None:
     """Test that _parse_vulnerabilities handles no vulnerabilities."""
-    output = json.dumps({"dependencies": [{"name": "numpy", "version": "1.0.0", "vulns": []}]})
+    output = json.dumps(
+        {"dependencies": [{"name": "numpy", "version": "1.0.0", "vulns": []}]}
+    )
     result = dependency_audit._parse_vulnerabilities(output)
     assert result == []
 

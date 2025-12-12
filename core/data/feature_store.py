@@ -21,11 +21,7 @@ import pandas as pd
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from pandas.api import types as pd_types
 
-from core.utils.dataframe_io import (
-    purge_dataframe_artifacts,
-    read_dataframe,
-    write_dataframe,
-)
+from core.utils.dataframe_io import purge_dataframe_artifacts, read_dataframe, write_dataframe
 
 try:  # pragma: no cover - optional dependency shim for real Redis connections
     import redis

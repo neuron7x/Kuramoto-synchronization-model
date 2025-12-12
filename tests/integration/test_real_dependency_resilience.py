@@ -32,11 +32,7 @@ from src.data.kafka_ingestion import (
     LagRecord,
     LagReport,
 )
-from src.data.pipeline import (
-    CacheRoute,
-    StaticTickRoutingStrategy,
-    StreamingIngestionPipeline,
-)
+from src.data.pipeline import CacheRoute, StaticTickRoutingStrategy, StreamingIngestionPipeline
 
 
 class _FlakyKillSwitchStateRepository(KillSwitchStateRepository):

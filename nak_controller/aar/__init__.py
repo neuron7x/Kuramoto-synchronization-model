@@ -45,19 +45,8 @@ Example Usage:
 See nak_controller/docs/AAR_SPEC.md for full specification.
 """
 
-from .aggregators import (
-    AggregateStats,
-    ModeAggregator,
-    SlidingWindowAggregator,
-    StrategyAggregator,
-)
-from .core import (
-    absolute_error,
-    compute_error,
-    error_sign,
-    normalize_error,
-    relative_error,
-)
+from .aggregators import AggregateStats, ModeAggregator, SlidingWindowAggregator, StrategyAggregator
+from .core import absolute_error, compute_error, error_sign, normalize_error, relative_error
 from .integration import (
     AARAdaptationConfig,
     AARAdaptationResult,

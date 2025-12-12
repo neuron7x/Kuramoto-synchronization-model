@@ -10,11 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from core.architecture_integrator import (
-    ArchitectureIntegrator,
-    ComponentHealth,
-    ComponentStatus,
-)
+from core.architecture_integrator import ArchitectureIntegrator, ComponentHealth, ComponentStatus
 
 # ------------------------------------------------------------------
 # Example Components

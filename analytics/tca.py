@@ -14,12 +14,7 @@ from math import floor
 from statistics import mean
 from typing import Mapping, MutableMapping, Sequence
 
-from .execution_quality import (
-    FillSample,
-    implementation_shortfall,
-    vwap,
-    vwap_slippage,
-)
+from .execution_quality import FillSample, implementation_shortfall, vwap, vwap_slippage
 
 __all__ = [
     "FillDetail",

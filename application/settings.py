@@ -488,11 +488,7 @@ class AdminApiSettings(BaseSettings):
     ) -> "SecretManager":
         """Return a configured secret manager for administrative components."""
 
-        from application.secrets.manager import (
-            ManagedSecret,
-            ManagedSecretConfig,
-            SecretManager,
-        )
+        from application.secrets.manager import ManagedSecret, ManagedSecretConfig, SecretManager
 
         refresh_interval = float(self.secret_refresh_interval_seconds)
         secrets: dict[str, ManagedSecret] = {
@@ -559,10 +555,7 @@ class AdminApiSettings(BaseSettings):
     ) -> "CentralConfigurationStore":
         """Instantiate the secure configuration store with namespace policies."""
 
-        from application.configuration import (
-            CentralConfigurationStore,
-            NamespaceDefinition,
-        )
+        from application.configuration import CentralConfigurationStore, NamespaceDefinition
         from application.secrets.rotation import SecretRotator
         from application.secrets.vault import SecretVault
         from core.config.template_manager import ConfigTemplateManager

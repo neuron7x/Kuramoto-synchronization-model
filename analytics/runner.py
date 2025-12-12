@@ -21,11 +21,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from analytics import _config_sanitizer as _config_sanitizer
 from analytics._config_sanitizer import redacted_config_yaml
-from analytics.tracking import (
-    ExperimentDeviationError,
-    ExperimentTracker,
-    NullExperimentTracker,
-)
+from analytics.tracking import ExperimentDeviationError, ExperimentTracker, NullExperimentTracker
 from core.config.hydra_profiles import (
     ExperimentProfileError,
     ExperimentProfileRegistry,

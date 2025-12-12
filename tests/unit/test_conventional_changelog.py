@@ -5,11 +5,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from tools.release.conventional_changelog import (
-    CommitInfo,
-    render_changelog,
-    update_changelog,
-)
+from tools.release.conventional_changelog import CommitInfo, render_changelog, update_changelog
 
 
 def test_render_changelog_groups_by_category() -> None:

@@ -1,10 +1,6 @@
 import pytest
 
-from runtime.behavior_contract import (
-    ActionClass,
-    SystemState,
-    tacl_gate,
-)
+from runtime.behavior_contract import ActionClass, SystemState, tacl_gate
 from runtime.dual_approval import DualApprovalManager
 from runtime.kill_switch import activate_kill_switch, deactivate_kill_switch
 

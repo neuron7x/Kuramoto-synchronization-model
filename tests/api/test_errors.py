@@ -7,11 +7,7 @@ import pytest
 from fastapi import FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
 
-from application.api.errors import (
-    ApiErrorCode,
-    ErrorResponse,
-    register_exception_handlers,
-)
+from application.api.errors import ApiErrorCode, ErrorResponse, register_exception_handlers
 
 
 def _build_app() -> FastAPI:

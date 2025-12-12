@@ -9,12 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from backtest.engine import (
-    LatencyConfig,
-    OrderBookConfig,
-    SlippageConfig,
-    WalkForwardEngine,
-)
+from backtest.engine import LatencyConfig, OrderBookConfig, SlippageConfig, WalkForwardEngine
 from backtest.event_driven import (
     CSVChunkDataHandler,
     EventDrivenBacktestEngine,

@@ -16,10 +16,7 @@ from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 from neuropro.hpc_validation import generate_synthetic_data
 
 try:
-    from backtest.event_driven import (  # noqa: F401
-        ArrayDataHandler,
-        EventDrivenBacktestEngine,
-    )
+    from backtest.event_driven import ArrayDataHandler, EventDrivenBacktestEngine  # noqa: F401
     from backtest.events import MarketEvent, SignalEvent
     from backtest.performance import compute_performance_metrics  # noqa: F401
 

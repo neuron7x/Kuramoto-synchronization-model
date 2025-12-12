@@ -8,11 +8,7 @@ from typing import Any, Callable, Dict, Optional
 
 import pandas as pd
 
-from analytics.signals.irreversibility import (
-    IGSConfig,
-    StreamingIGS,
-    compute_igs_features,
-)
+from analytics.signals.irreversibility import IGSConfig, StreamingIGS, compute_igs_features
 
 
 class IGSFeatureProvider:

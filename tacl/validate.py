@@ -9,12 +9,7 @@ from typing import Mapping
 
 import yaml
 
-from .energy_model import (
-    DEFAULT_THRESHOLDS,
-    EnergyMetrics,
-    EnergyValidationError,
-    EnergyValidator,
-)
+from .energy_model import DEFAULT_THRESHOLDS, EnergyMetrics, EnergyValidationError, EnergyValidator
 
 SCENARIO_FILE = Path(__file__).resolve().parent / "link_activator_test_scenarios.yaml"
 ARTIFACTS_DIR = Path(".ci_artifacts")

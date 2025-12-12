@@ -1,12 +1,7 @@
 import pytest
 import torch
 
-from modules.gaba_inhibition_gate import (
-    GABAInhibitionGate,
-    GateMetrics,
-    GateParams,
-    GateState,
-)
+from modules.gaba_inhibition_gate import GABAInhibitionGate, GateMetrics, GateParams, GateState
 
 
 def base_state(vix=20.0, vol=0.1, ret=0.01, pos=1.0, rpe=0.0, dt_ms=20.0):

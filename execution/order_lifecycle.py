@@ -40,16 +40,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from threading import RLock
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Mapping,
-    MutableMapping,
-    Sequence,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, MutableMapping, Sequence, Tuple
 
 from domain import OrderStatus
 from libs.db import DataAccessLayer

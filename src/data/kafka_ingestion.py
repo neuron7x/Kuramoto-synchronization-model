@@ -19,10 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Mapping, Protocol, Sequence
 
 from core.data.models import InstrumentType, PriceTick
-from core.messaging.idempotency import (
-    EventIdempotencyStore,
-    InMemoryEventIdempotencyStore,
-)
+from core.messaging.idempotency import EventIdempotencyStore, InMemoryEventIdempotencyStore
 
 logger = logging.getLogger(__name__)
 

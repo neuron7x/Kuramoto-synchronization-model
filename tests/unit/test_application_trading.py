@@ -1,18 +1,5 @@
-from application.trading import (
-    dto_to_signal,
-    order_to_dto,
-    position_to_dto,
-    signal_to_dto,
-)
-from domain import (
-    Order,
-    OrderSide,
-    OrderStatus,
-    OrderType,
-    Position,
-    Signal,
-    SignalAction,
-)
+from application.trading import dto_to_signal, order_to_dto, position_to_dto, signal_to_dto
+from domain import Order, OrderSide, OrderStatus, OrderType, Position, Signal, SignalAction
 
 
 def test_signal_dto_round_trip() -> None:

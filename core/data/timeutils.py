@@ -10,13 +10,7 @@ from typing import Dict, FrozenSet, Iterable, Sequence
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-from exchange_calendars import (
-    ExchangeCalendar,
-    always_open,
-    errors,
-    get_calendar,
-    resolve_alias,
-)
+from exchange_calendars import ExchangeCalendar, always_open, errors, get_calendar, resolve_alias
 
 __all__ = [
     "MarketCalendar",

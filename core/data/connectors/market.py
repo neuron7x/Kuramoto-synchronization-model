@@ -9,12 +9,7 @@ from pathlib import Path
 from typing import Any, AsyncIterator, Optional
 from uuid import uuid4
 
-from core.data.adapters.base import (
-    IngestionAdapter,
-    RateLimitConfig,
-    RetryConfig,
-    TimeoutConfig,
-)
+from core.data.adapters.base import IngestionAdapter, RateLimitConfig, RetryConfig, TimeoutConfig
 from core.data.adapters.ccxt import CCXTIngestionAdapter
 from core.data.adapters.polygon import PolygonIngestionAdapter
 from core.data.dead_letter import DeadLetterQueue, DeadLetterReason

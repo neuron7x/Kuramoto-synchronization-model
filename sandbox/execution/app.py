@@ -12,12 +12,7 @@ from ..clients import ControlClient, RiskClient, SignalClient
 from ..models import AuditEvent, OrderTicket, RiskDecision, TradingSignal
 from ..risk.engine import AuditLoggerProtocol
 from ..settings import ExecutionSettings, execution_settings
-from .engine import (
-    ExecutionEngine,
-    ExecutionParameters,
-    RiskGatewayProtocol,
-    SignalGatewayProtocol,
-)
+from .engine import ExecutionEngine, ExecutionParameters, RiskGatewayProtocol, SignalGatewayProtocol
 
 
 class HttpSignalGateway(SignalGatewayProtocol):

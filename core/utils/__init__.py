@@ -3,17 +3,8 @@
 
 from .clock import freeze_time
 from .debug import VariableInspector
-from .logging import (
-    JSONFormatter,
-    StructuredLogger,
-    configure_logging,
-    get_logger,
-)
-from .metrics import (
-    MetricsCollector,
-    get_metrics_collector,
-    start_metrics_server,
-)
+from .logging import JSONFormatter, StructuredLogger, configure_logging, get_logger
+from .metrics import MetricsCollector, get_metrics_collector, start_metrics_server
 from .numeric_constants import (
     BINARY_PROB_MIN,
     CASH_TOLERANCE,

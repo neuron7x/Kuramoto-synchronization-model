@@ -19,10 +19,7 @@ Example:
     >>> health = integrator.get_system_health()
 """
 
-from core.integration.adapters import (
-    AgentCoordinatorAdapter,
-    ServiceRegistryAdapter,
-)
+from core.integration.adapters import AgentCoordinatorAdapter, ServiceRegistryAdapter
 from core.integration.system_integrator import (
     IntegrationConfig,
     SystemIntegrator,

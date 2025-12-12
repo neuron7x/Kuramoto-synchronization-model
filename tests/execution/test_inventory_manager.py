@@ -5,11 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from execution.arbitrage.inventory import (
-    InventoryError,
-    InventoryManager,
-    InventoryTarget,
-)
+from execution.arbitrage.inventory import InventoryError, InventoryManager, InventoryTarget
 from execution.arbitrage.liquidity import LiquidityError, LiquidityLedger
 
 

@@ -24,11 +24,7 @@ from .oms import OMSConfig, OrderManagementSystem
 from .order_ledger import OrderLedger
 from .order_lifecycle import IdempotentSubmitter, OMSState
 from .risk import RiskManager
-from .session_snapshot import (
-    ExecutionMode,
-    SessionSnapshotError,
-    SessionSnapshotter,
-)
+from .session_snapshot import ExecutionMode, SessionSnapshotError, SessionSnapshotter
 from .watchdog import Watchdog
 
 

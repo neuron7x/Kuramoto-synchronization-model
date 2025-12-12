@@ -1,10 +1,6 @@
 """Tests for the main ArchitectureIntegrator."""
 
-from core.architecture_integrator import (
-    ArchitectureIntegrator,
-    ComponentHealth,
-    ComponentStatus,
-)
+from core.architecture_integrator import ArchitectureIntegrator, ComponentHealth, ComponentStatus
 
 
 class TestComponent:

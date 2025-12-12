@@ -12,10 +12,7 @@ import numpy as np
 import pytest
 
 from evolution.crisis_ga import CrisisMode
-from sandbox.control.thermo_prototype import (
-    BacktestResult,
-    run_backtest_on_synthetic_crises,
-)
+from sandbox.control.thermo_prototype import BacktestResult, run_backtest_on_synthetic_crises
 
 
 class TestCrisisPredictorBacktest:

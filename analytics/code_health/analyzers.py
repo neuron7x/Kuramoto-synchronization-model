@@ -10,17 +10,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import (
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import Dict, Iterable, Iterator, List, Mapping, MutableMapping, Optional, Set, Tuple
 
 import networkx as nx
 

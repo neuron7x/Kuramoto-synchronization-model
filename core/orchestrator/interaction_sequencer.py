@@ -260,13 +260,13 @@ class ModuleInteractionOrchestrator:
 
         # Check for cycles
         if len(result) != len(modules):
-            raise ValueError(
-                "Circular dependency detected in module orchestration"
-            )
+            raise ValueError("Circular dependency detected in module orchestration")
 
         return result
 
-    def execute(self, initial_context: Optional[ExecutionContext] = None) -> ExecutionContext:
+    def execute(
+        self, initial_context: Optional[ExecutionContext] = None
+    ) -> ExecutionContext:
         """Execute all registered modules in the correct sequence.
 
         Args:
@@ -288,9 +288,7 @@ class ModuleInteractionOrchestrator:
             module = self._modules[module_name]
 
             if not module.handler:
-                context.add_error(
-                    f"Module '{module_name}' has no handler defined"
-                )
+                context.add_error(f"Module '{module_name}' has no handler defined")
                 continue
 
             try:

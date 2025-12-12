@@ -65,8 +65,12 @@ class BiomarkerResponse(BaseModel):
     orexin: float = Field(..., description="Orexin (arousal) level")
     threat: float = Field(..., description="Threat level")
     state: str = Field(..., description="FHMC state (WAKE/SLEEP)")
-    alpha_history: List[float] = Field(default_factory=list, description="DFA alpha history")
-    slope_history: List[float] = Field(default_factory=list, description="Slope history")
+    alpha_history: List[float] = Field(
+        default_factory=list, description="DFA alpha history"
+    )
+    slope_history: List[float] = Field(
+        default_factory=list, description="Slope history"
+    )
 
 
 class DecisionResponse(BaseModel):

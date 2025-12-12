@@ -28,16 +28,8 @@ from core.data.models import InstrumentType
 from execution.risk import RiskLimits
 from src.audit.audit_logger import AuditLogger, AuditRecord
 from src.data.ingestion_service import CacheEntrySnapshot, DataIngestionCacheService
-from src.data.kafka_ingestion import (
-    KafkaIngestionConfig,
-    KafkaIngestionService,
-    LagHandler,
-)
-from src.data.pipeline import (
-    CacheRoute,
-    StreamingIngestionPipeline,
-    TickRoutingStrategy,
-)
+from src.data.kafka_ingestion import KafkaIngestionConfig, KafkaIngestionService, LagHandler
+from src.data.pipeline import CacheRoute, StreamingIngestionPipeline, TickRoutingStrategy
 from src.data.streaming_aggregator import TickStreamAggregator
 from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
 

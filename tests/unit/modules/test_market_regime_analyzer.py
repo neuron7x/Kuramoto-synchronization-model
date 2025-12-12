@@ -5,11 +5,7 @@ Tests for Market Regime Analyzer Module
 import numpy as np
 import pytest
 
-from modules.market_regime_analyzer import (
-    MarketRegimeAnalyzer,
-    RegimeType,
-    TrendStrength,
-)
+from modules.market_regime_analyzer import MarketRegimeAnalyzer, RegimeType, TrendStrength
 
 
 class TestMarketRegimeAnalyzer:

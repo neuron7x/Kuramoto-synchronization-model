@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from core.indicators.kuramoto_ricci_composite import (
-    MarketPhase,
-    TradePulseCompositeEngine,
-)
+from core.indicators.kuramoto_ricci_composite import MarketPhase, TradePulseCompositeEngine
 
 
 def synthetic_df(n=1200):

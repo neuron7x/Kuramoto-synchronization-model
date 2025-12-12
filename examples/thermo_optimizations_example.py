@@ -13,12 +13,7 @@ import networkx as nx
 from runtime.thermo_cache import ThermoCache, VectorizedOperations
 from runtime.thermo_controller import ThermoController
 from runtime.thermo_memory_manager import OptimizedTelemetryManager
-from runtime.thermo_performance import (
-    Benchmark,
-    get_performance_monitor,
-    timed,
-    timing_context,
-)
+from runtime.thermo_performance import Benchmark, get_performance_monitor, timed, timing_context
 
 
 def create_sample_graph() -> nx.DiGraph:

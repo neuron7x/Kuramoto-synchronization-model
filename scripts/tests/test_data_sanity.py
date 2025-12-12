@@ -4,7 +4,6 @@ from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from pathlib import Path
-from typing import Sequence
 
 import pandas as pd
 import pytest
@@ -15,7 +14,9 @@ from scripts import data_sanity
 def test_analyze_csv_returns_analysis_with_basic_stats(tmp_path: Path) -> None:
     """Test that analyze_csv returns correct basic statistics."""
     csv_file = tmp_path / "sample.csv"
-    csv_file.write_text("ts,value\n2024-01-01,10.0\n2024-01-02,20.0\n", encoding="utf-8")
+    csv_file.write_text(
+        "ts,value\n2024-01-01,10.0\n2024-01-02,20.0\n", encoding="utf-8"
+    )
 
     result = data_sanity.analyze_csv(csv_file)
 
@@ -122,7 +123,9 @@ def test_summarize_timestamp_gaps_with_monotonic_violations() -> None:
     assert result.monotonic_violations == 1
 
 
-def test_iter_csv_files_empty_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_iter_csv_files_empty_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that _iter_csv_files handles empty paths list."""
     # Change to tmp_path so default 'data' directory doesn't exist
     monkeypatch.chdir(tmp_path)
@@ -235,7 +238,9 @@ def test_main_with_no_csv_files(tmp_path: Path, capsys) -> None:
 def test_main_analyzes_csv_file(tmp_path: Path, capsys) -> None:
     """Test that main correctly analyzes a CSV file."""
     csv_file = tmp_path / "sample.csv"
-    csv_file.write_text("ts,value\n2024-01-01,10.0\n2024-01-02,20.0\n", encoding="utf-8")
+    csv_file.write_text(
+        "ts,value\n2024-01-01,10.0\n2024-01-02,20.0\n", encoding="utf-8"
+    )
 
     exit_code = data_sanity.main([str(csv_file)])
 

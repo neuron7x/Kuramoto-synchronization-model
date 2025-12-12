@@ -4,13 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.strategies import (
-    FETE,
-    FETEConfig,
-    FractalEMA,
-    SigmaController,
-    binary_entropy,
-)
+from core.strategies import FETE, FETEConfig, FractalEMA, SigmaController, binary_entropy
 
 
 def test_binary_entropy_midpoint() -> None:

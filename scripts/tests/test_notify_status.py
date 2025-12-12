@@ -58,12 +58,18 @@ def test_build_parser_required_args() -> None:
 def test_build_parser_valid_args() -> None:
     """Test _build_parser with valid arguments."""
     parser = notify_status._build_parser()
-    args = parser.parse_args([
-        "--stage", "build",
-        "--status", "success",
-        "--workflow", "CI",
-        "--run-url", "https://github.com/test/run/123",
-    ])
+    args = parser.parse_args(
+        [
+            "--stage",
+            "build",
+            "--status",
+            "success",
+            "--workflow",
+            "CI",
+            "--run-url",
+            "https://github.com/test/run/123",
+        ]
+    )
 
     assert args.stage == "build"
     assert args.status == "success"
@@ -74,17 +80,28 @@ def test_build_parser_valid_args() -> None:
 def test_build_parser_optional_args() -> None:
     """Test _build_parser with optional arguments."""
     parser = notify_status._build_parser()
-    args = parser.parse_args([
-        "--stage", "deploy",
-        "--status", "failure",
-        "--workflow", "Deploy",
-        "--run-url", "https://example.com/run",
-        "--job", "deploy-prod",
-        "--branch", "main",
-        "--commit", "abc123def456",
-        "--actor", "developer",
-        "--environment", "production",
-    ])
+    args = parser.parse_args(
+        [
+            "--stage",
+            "deploy",
+            "--status",
+            "failure",
+            "--workflow",
+            "Deploy",
+            "--run-url",
+            "https://example.com/run",
+            "--job",
+            "deploy-prod",
+            "--branch",
+            "main",
+            "--commit",
+            "abc123def456",
+            "--actor",
+            "developer",
+            "--environment",
+            "production",
+        ]
+    )
 
     assert args.job == "deploy-prod"
     assert args.branch == "main"
@@ -232,12 +249,18 @@ def test_normalise_color_unknown_status() -> None:
 def test_prepare_arguments_basic() -> None:
     """Test _prepare_arguments creates NotificationArguments."""
     parser = notify_status._build_parser()
-    namespace = parser.parse_args([
-        "--stage", "build",
-        "--status", "success",
-        "--workflow", "CI",
-        "--run-url", "https://example.com/run",
-    ])
+    namespace = parser.parse_args(
+        [
+            "--stage",
+            "build",
+            "--status",
+            "success",
+            "--workflow",
+            "CI",
+            "--run-url",
+            "https://example.com/run",
+        ]
+    )
 
     args = notify_status._prepare_arguments(namespace)
 
@@ -250,16 +273,26 @@ def test_prepare_arguments_basic() -> None:
 def test_prepare_arguments_populates_metadata() -> None:
     """Test _prepare_arguments populates metadata from args."""
     parser = notify_status._build_parser()
-    namespace = parser.parse_args([
-        "--stage", "deploy",
-        "--status", "success",
-        "--workflow", "Deploy",
-        "--run-url", "https://example.com/run",
-        "--branch", "main",
-        "--commit", "abc123",
-        "--actor", "dev",
-        "--environment", "prod",
-    ])
+    namespace = parser.parse_args(
+        [
+            "--stage",
+            "deploy",
+            "--status",
+            "success",
+            "--workflow",
+            "Deploy",
+            "--run-url",
+            "https://example.com/run",
+            "--branch",
+            "main",
+            "--commit",
+            "abc123",
+            "--actor",
+            "dev",
+            "--environment",
+            "prod",
+        ]
+    )
 
     args = notify_status._prepare_arguments(namespace)
 
@@ -329,10 +362,14 @@ def test_main_dry_run(capsys, monkeypatch: pytest.MonkeyPatch) -> None:
         "sys.argv",
         [
             "notify_status.py",
-            "--stage", "build",
-            "--status", "success",
-            "--workflow", "CI",
-            "--run-url", "https://example.com",
+            "--stage",
+            "build",
+            "--status",
+            "success",
+            "--workflow",
+            "CI",
+            "--run-url",
+            "https://example.com",
             "--dry-run",
         ],
     )

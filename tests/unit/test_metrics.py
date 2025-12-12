@@ -6,11 +6,7 @@ import pytest
 
 from core.metrics.direction_index import direction_index, skewness
 from core.metrics.ism import ism
-from core.metrics.volume_profile import (
-    cumulative_volume_delta,
-    imbalance,
-    order_aggression,
-)
+from core.metrics.volume_profile import cumulative_volume_delta, imbalance, order_aggression
 
 
 def test_skewness_of_symmetric_distribution_zero() -> None:

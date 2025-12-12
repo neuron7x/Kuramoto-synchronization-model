@@ -9,12 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from core.features.realtime_store import (
-    FeatureDescriptor,
-    FeatureLineage,
-    FeatureRecord,
-    _TTLCache,
-)
+from core.features.realtime_store import FeatureDescriptor, FeatureLineage, FeatureRecord, _TTLCache
 
 
 class TestFeatureLineage:

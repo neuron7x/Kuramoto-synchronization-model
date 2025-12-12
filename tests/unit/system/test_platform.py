@@ -8,11 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from application.system import (
-    ExchangeAdapterConfig,
-    TradePulseSystem,
-    TradePulseSystemConfig,
-)
+from application.system import ExchangeAdapterConfig, TradePulseSystem, TradePulseSystemConfig
 from application.system_orchestrator import MarketDataSource
 from core.data.models import InstrumentType, PriceTick
 from execution.connectors import SimulatedExchangeConnector
@@ -20,11 +16,7 @@ from src.audit.audit_logger import AuditLogger
 from src.data.ingestion_service import DataIngestionCacheService
 from src.data.kafka_ingestion import KafkaIngestionConfig
 from src.data.pipeline import CacheRoute
-from src.system import (
-    StreamingPipelineSettings,
-    TradePulsePlatform,
-    build_tradepulse_platform,
-)
+from src.system import StreamingPipelineSettings, TradePulsePlatform, build_tradepulse_platform
 
 
 class _StubStreamingPipeline:

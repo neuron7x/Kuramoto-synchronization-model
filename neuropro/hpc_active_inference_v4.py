@@ -137,9 +137,7 @@ class HPCActiveInferenceModuleV4(nn.Module):
             Latent state tensor
         """
         try:
-            from core.indicators.kuramoto_ricci_composite import (
-                TradePulseCompositeEngine,
-            )
+            from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
 
             engine = TradePulseCompositeEngine()
 

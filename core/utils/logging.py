@@ -23,10 +23,7 @@ except Exception:  # pragma: no cover - optional dependency not installed
 from uuid import uuid4
 
 try:  # pragma: no cover - optional dependency
-    from core.tracing.distributed import (
-        current_correlation_id,
-        generate_correlation_id,
-    )
+    from core.tracing.distributed import current_correlation_id, generate_correlation_id
 except Exception:  # pragma: no cover - tracing helpers optional
 
     def current_correlation_id(_: Optional[str] = None) -> Optional[str]:

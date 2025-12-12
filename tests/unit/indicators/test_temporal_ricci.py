@@ -7,11 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.indicators.temporal_ricci import (
-    LightGraph,
-    PriceLevelGraph,
-    TemporalRicciAnalyzer,
-)
+from core.indicators.temporal_ricci import LightGraph, PriceLevelGraph, TemporalRicciAnalyzer
 
 
 class TestLightGraph:

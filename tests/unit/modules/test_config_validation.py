@@ -24,21 +24,9 @@ from modules.adaptive_risk_manager import (
     PositionLimit,
     RiskLevel,
 )
-from modules.agent_coordinator import (
-    AgentCoordinator,
-    AgentStatus,
-    AgentType,
-    Priority,
-)
-from modules.dynamic_position_sizer import (
-    DynamicPositionSizer,
-    SizingMethod,
-)
-from modules.market_regime_analyzer import (
-    MarketRegimeAnalyzer,
-    RegimeType,
-    TrendStrength,
-)
+from modules.agent_coordinator import AgentCoordinator, AgentStatus, AgentType, Priority
+from modules.dynamic_position_sizer import DynamicPositionSizer, SizingMethod
+from modules.market_regime_analyzer import MarketRegimeAnalyzer, RegimeType, TrendStrength
 
 
 class TestAdaptiveRiskManagerConfigValidation:
