@@ -138,9 +138,10 @@ state/*.db
 /SECURITY_FIX_README.md
 
 # Generated report files (auto-generated test/perf outputs)
-reports/performance/*.json
-reports/performance/*.md
+reports/performance/performance_*.json
+reports/performance/performance_*.md
 reports/localization/*.json
+!reports/localization/README.md
 reports/*.json
 reports/*.csv
 reports/complexity.*
