@@ -32,6 +32,8 @@ jobs:
     name: Performance regression analysis
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      PYTHONPATH: "${{ github.workspace }}/src:${{ github.workspace }}"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -85,6 +87,7 @@ jobs:
       - name: Run baseline benchmarks
         env:
           TP_BENCHMARK_ARTIFACT_DIR: ../reports/performance/benchmarks/baseline
+          PYTHONPATH: "${{ github.workspace }}/baseline/src:${{ github.workspace }}/baseline"
         run: |
           cd baseline
           mkdir -p ../reports/performance
@@ -92,6 +95,8 @@ jobs:
             --benchmark-json=../reports/performance/baseline_benchmark.json -vv
 
       - name: Collect baseline resource metrics
+        env:
+          PYTHONPATH: "${{ github.workspace }}/baseline/src:${{ github.workspace }}/baseline"
         run: |
           if [ ! -f baseline/scripts/performance/run_resource_checks.py ]; then
             mkdir -p baseline/scripts/performance

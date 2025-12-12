@@ -37,6 +37,12 @@ Thumbs.db
 .env.local
 .venv/
 venv/
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+dev/.tls/
 configs/tls/dev/generated/
 
 # GitHub Actions local testing (act)
