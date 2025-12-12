@@ -1,0 +1,14 @@
+{
+  "generated_at": "2025-12-12T10:50:56.594389+00:00",
+  "records": [
+    {
+      "baseline": 0.2,
+      "exceeds_budget": true,
+      "measurement": 0.25,
+      "name": "sample-benchmark",
+      "regression_ratio": 1.25,
+      "test_id": "tests/performance/test_sample.py::test_sample",
+      "threshold": 0.1
+    }
+  ]
+}
