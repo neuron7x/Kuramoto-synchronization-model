@@ -68,7 +68,7 @@
 | COV_INDICATORS_90 | coverage | core/indicators/ ≥90% coverage | `pytest --cov=core/indicators tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
 | COV_METRICS_95 | coverage | core/metrics/ ≥95% coverage | `pytest --cov=core/metrics tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
 | COV_PHASE_95 | coverage | core/phase/ ≥95% coverage | `pytest --cov=core/phase tests/` | `reports/coverage/index.html` | goal | Per TESTING.md |
-| COV_GOLDEN_PATH | coverage | Golden path backtest workflow covered | `pytest tests/integration/test_golden_path_backtest.py -v` | `tests/integration/test_golden_path_backtest.py` | proven | 21 deterministic integration tests covering backtest workflow |
+| COV_GOLDEN_PATH | coverage | Golden path backtest workflow covered | `make golden-path` | `tests/integration/test_golden_path_backtest.py`, `Makefile:232-258` | proven | Verified 2025-12-12: Complete workflow (data→analysis→backtest) runs in <30s with deterministic output. 21 integration tests. |
 | COV_PAPER_TRADING | coverage | Paper trading engine >95% coverage | `pytest tests/unit/execution/test_paper_trading.py --cov=execution.paper_trading` | `tests/unit/execution/test_paper_trading.py` | proven | 44 unit tests, 98% coverage of paper_trading.py |
 | MUTATION_90_KILL | coverage | 90% mutation kill rate | `mutmut run --use-coverage && python -m tools.mutation.kill_rate_guard --threshold 0.9` | `reports/mutmut/summary.json` | partial | Configured in pyproject.toml, CI workflow exists but experimental |
 
@@ -86,6 +86,16 @@
 | PERF_FRONTEND_TTFB | performance | TTFB ≤ 500ms | `npx lighthouse-ci` | N/A | goal | Per docs/performance.md |
 | PERF_LATENCY_P95_85MS | performance | p95 latency ≤ 85ms for release gate | `python scripts/validate_energy.py --metric latency_p95=<value>` | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
 | PERF_LATENCY_P99_120MS | performance | p99 latency ≤ 120ms for release gate | `python scripts/validate_energy.py --metric latency_p99=<value>` | `.ci_artifacts/release_gates.json` | partial | CI gate exists in progressive rollout |
+
+### CI/CD Claims
+
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| CI_FAST_GATES_15MIN | ci | Fast PR gates complete in ≤15 minutes | GitHub Actions workflow run | `.github/workflows/tests.yml:55-532` | proven | Verified 2025-12-12: lint (8min timeout), fast-unit-tests (15min timeout), security-fast (10min timeout) |
+| CI_HEAVY_JOBS_GATED | ci | Heavy jobs only run on main/schedule/manual | N/A | `.github/workflows/tests.yml:541,665,758` | proven | full-test-suite, mutation-testing, benchmarks have if-conditions preventing PR runs |
+| CI_CACHE_STRATEGY | ci | Unique venv cache keys per job type | N/A | `.github/workflows/tests.yml:84-89,212-217,499-502` | proven | Cache keys: venv-lint, venv-full, venv-bench, venv-mutation, venv-security |
+| CI_LOCAL_MATCH | ci | Local make targets match CI commands | `make test` | `Makefile:89-93`, `.github/workflows/tests.yml:309-322` | proven | Verified 2025-12-12: `make test` uses same pytest markers as CI fast gates |
+| TEST_FAST_PASSED | testing | Fast test suite passes (PR gate) | `make test` | Local test run 2025-12-12 | proven | 3512 passed, 18 skipped in ~3 minutes. All core tests green. |
 
 ### Reliability Claims
 
@@ -117,7 +127,7 @@
 | SEC_GDPR_CCPA | compliance | Privacy controls for GDPR/CCPA | N/A | docs/security/ | partial | Privacy patterns implemented, NO formal audit |
 | SEC_SOC2 | compliance | SOC 2-aligned telemetry and controls | N/A | SECURITY.md | partial | Telemetry present, NO SOC 2 examination |
 | SEC_EU_AI_ACT | compliance | EU AI Act alignment (human oversight) | N/A | SECURITY.md, docs/TACL.md | partial | Manual reset endpoints documented |
-| SEC_PIP_AUDIT | security | Python dependencies vulnerability-free | `make audit` | `pip-audit` output | proven | CI enforced via pip-audit |
+| SEC_PIP_AUDIT | security | Python dependencies vulnerability-free | `make audit` | `pip-audit` output | partial | CI enforced but narwhals version conflict 2025-12-12: requirements-dev.lock has 2.8.0, requirements.lock has 2.9.0. Needs resolution via `make deps-update`. |
 | SEC_BANDIT_SCAN | security | Static security analysis passes | `bandit -r core/ backtest/ execution/ src/ -ll -q` | CI output | proven | CI enforced |
 | SEC_SECRETS_SCAN | security | No secrets in codebase | `detect-secrets scan` | CI output | proven | CI enforced in tests.yml |
 | SEC_CONTAINER_SCAN | security | Container images scanned for vulnerabilities | Trivy/Grype in CI | Security workflow | partial | Workflow exists, critical vulns block |

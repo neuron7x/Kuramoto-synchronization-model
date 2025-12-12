@@ -142,6 +142,8 @@ reports/performance/performance_*.json
 reports/performance/performance_*.md
 reports/localization/*.json
 !reports/localization/README.md
+reports/benchmarks/*.json
+reports/benchmarks/*.csv
 reports/*.json
 reports/*.csv
 reports/complexity.*

@@ -12,6 +12,7 @@ help:
 	@echo "Core Commands:"
 	@echo "  make install       - Install runtime dependencies only"
 	@echo "  make dev-install   - Install all dependencies (dev + runtime)"
+	@echo "  make golden-path   - Demo complete workflow (data → analysis → backtest)"
 	@echo "  make test          - Run core test suite (fast, CI-safe)"
 	@echo "  make lint          - Run all linters (Python + Go + shell)"
 	@echo "  make format        - Auto-format code (black, isort, ruff)"
@@ -228,6 +229,41 @@ perf:
 	@echo "⚡ Running performance benchmarks..."
 	pytest benchmarks/ --benchmark-only
 	@echo "✅ Benchmarks complete"
+
+.PHONY: golden-path
+golden-path:
+	@echo "🎯 TradePulse Golden Path Workflow"
+	@echo "===================================="
+	@echo ""
+	@echo "This demonstrates the complete TradePulse workflow:"
+	@echo "  1. Data generation (synthetic market data)"
+	@echo "  2. Market analysis (regime detection)"
+	@echo "  3. Backtest integration (strategy validation)"
+	@echo "  4. Results artifact (PnL summary)"
+	@echo ""
+	@echo "Prerequisites: Run 'make dev-install' first"
+	@echo ""
+	@echo "Step 1/3: Generating synthetic market data..."
+	@PYTHONPATH=. python -c "import numpy as np; import pandas as pd; from examples.quick_start import sample_df; df = sample_df(n=500, seed=42); print('✓ Generated 500 bars of synthetic data')"
+	@echo ""
+	@echo "Step 2/3: Running market analysis..."
+	@PYTHONPATH=. python examples/quick_start.py --seed 42 --num-points 500
+	@echo ""
+	@echo "Step 3/3: Running backtest integration test..."
+	@pytest tests/integration/test_golden_path_backtest.py::TestGoldenPathBasic::test_backtest_produces_valid_result -v --tb=short
+	@echo ""
+	@echo "✅ Golden Path Complete!"
+	@echo ""
+	@echo "📊 What was demonstrated:"
+	@echo "  • Synthetic data generation with deterministic seed"
+	@echo "  • Market regime detection using Kuramoto-Ricci indicators"
+	@echo "  • Backtest execution with valid PnL calculation"
+	@echo ""
+	@echo "📖 Next steps:"
+	@echo "  • Try your own data: python examples/quick_start.py --csv your_data.csv"
+	@echo "  • Run full backtest: python examples/neuro_trade_pulse_backtest.py"
+	@echo "  • View integration tests: pytest tests/integration/test_golden_path_backtest.py -v"
+	@echo ""
 
 .PHONY: perf-golden-path
 perf-golden-path:
