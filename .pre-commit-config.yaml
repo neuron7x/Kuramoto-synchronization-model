@@ -19,6 +19,10 @@ repos:
     rev: 7.1.1
     hooks:
       - id: flake8
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
   - repo: https://github.com/scop/pre-commit-shfmt
     rev: v3.12.0-2
     hooks:
@@ -47,6 +51,11 @@ repos:
         entry: npm run lint --prefix ui/dashboard
         language: system
         pass_filenames: false
+      - id: private-key-grep
+        name: detect private key headers (staged)
+        entry: bash -c 'pat="BEGIN (RSA )?PRIVATE"; pat+=" KEY"; ossh="BEGIN OPENSSH PRIVATE"; ossh+=" KEY"; grep -nE "${pat}|${ossh}" "$@" && exit 1 || true'
+        language: system
+        pass_filenames: true
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:

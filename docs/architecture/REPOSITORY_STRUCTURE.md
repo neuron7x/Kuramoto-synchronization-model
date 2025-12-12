@@ -91,15 +91,9 @@ TradePulse/
 
 ### Main Packages
 
-#### `tradepulse/` (Root Shim)
-Backward compatibility shim that forwards to `src.tradepulse`:
-- `tradepulse/__init__.py` - Import forwarding logic
-- `tradepulse/neural_controller/` - Neural controller module (direct)
-- `tradepulse/analytics/` - Analytics utilities (direct)
-- `tradepulse/risk/` - Risk management (direct)
-
 #### `src/tradepulse/` (Main SDK)
 The primary SDK package:
+- Use `PYTHONPATH=src` or an editable install (`pip install -e .`) for local imports.
 - `api/` - API clients and interfaces
 - `connectors/` - Exchange connectors
 - `core/` - Core SDK functionality

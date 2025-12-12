@@ -8,11 +8,11 @@ services:
     environment:
       TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET?tradepulse audit secret must be set}
       TRADEPULSE_RBAC_AUDIT_SECRET: ${TRADEPULSE_RBAC_AUDIT_SECRET?tradepulse RBAC audit secret must be set}
-      TRADEPULSE_API_SERVER_TLS__CERT_FILE: /app/tls/tradepulse-server.pem
-      TRADEPULSE_API_SERVER_TLS__KEY_FILE: /app/tls/tradepulse-server.key.pem
-      TRADEPULSE_API_SERVER_TLS__CLIENT_CA_FILE: /app/tls/root-ca.pem
+      TRADEPULSE_API_SERVER_TLS__CERT_FILE: /app/tls/generated/localhost.crt.pem
+      TRADEPULSE_API_SERVER_TLS__KEY_FILE: /app/tls/generated/localhost.key.pem
+      TRADEPULSE_API_SERVER_TLS__CLIENT_CA_FILE: /app/tls/generated/localhost.crt.pem
       TRADEPULSE_API_SERVER_TLS__REQUIRE_CLIENT_CERTIFICATE: "false"
-      TRADEPULSE_MTLS_TRUSTED_CA_PATH: /app/tls/root-ca.pem
+      TRADEPULSE_MTLS_TRUSTED_CA_PATH: /app/tls/generated/localhost.crt.pem
     ports:
       - "${TRADEPULSE_HTTP_PORT:-8000}:8000"
     restart: unless-stopped

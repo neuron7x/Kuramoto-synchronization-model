@@ -38,6 +38,19 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
     steps:
       - uses: actions/checkout@v5
+      - name: Secret material guard
+        run: |
+          PATTERN='BEGIN (RSA )?PRIVATE'
+          PATTERN+=' KEY'
+          OPENSSH='BEGIN OPENSSH PRIVATE'
+          OPENSSH+=' KEY'
+          git grep -nE "$PATTERN|$OPENSSH" && exit 1 || true
+          git ls-files | grep -Ei "\.(key|p12|pfx)$" && exit 1 || true
+          find . -path "*/configs/tls/dev/generated/*" -prune -o -type f -name "*.key" -print -quit | grep -q . && exit 1 || true
+      - name: Artifact guard
+        run: |
+          git ls-files | grep -E "(__pycache__/|\.pyc$)" && exit 1 || true
+          find . -name "__pycache__" -o -name "*.pyc" | grep -q . && echo "Artifacts present" && exit 1 || true
       - id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -62,6 +75,19 @@ jobs:
     name: Lint & Type Check (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v5
+      - name: Secret material guard
+        run: |
+          PATTERN='BEGIN (RSA )?PRIVATE'
+          PATTERN+=' KEY'
+          OPENSSH='BEGIN OPENSSH PRIVATE'
+          OPENSSH+=' KEY'
+          git grep -nE "$PATTERN|$OPENSSH" && exit 1 || true
+          git ls-files | grep -Ei "\.(key|p12|pfx)$" && exit 1 || true
+          find . -path "*/configs/tls/dev/generated/*" -prune -o -type f -name "*.key" -print -quit | grep -q . && exit 1 || true
+      - name: Artifact guard
+        run: |
+          git ls-files | grep -E "(__pycache__/|\.pyc$)" && exit 1 || true
+          find . -name "__pycache__" -o -name "*.pyc" | grep -q . && echo "Artifacts present" && exit 1 || true
       
       - name: Set up Python
         uses: actions/setup-python@v6

@@ -138,7 +138,7 @@ version_file = "src/_version.py"
 fallback_version = "0.1.0"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src", "."]
 include = [
     "analytics",
     "analytics.*",
@@ -158,8 +158,6 @@ include = [
     "interfaces.*",
     "libs",
     "libs.*",
-    "src",
-    "src.*",
     "tradepulse",
     "tradepulse.*",
     "tradepulse_agent",

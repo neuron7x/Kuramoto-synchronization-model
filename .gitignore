@@ -37,6 +37,7 @@ Thumbs.db
 .env.local
 .venv/
 venv/
+configs/tls/dev/generated/
 
 # GitHub Actions local testing (act)
 .github/act/tests.secrets

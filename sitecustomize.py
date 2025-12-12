@@ -11,8 +11,15 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 import tarfile
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+_REPO_ROOT = Path(__file__).resolve().parent
+_SRC_PATH = _REPO_ROOT / "src"
+if _SRC_PATH.exists():
+    sys.path.insert(0, str(_SRC_PATH))
 
 os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
 # Ensure local and CI test environments have a benign default for the
@@ -20,6 +27,7 @@ os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
 # bootstraps the FastAPI stack) does not raise configuration errors when the
 # sensitive value is not provided via environment variables.
 os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+os.environ.setdefault("TRADEPULSE_BOOTSTRAP_STRATEGY", "lazy")
 
 
 def _patch_pip_symlink_extraction() -> None:
