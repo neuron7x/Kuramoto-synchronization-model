@@ -11,7 +11,9 @@
 [![License: TPLA](https://img.shields.io/badge/License-TPLA-0066CC?style=flat)](LICENSE)
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 
-**TradePulse** is a production-grade algorithmic trading platform combining advanced geometric market indicators with enterprise reliability for quantitative researchers, algorithmic traders, and financial institutions.
+**TradePulse** is an R&D algorithmic trading platform combining advanced geometric market indicators with enterprise-focused engineering practices for quantitative researchers, algorithmic traders, and trading teams.
+
+> **🔬 Project Status**: Pre-Production Beta (v0.1.0) — Core functionality stable, live trading in active development. See [Project Status](#-project-status--roadmap) for details.
 
 [Quick Start](#-quick-start) • [Features](#-feature-highlights) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
@@ -52,9 +54,9 @@
 - **Observability**: Prometheus metrics, OpenTelemetry tracing, and comprehensive logging
 
 ### For Infrastructure Engineers
-- **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)
+- **Enterprise-Focused**: Security controls aligned with NIST SP 800-53 and ISO 27001 principles (design aligned, no external audit)
 - **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
-- **Comprehensive Testing**: 98% CI coverage gate with unit, integration, property-based, and fuzz testing
+- **Multi-Layer Testing**: Unit, integration, property-based, and fuzz testing (current coverage: backtest 74%, execution 44%, core 32%)
 
 ---
 
@@ -202,7 +204,43 @@ pip install -c constraints/security.txt -r requirements-dev.lock      # Add dev 
 📖 **Detailed Setup**: [SETUP.md](SETUP.md)  
 🔐 **Security**: All dependencies are pinned to exact versions with security constraints applied
 
-### Your First Analysis
+### 🎯 Golden Path - Complete Demo Workflow
+
+The fastest way to see TradePulse in action:
+
+```bash
+# One command to run complete workflow: data → analysis → backtest
+make golden-path
+```
+
+This demonstrates:
+1. **Market Analysis**: Generate sample data and analyze market regime
+2. **Integration Test**: Run a deterministic backtest workflow
+3. **Results**: See PnL calculations and trade metrics
+
+**Expected output:**
+```
+🎯 Running TradePulse Golden Path Demo...
+═══════════════════════════════════════
+Step 1: Market Analysis (quick_start.py)
+═══════════════════════════════════════
+Generating synthetic data with 500 points...
+Market Phase:     transition
+Confidence:       0.658
+Entry Signal:     0.000
+
+✅ Analysis complete!
+
+═══════════════════════════════════════
+Step 2: Run Integration Test
+═══════════════════════════════════════
+tests/integration/test_golden_path_backtest.py .  [100%]
+✅ Golden path complete!
+```
+
+### Your First Analysis (Step-by-Step)
+
+If you prefer to run examples manually:
 
 ```bash
 # Run the quick start example
@@ -376,8 +414,14 @@ mutmut run --use-coverage
 
 ### Coverage Status
 
-**CI Gate**: 98% coverage enforced on all PRs (via `--cov-fail-under=98`)  
-**Module Goals**: backtest (100%), execution (100%), core modules (90-95%)
+**Current Coverage** (December 2025):
+- `backtest/`: 74% (measured)
+- `execution/`: 44% (measured)
+- `core/`: 32% (measured)
+
+**Coverage Goals**:
+- CI Gate Target: 98% (goal, not yet enforced)
+- Module Goals: backtest (100%), execution (100%), core modules (90-95%)
 
 To verify current coverage:
 ```bash
@@ -385,7 +429,7 @@ make test-coverage
 # View report: reports/coverage/index.html
 ```
 
-📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
+📊 **All coverage claims and measurements**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 
