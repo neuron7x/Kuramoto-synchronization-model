@@ -81,6 +81,60 @@ class TestCalibrationProfiles:
                     f"{profile_name} dopamine config missing parameters: "
                     f"{required_params - da_params}"
                 )
+    
+    def test_serotonin_profile_parameters(self):
+        """Verify serotonin profiles have required parameters."""
+        required_params = {
+            "stress_threshold",
+            "release_threshold",
+            "hysteresis",
+            "cooldown_ticks",
+            "stress_gain",
+        }
+        
+        for profile_name, profile_data in CALIBRATION_PROFILES.items():
+            if "serotonin" in profile_data:
+                sero_params = set(profile_data["serotonin"].keys())
+                assert required_params.issubset(sero_params), (
+                    f"{profile_name} serotonin config missing parameters: "
+                    f"{required_params - sero_params}"
+                )
+    
+    def test_risk_engine_profile_parameters(self):
+        """Verify risk_engine profiles have required parameters."""
+        required_params = {
+            "max_daily_loss_percent",
+            "max_leverage",
+            "safe_mode_position_multiplier",
+            "kill_switch_loss_streak",
+        }
+        
+        for profile_name, profile_data in CALIBRATION_PROFILES.items():
+            if "risk_engine" in profile_data:
+                risk_params = set(profile_data["risk_engine"].keys())
+                assert required_params.issubset(risk_params), (
+                    f"{profile_name} risk_engine config missing parameters: "
+                    f"{required_params - risk_params}"
+                )
+    
+    def test_regime_adaptive_profile_parameters(self):
+        """Verify regime_adaptive profiles have required parameters."""
+        required_params = {
+            "calm_threshold",
+            "stressed_threshold",
+            "critical_threshold",
+            "calm_multiplier",
+            "stressed_multiplier",
+            "critical_multiplier",
+        }
+        
+        for profile_name, profile_data in CALIBRATION_PROFILES.items():
+            if "regime_adaptive" in profile_data:
+                regime_params = set(profile_data["regime_adaptive"].keys())
+                assert required_params.issubset(regime_params), (
+                    f"{profile_name} regime_adaptive config missing parameters: "
+                    f"{required_params - regime_params}"
+                )
 
     def test_nak_threshold_relationships(self):
         """Verify NAK thresholds maintain valid relationships."""
@@ -112,8 +166,83 @@ class TestCalibrationProfiles:
             )
             
             # Delta r limit
-            assert 0 < nak["delta_r_limit"] <= 1.0, (
-                f"{profile_name}: delta_r_limit must be in (0, 1]"
+            assert (
+                0 < nak["delta_r_limit"] <= 1.0
+            ), f"{profile_name}: delta_r_limit must be in (0, 1]"
+    
+    def test_serotonin_threshold_relationships(self):
+        """Verify Serotonin thresholds maintain valid relationships."""
+        for profile_name, profile_data in CALIBRATION_PROFILES.items():
+            if "serotonin" not in profile_data:
+                continue
+            
+            sero = profile_data["serotonin"]
+            
+            # Stress thresholds
+            assert sero["release_threshold"] <= sero["stress_threshold"], (
+                f"{profile_name}: release_threshold must be <= stress_threshold"
+            )
+            
+            # Hysteresis is reasonable
+            assert 0 <= sero["hysteresis"] <= 1.0, (
+                f"{profile_name}: hysteresis must be in [0, 1]"
+            )
+            
+            # Cooldown is non-negative
+            assert sero["cooldown_ticks"] >= 0, (
+                f"{profile_name}: cooldown_ticks must be >= 0"
+            )
+    
+    def test_risk_engine_invariants(self):
+        """Verify Risk Engine parameters maintain valid relationships."""
+        for profile_name, profile_data in CALIBRATION_PROFILES.items():
+            if "risk_engine" not in profile_data:
+                continue
+            
+            risk = profile_data["risk_engine"]
+            
+            # Loss percent is in (0, 1]
+            assert 0 < risk["max_daily_loss_percent"] <= 1.0, (
+                f"{profile_name}: max_daily_loss_percent must be in (0, 1]"
+            )
+            
+            # Leverage is positive
+            assert risk["max_leverage"] > 0, (
+                f"{profile_name}: max_leverage must be > 0"
+            )
+            
+            # Safe mode multiplier is in [0, 1]
+            assert 0 <= risk["safe_mode_position_multiplier"] <= 1.0, (
+                f"{profile_name}: safe_mode_position_multiplier must be in [0, 1]"
+            )
+            
+            # Kill switch streak is positive
+            assert risk["kill_switch_loss_streak"] >= 1, (
+                f"{profile_name}: kill_switch_loss_streak must be >= 1"
+            )
+    
+    def test_regime_adaptive_threshold_ordering(self):
+        """Verify Regime Adaptive thresholds maintain proper ordering."""
+        for profile_name, profile_data in CALIBRATION_PROFILES.items():
+            if "regime_adaptive" not in profile_data:
+                continue
+            
+            regime = profile_data["regime_adaptive"]
+            
+            # Threshold ordering: calm < stressed < critical
+            assert regime["calm_threshold"] < regime["stressed_threshold"] < regime["critical_threshold"], (
+                f"{profile_name}: thresholds must satisfy calm < stressed < critical"
+            )
+            
+            # Multipliers are positive
+            assert regime["calm_multiplier"] > 0, (
+                f"{profile_name}: calm_multiplier must be > 0"
+            )
+            assert regime["stressed_multiplier"] > 0, (
+                f"{profile_name}: stressed_multiplier must be > 0"
+            )
+            assert regime["critical_multiplier"] > 0, (
+                f"{profile_name}: critical_multiplier must be > 0"
             )
 
 
