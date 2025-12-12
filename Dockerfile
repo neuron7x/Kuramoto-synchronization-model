@@ -14,13 +14,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Copy requirements files (scan version excludes torch/GPU libs)
-COPY requirements-scan.txt ./
+# Copy requirements files (scan lock excludes torch and NVIDIA CUDA libraries)
+COPY requirements-scan.lock ./
 COPY constraints/security.txt ./constraints/
 
 # Install minimal dependencies for security scanning
-# This excludes torch and therefore avoids pulling heavy NVIDIA CUDA libraries
-RUN pip install --no-cache-dir -c constraints/security.txt -r requirements-scan.txt
+# This excludes torch and therefore avoids pulling heavy NVIDIA CUDA libraries (~2GB)
+RUN pip install --no-cache-dir -c constraints/security.txt -r requirements-scan.lock
 
 # Copy application code for scanning
 COPY application ./application
