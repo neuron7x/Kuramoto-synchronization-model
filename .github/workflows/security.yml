@@ -297,6 +297,7 @@ jobs:
       with:
         context: .
         file: ./Dockerfile
+        target: scan
         load: true
         tags: tradepulse:ci-scan
 
