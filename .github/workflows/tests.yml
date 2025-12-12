@@ -615,15 +615,22 @@ jobs:
           threshold = 98.0
           margin = line_rate - threshold
 
-          summary = f"""### Full Test Suite Coverage
-
-| Metric | Percentage | Target | Status |
-| --- | --- | --- | --- |
-| Line coverage | {line_rate:.2f}% | {threshold:.0f}% | {'✅' if line_rate >= threshold else '❌'} |
-| Branch coverage | {branch_rate:.2f}% | 90% | {'✅' if branch_rate >= 90 else '❌'} |
-| Coverage margin | {margin:+.2f}% | — | {'✅' if margin >= 0 else '⚠️'} |
-
-"""
+          status_line = "✅" if line_rate >= threshold else "❌"
+          status_branch = "✅" if branch_rate >= 90 else "❌"
+          status_margin = "✅" if margin >= 0 else "⚠️"
+          
+          summary_lines = [
+              "### Full Test Suite Coverage",
+              "",
+              "| Metric | Percentage | Target | Status |",
+              "| --- | --- | --- | --- |",
+              f"| Line coverage | {line_rate:.2f}% | {threshold:.0f}% | {status_line} |",
+              f"| Branch coverage | {branch_rate:.2f}% | 90% | {status_branch} |",
+              f"| Coverage margin | {margin:+.2f}% | — | {status_margin} |",
+              "",
+          ]
+          summary = "\n".join(summary_lines)
+          
           step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
           if step_summary:
               with open(step_summary, "a") as f:
