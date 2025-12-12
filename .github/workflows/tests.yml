@@ -196,7 +196,7 @@ jobs:
         run: |
           mkdir -p reports/go
           # Run Go tests with short flag for fast subset only
-          go test ./... -short -covermode=atomic -coverprofile=reports/go/services.coverage.out || echo "⚠️ Go tests had failures"
+          go test ./... -short -covermode=atomic -coverprofile=reports/go/services.coverage.out
           
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -339,7 +339,7 @@ jobs:
           .venv/bin/python -m pytest tests/smoke/ \
             -m "smoke and not slow" \
             --junitxml=reports/smoke-tests.xml \
-            -q || echo "⚠️ Smoke tests had failures"
+            -q
       - name: Publish fast test coverage summary
         if: always()
         id: coverage_summary
@@ -538,7 +538,7 @@ jobs:
   full-test-suite:
     runs-on: ubuntu-latest
     # Only run on main push, schedule, or manual trigger - NOT on PRs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: fast-unit-tests
     timeout-minutes: 45
     strategy:
@@ -662,7 +662,7 @@ jobs:
   mutation-trading-engine:
     runs-on: ubuntu-latest
     # Only run on main push, schedule, or manual trigger
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: fast-unit-tests
     timeout-minutes: 60
     name: Targeted Mutation Testing (Trading Engine)
@@ -755,7 +755,7 @@ jobs:
   benchmarks:
     runs-on: ubuntu-latest
     # Only run on main push, schedule, or manual trigger
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: fast-unit-tests
     timeout-minutes: 30
     name: Performance Benchmarks (Python 3.11)
@@ -981,7 +981,7 @@ jobs:
   ui-smoke:
     runs-on: ubuntu-latest
     # Only run on main push, schedule, or manual trigger
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: fast-unit-tests
     timeout-minutes: 20
     name: Playwright UI Smoke Tests
