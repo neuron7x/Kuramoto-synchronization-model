@@ -53,7 +53,7 @@ def cmd_manual() -> None:
         print("\n✅ Manual checklist complete!\n")
         return
 
-    pending = [item for item, done in zip(MANUAL_ITEMS, completed) if not done]
+    pending = (item for item, done in zip(MANUAL_ITEMS, completed) if not done)
     print("\n⚠️  Pending items:")
     for item in pending:
         print(f"  - {item}")

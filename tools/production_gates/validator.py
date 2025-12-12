@@ -8,8 +8,10 @@ instead of raising, so the caller always receives a complete status map.
 
 from __future__ import annotations
 
+import io
 import json
 import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -26,6 +28,14 @@ class GateStatus(Enum):
     PENDING = "⏳"
 
 
+class GateSeverity(Enum):
+    """Severity classification for gates."""
+
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+
+
 @dataclass
 class Gate:
     """Production readiness gate configuration."""
@@ -33,7 +43,7 @@ class Gate:
     name: str
     description: str
     validator: Callable[[], bool]
-    severity: str  # CRITICAL, HIGH, MEDIUM
+    severity: GateSeverity
     automated: bool = True
 
 
@@ -44,10 +54,36 @@ class ProductionGateValidator:
         self,
         coverage_target: float = 98.0,
         mutation_target: float = 90.0,
+        latency_target: float = 50.0,
         gates: Iterable[Gate] | None = None,
+        mutation_report_paths: Iterable[str | Path] | None = None,
+        docs_root: str | Path | None = None,
+        performance_budget_path: str | Path | None = None,
+        monitoring_paths: Iterable[str | Path] | None = None,
     ) -> None:
         self.coverage_target = coverage_target
         self.mutation_target = mutation_target
+        self.latency_target = latency_target
+        self.mutation_report_paths = (
+            [Path(p) for p in mutation_report_paths]
+            if mutation_report_paths is not None
+            else [Path("reports/mutation/mutmut.json"), Path("reports/mutation/summary.json")]
+        )
+        self.docs_root = Path(docs_root) if docs_root is not None else Path("docs")
+        self.performance_budget_path = (
+            Path(performance_budget_path)
+            if performance_budget_path is not None
+            else Path("configs/performance_budgets.yaml")
+        )
+        self.monitoring_paths = (
+            [Path(p) for p in monitoring_paths]
+            if monitoring_paths is not None
+            else [
+                Path("monitoring/alerts.yaml"),
+                Path("monitoring/alerts.yml"),
+                Path("monitoring/dashboards"),
+            ]
+        )
         self.gates: List[Gate] = list(gates) if gates is not None else self._define_gates()
 
     # --- Gate definitions -------------------------------------------------
@@ -57,56 +93,56 @@ class ProductionGateValidator:
                 name="test_coverage",
                 description=f"Test coverage ≥{self.coverage_target:.0f}%",
                 validator=self._check_coverage,
-                severity="CRITICAL",
+                severity=GateSeverity.CRITICAL,
                 automated=True,
             ),
             Gate(
                 name="mutation_score",
                 description=f"Mutation score ≥{self.mutation_target:.0f}%",
                 validator=self._check_mutations,
-                severity="HIGH",
+                severity=GateSeverity.HIGH,
                 automated=True,
             ),
             Gate(
                 name="zero_critical_vulns",
                 description="Zero critical vulnerabilities",
                 validator=self._check_security,
-                severity="CRITICAL",
+                severity=GateSeverity.CRITICAL,
                 automated=True,
             ),
             Gate(
                 name="secrets_rotated",
                 description="All secrets rotated <90 days",
                 validator=self._check_secrets,
-                severity="HIGH",
+                severity=GateSeverity.HIGH,
                 automated=False,
             ),
             Gate(
                 name="latency_sla",
-                description="p99 latency <50ms",
+                description=f"p99 latency <{self.latency_target:.0f}ms",
                 validator=self._check_latency,
-                severity="CRITICAL",
+                severity=GateSeverity.CRITICAL,
                 automated=True,
             ),
             Gate(
                 name="docs_complete",
                 description="All docs current and valid",
                 validator=self._check_docs,
-                severity="MEDIUM",
+                severity=GateSeverity.MEDIUM,
                 automated=True,
             ),
             Gate(
                 name="monitoring_configured",
                 description="Alerts and dashboards active",
                 validator=self._check_monitoring,
-                severity="CRITICAL",
+                severity=GateSeverity.CRITICAL,
                 automated=True,
             ),
             Gate(
                 name="runbooks_validated",
                 description="Incident runbooks tested",
                 validator=self._check_runbooks,
-                severity="HIGH",
+                severity=GateSeverity.HIGH,
                 automated=False,
             ),
         ]
@@ -115,8 +151,8 @@ class ProductionGateValidator:
     def _check_coverage(self) -> bool:
         """Validate test coverage from an existing .coverage file."""
         try:
-            import coverage  # type: ignore
-        except Exception:
+            import coverage
+        except ImportError:
             return False
 
         data_file = Path(".coverage")
@@ -126,18 +162,16 @@ class ProductionGateValidator:
         try:
             cov = coverage.Coverage(data_file=str(data_file))
             cov.load()
-            total = cov.report(file=None)
+            buffer = io.StringIO()
+            total = cov.report(file=buffer)
             return total >= self.coverage_target
         except Exception:
             return False
 
     def _check_mutations(self) -> bool:
         """Check mutation testing report if available."""
-        report_paths = [
-            Path("reports/mutation/mutmut.json"),
-            Path("reports/mutation/summary.json"),
-        ]
-        for path in report_paths:
+        possible_keys = ("mutation_score", "score", "kill_rate", "mutation_kill_rate")
+        for path in self.mutation_report_paths:
             if not path.exists():
                 continue
             try:
@@ -145,34 +179,34 @@ class ProductionGateValidator:
             except Exception:
                 continue
             # Accept either plain percentage or nested structure
-            score = None
-            if isinstance(payload, Mapping) and "mutation_score" in payload:
-                score = payload.get("mutation_score")
-            elif isinstance(payload, Mapping) and "score" in payload:
-                score = payload.get("score")
-            if isinstance(score, (int, float)):
-                return float(score) >= self.mutation_target
+            if isinstance(payload, Mapping):
+                for key in possible_keys:
+                    score = payload.get(key)
+                    if isinstance(score, (int, float)):
+                        return float(score) >= self.mutation_target
         return False
 
     def _check_security(self) -> bool:
         """Check for critical vulnerabilities using safety if available."""
         try:
             result = subprocess.run(
-                ["python", "-m", "safety", "check", "--full-report", "--bare"],
+                [sys.executable, "-m", "safety", "check", "--full-report", "--bare"],
                 capture_output=True,
                 check=False,
                 text=True,
                 timeout=20,
+                cwd=Path.cwd(),
             )
         except Exception:
             return False
 
-        output = result.stdout or ""
-        if not output.strip():
-            # No output implies no vulnerabilities detected
-            return True
-        # Treat presence of "CRITICAL" as failure
-        return "CRITICAL" not in output.upper()
+        output = (result.stdout or "").upper()
+        if result.returncode not in (0, 1):
+            return False
+        if "CRITICAL" in output:
+            return False
+        # safety exits with 1 when any vulnerability is found
+        return result.returncode == 0
 
     def _check_secrets(self) -> bool:
         """Manual gate placeholder for secret rotation."""
@@ -180,36 +214,41 @@ class ProductionGateValidator:
 
     def _check_latency(self) -> bool:
         """Validate latency budgets using optional performance budget file."""
-        budgets = Path("configs/performance_budgets.yaml")
+        budgets = self.performance_budget_path
         if not budgets.exists():
             return False
         try:
             import yaml
-        except Exception:
+        except ImportError:
             return False
 
         try:
             data = yaml.safe_load(budgets.read_text(encoding="utf-8")) or {}
-            p99_budget = float(
-                data.get("latency", {}).get("p99_ms", data.get("latency_p99_ms", 0))
-            )
-            return p99_budget and p99_budget < 50.0
+            candidates = [
+                data.get("latency", {}).get("p99_ms"),
+                data.get("latency_p99_ms"),
+            ]
+            numeric_candidates: list[float] = []
+            for candidate in candidates:
+                if candidate is None:
+                    continue
+                try:
+                    numeric_candidates.append(float(candidate))
+                except (TypeError, ValueError):
+                    continue
+            if not numeric_candidates:
+                return False
+            return any(value < self.latency_target for value in numeric_candidates)
         except Exception:
             return False
 
     def _check_docs(self) -> bool:
         """Verify documentation index exists."""
-        docs_root = Path("docs")
-        return docs_root.exists() and any(docs_root.glob("*.md"))
+        return self.docs_root.exists() and any(self.docs_root.glob("*.md"))
 
     def _check_monitoring(self) -> bool:
         """Check for presence of monitoring configuration files."""
-        monitoring_paths = [
-            Path("monitoring/alerts.yaml"),
-            Path("monitoring/alerts.yml"),
-            Path("monitoring/dashboards"),
-        ]
-        return any(path.exists() for path in monitoring_paths)
+        return any(path.exists() for path in self.monitoring_paths)
 
     def _check_runbooks(self) -> bool:
         """Manual gate placeholder for runbook validation."""
@@ -231,7 +270,7 @@ class ProductionGateValidator:
         return results
 
     def as_report_payload(self) -> Dict[str, Dict[str, object]]:
-        """Return a JSON-serialisable summary of gate results."""
+        """Return a JSON-serializable summary of gate results."""
         statuses = self.validate_all()
         payload: Dict[str, Dict[str, object]] = {}
         for gate in self.gates:
@@ -239,7 +278,7 @@ class ProductionGateValidator:
             payload[gate.name] = {
                 "status": status.name,
                 "symbol": status.value,
-                "severity": gate.severity,
+                "severity": gate.severity.value,
                 "automated": gate.automated,
                 "description": gate.description,
             }
@@ -259,21 +298,36 @@ class ProductionGateValidator:
             status = statuses.get(gate.name, GateStatus.PENDING)
             lines.append(
                 f"{status.value} **{gate.name}** "
-                f"({gate.severity}): {gate.description}"
+                f"({gate.severity.value}): {gate.description}"
             )
 
         total = len(self.gates)
-        passed = sum(1 for s in statuses.values() if s == GateStatus.PASS)
+        automated_statuses = [
+            statuses.get(gate.name, GateStatus.PENDING)
+            for gate in self.gates
+            if gate.automated
+        ]
+        automated_total = len(automated_statuses)
+        if automated_statuses:
+            passed = sum(1 for s in automated_statuses if s == GateStatus.PASS)
+            rate_total = automated_total
+        else:
+            passed = sum(1 for s in statuses.values() if s == GateStatus.PASS)
+            rate_total = total
+        all_passed = bool(automated_total) and all(
+            status == GateStatus.PASS for status in automated_statuses
+        )
+        pass_rate = (passed / rate_total * 100.0) if rate_total else 0.0
         lines.extend(
             [
                 "",
                 "## Summary",
                 f"- Total Gates: {total}",
                 f"- Passed: {passed}",
-                f"- Pass Rate: {passed/total*100:.1f}%",
+                f"- Pass Rate: {pass_rate:.1f}%",
                 "",
                 "## Production Ready?",
-                "✅ YES" if passed == total else "❌ NO - Address failures above",
+                "✅ YES" if all_passed and total > 0 else "❌ NO - Address failures above",
             ]
         )
         return "\n".join(lines)

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from tools.production_gates import Gate, GateStatus, ProductionGateValidator
+from tools.production_gates import (
+    Gate,
+    GateSeverity,
+    GateStatus,
+    ProductionGateValidator,
+)
 
 
 def test_validate_all_maps_statuses() -> None:
@@ -10,10 +15,22 @@ def test_validate_all_maps_statuses() -> None:
         raise RuntimeError("boom")
 
     gates = [
-        Gate("pass_gate", "passes", lambda: True, severity="CRITICAL", automated=True),
-        Gate("fail_gate", "fails", lambda: False, severity="HIGH", automated=True),
-        Gate("pending_gate", "pending", lambda: True, severity="MEDIUM", automated=False),
-        Gate("warning_gate", "warns", _raise, severity="MEDIUM", automated=True),
+        Gate(
+            "pass_gate", "passes", lambda: True, severity=GateSeverity.CRITICAL, automated=True
+        ),
+        Gate(
+            "fail_gate", "fails", lambda: False, severity=GateSeverity.HIGH, automated=True
+        ),
+        Gate(
+            "pending_gate",
+            "pending",
+            lambda: True,
+            severity=GateSeverity.MEDIUM,
+            automated=False,
+        ),
+        Gate(
+            "warning_gate", "warns", _raise, severity=GateSeverity.MEDIUM, automated=True
+        ),
     ]
     validator = ProductionGateValidator(gates=gates)
 
@@ -28,8 +45,12 @@ def test_validate_all_maps_statuses() -> None:
 def test_generate_report_contains_summary() -> None:
     """Ensure generate_report produces a readable summary."""
     gates = [
-        Gate("pass_gate", "passes", lambda: True, severity="CRITICAL", automated=True),
-        Gate("fail_gate", "fails", lambda: False, severity="HIGH", automated=True),
+        Gate(
+            "pass_gate", "passes", lambda: True, severity=GateSeverity.CRITICAL, automated=True
+        ),
+        Gate(
+            "fail_gate", "fails", lambda: False, severity=GateSeverity.HIGH, automated=True
+        ),
     ]
     validator = ProductionGateValidator(gates=gates)
 
@@ -47,7 +68,7 @@ def test_as_report_payload_exposes_metadata() -> None:
         "docs_complete",
         "All docs current and valid",
         lambda: True,
-        severity="MEDIUM",
+        severity=GateSeverity.MEDIUM,
         automated=True,
     )
     validator = ProductionGateValidator(gates=[gate])
@@ -56,7 +77,7 @@ def test_as_report_payload_exposes_metadata() -> None:
 
     assert "docs_complete" in payload
     item = payload["docs_complete"]
-    assert item["severity"] == "MEDIUM"
+    assert item["severity"] == GateSeverity.MEDIUM.value
     assert item["status"] == GateStatus.PASS.name
     assert item["automated"] is True
     assert item["symbol"] == GateStatus.PASS.value
