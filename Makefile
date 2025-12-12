@@ -12,6 +12,7 @@ help:
 	@echo "Core Commands:"
 	@echo "  make install       - Install runtime dependencies only"
 	@echo "  make dev-install   - Install all dependencies (dev + runtime)"
+	@echo "  make golden-path   - 🎯 Run complete demo workflow (quickstart → backtest)"
 	@echo "  make test          - Run core test suite (fast, CI-safe)"
 	@echo "  make lint          - Run all linters (Python + Go + shell)"
 	@echo "  make format        - Auto-format code (black, isort, ruff)"
@@ -236,6 +237,32 @@ perf-golden-path:
 	pytest tests/perf/test_golden_path_backtest_perf.py -v
 	@echo "✅ Golden path performance benchmark complete"
 	@echo "📊 Results available at: reports/perf/golden_path_backtest.json"
+
+.PHONY: golden-path
+golden-path:
+	@echo "🎯 Running TradePulse Golden Path Demo..."
+	@echo ""
+	@echo "This demonstrates the core workflow:"
+	@echo "  1. Generate sample market data"
+	@echo "  2. Analyze market regime"
+	@echo "  3. Run a simple backtest"
+	@echo ""
+	@echo "═══════════════════════════════════════"
+	@echo "Step 1: Market Analysis (quick_start.py)"
+	@echo "═══════════════════════════════════════"
+	PYTHONPATH=. python examples/quick_start.py --seed 42 --num-points 500
+	@echo ""
+	@echo "═══════════════════════════════════════"
+	@echo "Step 2: Run Integration Test"
+	@echo "═══════════════════════════════════════"
+	pytest tests/integration/test_golden_path_backtest.py::TestGoldenPathBasic::test_backtest_produces_valid_result -v --tb=short
+	@echo ""
+	@echo "✅ Golden path complete!"
+	@echo ""
+	@echo "📖 Next steps:"
+	@echo "   • Explore more examples in examples/"
+	@echo "   • Read docs/quickstart.md for detailed guides"
+	@echo "   • Try 'make test' to run the test suite"
 
 .PHONY: e2e
 e2e:
