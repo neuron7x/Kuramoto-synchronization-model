@@ -90,21 +90,22 @@ See `PR_TEST_OPTIMIZATION_IMPLEMENTATION.md` for complete documentation.
 
 #### 1. `tests.yml` - PRIMARY PR Quality Gate ⭐
 **Triggers:** PR to any branch, push to main/develop
-**Purpose:** Single source of truth for PR quality - comprehensive testing, linting, and coverage
+**Purpose:** Single source of truth for PR quality - linting + fast tests on PRs; full-suite with strict coverage runs on main/schedule
 
 **Jobs:**
 - `lint`: Code style, type checking, security scanning (ruff, black, mypy, detect-secrets)
 - `web-lint`: Frontend linting and testing (Prettier, ESLint, TypeScript, Jest)
-- `tests`: Unit, integration, e2e tests with 98% coverage requirement
+- `tests`: Unit/integration/e2e subset for fast PR feedback (coverage reported only)
   - Go service tests
   - Terraform validation
-  - Python tests with coverage enforcement
+  - Python tests with coverage reporting
   - Property-based tests with Hypothesis
   - Localization validation
+- `full-test-suite`: Runs on main/schedule/workflow_dispatch with 98% line coverage + 90% branch coverage gate
 
 **Requirements:**
-- ✅ Code coverage ≥ 98% (line coverage)
-- ✅ Branch coverage ≥ 90%
+- ✅ PRs: coverage reported (no gate on fast path)
+- ✅ Main/schedule: full-test-suite enforces 98% line / 90% branch coverage
 - ✅ All linters pass (ruff, black, mypy)
 - ✅ No secrets detected
 - ✅ All tests passing
