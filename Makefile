@@ -26,7 +26,8 @@ help:
 	@echo "Extended Commands:"
 	@echo "  make test-coverage - Generate HTML/XML coverage reports"
 	@echo "  make test-all      - Run full test suite with coverage"
-	@echo "  make test-fast     - Run fast unit tests only"
+	@echo "  make test-ci-full  - Run full suite with 98% coverage gate (CI match)"
+	@echo "  make test-fast     - Run fast unit tests only (PR gate)"
 	@echo "  make test-heavy    - Run slow/heavy tests"
 	@echo "  make perf          - Run performance benchmarks"
 	@echo "  make e2e           - Run end-to-end smoke tests"
@@ -87,8 +88,8 @@ clean-deps:
 
 .PHONY: test
 test:
-	@echo "🧪 Running core test suite..."
-	pytest tests/ -m "not slow and not heavy_math and not nightly" -q
+	@echo "🧪 Running fast PR gate tests (matches CI fast-unit-tests)..."
+	pytest tests/ -m "not slow and not heavy_math and not nightly and not flaky" -q
 	@echo "✅ Tests passed"
 
 .PHONY: lint
@@ -196,10 +197,24 @@ test-all:
 		--coverage coverage.xml
 	@echo "✅ Full test suite passed"
 
+.PHONY: test-ci-full
+test-ci-full:
+	@echo "🧪 Running full test suite with 98% coverage gate (matches CI)..."
+	@mkdir -p reports
+	pytest tests/ \
+		-m "not flaky" \
+		--cov=core --cov=backtest --cov=execution \
+		--cov-branch \
+		--cov-report=xml --cov-report=term-missing --cov-report=html:coverage_html \
+		--cov-fail-under=98 \
+		--junitxml=reports/full-test-suite.xml \
+		--html=reports/full-test-suite-report.html --self-contained-html
+	@echo "✅ Full test suite passed with 98% coverage"
+
 .PHONY: test-fast
 test-fast:
-	@echo "🧪 Running fast tests..."
-	pytest tests/ -m "not slow and not heavy_math and not nightly"
+	@echo "🧪 Running fast tests (PR gate, excludes flaky)..."
+	pytest tests/ -m "not slow and not heavy_math and not nightly and not flaky"
 	@echo "✅ Fast tests passed"
 
 .PHONY: test-heavy

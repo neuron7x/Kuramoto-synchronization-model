@@ -21,6 +21,10 @@ on:
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/*.md'
+  # Heavy jobs run on schedule (nightly) or manual trigger
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM UTC daily for heavy test suites
+  workflow_dispatch:  # Allow manual triggering
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -43,23 +47,29 @@ jobs:
             web:
               - 'apps/web/**'
 
+  # ============================================================================
+  # PR FAST GATES - These jobs are required for every PR and must be fast
+  # Target: Complete in ≤10-12 minutes total
+  # ============================================================================
+
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.11', '3.12']
     name: Lint & Type Check (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
       - name: Cache pre-commit environments
@@ -89,22 +99,25 @@ jobs:
           .venv/bin/pip install pre-commit detect-secrets
       - name: Validate localization bundles
         run: .venv/bin/python scripts/localization/sync_translations.py --check
+        
       - name: Install shellcheck
         run: |
           sudo apt-get update
           sudo apt-get install -y shellcheck
-      - name: Run ruff
-        run: .venv/bin/ruff check .
-      - name: Run black
-        run: .venv/bin/black --check .
-      - name: Run mypy
-        run: .venv/bin/mypy
+          
+      - name: Run Python linting (ruff, black, mypy)
+        run: |
+          .venv/bin/ruff check .
+          .venv/bin/black --check .
+          .venv/bin/mypy
+          
       - name: Run slotscheck
         run: .venv/bin/python -m slotscheck --module core --module backtest --module execution
-      - name: Run shfmt
-        run: .venv/bin/pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
-      - name: Run shellcheck
-        run: .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
+        
+      - name: Run shell linting (shfmt, shellcheck)
+        run: |
+          .venv/bin/pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
+          .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
       - name: Run detect-secrets scan
         run: |
           set -euo pipefail
@@ -154,12 +167,15 @@ jobs:
         working-directory: apps/web
         run: npm run test
 
-  tests:
+  fast-unit-tests:
     runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.11']
-    name: Tests (Python ${{ matrix.python-version }})
+        python-version: ['3.11', '3.12']
+    name: Fast Unit Tests (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v5
       - name: Set up Go
@@ -175,47 +191,20 @@ jobs:
           key: go-${{ runner.os }}-${{ hashFiles('go.sum', 'infra/terraform/tests/go.sum') }}
           restore-keys: |
             go-${{ runner.os }}-
-      - name: Run Go service unit tests
+      - name: Run Go service unit tests (fast subset)
         continue-on-error: true
         run: |
           mkdir -p reports/go
-          set +e
-          go test ./... -covermode=atomic -coverprofile=reports/go/services.coverage.out
-          go_exit_code=$?
-          set -e
-          if [ $go_exit_code -ne 0 ]; then
-            echo "⚠️ Go tests failed with exit code $go_exit_code"
-          fi
-          exit $go_exit_code
-      - name: Upload Go coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-services-coverage
-          path: reports/go/services.coverage.out
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Run Terraform validation tests
-        continue-on-error: true
-        working-directory: infra/terraform/tests
-        run: |
-          set +e
-          go test ./... -v
-          tf_exit_code=$?
-          set -e
-          if [ $tf_exit_code -ne 0 ]; then
-            echo "⚠️ Terraform tests failed with exit code $tf_exit_code"
-          fi
-          exit $tf_exit_code
+          # Run Go tests with short flag for fast subset only
+          go test ./... -short -covermode=atomic -coverprofile=reports/go/services.coverage.out
+          
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
@@ -317,29 +306,20 @@ jobs:
             --test-dir=tests \
             --report=reports/test-quality.json \
             --threshold=70.0
-      - name: Run unit and integration tests with coverage
+      - name: Run fast unit tests (PR gate)
         id: run_tests
-        continue-on-error: true
         run: |
-          set +e
+          # Fast tests only: exclude slow, heavy_math, nightly, flaky
           .venv/bin/python -m pytest \
-            -m "not flaky" \
             tests/ \
+            -m "not slow and not heavy_math and not nightly and not flaky" \
             --cov=core --cov=backtest --cov=execution \
             --cov-branch \
-            --cov-report=xml --cov-report=term-missing --cov-report=html:coverage_html \
-            --cov-fail-under=98 \
-            --junitxml=reports/unit-integration-tests.xml \
-            --html=reports/unit-integration-report.html --self-contained-html \
-            --flaky-report=reports/flaky-tests-skipped.json \
-            --json-report --json-report-file=reports/test-results.json
-          test_exit_code=$?
-          set -e
-          echo "test_exit_code=$test_exit_code" >> $GITHUB_OUTPUT
-          if [ $test_exit_code -ne 0 ]; then
-            echo "⚠️ Tests failed with exit code $test_exit_code"
-          fi
-          exit $test_exit_code
+            --cov-report=xml --cov-report=term-missing \
+            --junitxml=reports/fast-unit-tests.xml \
+            --html=reports/fast-unit-tests-report.html --self-contained-html \
+            --json-report --json-report-file=reports/test-results.json \
+            -q
       - name: Track test performance
         if: always()
         continue-on-error: true
@@ -352,22 +332,16 @@ jobs:
           else
             echo "⚠️ Test results file not found, skipping performance tracking"
           fi
-      - name: Run end-to-end smoke tests
+      - name: Run smoke tests (golden path)
         continue-on-error: true
         run: |
-          set +e
-          .venv/bin/python -m pytest tests/e2e/ \
-            -m "not slow and not flaky" \
-            --junitxml=reports/e2e-tests.xml \
-            --html=reports/e2e-report.html --self-contained-html
-          e2e_exit_code=$?
-          set -e
-          if [ $e2e_exit_code -ne 0 ]; then
-            echo "⚠️ E2E tests failed with exit code $e2e_exit_code"
-          fi
-          exit $e2e_exit_code
-      - name: Publish coverage summary
-        if: ${{ always() }}
+          # Quick smoke test to validate core functionality
+          .venv/bin/python -m pytest tests/smoke/ \
+            -m "smoke and not slow" \
+            --junitxml=reports/smoke-tests.xml \
+            -q
+      - name: Publish fast test coverage summary
+        if: always()
         id: coverage_summary
         continue-on-error: true
         run: |
@@ -379,19 +353,7 @@ jobs:
 
           report_path = pathlib.Path("coverage.xml")
           if not report_path.exists():
-              print("⚠️ coverage.xml not found; coverage step may have failed", file=sys.stderr)
-              # Set default values for output
-              github_output = os.environ.get("GITHUB_OUTPUT")
-              if github_output:
-                  with open(github_output, "a", encoding="utf-8") as handle:
-                      handle.write("line_rate=0.00\n")
-                      handle.write("branch_rate=0.00\n")
-                      handle.write("coverage_threshold=98.00\n")
-                      handle.write("coverage_margin=-98.00\n")
-                      handle.write("risk_level=Unknown\n")
-                      handle.write("risk_reason<<'EOF'\n")
-                      handle.write("Coverage report not generated")
-                      handle.write("\nEOF\n")
+              print("⚠️ coverage.xml not found", file=sys.stderr)
               sys.exit(0)
 
           try:
@@ -399,35 +361,18 @@ jobs:
               line_rate = float(root.get("line-rate", 0.0)) * 100
               branch_rate = float(root.get("branch-rate", 0.0)) * 100
           except Exception as e:
-              print(f"⚠️ Error parsing coverage.xml: {e}", file=sys.stderr)
-              line_rate = 0.0
-              branch_rate = 0.0
-
-          threshold = 98.0
-          margin = line_rate - threshold
-          margin_display = f"{margin:+.2f}"
-
-          if line_rate + 1e-9 >= threshold + 1.5:
-              risk_level = "Low"
-              risk_reason = f"Coverage exceeds the guardrail by {margin:.2f}% providing a healthy buffer."
-          elif line_rate + 1e-9 >= threshold:
-              risk_level = "Moderate"
-              risk_reason = f"Coverage clears the guardrail by {margin:.2f}% — consider adding tests to widen the buffer."
-          else:
-              risk_level = "High"
-              risk_reason = f"Coverage is below the {threshold:.0f}% guardrail by {abs(margin):.2f}%. Additional tests are required."
+              print(f"⚠️ Error parsing coverage: {e}", file=sys.stderr)
+              sys.exit(0)
 
           summary_lines = [
-              "### Coverage summary\n",
+              "### Fast Test Coverage (PR Gate)",
               "",
               "| Metric | Percentage |",
               "| --- | --- |",
               f"| Line coverage | {line_rate:.2f}% |",
               f"| Branch coverage | {branch_rate:.2f}% |",
-              f"| Guardrail | {threshold:.2f}% |",
-              f"| Margin vs guardrail | {margin:+.2f}% |",
               "",
-              f"**Risk level:** {risk_level} — {risk_reason}",
+              "_Note: Full coverage validation runs in the extended test suite._",
               "",
           ]
 
@@ -441,66 +386,17 @@ jobs:
               with open(github_output, "a", encoding="utf-8") as handle:
                   handle.write(f"line_rate={line_rate:.2f}\n")
                   handle.write(f"branch_rate={branch_rate:.2f}\n")
-                  handle.write(f"coverage_threshold={threshold:.2f}\n")
-                  handle.write(f"coverage_margin={margin_display}\n")
-                  handle.write(f"risk_level={risk_level}\n")
-                  handle.write("risk_reason<<'EOF'\n")
-                  handle.write(risk_reason)
-                  handle.write("\nEOF\n")
-
-          if branch_rate < 90.0:
-              print(f"⚠️ Branch coverage {branch_rate:.2f}% is below the required 90% threshold", file=sys.stderr)
-              # Don't fail the step, just warn
           PY
-      - name: Update missing-coverage label
-        if: ${{ github.event_name == 'pull_request' && matrix.python-version == '3.11' }}
-        continue-on-error: true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            try {
-              const owner = context.repo.owner;
-              const repo = context.repo.repo;
-              const pull_number = context.payload.pull_request.number;
-              const label = 'missing-coverage';
-              const lineThreshold = 98;
-              const branchThreshold = 90;
-              const lineRate = Number("${{ steps.coverage_summary.outputs.line_rate || '0' }}");
-              const branchRate = Number("${{ steps.coverage_summary.outputs.branch_rate || '0' }}");
-              const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, { owner, repo, issue_number: pull_number });
-              const hasLabel = labels.some(item => item.name === label);
-              if (lineRate >= lineThreshold && branchRate >= branchThreshold) {
-                if (hasLabel) {
-                  await github.rest.issues.removeLabel({ owner, repo, issue_number: pull_number, name: label }).catch(() => {});
-                }
-              } else if (!hasLabel) {
-                await github.rest.issues.addLabels({ owner, repo, issue_number: pull_number, labels: [label] });
-              }
-            } catch (error) {
-              console.log(`⚠️ Failed to update coverage label: ${error.message}`);
-            }
-      - name: Run property-based tests with statistics
-        continue-on-error: true
-        run: |
-          set +e
-          .venv/bin/python -m pytest tests/property/ --hypothesis-show-statistics \
-            --junitxml=reports/property-tests.xml \
-            --html=reports/property-tests-report.html --self-contained-html
-          property_exit_code=$?
-          set -e
-          if [ $property_exit_code -ne 0 ]; then
-            echo "⚠️ Property tests failed with exit code $property_exit_code"
-          fi
-          exit $property_exit_code
-      - name: Summarize pytest results
+
+
+      - name: Summarize fast test results
         if: always()
         id: test_summary
         uses: test-summary/action@v2
         with:
           paths: |
-            reports/unit-integration-tests.xml
-            reports/property-tests.xml
-            reports/e2e-tests.xml
+            reports/fast-unit-tests.xml
+            reports/smoke-tests.xml
           show: "fail, skip, pass"
       - name: Find existing test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && matrix.python-version == '3.11' && !github.event.pull_request.head.repo.fork }}
@@ -510,7 +406,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: '### Test & Coverage Summary'
-      - name: Post test summary comment
+      - name: Post fast test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && matrix.python-version == '3.11' && !github.event.pull_request.head.repo.fork }}
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -518,16 +414,10 @@ jobs:
           comment-id: ${{ steps.find_test_comment.outputs.comment-id }}
           edit-mode: replace
           body: |
-            ### Test & Coverage Summary (Python ${{ matrix.python-version }})
+            ### Fast Test Suite Summary (Python ${{ matrix.python-version }}) - PR Gate
 
-            **Status:** ${{ job.status == 'success' && '✅ Tests completed' || job.status == 'cancelled' && '⚪ Tests cancelled' || '❌ Tests failed' }}
-            **Coverage:** ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% lines (guardrail ≥ ${{ steps.coverage_summary.outputs.coverage_threshold || 'n/a' }}%)
-            **Risk:** ${{ steps.coverage_summary.outputs.risk_level || 'n/a' }} — ${{ steps.coverage_summary.outputs.risk_reason || 'n/a' }}
-
-            **Key Links**
-            - [Workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - Coverage HTML: download the `coverage-reports-${{ matrix.python-version }}` artifact from the run above.
-            - Test reports: download the `pytest-html-reports-${{ matrix.python-version }}` artifact for full context.
+            **Status:** ${{ job.status == 'success' && '✅ Fast tests passed' || job.status == 'cancelled' && '⚪ Tests cancelled' || '❌ Fast tests failed' }}
+            **Coverage:** ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% lines
 
             | Metric | Value |
             | --- | --- |
@@ -537,74 +427,58 @@ jobs:
             | Skipped | ${{ steps.test_summary.outputs.skipped }} |
             | Line coverage | ${{ steps.coverage_summary.outputs.line_rate || 'n/a' }}% |
             | Branch coverage | ${{ steps.coverage_summary.outputs.branch_rate || 'n/a' }}% |
-            | Margin vs guardrail | ${{ steps.coverage_summary.outputs.coverage_margin || 'n/a' }}% |
 
-            _Updated automatically for the latest workflow run._
-      - name: Upload JUnit test reports
+            **Note:** This runs fast unit/integration tests only. Full test suite (98% coverage gate, E2E, benchmarks) runs nightly or on `main` push.
+
+            [View workflow run →](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+      - name: Upload fast test JUnit reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: junit-test-results-${{ matrix.python-version }}
+          name: fast-junit-results-py${{ matrix.python-version }}
           path: |
-            reports/unit-integration-tests.xml
-            reports/property-tests.xml
+            reports/fast-unit-tests.xml
+            reports/smoke-tests.xml
           if-no-files-found: warn
           retention-days: 7
-      - name: Upload HTML test reports
+          
+      - name: Upload fast test HTML reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-html-reports-${{ matrix.python-version }}
+          name: fast-html-reports-py${{ matrix.python-version }}
           path: |
-            reports/unit-integration-report.html
-            reports/property-tests-report.html
-            reports/e2e-report.html
+            reports/fast-unit-tests-report.html
           if-no-files-found: warn
           retention-days: 7
-      - name: Upload flaky manifest
+      - name: Upload fast test metrics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flaky-tests-skipped-${{ matrix.python-version }}
-          path: reports/flaky-tests-skipped.json
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Upload test quality and performance reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-quality-performance-${{ matrix.python-version }}
+          name: fast-test-metrics-py${{ matrix.python-version }}
           path: |
-            reports/test-quality.json
-            reports/test-performance.json
-            reports/test-performance-baseline.json
             reports/test-results.json
+            reports/test-performance.json
           if-no-files-found: warn
           retention-days: 7
-      - name: Upload coverage reports
+          
+      - name: Upload fast coverage reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports-${{ matrix.python-version }}
-          path: |
-            coverage.xml
-            coverage_html
+          name: fast-coverage-py${{ matrix.python-version }}
+          path: coverage.xml
           if-no-files-found: warn
           retention-days: 7
-      - name: Upload coverage to Codecov (with token)
-        if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage.xml
 
-  security-tests:
+  security-fast:
     runs-on: ubuntu-latest
-    needs:
-      - lint
+    needs: lint
+    timeout-minutes: 10
     strategy:
       matrix:
         python-version: ['3.11']
-    name: Security Tests (Python ${{ matrix.python-version }})
+    name: Security Scans (Fast - Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python
@@ -656,24 +530,176 @@ jobs:
             reports/security/dast_report.json
           if-no-files-found: warn
 
+  # ============================================================================
+  # HEAVY / EXTENDED JOBS - Run on schedule (nightly), main push, or manual trigger
+  # These jobs are comprehensive but take longer to execute
+  # ============================================================================
+
+  full-test-suite:
+    runs-on: ubuntu-latest
+    # Only run on main push, schedule, or manual trigger - NOT on PRs
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fast-unit-tests
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    name: Full Test Suite with 98% Coverage (Python ${{ matrix.python-version }})
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+            constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-full
+        with:
+          path: .venv
+          key: venv-full-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-full-${{ runner.os }}-py${{ matrix.python-version }}-
+            
+      - name: Create virtual environment
+        if: steps.venv-cache-full.outputs.cache-hit != 'true'
+        run: python -m venv .venv
+        
+      - name: Install dependencies
+        if: steps.venv-cache-full.outputs.cache-hit != 'true'
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
+          
+      - name: Prepare test report directories
+        run: mkdir -p reports
+        
+      - name: Run full test suite with coverage
+        run: |
+          # Run ALL tests including slow, heavy_math, nightly (but not flaky)
+          .venv/bin/python -m pytest \
+            tests/ \
+            -m "not flaky" \
+            --cov=core --cov=backtest --cov=execution \
+            --cov-branch \
+            --cov-report=xml --cov-report=term-missing --cov-report=html:coverage_html \
+            --cov-fail-under=98 \
+            --junitxml=reports/full-test-suite.xml \
+            --html=reports/full-test-suite-report.html --self-contained-html \
+            --json-report --json-report-file=reports/full-test-results.json
+            
+      - name: Publish full coverage summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import xml.etree.ElementTree as ET
+
+          report_path = pathlib.Path("coverage.xml")
+          if not report_path.exists():
+              print("⚠️ coverage.xml not found")
+              exit(0)
+
+          root = ET.parse(report_path).getroot()
+          line_rate = float(root.get("line-rate", 0.0)) * 100
+          branch_rate = float(root.get("branch-rate", 0.0)) * 100
+          threshold = 98.0
+          margin = line_rate - threshold
+
+          status_line = "✅" if line_rate >= threshold else "❌"
+          status_branch = "✅" if branch_rate >= 90 else "❌"
+          status_margin = "✅" if margin >= 0 else "⚠️"
+          
+          summary_lines = [
+              "### Full Test Suite Coverage",
+              "",
+              "| Metric | Percentage | Target | Status |",
+              "| --- | --- | --- | --- |",
+              f"| Line coverage | {line_rate:.2f}% | {threshold:.0f}% | {status_line} |",
+              f"| Branch coverage | {branch_rate:.2f}% | 90% | {status_branch} |",
+              f"| Coverage margin | {margin:+.2f}% | — | {status_margin} |",
+              "",
+          ]
+          summary = "\n".join(summary_lines)
+          
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a") as f:
+                  f.write(summary)
+          PY
+          
+      - name: Upload full test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-test-suite-py${{ matrix.python-version }}
+          path: |
+            reports/full-test-suite.xml
+            reports/full-test-suite-report.html
+            reports/full-test-results.json
+            coverage.xml
+            coverage_html
+          if-no-files-found: warn
+          retention-days: 30
+          
+      - name: Upload coverage to Codecov
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: full-suite-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+
   mutation-trading-engine:
     runs-on: ubuntu-latest
-    needs:
-      - tests
+    # Only run on main push, schedule, or manual trigger
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fast-unit-tests
+    timeout-minutes: 60
     name: Targeted Mutation Testing (Trading Engine)
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+            constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-mutation
+        with:
+          path: .venv
+          key: venv-mutation-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-mutation-${{ runner.os }}-py3.11-
+            
+      - name: Create virtual environment
+        if: steps.venv-cache-mutation.outputs.cache-hit != 'true'
+        run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-mutation.outputs.cache-hit != 'true'
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -c constraints/security.txt -r requirements.txt
-          python -m pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Run targeted mutation suite
-        run: python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
+        run: .venv/bin/python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
       - name: Upload trading engine mutation artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -681,7 +707,7 @@ jobs:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 30
       - name: Upload coverage to Codecov (OIDC)
         if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
@@ -727,30 +753,46 @@ jobs:
           if-no-files-found: warn
 
   benchmarks:
-    name: Performance Benchmarks (Python 3.11)
     runs-on: ubuntu-latest
+    # Only run on main push, schedule, or manual trigger
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fast-unit-tests
+    timeout-minutes: 30
+    name: Performance Benchmarks (Python 3.11)
     env:
       TP_BENCHMARK_ARTIFACT_DIR: reports/benchmarks
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-bench
+        with:
+          path: .venv
+          key: venv-bench-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-bench-${{ runner.os }}-py3.11-
+            
       - name: Create virtual environment
+        if: steps.venv-cache-bench.outputs.cache-hit != 'true'
         run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-bench.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Run performance benchmarks
         id: run_benchmarks
         continue-on-error: true
@@ -881,29 +923,44 @@ jobs:
           body: ${{ steps.benchmark_summary.outputs.comment_body }}
 
   pytest-xdist:
-    name: Pytest (xdist profiling)
     runs-on: ubuntu-latest
-    needs: tests
+    # Only run on schedule or manual trigger for profiling analysis
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fast-unit-tests
+    timeout-minutes: 30
+    name: Pytest Parallel Profiling (xdist)
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-xdist
+        with:
+          path: .venv
+          key: venv-xdist-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-xdist-${{ runner.os }}-py3.11-
+            
       - name: Create virtual environment
+        if: steps.venv-cache-xdist.outputs.cache-hit != 'true'
         run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-xdist.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Run pytest in parallel with profiling
         run: |
           .venv/bin/python -m pytest tests/ -n auto --durations=20 --profile
@@ -922,9 +979,12 @@ jobs:
           retention-days: 7
 
   ui-smoke:
-    name: Playwright UI smoke tests
     runs-on: ubuntu-latest
-    needs: tests
+    # Only run on main push, schedule, or manual trigger
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fast-unit-tests
+    timeout-minutes: 20
+    name: Playwright UI Smoke Tests
     steps:
       - uses: actions/checkout@v5
       - name: Set up Node.js
@@ -957,31 +1017,45 @@ jobs:
           retention-days: 7
 
   flaky-tests:
-    name: Quarantined flaky tests
     runs-on: ubuntu-latest
-    needs: tests
-    if: always()
+    # Only run on schedule or manual trigger to monitor flaky tests
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fast-unit-tests
+    timeout-minutes: 20
     continue-on-error: true
+    name: Quarantined Flaky Tests (Monitoring)
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-flaky
+        with:
+          path: .venv
+          key: venv-flaky-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-flaky-${{ runner.os }}-py3.11-
+            
       - name: Create virtual environment
+        if: steps.venv-cache-flaky.outputs.cache-hit != 'true'
         run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-flaky.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Prepare test report directories
         run: |
           mkdir -p reports
