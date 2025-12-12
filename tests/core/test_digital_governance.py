@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.tradepulse.core.digital_governance import (
+from tradepulse.core.digital_governance import (
     ComplianceLevel,
     DataQualityCheck,
     DigitalAuditRecord,

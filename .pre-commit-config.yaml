@@ -33,6 +33,10 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
   - repo: local
     hooks:
       - id: slotscheck
@@ -47,6 +51,11 @@ repos:
         entry: npm run lint --prefix ui/dashboard
         language: system
         pass_filenames: false
+      - id: forbid-python-artifacts
+        name: forbid committing python artifacts
+        entry: python -c "import sys; bad=[p for p in sys.argv[1:] if p.endswith('.pyc') or '__pycache__' in p];\nif bad:\n    print('Refusing to commit Python artifacts:');\n    [print(p) for p in bad];\n    sys.exit(1)"
+        language: system
+        files: "(\\.pyc$|__pycache__)"
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:

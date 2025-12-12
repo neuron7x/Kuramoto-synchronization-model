@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.tradepulse.core.neuro.serotonin.observability import (
+from tradepulse.core.neuro.serotonin.observability import (
     SEROTONIN_ALERTS,
     SEROTONIN_SLOS,
     SLI,

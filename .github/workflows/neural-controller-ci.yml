@@ -6,7 +6,7 @@ permissions:
 on:
   pull_request:
     paths:
-      - 'tradepulse/neural_controller/**'
+      - 'src/tradepulse/neural_controller/**'
       - '.github/workflows/neural-controller-ci.yml'
       - 'pyproject.toml'
       - 'pytest.ini'
@@ -31,11 +31,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; else pip install numpy pyyaml pytest coverage; fi
+      - name: Verify neural controller tests path
+        run: ls -la src/tradepulse/neural_controller/tests
       - name: Run pytest
         env:
           TRADEPULSE_LIGHT_IMPORT: '1'
         run: |
-          pytest tradepulse/neural_controller/tests --maxfail=1 --durations=10 --cov=tradepulse/neural_controller --cov-report=xml
+          pytest src/tradepulse/neural_controller/tests --maxfail=1 --durations=10 --cov=tradepulse.neural_controller --cov-report=xml
       - name: Coverage gate
         run: coverage report --fail-under=85
 

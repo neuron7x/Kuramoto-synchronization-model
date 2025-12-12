@@ -87,7 +87,7 @@ results = tester.run_monte_carlo_simulation(config)
 
 - **Full API Reference**: See `docs/automated_risk_testing.md`
 - **Demo Script**: Run `python examples/automated_risk_testing_demo.py`
-- **Tests**: See `tests/unit/tradepulse/risk/`
+- **Tests**: See `tests/unit/tradepulse_pkg/risk/`
 
 ## Key Features
 
@@ -136,10 +136,10 @@ Run the test suite:
 
 ```bash
 # All risk tests
-pytest tests/unit/tradepulse/risk/ -v
+pytest tests/unit/tradepulse_pkg/risk/ -v
 
 # Just automated testing
-pytest tests/unit/tradepulse/risk/test_automated_testing.py -v
+pytest tests/unit/tradepulse_pkg/risk/test_automated_testing.py -v
 
 # Run demo
 python examples/automated_risk_testing_demo.py

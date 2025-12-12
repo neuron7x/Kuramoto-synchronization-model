@@ -118,6 +118,7 @@ sample.csv
 
 # State/database files
 state/*.sqlite
+configs/tls/dev/generated/
 state/*.db
 
 # Internal assessment and status reports (meta-documentation)

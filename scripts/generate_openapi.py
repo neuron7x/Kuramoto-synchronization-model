@@ -8,17 +8,11 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Iterable
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "openapi-generation-secret")
-os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://openapi.tradepulse.local")
-os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
-os.environ.setdefault(
-    "TRADEPULSE_OAUTH2_JWKS_URI", "https://openapi.tradepulse.local/jwks"
-)
 
 from application.api.service import create_app  # noqa: E402
 
@@ -34,8 +28,25 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _require_env(names: Iterable[str]) -> None:
+    missing = [name for name in names if not os.getenv(name)]
+    if missing:
+        raise RuntimeError(
+            "Missing required environment variables for OpenAPI generation: "
+            + ", ".join(sorted(missing))
+        )
+
+
 def main() -> None:
     args = parse_args()
+    _require_env(
+        (
+            "TRADEPULSE_AUDIT_SECRET",
+            "TRADEPULSE_OAUTH2_ISSUER",
+            "TRADEPULSE_OAUTH2_AUDIENCE",
+            "TRADEPULSE_OAUTH2_JWKS_URI",
+        )
+    )
     app = create_app()
     schema = app.openapi()
     output_path: Path = args.output

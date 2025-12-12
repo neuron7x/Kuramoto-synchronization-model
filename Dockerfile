@@ -31,7 +31,6 @@ COPY execution ./execution
 COPY observability ./observability
 COPY src ./src
 COPY configs ./configs
-COPY sitecustomize.py ./sitecustomize.py
 
 RUN mkdir -p state
 
@@ -73,7 +72,6 @@ COPY src ./src
 
 # Runtime assets required by the service.
 COPY configs ./configs
-COPY sitecustomize.py ./sitecustomize.py
 
 RUN mkdir -p state
 

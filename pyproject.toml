@@ -137,44 +137,12 @@ readme = { file = "README.md", content-type = "text/markdown" }
 version_file = "src/_version.py"
 fallback_version = "0.1.0"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
-where = ["."]
-include = [
-    "analytics",
-    "analytics.*",
-    "application",
-    "application.*",
-    "backtest",
-    "backtest.*",
-    "core",
-    "core.*",
-    "domain",
-    "domain.*",
-    "sandbox",
-    "sandbox.*",
-    "execution",
-    "execution.*",
-    "interfaces",
-    "interfaces.*",
-    "libs",
-    "libs.*",
-    "src",
-    "src.*",
-    "tradepulse",
-    "tradepulse.*",
-    "tradepulse_agent",
-    "tradepulse_agent.*",
-    "markets",
-    "markets.*",
-    "modules",
-    "modules.*",
-    "neurotrade_pro",
-    "neurotrade_pro.*",
-    "observability",
-    "observability.*",
-    "tools",
-    "tools.*",
-]
+where = ["src"]
+include = ["tradepulse*"]
 exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]
@@ -195,7 +163,7 @@ use_coverage = true
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["core", "backtest", "execution", "analytics", "src"]
+source = ["tradepulse"]
 
 [tool.coverage.report]
 fail_under = 98

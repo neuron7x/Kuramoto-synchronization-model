@@ -92,9 +92,9 @@ TradePulse/
 ### Main Packages
 
 #### `tradepulse/` (Root Shim)
-Backward compatibility shim that forwards to `src.tradepulse`:
+Backward compatibility shim that forwards to `tradepulse`:
 - `tradepulse/__init__.py` - Import forwarding logic
-- `tradepulse/neural_controller/` - Neural controller module (direct)
+- `src/tradepulse/neural_controller/` - Neural controller module (canonical)
 - `tradepulse/analytics/` - Analytics utilities (direct)
 - `tradepulse/risk/` - Risk management (direct)
 

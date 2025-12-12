@@ -43,18 +43,18 @@ jobs:
         with:
           path: |
             ~/.cache/helm
-            deploy/helm/tradepulse/charts
+            deploy/helm/tradepulse-chart/charts
           key: helm-${{ runner.os }}-${{ hashFiles('deploy/helm/**/Chart.yaml', 'deploy/helm/**/Chart.lock') }}
           restore-keys: |
             helm-${{ runner.os }}-
 
       - name: Lint umbrella chart
         run: |
-          helm lint deploy/helm/tradepulse
+          helm lint deploy/helm/tradepulse-chart
 
       - name: Lint sandbox subchart
         run: |
-          helm lint deploy/helm/tradepulse/charts/sandbox
+          helm lint deploy/helm/tradepulse-chart/charts/sandbox
 
   template:
     name: Template and Validate
@@ -75,10 +75,10 @@ jobs:
       - name: Template charts
         run: |
           # Update dependencies first
-          helm dependency update deploy/helm/tradepulse
+          helm dependency update deploy/helm/tradepulse-chart
 
-          helm template tradepulse deploy/helm/tradepulse \
-            --values deploy/helm/tradepulse/values.yaml \
+          helm template tradepulse deploy/helm/tradepulse-chart \
+            --values deploy/helm/tradepulse-chart/values.yaml \
             --output-dir /tmp/helm-output
 
       - name: Validate Kubernetes manifests
@@ -202,9 +202,9 @@ jobs:
       - name: Install chart with minimal config
         run: |
           # Update dependencies first
-          helm dependency update deploy/helm/tradepulse
+          helm dependency update deploy/helm/tradepulse-chart
 
-          helm install tradepulse deploy/helm/tradepulse \
+          helm install tradepulse deploy/helm/tradepulse-chart \
             --namespace tradepulse \
             --set sandbox.enabled=true \
             --set admin.enabled=false \
@@ -272,10 +272,10 @@ jobs:
       - name: Template charts
         run: |
           # Update dependencies first
-          helm dependency update deploy/helm/tradepulse
+          helm dependency update deploy/helm/tradepulse-chart
 
-          helm template tradepulse deploy/helm/tradepulse \
-            --values deploy/helm/tradepulse/values.yaml \
+          helm template tradepulse deploy/helm/tradepulse-chart \
+            --values deploy/helm/tradepulse-chart/values.yaml \
             --output-dir /tmp/helm-output
 
       - name: Run Kubescape scan
@@ -318,10 +318,10 @@ jobs:
       - name: Template charts
         run: |
           # Update dependencies first
-          helm dependency update deploy/helm/tradepulse
+          helm dependency update deploy/helm/tradepulse-chart
 
-          helm template tradepulse deploy/helm/tradepulse \
-            --values deploy/helm/tradepulse/values.yaml \
+          helm template tradepulse deploy/helm/tradepulse-chart \
+            --values deploy/helm/tradepulse-chart/values.yaml \
             --output-dir /tmp/helm-output
 
       - name: Install and run Polaris

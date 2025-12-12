@@ -37,7 +37,7 @@ All 8 P0 requirements have been successfully implemented, providing TradePulse w
 
 **Implementation**:
 ```
-deploy/helm/tradepulse/
+deploy/helm/tradepulse-chart/
 ├── Chart.yaml (umbrella chart)
 ├── values.yaml (global configuration)
 └── charts/
@@ -343,7 +343,7 @@ Recommended verification after merge:
 
 2. **Helm lint**:
    ```bash
-   helm lint deploy/helm/tradepulse
+   helm lint deploy/helm/tradepulse-chart
    ```
 
 3. **Pre-commit hooks**:
@@ -379,7 +379,7 @@ Recommended verification after merge:
 
 3. **Install TradePulse**:
    ```bash
-   helm install tradepulse ./deploy/helm/tradepulse \
+   helm install tradepulse ./deploy/helm/tradepulse-chart \
      --namespace tradepulse \
      --set grafana.adminPassword=<secure-password>
    ```

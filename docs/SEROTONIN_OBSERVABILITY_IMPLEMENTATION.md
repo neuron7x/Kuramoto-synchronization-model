@@ -185,7 +185,7 @@ serotonin_step_duration_seconds_bucket{le="0.0005"} 0
 
 ### 3.1 Test Coverage
 
-**Файл:** `tests/unit/tradepulse/core/neuro/serotonin/test_observability.py` (8.7 KB)
+**Файл:** `tests/unit/tradepulse_pkg/core/neuro/serotonin/test_observability.py` (8.7 KB)
 
 | Категорія | Тести | Статус |
 |-----------|-------|--------|

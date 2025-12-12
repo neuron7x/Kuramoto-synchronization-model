@@ -32,6 +32,19 @@ from .automated_testing import (
     generate_market_stress_scenarios,
     validate_risk_metrics,
 )
+from .config import RiskEngineConfig, SymbolLimits, load_risk_config
+from .engine import CentralRiskEngine, RiskDecision, RiskStatus
+from .environment import (
+    EnvironmentConfig,
+    EnvironmentError,
+    EnvironmentMode,
+    get_current_mode,
+    is_live_trading_allowed,
+    require_mode,
+    set_current_mode,
+    validate_environment,
+)
+from .kill_switch import SafetyController, SafetyState, get_safety_controller
 from .risk_core import (
     RiskConfig,
     check_risk_breach,
@@ -41,12 +54,27 @@ from .risk_core import (
 )
 
 __all__ = [
-    # Core risk functions
-    "var_es",
-    "kelly_shrink",
-    "compute_final_size",
-    "check_risk_breach",
-    "RiskConfig",
+    # Environment
+    "EnvironmentMode",
+    "EnvironmentConfig",
+    "EnvironmentError",
+    "validate_environment",
+    "get_current_mode",
+    "set_current_mode",
+    "require_mode",
+    "is_live_trading_allowed",
+    # Risk Engine (new API)
+    "CentralRiskEngine",
+    "RiskDecision",
+    "RiskStatus",
+    # Safety
+    "SafetyState",
+    "SafetyController",
+    "get_safety_controller",
+    # Configuration
+    "RiskEngineConfig",
+    "SymbolLimits",
+    "load_risk_config",
     # Risk Manager
     "RiskManager",
     "RiskLimits",
@@ -55,6 +83,12 @@ __all__ = [
     "OrderRateExceeded",
     "KillSwitch",
     "portfolio_heat",
+    # Core risk functions
+    "var_es",
+    "kelly_shrink",
+    "compute_final_size",
+    "check_risk_breach",
+    "RiskConfig",
     # Automated testing
     "AutomatedRiskTester",
     "RiskScenario",

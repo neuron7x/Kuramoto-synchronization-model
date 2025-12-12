@@ -47,6 +47,43 @@ jobs:
             web:
               - 'apps/web/**'
 
+  repo-guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fail on committed private keys
+        run: |
+          python - <<'PY'
+          import subprocess
+          import sys
+
+          proc = subprocess.run(
+              ["git", "grep", "-nE", "BEGIN (RSA )?PRIVATE KEY|BEGIN OPENSSH PRIVATE KEY", "--", "."],
+              text=True,
+              capture_output=True,
+          )
+          if proc.returncode == 0:
+              print("Private key material detected:")
+              print(proc.stdout)
+              sys.exit(1)
+          sys.exit(0)
+          PY
+      - name: Block tracked Python artifacts
+        run: |
+          python - <<'PY'
+          import subprocess
+          import sys
+
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          bad = [f for f in files if "__pycache__/" in f or f.endswith(".pyc")]
+          if bad:
+              print("Python artifacts must not be tracked:")
+              for path in bad:
+                  print(path)
+              sys.exit(1)
+          sys.exit(0)
+          PY
+
   # ============================================================================
   # PR FAST GATES - These jobs are required for every PR and must be fast
   # Target: Complete in ≤10-12 minutes total
@@ -54,6 +91,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    needs: repo-guards
     timeout-minutes: 8
     strategy:
       fail-fast: false

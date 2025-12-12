@@ -16,7 +16,7 @@ observability data for the governance dashboards. The stack includes:
 
 ## Installation
 
-Copy the `tradepulse/neural_controller/` directory into your project or install as a package. Dependencies: `numpy`, `pyyaml`. Python 3.11+.
+Copy the `src/tradepulse/neural_controller/` directory into your project or install as a package. Dependencies: `numpy`, `pyyaml`. Python 3.11+.
 
 ## Quickstart
 
@@ -29,7 +29,7 @@ from tradepulse.neural_controller import (
     TACLSystem,
 )
 
-neural = NeuralMarketController.from_yaml("tradepulse/neural_controller/config/neural_params.yaml")
+neural = NeuralMarketController.from_yaml("src/tradepulse/neural_controller/config/neural_params.yaml")
 tacl = TACLSystem()  # auto-resolves runtime ThermoController when available
 kuramoto = KuramotoSync()
 bridge = NeuralTACLBridge(neural, tacl, kuramoto)
@@ -63,10 +63,10 @@ decision = bridge.step(obs)
 
 ## Testing
 
-Unit and property tests live in `tradepulse/neural_controller/tests/`. Run with:
+Unit and property tests live in `src/tradepulse/neural_controller/tests/`. Run with:
 
 ```bash
-pytest tradepulse/neural_controller/tests
+pytest src/tradepulse/neural_controller/tests
 ```
 
 The suite covers EKF invariants, Go/No-Go gating, CVaR monotonicity, YAML loading, bridge throttling, toy-stream bounds, and performance checks (`≤3ms/tick`).

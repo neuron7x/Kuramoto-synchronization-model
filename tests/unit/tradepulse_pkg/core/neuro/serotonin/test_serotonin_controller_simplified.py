@@ -42,7 +42,7 @@ def serotonin_config():
 @pytest.fixture
 def serotonin_controller(serotonin_config):
     """Create a serotonin controller instance."""
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninController,
     )
 
@@ -493,7 +493,7 @@ class TestConfigValidation:
 
     def test_missing_config_keys_raises_error(self, serotonin_config):
         """Test that missing config keys raise an error."""
-        from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+        from tradepulse.core.neuro.serotonin.serotonin_controller import (
             SerotoninController,
         )
 
@@ -512,7 +512,7 @@ class TestConfigValidation:
 
     def test_invalid_config_values_raise_error(self, serotonin_config):
         """Test that invalid config values raise an error."""
-        from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+        from tradepulse.core.neuro.serotonin.serotonin_controller import (
             SerotoninController,
         )
 

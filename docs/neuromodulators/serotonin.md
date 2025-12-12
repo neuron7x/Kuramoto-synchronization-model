@@ -74,7 +74,7 @@ serotonin:
 ### Basic Usage
 
 ```python
-from src.tradepulse.core.neuro.serotonin import SerotoninController
+from tradepulse.core.neuro.serotonin import SerotoninController
 
 # Initialize controller
 controller = SerotoninController("configs/serotonin.yaml")

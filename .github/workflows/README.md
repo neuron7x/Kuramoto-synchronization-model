@@ -230,7 +230,7 @@ These workflows only run when relevant files change:
 **Purpose:** Validates NaK (Na⁺/K⁺-ATPase) controller implementation
 
 #### 10. `neural-controller-ci.yml` - Neural Controller Tests
-**Triggers:** Changes to `tradepulse/neural_controller/**`
+**Triggers:** Changes to `src/tradepulse/neural_controller/**`
 **Purpose:** Tests neural network controller components
 
 #### 11. `dopamine-validation.yml` - Dopamine System Tests
@@ -593,7 +593,7 @@ After optimization, these workflows run on PRs:
 | performance-regression-pr.yml | ❌ | ✅ | Performance tests (core/engine, execution) |
 | multi-exchange-replay-regression.yml | ❌ | ✅ | Replay tests (recordings, backtest) |
 | nak-ci.yml | ❌ | ✅ | NaK controller (nak_controller/) |
-| neural-controller-ci.yml | ❌ | ✅ | Neural controller (neural_controller/) |
+| neural-controller-ci.yml | ❌ | ✅ | Neural controller (`src/tradepulse/neural_controller/`) |
 | dopamine-validation.yml | ❌ | ✅ | Dopamine config validation |
 | ci-hardening.yml | ❌ | ✅ | Workflow security (.github/workflows) |
 

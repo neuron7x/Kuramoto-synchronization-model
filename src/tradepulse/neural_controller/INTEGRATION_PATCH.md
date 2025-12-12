@@ -12,7 +12,7 @@ from tradepulse.neural_controller import (
 )
 
 adapter = MarketDataAdapter()
-neural = NeuralMarketController.from_yaml("tradepulse/neural_controller/config/neural_params.yaml")
+neural = NeuralMarketController.from_yaml("src/tradepulse/neural_controller/config/neural_params.yaml")
 tacl = TACLSystem()  # wraps runtime ThermoController when available
 kuramoto = KuramotoSync()
 bridge = NeuralTACLBridge(neural, tacl, kuramoto)

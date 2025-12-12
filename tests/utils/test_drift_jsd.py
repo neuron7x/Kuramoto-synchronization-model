@@ -13,7 +13,7 @@ from scipy.spatial.distance import jensenshannon
 
 
 def _load_drift_module():
-    """Import ``src.tradepulse.utils.drift`` without triggering heavy bootstraps."""
+    """Import ``tradepulse.utils.drift`` without triggering heavy bootstraps."""
 
     module_name = "tradepulse_utils_drift_test"
     path = (

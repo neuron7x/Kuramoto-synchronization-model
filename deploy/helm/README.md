@@ -5,7 +5,7 @@ This directory contains Helm charts for deploying TradePulse to Kubernetes.
 ## Structure
 
 ```
-deploy/helm/tradepulse/
+deploy/helm/tradepulse-chart/
 ├── Chart.yaml              # Umbrella chart definition
 ├── values.yaml             # Default configuration values
 └── charts/
@@ -38,15 +38,15 @@ kubectl label namespace tradepulse \
   pod-security.kubernetes.io/warn=restricted
 
 # Install TradePulse
-helm install tradepulse ./deploy/helm/tradepulse \
+helm install tradepulse ./deploy/helm/tradepulse-chart \
   --namespace tradepulse \
-  --values ./deploy/helm/tradepulse/values.yaml
+  --values ./deploy/helm/tradepulse-chart/values.yaml
 ```
 
 ### Install with custom values
 
 ```bash
-helm install tradepulse ./deploy/helm/tradepulse \
+helm install tradepulse ./deploy/helm/tradepulse-chart \
   --namespace tradepulse \
   --set sandbox.replicaCount=3 \
   --set sandbox.resources.limits.memory=2Gi \
@@ -56,9 +56,9 @@ helm install tradepulse ./deploy/helm/tradepulse \
 ### Upgrade existing deployment
 
 ```bash
-helm upgrade tradepulse ./deploy/helm/tradepulse \
+helm upgrade tradepulse ./deploy/helm/tradepulse-chart \
   --namespace tradepulse \
-  --values ./deploy/helm/tradepulse/values.yaml
+  --values ./deploy/helm/tradepulse-chart/values.yaml
 ```
 
 ## Configuration
@@ -177,13 +177,13 @@ slo:
 ### Lint Charts
 
 ```bash
-helm lint deploy/helm/tradepulse
+helm lint deploy/helm/tradepulse-chart
 ```
 
 ### Template and Validate
 
 ```bash
-helm template tradepulse deploy/helm/tradepulse --output-dir /tmp/helm-output
+helm template tradepulse deploy/helm/tradepulse-chart --output-dir /tmp/helm-output
 kubeval --strict /tmp/helm-output/**/*.yaml
 ```
 
@@ -194,7 +194,7 @@ kubeval --strict /tmp/helm-output/**/*.yaml
 kind create cluster --name tradepulse-test
 
 # Install
-helm install tradepulse ./deploy/helm/tradepulse \
+helm install tradepulse ./deploy/helm/tradepulse-chart \
   --namespace tradepulse \
   --create-namespace \
   --set observability.enabled=false

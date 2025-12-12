@@ -60,7 +60,7 @@ python -m setuptools_scm
 ### Structure
 
 ```
-deploy/helm/tradepulse/
+deploy/helm/tradepulse-chart/
 ├── Chart.yaml              # Umbrella chart
 ├── values.yaml             # Global configuration
 └── charts/
@@ -116,12 +116,12 @@ Tests include:
 
 ```bash
 # Install complete stack
-helm install tradepulse ./deploy/helm/tradepulse \
+helm install tradepulse ./deploy/helm/tradepulse-chart \
   --namespace tradepulse \
   --create-namespace
 
 # Upgrade
-helm upgrade tradepulse ./deploy/helm/tradepulse
+helm upgrade tradepulse ./deploy/helm/tradepulse-chart
 
 # Uninstall
 helm uninstall tradepulse -n tradepulse
@@ -443,7 +443,7 @@ Release (tag)
 
 ### Helm Charts
 
-1. Always lint before committing: `helm lint deploy/helm/tradepulse`
+1. Always lint before committing: `helm lint deploy/helm/tradepulse-chart`
 2. Test in kind cluster before PR
 3. Update chart version in `Chart.yaml` for changes
 4. Document configuration changes in `values.yaml`
