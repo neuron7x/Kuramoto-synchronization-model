@@ -661,17 +661,38 @@ jobs:
     name: Targeted Mutation Testing (Trading Engine)
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+            constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-mutation
+        with:
+          path: .venv
+          key: venv-mutation-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-mutation-${{ runner.os }}-py3.11-
+            
+      - name: Create virtual environment
+        if: steps.venv-cache-mutation.outputs.cache-hit != 'true'
+        run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-mutation.outputs.cache-hit != 'true'
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -c constraints/security.txt -r requirements.txt
-          python -m pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Run targeted mutation suite
-        run: python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
+        run: .venv/bin/python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
       - name: Upload trading engine mutation artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -679,7 +700,7 @@ jobs:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 30
       - name: Upload coverage to Codecov (OIDC)
         if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
@@ -735,24 +756,36 @@ jobs:
       TP_BENCHMARK_ARTIFACT_DIR: reports/benchmarks
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-bench
+        with:
+          path: .venv
+          key: venv-bench-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-bench-${{ runner.os }}-py3.11-
+            
       - name: Create virtual environment
+        if: steps.venv-cache-bench.outputs.cache-hit != 'true'
         run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-bench.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Run performance benchmarks
         id: run_benchmarks
         continue-on-error: true
@@ -891,24 +924,36 @@ jobs:
     name: Pytest Parallel Profiling (xdist)
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-xdist
+        with:
+          path: .venv
+          key: venv-xdist-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-xdist-${{ runner.os }}-py3.11-
+            
       - name: Create virtual environment
+        if: steps.venv-cache-xdist.outputs.cache-hit != 'true'
         run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-xdist.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Run pytest in parallel with profiling
         run: |
           .venv/bin/python -m pytest tests/ -n auto --durations=20 --profile
@@ -974,24 +1019,36 @@ jobs:
     name: Quarantined Flaky Tests (Monitoring)
     steps:
       - uses: actions/checkout@v5
+      
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
+            
+      - name: Cache Python virtual environment
+        uses: actions/cache@v4
+        id: venv-cache-flaky
+        with:
+          path: .venv
+          key: venv-flaky-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-flaky-${{ runner.os }}-py3.11-
+            
       - name: Create virtual environment
+        if: steps.venv-cache-flaky.outputs.cache-hit != 'true'
         run: python -m venv .venv
+        
       - name: Install dependencies
+        if: steps.venv-cache-flaky.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Prepare test report directories
         run: |
           mkdir -p reports
