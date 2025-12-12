@@ -238,6 +238,43 @@ PYTHONPATH=. streamlit run interfaces/dashboard_streamlit.py
 
 📖 **Dashboard Guide**: [docs/ui_logical_structure.md](docs/ui_logical_structure.md)
 
+### Golden Path Workflow
+
+Demonstrate the complete TradePulse workflow from data to results:
+
+```bash
+# One-command demonstration of the full workflow
+make golden-path
+```
+
+**What it does:**
+1. **Data Generation** — Creates 500 bars of synthetic market data with deterministic seed
+2. **Market Analysis** — Detects regime using Kuramoto-Ricci indicators
+3. **Backtest Integration** — Validates strategy execution with PnL calculation
+4. **Results** — Produces validated output in <30 seconds
+
+**Expected output:**
+```
+🎯 TradePulse Golden Path Workflow
+====================================
+Step 1/3: Generating synthetic market data...
+✓ Generated 500 bars of synthetic data
+
+Step 2/3: Running market analysis...
+=== TradePulse Market Analysis ===
+Market Phase:     transition
+Confidence:       0.658
+Entry Signal:     0.000
+
+Step 3/3: Running backtest integration test...
+tests/integration/test_golden_path_backtest.py . [100%]
+1 passed in 0.84s
+
+✅ Golden Path Complete!
+```
+
+> **Note:** This is a demonstration workflow using synthetic data. For production use with real market data, see [DEPLOYMENT.md](DEPLOYMENT.md) and [docs/live_trading.md](docs/live_trading.md).
+
 ---
 
 ## 💻 Usage Examples
@@ -706,9 +743,16 @@ The TPLA permits **internal, non-commercial evaluation and development use only*
 
 > **⚠️ Trading involves substantial risk of loss and is not suitable for everyone.**
 
-This software is provided for **educational and research purposes only**. Past performance does not guarantee future results. Always test strategies thoroughly in paper trading before risking real capital.
+**TradePulse is an R&D/research platform** provided for **educational and research purposes only**. 
 
-**Trade responsibly. Never invest more than you can afford to lose.**
+- **No Performance Guarantees**: This is a research laboratory, not a production trading system with guaranteed returns
+- **Beta Software**: Live trading components are in beta; paper trading recommended for evaluation
+- **Due Diligence Required**: Always perform your own analysis and testing before deploying strategies
+- **Risk Management**: Never invest more than you can afford to lose
+
+Past performance does not guarantee future results. Test strategies thoroughly in paper trading before risking real capital.
+
+**Trade responsibly. This is research software, not investment advice.**
 
 ---
 
