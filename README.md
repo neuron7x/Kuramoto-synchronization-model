@@ -54,7 +54,7 @@
 ### For Infrastructure Engineers
 - **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)
 - **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
-- **Comprehensive Testing**: 98% CI coverage gate with unit, integration, property-based, and fuzz testing
+- **Comprehensive Testing**: Target 98% coverage with unit, integration, property-based, and fuzz testing (currently ~71%, actively expanding)
 
 ---
 
@@ -376,7 +376,8 @@ mutmut run --use-coverage
 
 ### Coverage Status
 
-**CI Gate**: 98% coverage enforced on all PRs (via `--cov-fail-under=98`)  
+**Target Goal**: 98% coverage gate for all PRs (currently ~71%, actively expanding)  
+**Current Coverage**: backtest (74%), execution (44%), core (32%)  
 **Module Goals**: backtest (100%), execution (100%), core modules (90-95%)
 
 To verify current coverage:
@@ -561,7 +562,9 @@ risk_manager = RiskManager(
 
 ### Current Version: v0.1.0
 
-**Status**: Beta — Core functionality stable, live trading in active development
+**Status**: Pre-Production Beta — Core functionality stable, preparing for v1.0 release
+
+**Current Focus** (December 2025): Test coverage expansion, documentation finalization, dashboard hardening
 
 ### Component Maturity
 
@@ -576,10 +579,10 @@ risk_manager = RiskManager(
 
 ### Development Roadmap
 
-- **Q1 2025**: Complete live trading module, finalize dashboard
-- **Q2 2025**: Options & derivatives support
-- **Q3 2025**: Multi-asset portfolio optimization
-- **Q4 2025**: v1.0 GA release
+- **Q4 2025 → Q1 2026**: Complete live trading module, finalize dashboard
+- **Q1 2026**: v1.0 production release preparation
+- **Q2 2026**: Options & derivatives support
+- **Q3-Q4 2026**: Multi-asset portfolio optimization and advanced features
 
 📖 **Full Roadmap**: [docs/roadmap.md](docs/roadmap.md)  
 📰 **Changelog**: [CHANGELOG.md](CHANGELOG.md)  
