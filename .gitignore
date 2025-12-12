@@ -140,6 +140,10 @@ state/*.db
 # Generated report files (auto-generated test/perf outputs)
 reports/performance/performance_*.json
 reports/performance/performance_*.md
+
+# Generated development TLS materials (do not commit keys)
+configs/tls/dev/**/*.pem
+configs/tls/dev/**/*.srl
 reports/localization/*.json
 !reports/localization/README.md
 reports/benchmarks/*.json

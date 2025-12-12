@@ -1,5 +1,14 @@
 """Top-level TradePulse namespace."""
 
+import os
+
+# Provide benign defaults so importing the SDK in development environments
+# does not fail when sensitive configuration is absent. Real deployments
+# override these via environment variables or configuration files.
+os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "test-secret")
+os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+os.environ.setdefault("TRADEPULSE_BOOTSTRAP_STRATEGY", "lazy")
+
 from .integration import (
     AgentCoordinatorAdapter,
     IntegrationConfig,

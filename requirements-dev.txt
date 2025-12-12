@@ -1,4 +1,4 @@
--r requirements.txt
+-r requirements.lock
 
 # Formatters & linters
 black==25.9.0

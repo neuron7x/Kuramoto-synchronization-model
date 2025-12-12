@@ -32,6 +32,19 @@ from .automated_testing import (
     generate_market_stress_scenarios,
     validate_risk_metrics,
 )
+from .config import RiskEngineConfig, load_risk_config
+from .engine import CentralRiskEngine, RiskDecision, RiskStatus
+from .environment import (
+    EnvironmentConfig,
+    EnvironmentError,
+    EnvironmentMode,
+    get_current_mode,
+    is_live_trading_allowed,
+    require_mode,
+    set_current_mode,
+    validate_environment,
+)
+from .kill_switch import SafetyController, SafetyState, get_safety_controller
 from .risk_core import (
     RiskConfig,
     check_risk_breach,
@@ -41,6 +54,26 @@ from .risk_core import (
 )
 
 __all__ = [
+    # Environment
+    "EnvironmentMode",
+    "EnvironmentConfig",
+    "EnvironmentError",
+    "validate_environment",
+    "get_current_mode",
+    "set_current_mode",
+    "require_mode",
+    "is_live_trading_allowed",
+    # Risk Engine
+    "CentralRiskEngine",
+    "RiskDecision",
+    "RiskStatus",
+    # Safety
+    "SafetyState",
+    "SafetyController",
+    "get_safety_controller",
+    # Configuration
+    "RiskEngineConfig",
+    "load_risk_config",
     # Core risk functions
     "var_es",
     "kelly_shrink",

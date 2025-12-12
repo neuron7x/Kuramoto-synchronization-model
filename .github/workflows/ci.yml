@@ -53,8 +53,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
+          if [ -f requirements.lock ]; then pip install -c constraints/security.txt -r requirements.lock; fi
+          if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
 
       - name: Run tests with coverage (shard ${{ matrix.shard }})
         run: |

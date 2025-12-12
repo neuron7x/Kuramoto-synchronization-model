@@ -17,7 +17,7 @@ services:
       - "${TRADEPULSE_HTTP_PORT:-8000}:8000"
     restart: unless-stopped
     volumes:
-      - ./configs/tls/dev:/app/tls:ro
+      - ./configs/tls/dev/generated:/app/tls:ro
     healthcheck:
       test:
         [
@@ -58,7 +58,7 @@ services:
       CORTEX__DATABASE__TLS__KEY_FILE: /service/tls/cortex-db-client.key.pem
     volumes:
       - ./cortex_service/config/service.yaml:/service/cortex_service/config/service.yaml:ro
-      - ./configs/tls/dev:/service/tls:ro
+      - ./configs/tls/dev/generated:/service/tls:ro
     ports:
       - "${TRADEPULSE_CORTEX_PORT:-8001}:8001"
     depends_on:
@@ -83,7 +83,7 @@ services:
       - cortex-db-data:/var/lib/postgresql/data
       - ./configs/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./configs/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
-      - ./configs/tls/dev:/etc/postgresql/tls:ro
+      - ./configs/tls/dev/generated:/etc/postgresql/tls:ro
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
     environment:

@@ -57,7 +57,9 @@ install:
 	@echo "📦 Installing runtime dependencies..."
 	python -m pip install --upgrade pip setuptools wheel
 	pip install -c constraints/security.txt -r requirements.lock
-	@echo "✅ Runtime dependencies installed"
+	pip install -c constraints/security.txt -r requirements-dev.lock
+	pip install --no-deps -e .
+	@echo "✅ Runtime and test dependencies installed"
 
 .PHONY: dev-install
 dev-install:
@@ -65,6 +67,7 @@ dev-install:
 	python -m pip install --upgrade pip setuptools wheel
 	pip install -c constraints/security.txt -r requirements.lock
 	pip install -c constraints/security.txt -r requirements-dev.lock
+	pip install --no-deps -e .
 	@echo "✅ Development dependencies installed"
 
 .PHONY: deps-update

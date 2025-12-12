@@ -38,6 +38,15 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
     steps:
       - uses: actions/checkout@v5
+      - name: Ensure no committed private keys
+        run: |
+          set -euo pipefail
+          matches="$(git ls-files -z | xargs -0 grep -n 'BEGIN .*PRIVATE KEY' || true)"
+          if [ -n "$matches" ]; then
+            echo "Private key material detected in repository:"
+            echo "$matches"
+            exit 1
+          fi
       - id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -94,8 +103,8 @@ jobs:
         if: steps.venv-cache-lint.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
           .venv/bin/pip install pre-commit detect-secrets
       - name: Validate localization bundles
         run: .venv/bin/python scripts/localization/sync_translations.py --check
@@ -222,8 +231,8 @@ jobs:
         if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Prepare test report directories
         run: |
           mkdir -p reports
