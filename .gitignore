@@ -16,7 +16,6 @@ src/_version.py
 coverage.xml
 htmlcov/
 coverage_html/
-reports/
 .pytest_cache/
 .hypothesis/
 test_results/
@@ -138,7 +137,11 @@ state/*.db
 /*_POLICY.md
 /SECURITY_FIX_README.md
 
-# Generated report files
+# Generated report files (auto-generated test/perf outputs)
+reports/performance/performance_*.json
+reports/performance/performance_*.md
+reports/localization/*.json
+!reports/localization/README.md
 reports/*.json
 reports/*.csv
 reports/complexity.*

@@ -1,5 +1,12 @@
 # Module Orchestration Implementation Summary
 
+> **⚠️ LEGACY DRAFT: This is a historical task completion report, not current system documentation.**  
+> **Archived**: 2025-12-12  
+> **Current Documentation**: See [docs/MODULE_INTERACTION_ORCHESTRATOR.md](../MODULE_INTERACTION_ORCHESTRATOR.md)  
+> **Purpose**: Kept for historical context only. Do not use as primary reference.
+
+---
+
 ## Task Completed ✅
 
 **Original Task**: Оркеструвати - Керувати послідовністю взаємодії модулів  

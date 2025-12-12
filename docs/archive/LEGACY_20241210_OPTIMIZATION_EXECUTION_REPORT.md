@@ -1,6 +1,13 @@
 # Neuro-Optimization Execution Report
 ## 100 Iterations - Successfully Completed
 
+> **⚠️ LEGACY DRAFT: This is a historical optimization execution report, not current system documentation.**  
+> **Archived**: 2025-12-12  
+> **Current Documentation**: See [docs/CALIBRATION_GUIDE.md](../CALIBRATION_GUIDE.md) and [docs/neuro_optimization_guide.md](../neuro_optimization_guide.md)  
+> **Purpose**: Kept for historical context only. Do not use as primary reference.
+
+---
+
 **Date**: 2025-12-10  
 **Task**: виконуй необіхдні оптимізації та 100 ітерацій (Execute necessary optimizations with 100 iterations)
 

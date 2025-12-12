@@ -1,5 +1,12 @@
 # Controller Calibration Implementation Summary
 
+> **⚠️ LEGACY DRAFT: This is a historical task completion report, not current system documentation.**  
+> **Archived**: 2025-12-12  
+> **Current Documentation**: See [docs/CALIBRATION_GUIDE.md](../CALIBRATION_GUIDE.md) and [docs/CALIBRATION_QUICK_START.md](../CALIBRATION_QUICK_START.md)  
+> **Purpose**: Kept for historical context only. Do not use as primary reference.
+
+---
+
 **Issue**: Калібрувати - Налаштувати точність, пороги або чутливість контроллерів та модулів
 (Calibrate - Configure accuracy, thresholds or sensitivity of controllers and modules)
 
