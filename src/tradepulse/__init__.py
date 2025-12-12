@@ -1,58 +1,46 @@
-"""Top-level TradePulse namespace."""
+"""Top-level TradePulse namespace with lazy attribute loading."""
 
-from .integration import (
-    AgentCoordinatorAdapter,
-    IntegrationConfig,
-    ServiceRegistryAdapter,
-    SystemIntegrator,
-    SystemIntegratorBuilder,
-)
-from .protocol import (
-    DivConvSignal,
-    DivConvSnapshot,
-    aggregate_signals,
-    compute_divergence_functional,
-    compute_kappa,
-    compute_price_gradient,
-    compute_theta,
-    compute_threshold_tau_c,
-    compute_threshold_tau_d,
-    compute_time_warp_invariant_metric,
-)
-from .sdk import (
-    AuditEvent,
-    ExecutionResult,
-    MarketState,
-    RiskCheckResult,
-    SDKConfig,
-    SuggestedOrder,
-    TradePulseSDK,
-)
+from __future__ import annotations
 
-__all__ = [
+from importlib import import_module
+from typing import Any
+
+_ATTR_TO_MODULE = {
     # Integration
-    "AgentCoordinatorAdapter",
-    "IntegrationConfig",
-    "ServiceRegistryAdapter",
-    "SystemIntegrator",
-    "SystemIntegratorBuilder",
+    "AgentCoordinatorAdapter": "tradepulse.integration",
+    "IntegrationConfig": "tradepulse.integration",
+    "ServiceRegistryAdapter": "tradepulse.integration",
+    "SystemIntegrator": "tradepulse.integration",
+    "SystemIntegratorBuilder": "tradepulse.integration",
     # Protocol
-    "DivConvSignal",
-    "DivConvSnapshot",
-    "aggregate_signals",
-    "compute_divergence_functional",
-    "compute_kappa",
-    "compute_price_gradient",
-    "compute_theta",
-    "compute_threshold_tau_c",
-    "compute_threshold_tau_d",
-    "compute_time_warp_invariant_metric",
+    "DivConvSignal": "tradepulse.protocol",
+    "DivConvSnapshot": "tradepulse.protocol",
+    "aggregate_signals": "tradepulse.protocol",
+    "compute_divergence_functional": "tradepulse.protocol",
+    "compute_kappa": "tradepulse.protocol",
+    "compute_price_gradient": "tradepulse.protocol",
+    "compute_theta": "tradepulse.protocol",
+    "compute_threshold_tau_c": "tradepulse.protocol",
+    "compute_threshold_tau_d": "tradepulse.protocol",
+    "compute_time_warp_invariant_metric": "tradepulse.protocol",
     # SDK
-    "TradePulseSDK",
-    "SDKConfig",
-    "MarketState",
-    "SuggestedOrder",
-    "RiskCheckResult",
-    "ExecutionResult",
-    "AuditEvent",
-]
+    "TradePulseSDK": "tradepulse.sdk",
+    "SDKConfig": "tradepulse.sdk",
+    "MarketState": "tradepulse.sdk",
+    "SuggestedOrder": "tradepulse.sdk",
+    "RiskCheckResult": "tradepulse.sdk",
+    "ExecutionResult": "tradepulse.sdk",
+    "AuditEvent": "tradepulse.sdk",
+}
+
+__all__ = list(_ATTR_TO_MODULE)
+
+
+def __getattr__(name: str) -> Any:
+    module_path = _ATTR_TO_MODULE.get(name)
+    if module_path is None:
+        raise AttributeError(name)
+    module = import_module(module_path)
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
