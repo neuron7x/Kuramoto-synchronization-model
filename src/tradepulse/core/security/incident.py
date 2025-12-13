@@ -67,7 +67,7 @@ class IncidentResponse:
 
         try:
             from tradepulse.runtime import kill_switch
-        except Exception:
+        except ImportError:
             return
         activate = getattr(kill_switch, "activate", None)
         if callable(activate):

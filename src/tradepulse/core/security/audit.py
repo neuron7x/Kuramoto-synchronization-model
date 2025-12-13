@@ -25,7 +25,7 @@ class AuditLogger:
         try:
             log_path.parent.mkdir(parents=True, exist_ok=True)
             handler: logging.Handler = logging.FileHandler(log_path)
-        except Exception:
+        except (OSError, PermissionError):
             handler = logging.NullHandler()
         handler.setFormatter(logging.Formatter("%(message)s"))
         return handler

@@ -51,6 +51,6 @@ class Secrets:
 
 try:
     secrets = Secrets()
-except Exception:
+except (ImportError, ValueError):
     # Optional default instance; consumers can instantiate with explicit client.
     secrets = None
