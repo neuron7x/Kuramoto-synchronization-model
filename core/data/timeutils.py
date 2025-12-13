@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timezone
+import math
 from functools import lru_cache
 from typing import Dict, FrozenSet, Iterable, Sequence
 from zoneinfo import ZoneInfo
@@ -249,7 +250,21 @@ def normalize_timestamp(
             value = float(numeric_value)
 
     if isinstance(value, (int, float)):
-        dt = datetime.fromtimestamp(float(value), tz=timezone.utc)
+        numeric_value = float(value)
+        if math.isnan(numeric_value) or math.isinf(numeric_value):
+            raise ValueError("timestamp numeric value must be finite")
+
+        # Detect millisecond/microsecond inputs which are commonly used by
+        # upstream data providers.  Interpreting these as seconds would yield
+        # wildly incorrect dates (often thousands of years in the future).
+        if abs(numeric_value) >= 1e14:
+            seconds = numeric_value / 1_000_000  # microseconds
+        elif abs(numeric_value) >= 1e12:
+            seconds = numeric_value / 1_000  # milliseconds
+        else:
+            seconds = numeric_value
+
+        dt = datetime.fromtimestamp(seconds, tz=timezone.utc)
     elif isinstance(value, datetime):
         dt = value
     else:  # pragma: no cover - defensive path
