@@ -6,7 +6,7 @@ import smtplib
 import os
 from email.mime.text import MIMEText
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 
 class IncidentResponse:
@@ -14,9 +14,10 @@ class IncidentResponse:
 
     SEVERITY = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
 
-    def __init__(self) -> None:
+    def __init__(self, kill_switch_hook: Callable[[], None] | None = None) -> None:
         self.incidents: list[dict[str, Any]] = []
         self._next_id: int = 0
+        self._kill_switch_hook = kill_switch_hook
 
     def report(self, severity: str, event: str, details: dict[str, Any]) -> None:
         if severity not in self.SEVERITY:
@@ -56,6 +57,13 @@ class IncidentResponse:
 
     def _kill_switch(self) -> None:
         """Emergency halt all trading (best-effort)."""
+
+        if self._kill_switch_hook is not None:
+            try:
+                self._kill_switch_hook()
+            except Exception:
+                pass
+            return
 
         try:
             from tradepulse.runtime import kill_switch

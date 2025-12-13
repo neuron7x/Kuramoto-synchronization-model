@@ -99,18 +99,13 @@ def test_ids_blocks_after_threshold() -> None:
     assert ids.check_brute_force(user, max_attempts=5)
 
 
-def test_incident_response_records_and_handles_kill_switch(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_incident_response_records_and_handles_kill_switch() -> None:
     calls = {}
 
-    class _FakeKillSwitch:
-        def activate(self) -> None:
-            calls["activated"] = True
+    def _hook() -> None:
+        calls["activated"] = True
 
-    monkeypatch.setattr(
-        IncidentResponse, "_kill_switch", lambda self: _FakeKillSwitch().activate()
-    )
-    ir = IncidentResponse()
+    ir = IncidentResponse(kill_switch_hook=_hook)
     ir.report("CRITICAL", "test_event", {"detail": "value"})
     assert ir.incidents[-1]["severity"] == "CRITICAL"
+    assert calls["activated"]

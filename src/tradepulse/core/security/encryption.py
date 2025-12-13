@@ -45,7 +45,9 @@ class EncryptedField:
         self.cipher = Encryption()
 
     def encrypt_value(self, value: str) -> str:
-        return self.cipher.encrypt(value.encode()).decode()
+        token = self.cipher.encrypt(value.encode())
+        return base64.b64encode(token).decode()
 
     def decrypt_value(self, value: str) -> str:
-        return self.cipher.decrypt(value.encode()).decode()
+        raw = base64.b64decode(value.encode())
+        return self.cipher.decrypt(raw).decode()
