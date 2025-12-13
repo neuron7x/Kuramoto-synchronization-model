@@ -71,7 +71,23 @@ jobs:
       - name: Run PR memory regression suite
         run: .venv/bin/python -m pytest tests/performance/test_memory_regression.py -q
 
+      - name: Preflight python path (PR)
+        run: |
+          set -xuo pipefail
+          pwd
+          ls -la
+          ls -la src || true
+          ls -la src/tradepulse || true
+          .venv/bin/python - <<'PY'
+import sys, importlib.util
+print("sys.path[0:5]=", sys.path[:5])
+print("tradepulse spec=", importlib.util.find_spec("tradepulse"))
+PY
+
       - name: Collect PR resource metrics
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+          TRADEPULSE_LIGHT_IMPORT: '1'
         run: |
           .venv/bin/python scripts/performance/run_resource_checks.py \
             --output reports/performance/current_resources.json
@@ -98,7 +114,9 @@ jobs:
             cp scripts/performance/run_resource_checks.py baseline/scripts/performance/
           fi
           cd baseline
-          ../.venv/bin/python scripts/performance/run_resource_checks.py \
+          PYTHONPATH=${{ github.workspace }}/baseline/src:${{ github.workspace }}/baseline \
+            TRADEPULSE_LIGHT_IMPORT=1 \
+            ../.venv/bin/python scripts/performance/run_resource_checks.py \
             --output ../reports/performance/baseline_resources.json
 
       - name: Debug generated files

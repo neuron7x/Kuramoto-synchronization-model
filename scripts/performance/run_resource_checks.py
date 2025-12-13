@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import os
 import sys
 import time
 import tracemalloc
@@ -20,30 +21,58 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Literal
 
-import numpy as np
-import pandas as pd
-
-ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from backtest.engine import walk_forward  # noqa: E402 - after sys.path setup
-from core.agent.strategy import Strategy  # noqa: E402
-from core.data.preprocess import normalize_df, scale_series  # noqa: E402
-from core.indicators.entropy import EntropyFeature  # noqa: E402
-from core.indicators.hierarchical_features import (  # noqa: E402
-    FeatureBufferCache,
-    compute_hierarchical_features,
-)
-from core.indicators.hurst import HurstFeature  # noqa: E402
-from core.indicators.kuramoto import (  # noqa: E402
-    KuramotoOrderFeature,
-    compute_phase,
-    kuramoto_order,
-)
-from core.indicators.pipeline import IndicatorPipeline  # noqa: E402
-
 Category = Literal["memory", "cpu", "response"]
+
+
+def bootstrap_pythonpath() -> None:
+    """Ensure src-layout imports resolve before importing project modules."""
+
+    root = Path(__file__).resolve().parents[2]
+    src = root / "src"
+
+    if src.exists():
+        sys.path.insert(0, str(src))
+    sys.path.insert(1, str(root))
+
+    if os.getenv("TRADEPULSE_DEBUG_PYTHONPATH") == "1":
+        print("BOOTSTRAP_ROOT:", root)
+        print("BOOTSTRAP_SRC_EXISTS:", src.exists())
+        print("BOOTSTRAP_SYS_PATH_HEAD:", sys.path[:6])
+
+
+bootstrap_pythonpath()
+
+
+def _load_dependencies() -> None:
+    """Import heavy dependencies after PATH bootstrap."""
+
+    global np, pd
+    global walk_forward, Strategy, normalize_df, scale_series
+    global EntropyFeature, FeatureBufferCache, compute_hierarchical_features
+    global HurstFeature, KuramotoOrderFeature, compute_phase, kuramoto_order
+    global IndicatorPipeline
+
+    import numpy as np  # noqa: WPS433
+    import pandas as pd  # noqa: WPS433
+    from backtest.engine import walk_forward  # noqa: WPS433
+    from core.agent.strategy import Strategy  # noqa: WPS433
+    from core.data.preprocess import normalize_df, scale_series  # noqa: WPS433
+    from core.indicators.entropy import EntropyFeature  # noqa: WPS433
+    from core.indicators.hierarchical_features import (  # noqa: WPS433
+        FeatureBufferCache,
+        compute_hierarchical_features,
+    )
+    from core.indicators.hurst import HurstFeature  # noqa: WPS433
+    from core.indicators.kuramoto import (  # noqa: WPS433
+        KuramotoOrderFeature,
+        compute_phase,
+        kuramoto_order,
+    )
+    from core.indicators.pipeline import IndicatorPipeline  # noqa: WPS433
+
+
+if os.getenv("TP_SKIP_RESOURCE_IMPORTS") != "1":
+    _load_dependencies()
 
 
 @dataclass(slots=True)
