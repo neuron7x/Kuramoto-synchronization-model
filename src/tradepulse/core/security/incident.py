@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-import smtplib
 import os
+import smtplib
+import logging
 from email.mime.text import MIMEText
 from datetime import datetime
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 
 class IncidentResponse:
@@ -48,12 +51,18 @@ class IncidentResponse:
             msg["To"] = "security-team@tradepulse.com"
             # Integrate with SMTP or notification system in production.
             smtp_host = os.getenv("SMTP_HOST", "localhost")
-            smtp = smtplib.SMTP(smtp_host)
-            smtp.send_message(msg)
-            smtp.quit()
-        except Exception:
-            # Notification failures should not crash the reporter.
-            pass
+            smtp_port = int(os.getenv("SMTP_PORT", "25"))
+            use_tls = os.getenv("SMTP_USE_TLS", "false").lower() == "true"
+            smtp_user = os.getenv("SMTP_USERNAME")
+            smtp_password = os.getenv("SMTP_PASSWORD")
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
+                if use_tls:
+                    smtp.starttls()
+                if smtp_user and smtp_password:
+                    smtp.login(smtp_user, smtp_password)
+                smtp.send_message(msg)
+        except Exception as exc:
+            logger.warning("incident.alert_failed", exc_info=exc)
 
     def _kill_switch(self) -> None:
         """Emergency halt all trading (best-effort)."""
@@ -61,7 +70,8 @@ class IncidentResponse:
         if self._kill_switch_hook is not None:
             try:
                 self._kill_switch_hook()
-            except Exception:
+            except Exception as exc:
+                logger.warning("incident.kill_switch_hook_failed", exc_info=exc)
                 pass
             return
 
@@ -73,8 +83,8 @@ class IncidentResponse:
         if callable(activate):
             try:
                 activate()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("incident.kill_switch_activation_failed", exc_info=exc)
 
 
 ir = IncidentResponse()

@@ -17,7 +17,10 @@ class Encryption:
         key_material = os.getenv("ENCRYPTION_KEY")
         if not key_material:
             raise ValueError("ENCRYPTION_KEY environment variable must be set")
-        salt = os.getenv("ENCRYPTION_SALT", "tradepulse").encode()
+        salt_value = os.getenv("ENCRYPTION_SALT")
+        if not salt_value:
+            raise ValueError("ENCRYPTION_SALT environment variable must be set")
+        salt = salt_value.encode()
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,

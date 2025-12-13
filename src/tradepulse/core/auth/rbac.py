@@ -50,9 +50,9 @@ def get_current_user() -> User:
 
     user = _current_user.get()
     role = getattr(user, "role", None) if user is not None else None
-    if isinstance(role, str) and role.strip():
-        return User(role=role.strip())
-    return User(role="viewer")
+    if not isinstance(role, str) or not role.strip():
+        raise PermissionError("No authenticated user available for RBAC check")
+    return User(role=role.strip())
 
 
 def require(permission: Permission) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
