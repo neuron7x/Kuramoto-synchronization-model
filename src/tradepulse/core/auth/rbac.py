@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
-from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Iterable
@@ -30,27 +29,30 @@ ROLES: dict[str, set[Permission]] = {
 }
 
 
-@dataclass
-class _User:
-    role: str
+class User:
+    """Simple user representation for RBAC checks."""
+
+    def __init__(self, role: str) -> None:
+        self.role = role
 
 
-_current_user: ContextVar[_User | None] = ContextVar("current_user", default=None)
+_current_user: ContextVar[object | None] = ContextVar("current_user", default=None)
 
 
-def set_current_user(user: _User | None) -> None:
+def set_current_user(user: object | None) -> None:
     """Set the current user context for RBAC checks."""
 
     _current_user.set(user)
 
 
-def get_current_user() -> _User:
+def get_current_user() -> User:
     """Return the current user or a default viewer."""
 
     user = _current_user.get()
-    if user is None:
-        return _User(role="viewer")
-    return user
+    role = getattr(user, "role", None) if user is not None else None
+    if isinstance(role, str) and role.strip():
+        return User(role=role.strip())
+    return User(role="viewer")
 
 
 def require(permission: Permission) -> Callable[[Callable[..., Any]], Callable[..., Any]]:

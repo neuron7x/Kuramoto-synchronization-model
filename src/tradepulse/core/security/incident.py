@@ -16,12 +16,13 @@ class IncidentResponse:
 
     def __init__(self) -> None:
         self.incidents: list[dict[str, Any]] = []
+        self._next_id: int = 0
 
     def report(self, severity: str, event: str, details: dict[str, Any]) -> None:
         if severity not in self.SEVERITY:
             raise ValueError(f"Unknown severity '{severity}'")
         incident = {
-            "id": len(self.incidents),
+            "id": self._next_id,
             "timestamp": datetime.utcnow().isoformat(),
             "severity": severity,
             "event": event,
@@ -30,6 +31,7 @@ class IncidentResponse:
         }
 
         self.incidents.append(incident)
+        self._next_id += 1
 
         if self.SEVERITY[severity] >= self.SEVERITY["HIGH"]:
             self._alert(incident)

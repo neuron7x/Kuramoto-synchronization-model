@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Mapping
 
@@ -72,7 +73,7 @@ def test_rbac_require_allows_only_permitted_roles() -> None:
     assert _execute() == "ok"
 
 
-def test_audit_logger_writes_json(tmp_path) -> None:
+def test_audit_logger_writes_json(tmp_path: Path) -> None:
     log_path = tmp_path / "audit.log"
     logger = AuditLogger(log_path=log_path)
     logger.log(
@@ -98,7 +99,9 @@ def test_ids_blocks_after_threshold() -> None:
     assert ids.check_brute_force(user, max_attempts=5)
 
 
-def test_incident_response_records_and_handles_kill_switch(monkeypatch) -> None:
+def test_incident_response_records_and_handles_kill_switch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls = {}
 
     class _FakeKillSwitch:
