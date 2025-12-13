@@ -93,6 +93,7 @@ dev = [
     "ruff>=0.14.0",
     "isort>=5.13.2",
     "mypy>=1.18.2",
+    "pyarrow>=22.0.0",
     "pytest>=8.4.2",
     "pytest-benchmark>=5.1.0",
     "pytest-cov>=7.0.0",
@@ -138,44 +139,9 @@ version_file = "src/_version.py"
 fallback_version = "0.1.0"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = [
-    "analytics",
-    "analytics.*",
-    "application",
-    "application.*",
-    "backtest",
-    "backtest.*",
-    "core",
-    "core.*",
-    "domain",
-    "domain.*",
-    "sandbox",
-    "sandbox.*",
-    "execution",
-    "execution.*",
-    "interfaces",
-    "interfaces.*",
-    "libs",
-    "libs.*",
-    "src",
-    "src.*",
-    "tradepulse",
-    "tradepulse.*",
-    "tradepulse_agent",
-    "tradepulse_agent.*",
-    "markets",
-    "markets.*",
-    "modules",
-    "modules.*",
-    "neurotrade_pro",
-    "neurotrade_pro.*",
-    "observability",
-    "observability.*",
-    "tools",
-    "tools.*",
-]
-exclude = ["tests", "tests.*", "docs", "docs.*"]
+where = ["src"]
+include = ["tradepulse*"]
+exclude = ["tests", "tests.*", "docs", "docs.*", "legacy", "reports", "scripts"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]

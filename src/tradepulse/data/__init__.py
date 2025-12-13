@@ -33,53 +33,8 @@ Example:
     ...     print(report.issues)
 """
 
-# Validation utilities from core
-from core.data.validation import (
-    OHLCVValidationResult,
-    TimeSeriesValidationConfig,
-    TimeSeriesValidationError,
-    ValueColumnConfig,
-    build_timeseries_schema,
-    validate_ohlcv,
-    validate_timeseries_frame,
-)
-
-# Data access API
-from .api import (
-    DataSource,
-    DataSourceConfig,
-    get_feature_window,
-    get_historical_window,
-    get_latest_snapshot,
-    load_historical_bars,
-    normalize_bars,
-)
-
-# Data quality validation
-from .quality import (
-    DataQualityError,
-    DataQualityIssue,
-    DataQualityReport,
-    IssueSeverity,
-    check_monotonic_time,
-    detect_duplicates,
-    detect_gaps,
-    detect_outliers,
-    require_valid_data,
-    validate_series,
-)
-
-# Unified schema models
-from .schema import (
-    Bar,
-    Candle,
-    DataQualityStatus,
-    FeatureVector,
-    MarketSnapshot,
-    OrderSide,
-    Tick,
-    Timeframe,
-)
+from importlib import import_module
+from typing import Any
 
 __all__ = [
     # Schema models
@@ -119,3 +74,60 @@ __all__ = [
     "load_historical_bars",
     "normalize_bars",
 ]
+
+_SCHEMA_EXPORTS = {
+    "Bar",
+    "Candle",
+    "DataQualityStatus",
+    "FeatureVector",
+    "MarketSnapshot",
+    "OrderSide",
+    "Tick",
+    "Timeframe",
+}
+_VALIDATION_EXPORTS = {
+    "OHLCVValidationResult",
+    "TimeSeriesValidationConfig",
+    "TimeSeriesValidationError",
+    "ValueColumnConfig",
+    "build_timeseries_schema",
+    "validate_ohlcv",
+    "validate_timeseries_frame",
+}
+_QUALITY_EXPORTS = {
+    "DataQualityError",
+    "DataQualityIssue",
+    "DataQualityReport",
+    "IssueSeverity",
+    "check_monotonic_time",
+    "detect_duplicates",
+    "detect_gaps",
+    "detect_outliers",
+    "require_valid_data",
+    "validate_series",
+}
+_API_EXPORTS = {
+    "DataSource",
+    "DataSourceConfig",
+    "get_feature_window",
+    "get_historical_window",
+    "get_latest_snapshot",
+    "load_historical_bars",
+    "normalize_bars",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _SCHEMA_EXPORTS:
+        module = import_module("tradepulse.data.schema")
+        return getattr(module, name)
+    if name in _VALIDATION_EXPORTS:
+        module = import_module("core.data.validation")
+        return getattr(module, name)
+    if name in _QUALITY_EXPORTS:
+        module = import_module("tradepulse.data.quality")
+        return getattr(module, name)
+    if name in _API_EXPORTS:
+        module = import_module("tradepulse.data.api")
+        return getattr(module, name)
+    raise AttributeError(name)

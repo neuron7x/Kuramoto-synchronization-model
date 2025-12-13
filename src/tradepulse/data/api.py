@@ -265,6 +265,120 @@ def _load_csv_bars(
     return bars
 
 
+def _load_parquet_bars(path: Path, config: DataSourceConfig) -> List[Bar]:
+    """Load bars from a Parquet file using pandas/pyarrow."""
+    if not path.exists():
+        raise FileNotFoundError(f"Parquet file not found: {path}")
+
+    try:
+        import pandas as pd
+    except ImportError as exc:  # pragma: no cover - defensive
+        raise RuntimeError("pandas is required to load parquet files") from exc
+
+    try:
+        frame = pd.read_parquet(path)
+    except ImportError as exc:
+        raise RuntimeError(
+            "pyarrow or fastparquet is required to read parquet files. "
+            "Install with `pip install pyarrow` or use the 'tradepulse[feature_store]' extra."
+        ) from exc
+    except Exception as exc:
+        raise ValueError(f"Failed to read parquet file {path}: {exc}") from exc
+
+    ohlcv = config.ohlcv_columns
+    ts_col = config.timestamp_column
+    open_col = ohlcv.get("open", "open")
+    high_col = ohlcv.get("high", "high")
+    low_col = ohlcv.get("low", "low")
+    close_col = ohlcv.get("close", "close")
+    volume_col = ohlcv.get("volume", "volume")
+
+    required_cols = {
+        ts_col,
+        open_col,
+        high_col,
+        low_col,
+        close_col,
+        volume_col,
+    }
+    missing = [col for col in required_cols if col not in frame.columns]
+    if missing:
+        raise ValueError(f"Missing required columns in parquet file: {sorted(missing)}")
+
+    # Normalize timestamps to UTC
+    ts_raw = frame[ts_col]
+    if ts_raw.dtype.kind in {"i", "u", "f"}:
+        raise ValueError("Timestamp column must be datetime-like")
+
+    try:
+        ts_series = pd.to_datetime(ts_raw, utc=False, errors="raise")
+    except Exception as exc:
+        raise ValueError("Timestamp column must be datetime-like") from exc
+
+    if ts_series.dt.tz is None:
+        ts_series = ts_series.dt.tz_localize(timezone.utc)
+    else:
+        ts_series = ts_series.dt.tz_convert(timezone.utc)
+
+    frame = frame.copy()
+    frame[ts_col] = ts_series
+
+    symbol_value: str | None = config.symbol
+    if symbol_value is None and "symbol" in frame.columns:
+        symbols = (
+            frame["symbol"]
+            .dropna()
+            .astype(str)
+            .str.upper()
+            .unique()
+            .tolist()
+        )
+        if len(symbols) == 1:
+            symbol_value = symbols[0]
+        elif len(symbols) == 0:
+            symbol_value = None
+        else:
+            raise ValueError(
+                "Parquet file contains multiple symbols; provide a symbol in config."
+            )
+    if symbol_value is None:
+        raise ValueError("Symbol is required for parquet data; set in config or column")
+    symbol_value = symbol_value.upper()
+
+    timeframe_value = config.timeframe
+    if timeframe_value is None and "timeframe" in frame.columns:
+        tf_values = (
+            frame["timeframe"].dropna().astype(str).str.lower().unique().tolist()
+        )
+        if len(tf_values) == 1:
+            timeframe_value = Timeframe.from_string(tf_values[0])
+        elif len(tf_values) > 1:
+            raise ValueError(
+                "Parquet file contains multiple timeframes; provide a timeframe in config."
+            )
+    if timeframe_value is None:
+        timeframe_value = Timeframe.M1
+
+    frame = frame.sort_values(ts_col)
+    bars: List[Bar] = []
+    for row in frame.itertuples(index=False):
+        row_dict = row._asdict()
+        bars.append(
+            Bar(
+                timestamp=row_dict[ts_col].to_pydatetime(),
+                symbol=symbol_value,
+                timeframe=timeframe_value,
+                open=Decimal(str(row_dict[open_col])),
+                high=Decimal(str(row_dict[high_col])),
+                low=Decimal(str(row_dict[low_col])),
+                close=Decimal(str(row_dict[close_col])),
+                volume=Decimal(str(row_dict[volume_col])),
+            )
+        )
+
+    return bars
+
+
 def normalize_bars(
     bars: Sequence[Bar],
     *,
@@ -365,7 +479,9 @@ def load_historical_bars(
     if config.source_type == "csv" and config.path:
         bars = _load_csv_bars(config.path, config)
     elif config.source_type == "parquet":
-        raise NotImplementedError("Parquet loading not yet implemented")
+        if not config.path:
+            raise ValueError("Parquet source requires a valid path")
+        bars = _load_parquet_bars(config.path, config)
     else:
         raise ValueError(f"Unknown source type: {config.source_type}")
 
