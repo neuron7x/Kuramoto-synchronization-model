@@ -10,7 +10,7 @@ from pathlib import Path
 def test_no_stub_markers_in_tradepulse_package() -> None:
     """Ensure runtime package ships without placeholders or TODOs."""
     root = Path(__file__).resolve().parents[2] / "src" / "tradepulse"
-    pattern = re.compile(r"(NotImplementedError|stub|skeleton|TODO|FIXME|TBD)")
+    pattern = re.compile(r"(NotImplementedError|stub|skeleton|TODO|FIXME|TBD)", re.IGNORECASE)
 
     matches: list[str] = []
     for path in root.rglob("*.py"):
