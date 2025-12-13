@@ -63,8 +63,8 @@ class AuditLogger:
             if hasattr(handler, 'stream') and hasattr(handler.stream, 'fileno'):
                 try:
                     os.fsync(handler.stream.fileno())
-                except (OSError, AttributeError):
-                    # NullHandler or other handlers without file descriptor
+                except OSError:
+                    # Handle permission errors or invalid file descriptors
                     pass
 
 
