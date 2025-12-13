@@ -188,6 +188,16 @@ def test_configure_logging_accepts_numeric_level() -> None:
     assert "debug message" in stream.getvalue()
 
 
+def test_configure_logging_accepts_numeric_level_string() -> None:
+    stream = io.StringIO()
+
+    configure_logging(level="10", use_json=False, stream=stream)
+    logging.getLogger("tradepulse.tests").debug("debug message")
+
+    assert logging.getLogger().level == 10
+    assert "debug message" in stream.getvalue()
+
+
 def test_configure_logging_rejects_invalid_level() -> None:
     with pytest.raises(ValueError):
         configure_logging(level="not-a-level")
