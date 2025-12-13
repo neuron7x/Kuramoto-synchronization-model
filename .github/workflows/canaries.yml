@@ -63,9 +63,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
 
@@ -75,8 +73,8 @@ jobs:
       - name: Install dependencies
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Prepare test report directories
         run: |
