@@ -75,9 +75,9 @@ websockets==15.0.1
 wrapt==1.17.3
 yarl==1.22.0
 zipp==3.23.0
-bandit==1.8.0
+bandit==1.9.2
 bashlex==0.18
-black==25.1.0
+black==25.12.0
 boolean-py==5.0
 bracex==2.6
 build==1.3.0
@@ -93,7 +93,7 @@ execnet==2.1.1
 filelock==3.20.0
 gprof2dot==2025.4.14
 humanize==4.13.0
-hypothesis==6.140.3
+hypothesis==6.148.7
 incremental==24.7.2
 iniconfig==2.1.0
 jaraco-classes==3.4.0
@@ -111,7 +111,7 @@ mdurl==0.1.2
 more-itertools==10.8.0
 msgpack==1.1.2
 mutmut==3.3.1
-mypy==1.18.2
+mypy==1.19.0
 nh3==0.3.1
 nvidia-ml-py==13.580.82
 packageurl-python==0.17.5
@@ -132,18 +132,18 @@ pyelftools==0.32
 pygments==2.19.2
 pyparsing==3.2.5
 pyproject-hooks==1.2.0
-pytest==8.4.2
-pytest-asyncio==0.25.2
-pytest-cov==6.0.0
+pytest==9.0.2
+pytest-asyncio==1.3.0
+pytest-cov==7.0.0
 pytest-html==4.1.1
 pytest-metadata==3.1.1
-pytest-profiling==1.7.0 ; python_version < "3.13"
-pytest-xdist==3.6.1
+pytest-profiling==1.8.1 ; python_version < "3.13"
+pytest-xdist==3.8.0
 readme-renderer==44.0
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==14.2.0
-ruff==0.14.0
+ruff==0.14.9
 scalene==1.5.55
 secretstorage==3.4.0
 setproctitle==1.3.7
@@ -152,7 +152,7 @@ sortedcontainers==2.4.0
 stevedore==5.5.0
 textual==6.3.0
 toml==0.10.2
-towncrier==23.11.0
+towncrier==25.8.0
 twine==5.1.1
 uc-micro-py==1.0.3
 wheel==0.45.1

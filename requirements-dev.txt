@@ -1,22 +1,22 @@
 -r requirements.txt
 
 # Formatters & linters
-black==25.9.0
+black==25.12.0
 flake8==7.1.1
 isort==5.13.2
-ruff==0.14.0
+ruff==0.14.9
 slotscheck==0.19.1
 
 # Type checking
-mypy==1.18.2
+mypy==1.19.0
 
 # Testing stack
-pytest==8.4.2
-pytest-benchmark==5.1.0
+pytest==9.0.2
+pytest-benchmark==5.2.3
 pytest-cov==7.0.0
-pytest-asyncio==1.2.0
-pytest-httpx==0.35.0
-hypothesis==6.140.3
+pytest-asyncio==1.3.0
+pytest-httpx==0.36.0
+hypothesis==6.148.7
 pytest-html==4.1.1
 pytest-xdist==3.8.0
 pytest-split==0.10.0
@@ -32,7 +32,7 @@ scalene>=1.5.55
 py-spy>=0.4.1
 
 # Security scanning
-bandit==1.8.6
+bandit==1.9.2
 pip-audit==2.9.0
 pip>=25.2
 z3-solver>=4.13.0.0
