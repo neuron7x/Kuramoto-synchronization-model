@@ -72,7 +72,7 @@ setuptools>=78.1.1
 # CVE-2024-41671: HTTP request pipelining out-of-order processing vulnerability
 # Version 24.7.0 (non-RC) fixes these vulnerabilities
 # NOTE: Exact pin (==) ensures transitive dependencies are upgraded to secure versions
-twisted==24.7.0
+twisted==25.5.0
 
 # ============================================================================
 # Web Framework - Security-critical for API endpoints
