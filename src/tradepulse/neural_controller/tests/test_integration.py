@@ -18,6 +18,7 @@ if "tradepulse" not in sys.modules:
     pkg = types.ModuleType("tradepulse")
     pkg.__path__ = [str(Path(__file__).resolve().parents[2])]
     sys.modules["tradepulse"] = pkg
+import tradepulse.neural_controller  # ensure package is imported for coverage
 
 from ..config import load_default_config
 from ..core.emh_model import EMHSSM
@@ -159,7 +160,9 @@ def test_toy_stream_invariants(controller: NeuralMarketController) -> None:
 
 
 def test_yaml_loader_defaults(tmp_path: Path) -> None:
-    config_path = Path("tradepulse/neural_controller/config/neural_params.yaml")
+    config_path = (
+        Path(__file__).resolve().parent.parent / "config" / "neural_params.yaml"
+    )
     neural = NeuralMarketController.from_yaml(str(config_path))
     assert pytest.approx(neural.ctrl.tau_E_amber, rel=1e-6) == 0.3
     assert neural.sync_threshold == pytest.approx(0.3, rel=1e-6)
