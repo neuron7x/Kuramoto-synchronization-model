@@ -1,0 +1,54 @@
+"""Security audit logging helpers."""
+
+from __future__ import annotations
+
+import json
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+
+class AuditLogger:
+    """Simple JSON audit logger."""
+
+    def __init__(self, log_path: str | Path = "/var/log/tradepulse/audit.log") -> None:
+        self.logger = logging.getLogger("security.audit")
+        handler = self._build_handler(Path(log_path))
+        if not self.logger.handlers or all(
+            isinstance(existing, logging.NullHandler) for existing in self.logger.handlers
+        ):
+            self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
+
+    def _build_handler(self, log_path: Path) -> logging.Handler:
+        try:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            handler: logging.Handler = logging.FileHandler(log_path)
+        except Exception:
+            handler = logging.NullHandler()
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        return handler
+
+    def log(
+        self,
+        event: str,
+        user: str,
+        resource: str,
+        action: str,
+        result: str,
+        **kwargs: Any,
+    ) -> None:
+        entry = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "event": event,
+            "user": user,
+            "resource": resource,
+            "action": action,
+            "result": result,
+            **kwargs,
+        }
+        self.logger.info(json.dumps(entry))
+
+
+audit = AuditLogger()
