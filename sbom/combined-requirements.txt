@@ -40,7 +40,7 @@ opentelemetry-exporter-otlp-proto-grpc==1.37.0
 opentelemetry-exporter-otlp-proto-http==1.37.0
 opentelemetry-proto==1.37.0
 opentelemetry-sdk==1.37.0
-opentelemetry-semantic-conventions==0.58b0
+opentelemetry-semantic-conventions==0.60b1
 packaging==25.0
 pandas==2.3.3
 pandera==0.20.4
