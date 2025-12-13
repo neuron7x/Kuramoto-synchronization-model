@@ -49,9 +49,11 @@ def get_current_user() -> User:
     """Return the current user or a default viewer."""
 
     user = _current_user.get()
-    role = getattr(user, "role", None) if user is not None else None
-    if not isinstance(role, str) or not role.strip():
+    if user is None:
         raise PermissionError("No authenticated user available for RBAC check")
+    role = getattr(user, "role", None)
+    if not isinstance(role, str) or not role.strip():
+        raise PermissionError("Current user has no valid role for RBAC check")
     return User(role=role.strip())
 
 

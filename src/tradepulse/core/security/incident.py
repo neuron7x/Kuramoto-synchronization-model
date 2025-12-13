@@ -49,12 +49,16 @@ class IncidentResponse:
             msg["Subject"] = f"[{incident['severity']}] {incident['event']}"
             msg["From"] = "security@tradepulse.com"
             msg["To"] = "security-team@tradepulse.com"
-            # Integrate with SMTP or notification system in production.
+            # SMTP configuration supports TLS/auth; integrate with other notifiers as needed.
             smtp_host = os.getenv("SMTP_HOST", "localhost")
             smtp_port = int(os.getenv("SMTP_PORT", "25"))
             use_tls = os.getenv("SMTP_USE_TLS", "false").lower() == "true"
             smtp_user = os.getenv("SMTP_USERNAME")
             smtp_password = os.getenv("SMTP_PASSWORD")
+            if not smtp_user or not smtp_password:
+                logger.warning(
+                    "Missing SMTP credentials; incident alerts will be sent without authentication"
+                )
             with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
                 if use_tls:
                     smtp.starttls()
@@ -62,7 +66,7 @@ class IncidentResponse:
                     smtp.login(smtp_user, smtp_password)
                 smtp.send_message(msg)
         except Exception as exc:
-            logger.warning("incident.alert_failed", exc_info=exc)
+            logger.warning("Failed to send security incident alert", exc_info=exc)
 
     def _kill_switch(self) -> None:
         """Emergency halt all trading (best-effort)."""
@@ -71,7 +75,7 @@ class IncidentResponse:
             try:
                 self._kill_switch_hook()
             except Exception as exc:
-                logger.warning("incident.kill_switch_hook_failed", exc_info=exc)
+                logger.warning("Kill switch hook execution failed", exc_info=exc)
             return
 
         try:
@@ -83,7 +87,7 @@ class IncidentResponse:
             try:
                 activate()
             except Exception as exc:
-                logger.warning("incident.kill_switch_activation_failed", exc_info=exc)
+                logger.warning("Kill switch activation failed", exc_info=exc)
 
 
 ir = IncidentResponse()
