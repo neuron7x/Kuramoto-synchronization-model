@@ -59,6 +59,7 @@ jobs:
         run: |
           uv pip install -c constraints/security.txt -r requirements.txt
           uv pip install -c constraints/security.txt -r requirements-dev.txt
+          uv pip install -e .
 
       - name: Run PR benchmarks
         env:
