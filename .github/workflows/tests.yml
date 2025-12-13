@@ -73,14 +73,14 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
       - name: Cache pre-commit environments
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
           key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
             lint-pre-commit-${{ runner.os }}-
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-lint
         with:
           path: .venv
@@ -183,7 +183,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Cache Go modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/go-build
@@ -208,7 +208,7 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache
         with:
           path: .venv
@@ -493,7 +493,7 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-security
         with:
           path: .venv
@@ -560,7 +560,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-full
         with:
           path: .venv
@@ -680,7 +680,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-mutation
         with:
           path: .venv
@@ -775,7 +775,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-bench
         with:
           path: .venv
@@ -943,7 +943,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-xdist
         with:
           path: .venv
@@ -1038,7 +1038,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-flaky
         with:
           path: .venv

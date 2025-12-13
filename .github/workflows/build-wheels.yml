@@ -49,7 +49,7 @@ jobs:
             constraints/security.txt
 
       - name: Cache Python packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: pip-wheels-${{ matrix.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'pyproject.toml', 'constraints/security.txt') }}

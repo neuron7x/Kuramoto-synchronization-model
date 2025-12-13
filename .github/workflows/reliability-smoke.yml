@@ -48,7 +48,7 @@ jobs:
             constraints/security.txt
       
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: venv-cache-reliability
         with:
           path: .venv
