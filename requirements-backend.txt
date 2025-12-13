@@ -1,7 +1,7 @@
 # Backend service dependencies with strict pins to reduce supply-chain risk.
 # Keep versions in sync with requirements.lock and security guidance.
 opentelemetry-api==1.38.0
-opentelemetry-sdk==1.38.0
+opentelemetry-sdk==1.39.1
 opentelemetry-exporter-otlp==1.38.0
 prometheus-client==0.23.1
 PyJWT[crypto]==2.10.1
