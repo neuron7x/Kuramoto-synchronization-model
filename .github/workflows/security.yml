@@ -92,7 +92,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
+        pip install -c constraints/security.txt -r requirements.lock -r requirements-dev.lock
         pip install safety pip-audit
 
     - name: Check for known vulnerabilities with Safety
@@ -456,8 +456,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install -c constraints/security.txt -r requirements.txt
-        uv pip install -c constraints/security.txt -r requirements-dev.txt
+        uv pip install -c constraints/security.txt -r requirements.lock
+        uv pip install -c constraints/security.txt -r requirements-dev.lock
 
     - name: Prepare report directories
       run: mkdir -p reports

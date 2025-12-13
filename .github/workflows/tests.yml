@@ -94,8 +94,8 @@ jobs:
         if: steps.venv-cache-lint.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
           .venv/bin/pip install pre-commit detect-secrets
       - name: Validate localization bundles
         run: .venv/bin/python scripts/localization/sync_translations.py --check
@@ -222,8 +222,8 @@ jobs:
         if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Prepare test report directories
         run: |
           mkdir -p reports
@@ -487,9 +487,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
@@ -507,8 +505,8 @@ jobs:
         if: steps.venv-cache-security.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.txt
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Activate virtual environment
         run: echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
       - name: Run static security analysis (Bandit)
