@@ -133,7 +133,19 @@ updates:
     labels:
       - dependencies
       - ci
+      - security
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      # Group minor/patch updates to reduce PR noise
+      github-actions-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Docker base images
   - package-ecosystem: "docker"
