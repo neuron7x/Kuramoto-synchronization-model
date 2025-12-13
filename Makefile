@@ -23,6 +23,7 @@ help:
 	@echo "  make deps-update   - Regenerate lock files from requirements.txt"
 	@echo "  make deps-audit    - Audit dependencies for vulnerabilities"
 	@echo "  make clean-deps    - Clean dependency caches"
+	@echo "  make guard-python-matrix - Check Python version alignment across configs"
 	@echo ""
 	@echo "Extended Commands:"
 	@echo "  make test-coverage - Generate HTML/XML coverage reports"
@@ -144,6 +145,12 @@ audit:
 	python -m pip_audit -r requirements.txt -r requirements-dev.txt || echo "⚠️  pip-audit found issues - review above output"
 	python -m bandit -r core/ backtest/ execution/ src/ -ll -q
 	@echo "✅ Security audit complete"
+
+.PHONY: guard-python-matrix
+guard-python-matrix:
+	@echo "🔍 Checking Python version matrix alignment..."
+	python scripts/check_python_matrix.py
+	@echo "✅ Python version matrix is aligned"
 
 .PHONY: deps-audit
 deps-audit:

@@ -169,6 +169,9 @@ graph TB
 ### Prerequisites
 
 - **Python** 3.11 or 3.12 ([Download](https://www.python.org/downloads/))
+  - **Version Policy**: `pyproject.toml` is the single source of truth (`requires-python = ">=3.11,<3.13"`)
+  - All Dockerfiles, CI workflows, and tooling are automatically aligned to this constraint
+  - Use `make guard-python-matrix` to verify version alignment locally
 - **Git** 2.30+ for version control
 - **Docker** (optional, for containerized deployment)
 

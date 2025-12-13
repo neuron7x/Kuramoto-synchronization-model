@@ -52,6 +52,21 @@ jobs:
   # Target: Complete in ≤10-12 minutes total
   # ============================================================================
 
+  python-matrix-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    name: Python Version Matrix Alignment Check
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      
+      - name: Check Python version matrix alignment
+        run: python scripts/check_python_matrix.py
+
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 8
