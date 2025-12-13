@@ -49,7 +49,7 @@ jobs:
               pip install -r requirements-dev.txt
             fi
           fi
-          pip install "pytest-cov>=4,<5"
+          pip install "pytest-cov>=7,<8"
           # Ensure src-layout imports work even if package isn't installed
           echo "PYTHONPATH=${GITHUB_WORKSPACE}/src:${GITHUB_WORKSPACE}" >> $GITHUB_ENV
 
