@@ -119,11 +119,14 @@ jobs:
 
       - name: Request dynamic credentials from Vault
         id: vault
-        if: ${{ secrets.MLOPS_VAULT_ADDRESS != '' && secrets.MLOPS_VAULT_ROLE != '' && secrets.MLOPS_VAULT_TOKEN != '' }}
+        if: ${{ env.MLOPS_VAULT_ADDRESS != '' && env.MLOPS_VAULT_ROLE != '' && env.MLOPS_VAULT_TOKEN != '' }}
         env:
           VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
           VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
           VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
+          MLOPS_VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
+          MLOPS_VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
+          MLOPS_VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
         run: |
           mkdir -p "${ARTIFACT_ROOT}/secrets"
           python -m scripts.cli secrets-issue-dynamic \
@@ -267,7 +270,10 @@ jobs:
 
       - name: Configure AWS credentials
         id: aws-creds
-        if: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID != '' && secrets.AWS_MLOPS_SECRET_ACCESS_KEY != '' }}
+        if: ${{ env.AWS_MLOPS_ACCESS_KEY_ID != '' && env.AWS_MLOPS_SECRET_ACCESS_KEY != '' }}
+        env:
+          AWS_MLOPS_ACCESS_KEY_ID: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
+          AWS_MLOPS_SECRET_ACCESS_KEY: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
