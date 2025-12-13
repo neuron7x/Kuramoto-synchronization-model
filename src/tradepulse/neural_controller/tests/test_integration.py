@@ -159,7 +159,7 @@ def test_toy_stream_invariants(controller: NeuralMarketController) -> None:
 
 
 def test_yaml_loader_defaults(tmp_path: Path) -> None:
-config_path = Path(__file__).resolve().parents[1] / "config" / "neural_params.yaml"
+    config_path = Path(__file__).resolve().parents[1] / "config" / "neural_params.yaml"
     neural = NeuralMarketController.from_yaml(str(config_path))
     assert pytest.approx(neural.ctrl.tau_E_amber, rel=1e-6) == 0.3
     assert neural.sync_threshold == pytest.approx(0.3, rel=1e-6)

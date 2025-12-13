@@ -1,8 +1,6 @@
 [run]
 source =
-    core
-    backtest
-    execution
+    tradepulse
 omit =
     **/__init__.py
     application/**
@@ -17,7 +15,6 @@ omit =
     interfaces/**
     libs/**
     scripts/**
-    src/**
     tools/**
     conftest.py
     core/accelerators/**
@@ -52,7 +49,6 @@ omit =
     interfaces/**
     libs/**
     scripts/**
-    src/**
     tools/**
     conftest.py
     core/accelerators/**
