@@ -15,6 +15,12 @@ class IDS:
         self.rate_limits = defaultdict(list)
         self.logger = logging.getLogger("security.ids")
 
+    @staticmethod
+    def _sanitize(user: str) -> str:
+        """Return a log-safe user identifier."""
+
+        return str(user).replace("\n", "_").replace("\r", "_")
+
     def check_brute_force(self, user: str, max_attempts: int = 5) -> bool:
         """Return True if blocked due to excessive failures."""
 
@@ -24,7 +30,7 @@ class IDS:
         ]
 
         if len(self.failed_attempts[user]) >= max_attempts:
-            self.logger.warning(f"BRUTE_FORCE_DETECTED: {user}")
+            self.logger.warning("BRUTE_FORCE_DETECTED: %s", self._sanitize(user))
             return True
         return False
 
@@ -42,7 +48,7 @@ class IDS:
         ]
 
         if len(self.rate_limits[user]) >= max_requests:
-            self.logger.warning(f"RATE_LIMIT_EXCEEDED: {user}")
+            self.logger.warning("RATE_LIMIT_EXCEEDED: %s", self._sanitize(user))
             return True
 
         self.rate_limits[user].append(now)

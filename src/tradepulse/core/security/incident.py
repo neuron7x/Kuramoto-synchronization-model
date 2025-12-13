@@ -72,7 +72,6 @@ class IncidentResponse:
                 self._kill_switch_hook()
             except Exception as exc:
                 logger.warning("incident.kill_switch_hook_failed", exc_info=exc)
-                pass
             return
 
         try:
