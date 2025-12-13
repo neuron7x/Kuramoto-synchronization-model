@@ -489,8 +489,6 @@ jobs:
           cache-dependency-path: |
             requirements.lock
             requirements-dev.lock
-            requirements-dev.txt
-            requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
         uses: actions/cache@v4
