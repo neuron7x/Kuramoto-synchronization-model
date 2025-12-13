@@ -581,6 +581,21 @@ class TestCentralRiskEngine:
 
         assert safety.is_kill_switch_active() is True
 
+    def test_profit_does_not_trigger_loss_limits(self) -> None:
+        """Ensure profitable days do not trigger loss-based protections."""
+        config = RiskEngineConfig(max_daily_loss=1000.0, kill_switch_loss_threshold=2000.0)
+        safety = SafetyController()
+        engine = self._create_engine(config, safety)
+
+        decision = engine.assess_order(
+            self._create_order(),
+            self._create_portfolio(daily_pnl=5000.0),
+            self._create_market(),
+        )
+
+        assert safety.is_kill_switch_active() is False
+        assert RiskViolation.DAILY_LOSS_LIMIT_EXCEEDED not in decision.violations
+
     def test_rate_limiting(self) -> None:
         """Test order rate limiting."""
         config = RiskEngineConfig(max_orders_per_minute=3)

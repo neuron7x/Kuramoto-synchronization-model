@@ -365,7 +365,7 @@ class CentralRiskEngine:
             daily_loss_limit = self._config.max_daily_loss
             daily_loss_pct_limit = self._config.max_daily_loss_percent
 
-            if abs(portfolio_state.daily_pnl) > daily_loss_limit:
+            if portfolio_state.daily_pnl <= -daily_loss_limit:
                 violations.append(RiskViolation.DAILY_LOSS_LIMIT_EXCEEDED)
                 metadata["daily_pnl"] = portfolio_state.daily_pnl
                 metadata["max_daily_loss"] = daily_loss_limit
@@ -551,7 +551,7 @@ class CentralRiskEngine:
             return
 
         # Check loss threshold
-        if abs(portfolio_state.daily_pnl) > self._config.kill_switch_loss_threshold:
+        if portfolio_state.daily_pnl <= -self._config.kill_switch_loss_threshold:
             self._safety.activate_kill_switch(
                 reason=f"Daily loss threshold exceeded: {portfolio_state.daily_pnl:.2f}",
                 source="risk_engine",
