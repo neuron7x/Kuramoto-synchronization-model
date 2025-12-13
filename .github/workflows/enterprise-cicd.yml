@@ -159,7 +159,7 @@ jobs:
             --cov-report=xml --cov-report=term-missing --cov-branch
 
       - name: Upload unit test reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: unit-tests
           path: |
@@ -216,7 +216,7 @@ jobs:
             --html=reports/property-security-report.html --self-contained-html
 
       - name: Upload integration artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: integration-tests
           path: |
@@ -240,7 +240,7 @@ jobs:
 
       - name: Upload k6 summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: k6-summary
           path: ./k6-summary.json
@@ -337,7 +337,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trivy-report
           path: trivy-results.sarif
@@ -391,7 +391,7 @@ jobs:
           echo "plan_path=infra/terraform/eks/tfplan-${env_name}.json" >>"$GITHUB_OUTPUT"
 
       - name: Upload terraform plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: terraform-plan
           path: infra/terraform/eks/tfplan-${{ steps.resolve-env.outputs.environment }}.json
@@ -735,7 +735,7 @@ jobs:
           REPORT
 
       - name: Upload audit summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: audit-summary
           path: audit/summary.md

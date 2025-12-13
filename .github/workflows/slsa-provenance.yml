@@ -104,7 +104,7 @@ jobs:
           echo "✓ Provenance signed with Sigstore"
 
       - name: Upload provenance artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: slsa-provenance
           path: |

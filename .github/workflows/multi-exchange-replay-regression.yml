@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload performance reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: multi-exchange-replay-reports
           path: |
@@ -153,7 +153,7 @@ jobs:
           PYTEST_ARTIFACTS_DIR: .ci_artifacts/baseline
 
       - name: Upload baseline artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: performance-baseline-${{ github.sha }}
           path: .ci_artifacts/baseline/*.json
@@ -200,7 +200,7 @@ jobs:
           PYTEST_ARTIFACTS_DIR: .ci_artifacts/trends
 
       - name: Upload trend analysis
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: performance-trends-${{ github.run_id }}
           path: .ci_artifacts/trends/

@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload SLO report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: slo-report
           path: /tmp/slo-report.md

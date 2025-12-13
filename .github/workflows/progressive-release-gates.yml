@@ -43,7 +43,7 @@ jobs:
         run: python -m tacl.release_gates --config ci/release_gates.yml
 
       - name: Upload release gate artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-gates-report
           path: |

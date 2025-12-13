@@ -292,7 +292,7 @@ jobs:
           PY
       - name: Upload localization coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: localization-coverage
           path: reports/localization/coverage.json
@@ -433,7 +433,7 @@ jobs:
             [View workflow run →](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
       - name: Upload fast test JUnit reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fast-junit-results-py${{ matrix.python-version }}
           path: |
@@ -444,7 +444,7 @@ jobs:
           
       - name: Upload fast test HTML reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fast-html-reports-py${{ matrix.python-version }}
           path: |
@@ -453,7 +453,7 @@ jobs:
           retention-days: 7
       - name: Upload fast test metrics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fast-test-metrics-py${{ matrix.python-version }}
           path: |
@@ -464,7 +464,7 @@ jobs:
           
       - name: Upload fast coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fast-coverage-py${{ matrix.python-version }}
           path: coverage.xml
@@ -521,7 +521,7 @@ jobs:
         run: python -m tools.security.dast_probe --report reports/security/dast_report.json
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: security-reports
           path: |
@@ -639,7 +639,7 @@ jobs:
           
       - name: Upload full test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: full-test-suite-py${{ matrix.python-version }}
           path: |
@@ -702,7 +702,7 @@ jobs:
         run: .venv/bin/python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
       - name: Upload trading engine mutation artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
@@ -744,7 +744,7 @@ jobs:
         run: npx playwright test
       - name: Upload Playwright artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dashboard-playwright-artifacts
           path: |
@@ -897,7 +897,7 @@ jobs:
           PY
       - name: Upload benchmark artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: benchmark-reports
           path: |
@@ -971,7 +971,7 @@ jobs:
           if [ -d prof ]; then cp -r prof/. reports/profiling/; fi
       - name: Upload profiling artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pytest-profiling
           path: reports/profiling
@@ -1009,7 +1009,7 @@ jobs:
         run: npx playwright test --config=playwright.config.ts --reporter=list --project="Desktop Chrome"
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report
           path: apps/web/playwright-report
@@ -1078,7 +1078,7 @@ jobs:
           exit "$status"
       - name: Upload flaky test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: flaky-tests-artifacts
           path: |

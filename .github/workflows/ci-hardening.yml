@@ -234,7 +234,7 @@ jobs:
           cat ci-hardening-report.md
 
       - name: Upload hardening report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ci-hardening-report
           path: |
