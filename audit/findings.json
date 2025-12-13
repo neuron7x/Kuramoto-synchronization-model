@@ -1,0 +1,232 @@
+{
+  "meta": {
+    "audit_date": "2025-12-13",
+    "commit": "5675708586b7480d8ab174734b453f3e3b57c38c",
+    "branch": "copilot/full-security-audit",
+    "auditor": "Independent Security Auditor",
+    "version": "1.0"
+  },
+  "scores": {
+    "CSS": 64.5,
+    "SCS": 100,
+    "CIS": 50.0,
+    "SDS": 94.0,
+    "TOTAL": 77,
+    "rating": "GOOD"
+  },
+  "counts": {
+    "sast": {
+      "bandit_critical": 0,
+      "bandit_high": 0,
+      "bandit_medium": 5,
+      "bandit_low_actionable": 51,
+      "bandit_low_informational": 610,
+      "eval_exec": 0,
+      "yaml_unsafe": 0,
+      "pickle_loads": 0,
+      "shell_true": 0
+    },
+    "deps": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secrets": {
+      "current_tree_real": 0,
+      "history": 0,
+      "dev_keys_tracked": 4
+    },
+    "ci": {
+      "workflows": 51,
+      "actions_tag_pinned": 386,
+      "actions_sha_pinned": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "SEC-001",
+      "severity": "MEDIUM",
+      "area": "SDS",
+      "title": "Development TLS private keys tracked in git",
+      "evidence": {
+        "tool": "gitleaks + git ls-files",
+        "artifact": "audit/artifacts/tracked_key_material.txt",
+        "files": [
+          "configs/tls/dev/cortex-db-client.key.pem",
+          "configs/tls/dev/cortex-db-server.key.pem",
+          "configs/tls/dev/cortex-server.key.pem",
+          "configs/tls/dev/tradepulse-server.key.pem"
+        ]
+      },
+      "impact": "Development TLS keys are tracked in version control. While these are dev-only keys, tracking private keys is discouraged.",
+      "remediation": "1) Add configs/tls/dev/*.key.pem to .gitignore\n2) Document key generation in README\n3) Generate keys locally during dev setup",
+      "verification": "git rm --cached configs/tls/dev/*.key.pem && echo 'configs/tls/dev/*.key.pem' >> .gitignore"
+    },
+    {
+      "id": "SEC-002",
+      "severity": "HIGH",
+      "area": "CIS",
+      "title": "GitHub Actions not pinned to commit SHA",
+      "evidence": {
+        "tool": "grep analysis",
+        "artifact": "audit/artifacts/action_pinning_analysis.txt",
+        "count": 386,
+        "detail": "386 actions use @v* tags, 0 use @sha"
+      },
+      "impact": "Actions pinned to mutable tags (@v4, @main) are vulnerable to supply chain attacks if action maintainers' credentials are compromised.",
+      "remediation": "Pin all actions to full 40-character SHA:\nuses: actions/checkout@v4 \u2192 uses: actions/checkout@a12b3c4d5e6f...\nUse dependabot or renovate to auto-update SHAs with comments showing tag equivalents.",
+      "verification": "grep -r 'uses:' .github/workflows/*.yml | grep -v '@[a-f0-9]\\{40\\}' | wc -l  # Should be 0"
+    },
+    {
+      "id": "SEC-003",
+      "severity": "MEDIUM",
+      "area": "CSS",
+      "title": "Bandit MEDIUM severity issues",
+      "evidence": {
+        "tool": "bandit",
+        "artifact": "audit/artifacts/bandit.json",
+        "count": 5,
+        "samples": [
+          {
+            "test_id": "B310",
+            "file": "scripts/deploy/docker_compose_smoke.py",
+            "line": 137,
+            "issue": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
+          },
+          {
+            "test_id": "B310",
+            "file": "scripts/deploy/docker_compose_smoke.py",
+            "line": 144,
+            "issue": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
+          },
+          {
+            "test_id": "B108",
+            "file": "scripts/tests/test_sanity_cleanup.py",
+            "line": 75,
+            "issue": "Probable insecure usage of temp file/directory."
+          }
+        ]
+      },
+      "impact": "Medium severity code security issues detected by Bandit static analyzer",
+      "remediation": "Review each finding in audit/artifacts/bandit.json and address legitimate security concerns",
+      "verification": "bandit -r src backtest scripts -ll  # Should show reduced count"
+    },
+    {
+      "id": "SEC-004",
+      "severity": "LOW",
+      "area": "CSS",
+      "title": "Subprocess module usage without input validation",
+      "evidence": {
+        "tool": "bandit + ripgrep",
+        "artifact": "audit/artifacts/danger_patterns.txt",
+        "count": 38,
+        "detail": "subprocess.run, subprocess.check_output used in scripts/",
+        "samples": [
+          "scripts/generate_stakeholder_assets.py:331",
+          "scripts/performance/generate_replay_report.py:41",
+          "scripts/dependency_audit.py:50"
+        ]
+      },
+      "impact": "Scripts use subprocess calls. While no shell=True found, review for untrusted input.",
+      "remediation": "1) Audit all subprocess calls for user-controlled input\n2) Prefer pathlib/stdlib over subprocess when possible\n3) Use explicit argument lists, not string commands",
+      "verification": "Review scripts with subprocess usage and add input validation where needed"
+    },
+    {
+      "id": "SEC-005",
+      "severity": "INFORMATIONAL",
+      "area": "CSS",
+      "title": "Assert statements in production code",
+      "evidence": {
+        "tool": "bandit",
+        "artifact": "audit/artifacts/bandit.json",
+        "count": 610,
+        "detail": "B101: Assert statements will be removed with python -O"
+      },
+      "impact": "Assert statements are removed when Python runs in optimized mode (-O). Code should not rely on asserts for validation.",
+      "remediation": "For user input validation, use explicit if/raise. Asserts are OK for developer sanity checks.",
+      "verification": "Review critical validation logic and replace asserts with explicit checks where needed"
+    },
+    {
+      "id": "SEC-006",
+      "severity": "LOW",
+      "area": "CSS",
+      "title": "Try-except-pass patterns suppress errors",
+      "evidence": {
+        "tool": "bandit",
+        "artifact": "audit/artifacts/bandit.json",
+        "count": 8,
+        "detail": "B110: Try-except-pass detected in 8 locations"
+      },
+      "impact": "Silent error suppression can hide bugs and security issues",
+      "remediation": "Replace except-pass with explicit handling or at minimum log the exception",
+      "verification": "Search for 'except.*:\\s*pass' and add logging"
+    },
+    {
+      "id": "SEC-007",
+      "severity": "INFORMATIONAL",
+      "area": "SDS",
+      "title": "\u2705 No production secrets in repository",
+      "evidence": {
+        "tool": "gitleaks + trufflehog",
+        "artifact": "audit/artifacts/gitleaks.json",
+        "detail": "All detected secrets are false positives (test fixtures, docs examples, .secrets.baseline)"
+      },
+      "impact": "POSITIVE: No production secrets detected in current tree or git history",
+      "remediation": "Maintain current practice: use .env files, secret managers, never commit real credentials",
+      "verification": "gitleaks detect --source . --verbose"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "INFORMATIONAL",
+      "area": "SCS",
+      "title": "\u2705 Excellent supply chain security",
+      "evidence": {
+        "tool": "pip-audit + cyclonedx",
+        "artifacts": [
+          "audit/artifacts/pip_audit.json",
+          "audit/artifacts/sbom.json"
+        ],
+        "detail": "Lock files present, 0 vulnerabilities, SBOM generated"
+      },
+      "impact": "POSITIVE: Strong dependency management with lock files and vulnerability scanning",
+      "remediation": "Continue current practices. Consider OSV scanner in CI for additional coverage.",
+      "verification": "pip-audit -r requirements.txt"
+    },
+    {
+      "id": "SEC-009",
+      "severity": "INFORMATIONAL",
+      "area": "CIS",
+      "title": "\u2705 Comprehensive security CI workflows",
+      "evidence": {
+        "tool": "workflow analysis",
+        "artifact": "audit/artifacts/workflows_list.txt",
+        "workflows": [
+          "security.yml",
+          "security-policy-enforcement.yml",
+          "slsa-provenance.yml",
+          "sbom-generation.yml",
+          "ossf-scorecard.yml"
+        ]
+      },
+      "impact": "POSITIVE: Repository has extensive security automation including SLSA provenance, SBOM generation, and policy enforcement",
+      "remediation": "Continue maintaining these workflows. Ensure they run on all PRs.",
+      "verification": "Check .github/workflows/security*.yml"
+    },
+    {
+      "id": "SEC-010",
+      "severity": "LOW",
+      "area": "SDS",
+      "title": ".secrets.baseline may contain outdated entries",
+      "evidence": {
+        "tool": "gitleaks",
+        "artifact": "audit/artifacts/gitleaks.json",
+        "count": 131,
+        "detail": "131 hashed secrets in .secrets.baseline"
+      },
+      "impact": "The .secrets.baseline file is large (131 entries). Periodically review to ensure entries are still necessary.",
+      "remediation": "1) Regenerate baseline: detect-secrets scan > .secrets.baseline\n2) Audit and remove entries for deleted files\n3) Document baseline maintenance in CONTRIBUTING.md",
+      "verification": "detect-secrets audit .secrets.baseline"
+    }
+  ]
+}

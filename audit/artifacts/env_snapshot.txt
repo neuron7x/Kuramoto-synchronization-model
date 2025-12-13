@@ -1,0 +1,6 @@
+=== ENVIRONMENT SNAPSHOT ===
+Date: 2025-12-13 15:59:43 UTC
+Git Commit: 5675708586b7480d8ab174734b453f3e3b57c38c
+Git Branch: copilot/full-security-audit
+Python Version: Python 3.12.3
+Pip Version: pip 24.0 from /usr/lib/python3/dist-packages/pip (python 3.12)

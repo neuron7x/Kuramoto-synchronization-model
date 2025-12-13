@@ -1,0 +1,38 @@
+scripts/generate_stakeholder_assets.py:331:        rev = subprocess.check_output(
+scripts/performance/generate_replay_report.py:41:            subprocess.check_output(
+scripts/performance/generate_replay_report.py:42:                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
+scripts/performance/generate_replay_report.py:50:    except subprocess.CalledProcessError as exc:
+scripts/performance/generate_replay_report.py:66:            subprocess.check_output(
+scripts/performance/generate_replay_report.py:67:                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+scripts/performance/generate_replay_report.py:75:    except subprocess.CalledProcessError as exc:
+scripts/commands/base.py:55:) -> subprocess.CompletedProcess[int]:
+scripts/commands/base.py:64:    result = subprocess.run(
+scripts/commands/system.py:230:    result = subprocess.run(
+scripts/dependency_audit.py:37:) -> subprocess.CompletedProcess[str]:
+scripts/dependency_audit.py:50:    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+scripts/commands/build_core.py:136:        result = subprocess.run(
+scripts/commands/build_core.py:140:            stdout=subprocess.PIPE,
+scripts/commands/build_core.py:160:        result = subprocess.run(
+scripts/commands/build_core.py:164:            stdout=subprocess.PIPE,
+scripts/commands/build_core.py:363:    result = subprocess.run(command, check=True, capture_output=True, text=True)
+scripts/tests/test_dependency_audit.py:167:@patch("scripts.dependency_audit.subprocess.run")
+scripts/tests/test_dependency_audit.py:184:@patch("scripts.dependency_audit.subprocess.run")
+scripts/commands/lint.py:67:        diff = subprocess.run(
+scripts/commands/lint.py:70:            stdout=subprocess.PIPE,
+scripts/commands/lint.py:73:        staged = subprocess.run(
+scripts/commands/lint.py:76:            stdout=subprocess.PIPE,
+scripts/commands/lint.py:79:        untracked = subprocess.run(
+scripts/commands/lint.py:82:            stdout=subprocess.PIPE,
+scripts/commands/lint.py:88:    except subprocess.CalledProcessError as exc:
+scripts/deploy/docker_compose_smoke.py:31:) -> subprocess.CompletedProcess[str]:
+scripts/deploy/docker_compose_smoke.py:32:    return subprocess.run(
+scripts/deploy/docker_compose_smoke.py:219:        subprocess.run(up_command, check=True, text=True, env=env)
+scripts/deploy/docker_compose_smoke.py:257:            subprocess.run(
+scripts/deploy/docker_compose_smoke.py:262:                stderr=subprocess.STDOUT,
+scripts/deploy/docker_compose_smoke.py:271:        subprocess.run(
+scripts/verify_security_constraints.py:71:        result = subprocess.run(
+scripts/verify_security_constraints.py:81:    except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+scripts/verify_security_constraints.py:194:        subprocess.run(cmd, check=True)
+scripts/verify_security_constraints.py:197:    except subprocess.CalledProcessError as e:
+src/tradepulse/perf/golden_path.py:31:        result = subprocess.run(
+src/tradepulse/core/digital_governance.py:615:        dangerous_patterns = ["exec(", "eval(", "os.system(", "subprocess.call("]
