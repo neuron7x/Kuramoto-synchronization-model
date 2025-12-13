@@ -24,8 +24,12 @@ YELLOW = "\033[93m"
 RESET = "\033[0m"
 
 
-def parse_requires_python(pyproject_path: Path) -> Tuple[str, str]:
-    """Parse requires-python from pyproject.toml."""
+def parse_requires_python(pyproject_path: Path) -> Tuple[str, str, str]:
+    """Parse requires-python from pyproject.toml.
+    
+    Returns:
+        Tuple of (min_version, max_version, constraint)
+    """
     content = pyproject_path.read_text()
     match = re.search(r'requires-python\s*=\s*"([^"]+)"', content)
     if not match:
