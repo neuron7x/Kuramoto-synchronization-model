@@ -98,7 +98,7 @@ multidict==6.7.0
 mutmut==3.3.1
 mypy==1.18.2
 mypy-extensions==1.1.0
-narwhals==2.8.0
+narwhals==2.9.0
 networkx==3.5
 nh3==0.3.1
 numba==0.63.1

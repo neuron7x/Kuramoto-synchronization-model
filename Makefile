@@ -22,6 +22,7 @@ help:
 	@echo "Dependency Management:"
 	@echo "  make deps-update   - Regenerate lock files from requirements.txt"
 	@echo "  make deps-audit    - Audit dependencies for vulnerabilities"
+	@echo "  make guard-python-matrix - Verify Python version consistency"
 	@echo "  make clean-deps    - Clean dependency caches"
 	@echo ""
 	@echo "Extended Commands:"
@@ -156,6 +157,12 @@ deps-audit:
 	@echo ""
 	@echo "✅ Dependency audit complete"
 	@echo "📖 See https://pypi.org/project/pip-audit/ for more info"
+
+.PHONY: guard-python-matrix
+guard-python-matrix:
+	@echo "🐍 Checking Python version consistency..."
+	python scripts/check_python_matrix.py
+	@echo "✅ Python version matrix is consistent"
 
 .PHONY: clean
 clean:
