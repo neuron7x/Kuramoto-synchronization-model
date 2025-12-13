@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,13 @@ class AuditLogger:
         """
         for handler in self.logger.handlers:
             handler.flush()
+            # Ensure data is physically written to disk (not just OS buffer)
+            if hasattr(handler, 'stream') and hasattr(handler.stream, 'fileno'):
+                try:
+                    os.fsync(handler.stream.fileno())
+                except (OSError, AttributeError):
+                    # NullHandler or other handlers without file descriptor
+                    pass
 
 
 audit = AuditLogger()
