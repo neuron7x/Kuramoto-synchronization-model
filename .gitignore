@@ -38,6 +38,11 @@ Thumbs.db
 .venv/
 venv/
 
+# TLS keys (dev keys generated locally, never committed)
+configs/tls/dev/*.key.pem
+configs/tls/dev/*.key
+*.key.pem
+
 # GitHub Actions local testing (act)
 .github/act/tests.secrets
 .github/act/tests.env

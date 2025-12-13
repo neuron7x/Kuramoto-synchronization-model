@@ -4,7 +4,7 @@
 # Stage 1: Lightweight scan stage (for security scanning only)
 # This stage excludes heavy GPU dependencies to reduce image size
 # =============================================================================
-FROM python:3.13-slim AS scan
+FROM python:3.12-slim AS scan
 
 WORKDIR /app
 

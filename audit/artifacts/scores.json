@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "audit_date": "2025-12-13",
+    "commit": "5675708586b7480d8ab174734b453f3e3b57c38c",
+    "branch": "copilot/full-security-audit",
+    "auditor": "Independent Security Auditor",
+    "version": "1.0"
+  },
+  "scores": {
+    "CSS": 64.5,
+    "SCS": 100,
+    "CIS": 50.0,
+    "SDS": 94.0,
+    "TOTAL": 77,
+    "rating": "GOOD"
+  },
+  "counts": {
+    "sast": {
+      "bandit_critical": 0,
+      "bandit_high": 0,
+      "bandit_medium": 5,
+      "bandit_low_actionable": 51,
+      "bandit_low_informational": 610,
+      "eval_exec": 0,
+      "yaml_unsafe": 0,
+      "pickle_loads": 0,
+      "shell_true": 0
+    },
+    "deps": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secrets": {
+      "current_tree_real": 0,
+      "history": 0,
+      "dev_keys_tracked": 4
+    },
+    "ci": {
+      "workflows": 51,
+      "actions_tag_pinned": 386,
+      "actions_sha_pinned": 0
+    }
+  },
+  "calculation": {
+    "css": {
+      "starting": 100,
+      "penalties": {
+        "critical": 0,
+        "high": 0,
+        "medium": 10,
+        "low": 25.5,
+        "eval_exec": 0,
+        "yaml_unsafe": 0,
+        "pickle_loads": 0,
+        "shell_true": 0
+      },
+      "total": 64.5
+    },
+    "scs": {
+      "starting": 100,
+      "penalties": {},
+      "total": 100
+    },
+    "cis": {
+      "starting": 100,
+      "penalties": {
+        "tag_pinned": 70
+      },
+      "bonuses": {
+        "security_workflows": 20
+      },
+      "total": 50.0
+    },
+    "sds": {
+      "starting": 100,
+      "penalties": {
+        "real_secrets": 0,
+        "dev_keys": 6
+      },
+      "total": 94.0
+    }
+  }
+}

@@ -1,0 +1,91 @@
+docker-compose.yml:9:      TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET?tradepulse audit secret must be set}
+docker-compose.yml:10:      TRADEPULSE_RBAC_AUDIT_SECRET: ${TRADEPULSE_RBAC_AUDIT_SECRET?tradepulse RBAC audit secret must be set}
+docker-compose.yml:91:      - xpack.security.enabled=false
+scripts/__init__.py:9:helpers crash at import time when optional secrets were not configured.
+configs/rbac/policy.yaml:113:      - resource: secrets.vault
+scripts/commands/system.py:56:        help="Env file containing required secrets for the Compose stack.",
+scripts/commands/system.py:140:            description="Ensure required Compose secrets are available.",
+scripts/commands/__init__.py:18:    secrets,
+scripts/generate_thermo_token.py:5:Generates secure tokens for manual override and dual approval operations.
+scripts/generate_thermo_token.py:10:import secrets
+scripts/generate_thermo_token.py:15:def generate_token(length: int = 32) -> str:
+scripts/generate_thermo_token.py:16:    """Generate a cryptographically secure token."""
+scripts/generate_thermo_token.py:17:    return secrets.token_urlsafe(length)
+scripts/generate_thermo_token.py:22:        description="Generate secure token for thermodynamic manual override"
+scripts/generate_thermo_token.py:61:    # Generate token
+scripts/generate_thermo_token.py:62:    token = generate_token(args.length)
+scripts/generate_thermo_token.py:64:    # Display token information
+scripts/generate_thermo_token.py:74:    print(token)
+scripts/generate_thermo_token.py:80:        print(f"  export THERMO_OVERRIDE_TOKEN='{token}'")
+scripts/generate_thermo_token.py:84:        print(f'    -d \'{{"token": "{token}", "reason": "Your reason here"}}\'')
+scripts/generate_thermo_token.py:86:        print(f"  export THERMO_DUAL_TOKEN='{token}'")
+scripts/generate_thermo_token.py:87:        print("\n  The controller will use this token for dual approval checks.")
+scripts/generate_thermo_token.py:91:    print("  - Store this token securely")
+scripts/generate_thermo_token.py:94:    print("  - Log all token usage for audit trail")
+scripts/scripts_manifest.json:142:    "path": "scripts/commands/secrets.py",
+scripts/scripts_manifest.json:480:    "path": "tools/compliance/secret_scanner.py",
+scripts/scripts_manifest.json:484:    "docstring": "Repository secret scanner for continuous compliance workflows."
+scripts/generate_openapi.py:16:os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "openapi-generation-secret")
+scripts/cli.py:61:        secrets,
+scripts/cli.py:79:    secrets.build_parser(subparsers)
+scripts/commands/secrets.py:11:from application.secrets.hashicorp import (
+scripts/commands/secrets.py:26:        "secrets-issue-dynamic",
+scripts/commands/secrets.py:47:        choices=("static-token", "oidc"),
+scripts/commands/secrets.py:48:        default="static-token",
+scripts/commands/secrets.py:51:    parser.add_argument("--token", help="Static token used for authentication")
+scripts/commands/secrets.py:53:        "--token-env",
+scripts/commands/secrets.py:54:        help="Environment variable containing a static Vault token",
+scripts/commands/secrets.py:95:    parser.set_defaults(command="secrets-issue-dynamic", handler=handle_issue_dynamic)
+scripts/commands/secrets.py:98:def _load_static_token(args: object) -> str:
+scripts/commands/secrets.py:99:    token = getattr(args, "token", None)
+scripts/commands/secrets.py:100:    if token:
+scripts/commands/secrets.py:101:        return str(token)
+scripts/commands/secrets.py:102:    token_env = getattr(args, "token_env", None)
+scripts/commands/secrets.py:103:    if token_env:
+scripts/commands/secrets.py:104:        value = os.getenv(token_env)
+scripts/commands/secrets.py:107:    raise CommandError("A Vault token must be provided via --token or --token-env")
+scripts/commands/secrets.py:129:@register("secrets-issue-dynamic")
+scripts/commands/secrets.py:145:        if auth_method == "static-token":
+scripts/commands/secrets.py:146:            authenticator = StaticTokenAuthenticator(token=_load_static_token(args))
+scripts/commands/supply_chain.py:208:        "--identity-token",
+scripts/commands/supply_chain.py:210:        help="OIDC identity token to use for keyless signing.",
+scripts/commands/supply_chain.py:604:    identity_token = getattr(namespace, "identity_token", None)
+scripts/commands/supply_chain.py:605:    if identity_token:
+scripts/commands/supply_chain.py:606:        command.extend(["--identity-token", identity_token])
+scripts/commands/nightly.py:102:        "--email-password",
+scripts/commands/nightly.py:105:        help="SMTP password when authentication is required.",
+scripts/commands/nightly.py:180:            password=args.email_password,
+scripts/tests/test_bootstrap.py:11:os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "audit-secret-placeholder-1234")
+scripts/production_readiness_check.py:15:    TRADEPULSE_TWO_FACTOR_SECRET - Two-factor authentication secret
+scripts/production_readiness_check.py:16:    TRADEPULSE_AUDIT_SECRET - Audit logging secret (min 16 chars)
+scripts/test-pr-locally.sh:80:# 6. Check for secrets
+scripts/test-pr-locally.sh:81:echo -e "\n${YELLOW}[6/8] Scanning for secrets...${NC}"
+scripts/test-pr-locally.sh:82:if command -v detect-secrets &> /dev/null; then
+scripts/test-pr-locally.sh:83:    run_check "Detect secrets" "detect-secrets scan core backtest execution src application --baseline .secrets.baseline 2>/dev/null || true" || ((failures++))
+scripts/test-pr-locally.sh:85:    echo -e "${YELLOW}⚠️  detect-secrets not installed, skipping${NC}"
+configs/security/denylist.yaml:5:    reason: "Malicious typosquat of 'requests' that exfiltrates AWS keys and environment secrets."
+scripts/tests/test_system_launch.py:6:os.environ.setdefault("TRADEPULSE_ADMIN__TWO_FACTOR_SECRET", "test-secret")
+scripts/tests/test_system_launch.py:7:os.environ.setdefault("TWO_FACTOR_SECRET", "test-secret")
+scripts/tests/test_system_launch.py:8:os.environ.setdefault("AUDIT_SECRET", "test-audit-secret")
+scripts/supply_chain.py:732:    tokens: list[str] = []
+scripts/supply_chain.py:735:            LOGGER.debug("Ignoring non-string license token in policy: %s", value)
+scripts/supply_chain.py:739:            tokens.append(normalised)
+scripts/supply_chain.py:740:    return tokens
+scripts/supply_chain.py:821:            f"{dependency.name}. Observed tokens: "
+scripts/requirements_extractor.py:288:        if any(token in lowered for token in SECURITY_KEYWORDS):
+scripts/requirements_extractor.py:290:        if any(token in lowered for token in LEGAL_KEYWORDS):
+scripts/requirements_extractor.py:292:        if any(token in lowered for token in NON_FUNCTIONAL_KEYWORDS):
+scripts/requirements_extractor.py:310:        if any(token in lowered for token in ("необхід", "обов'", "критич", "повин")):
+scripts/requirements_extractor.py:321:        if any(token in lowered for token in ACCEPTANCE_TOKENS):
+scripts/requirements_extractor.py:329:        if any(token in lowered for token in UNCERTAIN_TOKENS):
+scripts/requirements_extractor.py:331:        if any(token in lowered for token in CONFLICT_TOKENS):
+scripts/_runtime_core.py:84:    """Parse a dotenv style file without leaking secret values."""
+scripts/_runtime_core.py:107:    """Update :data:`os.environ` without exposing secrets in the logs."""
+configs/live/default.toml:32:    [venues.credentials.secret_backend]
+configs/live/default.toml:36:      [venues.credentials.secret_backend.field_mapping]
+configs/live/default.toml:38:      API_SECRET = "api_secret"
+configs/live/default.toml:50:    [venues.credentials.secret_backend]
+configs/live/default.toml:54:      [venues.credentials.secret_backend.field_mapping]
+configs/live/default.toml:69:    [venues.credentials.secret_backend]
+configs/live/default.toml:73:      [venues.credentials.secret_backend.field_mapping]
+configs/live/default.toml:75:      API_SECRET = "api_secret"

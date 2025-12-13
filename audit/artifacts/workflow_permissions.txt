@@ -1,0 +1,80 @@
+.github/workflows/canaries.yml:3:permissions:
+.github/workflows/contract-schema-validation.yml:3:permissions:
+.github/workflows/archive/pr-quality-summary.yml:15:permissions:
+.github/workflows/archive/merge-guard.yml:21:permissions:
+.github/workflows/archive/pr-complexity-analysis.yml:6:permissions:
+.github/workflows/archive/pr-quality-labels.yml:13:permissions:
+.github/workflows/mutation-testing.yml:20:permissions:
+.github/workflows/security-policy-enforcement.yml:3:permissions:
+.github/workflows/security-policy-enforcement.yml:268:            if ! grep -q "permissions:" "$workflow"; then
+.github/workflows/reliability-smoke.yml:6:permissions:
+.github/workflows/ci.yml:3:permissions:
+.github/workflows/ci.yml:251:    permissions:
+.github/workflows/nak-ci.yml:3:permissions:
+.github/workflows/sbom-generation.yml:3:permissions:
+.github/workflows/e2e-integration.yml:3:permissions:
+.github/workflows/mlops-orchestration.yml:31:permissions:
+.github/workflows/version-gate.yml:7:permissions:
+.github/workflows/version-gate.yml:20:    permissions:
+.github/workflows/slsa-provenance.yml:3:permissions:
+.github/workflows/release-drafter.yml:14:permissions:
+.github/workflows/pr-release-gate.yml:10:permissions:
+.github/workflows/dependency-pinning.yml:7:permissions:
+.github/workflows/dependency-pinning.yml:31:    permissions:
+.github/workflows/enterprise-cicd.yml:42:permissions:
+.github/workflows/dopamine-validation.yml:3:permissions:
+.github/workflows/helm.yml:3:permissions:
+.github/workflows/helm.yml:29:    permissions:
+.github/workflows/helm.yml:63:    permissions:
+.github/workflows/helm.yml:112:    permissions:
+.github/workflows/helm.yml:259:    permissions:
+.github/workflows/helm.yml:306:    permissions:
+.github/workflows/thermo-evolution.yml:3:permissions:
+.github/workflows/dependabot-auto-merge.yml:11:permissions:
+.github/workflows/sbom.yml:22:permissions:
+.github/workflows/sbom.yml:38:    permissions:
+.github/workflows/ci-hardening.yml:3:permissions:
+.github/workflows/ci-hardening.yml:80:          EXCESSIVE_PERMS=$(grep -A 5 "pull_request:" .github/workflows/*.yml | grep -E "permissions:.*write" | wc -l)
+.github/workflows/ci-hardening.yml:143:            if ! grep -q "^permissions:" "$workflow"; then
+.github/workflows/ci-hardening.yml:149:            if grep -q "permissions:.*write-all" "$workflow" || grep -q "permissions: write-all" "$workflow"; then
+.github/workflows/ci-hardening.yml:216:          - Use \`permissions: read-all\` or more restrictive by default
+.github/workflows/load-test.yml:8:permissions:
+.github/workflows/deploy-environments.yml:41:permissions:
+.github/workflows/performance-regression-pr.yml:3:permissions:
+.github/workflows/exchange-canary.yml:8:permissions:
+.github/workflows/build-wheels.yml:3:permissions:
+.github/workflows/slo-gate.yml:3:permissions:
+.github/workflows/slo-gate.yml:23:    permissions:
+.github/workflows/slo-gate.yml:192:    permissions:
+.github/workflows/slo-gate.yml:252:    permissions:
+.github/workflows/security.yml:3:permissions:
+.github/workflows/security.yml:162:    permissions:
+.github/workflows/security.yml:393:    permissions:
+.github/workflows/tests.yml:3:permissions:
+.github/workflows/semgrep.yml:3:permissions:
+.github/workflows/multi-exchange-replay-regression.yml:3:permissions:
+.github/workflows/progressive-release-gates.yml:11:permissions:
+.github/workflows/performance-regression.yml:3:permissions:
+.github/workflows/dependency-review.yml:3:permissions:
+.github/workflows/ossf-scorecard.yml:4:permissions:
+.github/workflows/ossf-scorecard.yml:26:    # Job-level permissions: write only where needed
+.github/workflows/ossf-scorecard.yml:27:    permissions:
+.github/workflows/ossf-scorecard.yml:63:    permissions:
+.github/workflows/ossf-scorecard.yml:114:    permissions:
+.github/workflows/publish-python.yml:7:permissions:
+.github/workflows/publish-python.yml:15:    permissions:
+.github/workflows/publish-python.yml:63:    permissions:
+.github/workflows/publish-python.yml:135:    permissions:
+.github/workflows/publish-python.yml:319:    permissions:
+.github/workflows/publish-python.yml:344:    permissions:
+.github/workflows/mutation-tests.yml:12:permissions:
+.github/workflows/pin-terraform-version.yml:13:permissions:
+.github/workflows/smoke-e2e.yml:4:permissions:
+.github/workflows/exchange-matrix.yml:8:permissions:
+.github/workflows/progressive-rollout.yml:30:permissions:
+.github/workflows/publish-image.yml:8:permissions:
+.github/workflows/publish-image.yml:17:    permissions:
+.github/workflows/publish-image.yml:53:    permissions:
+.github/workflows/publish-image.yml:131:    permissions:
+.github/workflows/neural-controller-ci.yml:3:permissions:
+.github/workflows/neural-controller-ci.yml:52:    permissions:

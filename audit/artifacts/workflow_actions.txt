@@ -1,0 +1,394 @@
+.github/workflows/canaries.yml:      - uses: actions/checkout@v5
+.github/workflows/canaries.yml:        uses: actions/setup-go@v5
+.github/workflows/canaries.yml:        uses: actions/cache@v4
+.github/workflows/canaries.yml:        uses: actions/upload-artifact@v4
+.github/workflows/canaries.yml:        uses: actions/setup-python@v6
+.github/workflows/canaries.yml:        uses: actions/upload-artifact@v4
+.github/workflows/contract-schema-validation.yml:        uses: actions/checkout@v5
+.github/workflows/contract-schema-validation.yml:        uses: actions/setup-python@v6
+.github/workflows/contract-schema-validation.yml:        uses: peter-evans/create-or-update-comment@v4
+.github/workflows/contract-schema-validation.yml:        uses: actions/upload-artifact@v4
+.github/workflows/archive/pr-quality-summary.yml:        uses: actions/github-script@v7
+.github/workflows/archive/pr-quality-summary.yml:        uses: actions/github-script@v7
+.github/workflows/archive/pr-quality-summary.yml:        uses: actions/github-script@v7
+.github/workflows/archive/merge-guard.yml:        uses: actions/github-script@v7
+.github/workflows/archive/merge-guard.yml:        uses: actions/github-script@v7
+.github/workflows/archive/merge-guard.yml:        uses: actions/github-script@v7
+.github/workflows/archive/pr-complexity-analysis.yml:        uses: actions/checkout@v5
+.github/workflows/archive/pr-complexity-analysis.yml:        uses: actions/setup-python@v6
+.github/workflows/archive/pr-complexity-analysis.yml:        uses: actions/github-script@v7
+.github/workflows/archive/pr-complexity-analysis.yml:        uses: actions/github-script@v7
+.github/workflows/archive/pr-complexity-analysis.yml:        uses: actions/github-script@v7
+.github/workflows/archive/pr-quality-labels.yml:      - uses: actions/github-script@v7
+.github/workflows/mutation-testing.yml:        uses: actions/checkout@v5
+.github/workflows/mutation-testing.yml:        uses: actions/setup-python@v6
+.github/workflows/mutation-testing.yml:        uses: actions/cache@v4
+.github/workflows/mutation-testing.yml:        uses: actions/upload-artifact@v4
+.github/workflows/mutation-testing.yml:        uses: actions/github-script@v7
+.github/workflows/security-policy-enforcement.yml:        uses: actions/checkout@v5
+.github/workflows/security-policy-enforcement.yml:            UNPINNED=$(grep -E 'uses:.*@[a-z]' "$workflow" || echo "")
+.github/workflows/security-policy-enforcement.yml:        uses: actions/upload-artifact@v4
+.github/workflows/security-policy-enforcement.yml:        uses: actions/github-script@v7
+.github/workflows/reliability-smoke.yml:      - uses: actions/checkout@v5
+.github/workflows/reliability-smoke.yml:        uses: actions/setup-python@v6
+.github/workflows/reliability-smoke.yml:        uses: actions/cache@v4
+.github/workflows/ci.yml:        uses: actions/checkout@v5
+.github/workflows/ci.yml:        uses: actions/setup-python@v6
+.github/workflows/ci.yml:        uses: actions/cache@v4
+.github/workflows/ci.yml:        uses: actions/upload-artifact@v4
+.github/workflows/ci.yml:        uses: actions/checkout@v5
+.github/workflows/ci.yml:        uses: actions/setup-python@v6
+.github/workflows/ci.yml:        uses: actions/cache@v4
+.github/workflows/ci.yml:        uses: actions/download-artifact@v4
+.github/workflows/ci.yml:        uses: actions/upload-artifact@v4
+.github/workflows/ci.yml:        uses: codecov/codecov-action@v4
+.github/workflows/ci.yml:        uses: actions/checkout@v5
+.github/workflows/ci.yml:        uses: actions/setup-python@v6
+.github/workflows/ci.yml:        uses: actions/upload-artifact@v4
+.github/workflows/ci.yml:        uses: actions/checkout@v5
+.github/workflows/ci.yml:        uses: docker/setup-qemu-action@v3
+.github/workflows/ci.yml:        uses: docker/setup-buildx-action@v3
+.github/workflows/ci.yml:        uses: docker/login-action@v3
+.github/workflows/ci.yml:        uses: docker/login-action@v3
+.github/workflows/ci.yml:        uses: docker/metadata-action@v5
+.github/workflows/ci.yml:        uses: docker/build-push-action@v5
+.github/workflows/nak-ci.yml:      - uses: actions/checkout@v4
+.github/workflows/nak-ci.yml:      - uses: actions/setup-python@v5
+.github/workflows/nak-ci.yml:        uses: actions/upload-artifact@v4
+.github/workflows/sbom-generation.yml:        uses: actions/checkout@v5
+.github/workflows/sbom-generation.yml:        uses: actions/setup-python@v6
+.github/workflows/sbom-generation.yml:        uses: actions/attest-sbom@v2
+.github/workflows/sbom-generation.yml:        uses: actions/upload-artifact@v4
+.github/workflows/sbom-generation.yml:        uses: actions/github-script@v7
+.github/workflows/e2e-integration.yml:      - uses: actions/checkout@v4
+.github/workflows/e2e-integration.yml:        uses: actions/setup-python@v5
+.github/workflows/e2e-integration.yml:        uses: actions/cache@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/checkout@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/setup-python@v5
+.github/workflows/mlops-orchestration.yml:        uses: actions/upload-artifact@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/checkout@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/setup-python@v5
+.github/workflows/mlops-orchestration.yml:        uses: actions/upload-artifact@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/checkout@v4
+.github/workflows/mlops-orchestration.yml:        uses: docker/setup-buildx-action@v3
+.github/workflows/mlops-orchestration.yml:        uses: docker/login-action@v3
+.github/workflows/mlops-orchestration.yml:        uses: docker/build-push-action@v5
+.github/workflows/mlops-orchestration.yml:        uses: actions/upload-artifact@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/checkout@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/cache@v4
+.github/workflows/mlops-orchestration.yml:        uses: hashicorp/setup-terraform@v3
+.github/workflows/mlops-orchestration.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/mlops-orchestration.yml:        uses: actions/checkout@v4
+.github/workflows/mlops-orchestration.yml:        uses: imranismail/setup-kustomize@v2
+.github/workflows/mlops-orchestration.yml:        uses: actions/upload-artifact@v4
+.github/workflows/version-gate.yml:        uses: actions/checkout@v5
+.github/workflows/version-gate.yml:        uses: actions/setup-python@v6
+.github/workflows/slsa-provenance.yml:        uses: actions/checkout@v5
+.github/workflows/slsa-provenance.yml:        uses: actions/setup-python@v6
+.github/workflows/slsa-provenance.yml:        uses: actions/upload-artifact@v4
+.github/workflows/slsa-provenance.yml:        uses: actions/attest-build-provenance@v2
+.github/workflows/release-drafter.yml:        uses: actions/checkout@v4
+.github/workflows/release-drafter.yml:        uses: release-drafter/release-drafter@v6
+.github/workflows/pr-release-gate.yml:        uses: actions/checkout@v5
+.github/workflows/pr-release-gate.yml:        uses: actions/setup-python@v6
+.github/workflows/pr-release-gate.yml:        uses: actions/cache@v4
+.github/workflows/pr-release-gate.yml:        uses: actions/github-script@v7
+.github/workflows/pr-release-gate.yml:        uses: actions/github-script@v7
+.github/workflows/pr-release-gate.yml:        uses: actions/github-script@v7
+.github/workflows/pr-release-gate.yml:        uses: actions/github-script@v7
+.github/workflows/dependency-pinning.yml:        uses: actions/checkout@v5
+.github/workflows/enterprise-cicd.yml:        uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/setup-python@v6
+.github/workflows/enterprise-cicd.yml:        uses: astral-sh/setup-uv@v3
+.github/workflows/enterprise-cicd.yml:        uses: actions/cache@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/cache@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/setup-python@v6
+.github/workflows/enterprise-cicd.yml:        uses: astral-sh/setup-uv@v3
+.github/workflows/enterprise-cicd.yml:        uses: actions/cache@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/upload-artifact@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/setup-python@v6
+.github/workflows/enterprise-cicd.yml:        uses: astral-sh/setup-uv@v3
+.github/workflows/enterprise-cicd.yml:        uses: actions/cache@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/upload-artifact@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: grafana/k6-action@v0.2.0
+.github/workflows/enterprise-cicd.yml:        uses: actions/upload-artifact@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: docker/setup-qemu-action@v3
+.github/workflows/enterprise-cicd.yml:        uses: docker/setup-buildx-action@v3
+.github/workflows/enterprise-cicd.yml:        uses: docker/login-action@v3
+.github/workflows/enterprise-cicd.yml:        uses: docker/metadata-action@v5
+.github/workflows/enterprise-cicd.yml:        uses: docker/build-push-action@v5
+.github/workflows/enterprise-cicd.yml:        uses: sigstore/cosign-installer@v3.5.0
+.github/workflows/enterprise-cicd.yml:        uses: aquasecurity/trivy-action@0.20.0
+.github/workflows/enterprise-cicd.yml:        uses: aquasecurity/trivy-action@0.20.0
+.github/workflows/enterprise-cicd.yml:        uses: actions/upload-artifact@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: hashicorp/setup-terraform@v3
+.github/workflows/enterprise-cicd.yml:        uses: actions/upload-artifact@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/enterprise-cicd.yml:        uses: azure/setup-kubectl@v4
+.github/workflows/enterprise-cicd.yml:        uses: imranismail/setup-kustomize@v2
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/enterprise-cicd.yml:        uses: azure/setup-kubectl@v4
+.github/workflows/enterprise-cicd.yml:      - uses: actions/checkout@v4
+.github/workflows/enterprise-cicd.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/enterprise-cicd.yml:        uses: actions/upload-artifact@v4
+.github/workflows/enterprise-cicd.yml:        uses: slackapi/slack-github-action@v1.27.0
+.github/workflows/dopamine-validation.yml:      - uses: actions/checkout@v4
+.github/workflows/dopamine-validation.yml:        uses: actions/setup-python@v5
+.github/workflows/dopamine-validation.yml:      - uses: actions/checkout@v4
+.github/workflows/dopamine-validation.yml:        uses: actions/setup-python@v5
+.github/workflows/dopamine-validation.yml:      - uses: actions/checkout@v4
+.github/workflows/dopamine-validation.yml:        uses: actions/setup-python@v5
+.github/workflows/dopamine-validation.yml:      - uses: actions/checkout@v4
+.github/workflows/dopamine-validation.yml:        uses: actions/setup-python@v5
+.github/workflows/helm.yml:        uses: actions/checkout@v5
+.github/workflows/helm.yml:        uses: azure/setup-helm@v4
+.github/workflows/helm.yml:        uses: actions/cache@v4
+.github/workflows/helm.yml:        uses: actions/checkout@v5
+.github/workflows/helm.yml:        uses: azure/setup-helm@v4
+.github/workflows/helm.yml:        uses: actions/checkout@v5
+.github/workflows/helm.yml:        uses: azure/setup-helm@v4
+.github/workflows/helm.yml:        uses: helm/kind-action@v1
+.github/workflows/helm.yml:        uses: actions/checkout@v5
+.github/workflows/helm.yml:        uses: azure/setup-helm@v4
+.github/workflows/helm.yml:        uses: actions/upload-artifact@v4
+.github/workflows/helm.yml:        uses: actions/checkout@v5
+.github/workflows/helm.yml:        uses: azure/setup-helm@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/setup-python@v5
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/setup-python@v5
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:        uses: actions/setup-python@v5
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/setup-python@v5
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/setup-python@v5
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/checkout@v4
+.github/workflows/thermo-evolution.yml:      - uses: actions/setup-python@v5
+.github/workflows/dependabot-auto-merge.yml:        uses: peter-evans/rebase@v2
+.github/workflows/dependabot-auto-merge.yml:        uses: dependabot/fetch-metadata@v2
+.github/workflows/sbom.yml:        uses: actions/checkout@v5
+.github/workflows/sbom.yml:        uses: actions/setup-python@v6
+.github/workflows/sbom.yml:        uses: sigstore/cosign-installer@v3.8.0
+.github/workflows/sbom.yml:        uses: actions/upload-artifact@v4
+.github/workflows/ci-hardening.yml:        uses: actions/checkout@v5
+.github/workflows/ci-hardening.yml:            UNPINNED=$(grep -E "uses:.*@v[0-9]" "$workflow" | wc -l)
+.github/workflows/ci-hardening.yml:            echo "Example: uses: actions/checkout@v5 -> uses: actions/checkout@<sha256>"
+.github/workflows/ci-hardening.yml:        uses: actions/upload-artifact@v4
+.github/workflows/ci-hardening.yml:        uses: actions/github-script@v7
+.github/workflows/load-test.yml:      - uses: actions/checkout@v5
+.github/workflows/load-test.yml:        uses: actions/setup-python@v6
+.github/workflows/load-test.yml:        uses: astral-sh/setup-uv@v3
+.github/workflows/load-test.yml:        uses: actions/cache@v4
+.github/workflows/load-test.yml:        uses: actions/upload-artifact@v4
+.github/workflows/deploy-environments.yml:        uses: actions/checkout@v4
+.github/workflows/deploy-environments.yml:        uses: actions/cache@v4
+.github/workflows/deploy-environments.yml:        uses: hashicorp/setup-terraform@v3
+.github/workflows/deploy-environments.yml:        uses: imranismail/setup-kustomize@v2
+.github/workflows/deploy-environments.yml:        uses: actions/checkout@v4
+.github/workflows/deploy-environments.yml:        uses: actions/setup-python@v6
+.github/workflows/deploy-environments.yml:        uses: actions/checkout@v4
+.github/workflows/deploy-environments.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/deploy-environments.yml:        uses: azure/setup-kubectl@v4
+.github/workflows/deploy-environments.yml:        uses: imranismail/setup-kustomize@v2
+.github/workflows/deploy-environments.yml:        uses: actions/checkout@v4
+.github/workflows/deploy-environments.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/deploy-environments.yml:        uses: azure/setup-kubectl@v4
+.github/workflows/deploy-environments.yml:        uses: imranismail/setup-kustomize@v2
+.github/workflows/deploy-environments.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/deploy-environments.yml:        uses: azure/setup-kubectl@v4
+.github/workflows/deploy-environments.yml:        uses: actions/checkout@v4
+.github/workflows/deploy-environments.yml:        uses: imranismail/setup-kustomize@v2
+.github/workflows/performance-regression-pr.yml:        uses: actions/checkout@v5
+.github/workflows/performance-regression-pr.yml:        uses: actions/setup-python@v6
+.github/workflows/performance-regression-pr.yml:        uses: actions/cache@v4
+.github/workflows/performance-regression-pr.yml:        uses: actions/upload-artifact@v4
+.github/workflows/performance-regression-pr.yml:        uses: actions/github-script@v7
+.github/workflows/exchange-canary.yml:        uses: actions/checkout@v4
+.github/workflows/exchange-canary.yml:        uses: actions/setup-python@v5
+.github/workflows/build-wheels.yml:        uses: actions/checkout@v4
+.github/workflows/build-wheels.yml:        uses: actions/setup-python@v5
+.github/workflows/build-wheels.yml:        uses: actions/cache@v4
+.github/workflows/build-wheels.yml:        uses: actions/upload-artifact@v4
+.github/workflows/slo-gate.yml:        uses: actions/checkout@v5
+.github/workflows/slo-gate.yml:        uses: actions/setup-python@v6
+.github/workflows/slo-gate.yml:        uses: actions/upload-artifact@v4
+.github/workflows/slo-gate.yml:        uses: actions/checkout@v5
+.github/workflows/slo-gate.yml:        uses: azure/k8s-set-context@v4
+.github/workflows/slo-gate.yml:        uses: actions/github-script@v7
+.github/workflows/slo-gate.yml:        uses: actions/checkout@v5
+.github/workflows/slo-gate.yml:        uses: azure/k8s-set-context@v4
+.github/workflows/slo-gate.yml:        uses: actions/github-script@v7
+.github/workflows/security.yml:    - uses: actions/checkout@v5
+.github/workflows/security.yml:      uses: actions/setup-python@v6
+.github/workflows/security.yml:      uses: gitleaks/gitleaks-action@v2
+.github/workflows/security.yml:      uses: trufflesecurity/trufflehog@main
+.github/workflows/security.yml:      uses: actions/upload-artifact@v4
+.github/workflows/security.yml:    - uses: actions/checkout@v5
+.github/workflows/security.yml:      uses: actions/setup-python@v6
+.github/workflows/security.yml:      uses: actions/upload-artifact@v4
+.github/workflows/security.yml:      uses: actions/checkout@v5
+.github/workflows/security.yml:      uses: docker/setup-buildx-action@v3
+.github/workflows/security.yml:      uses: docker/build-push-action@v5
+.github/workflows/security.yml:      uses: aquasecurity/trivy-action@0.20.0
+.github/workflows/security.yml:      uses: github/codeql-action/upload-sarif@v3
+.github/workflows/security.yml:      uses: anchore/scan-action@v3
+.github/workflows/security.yml:      uses: github/codeql-action/upload-sarif@v3
+.github/workflows/security.yml:      uses: actions/checkout@v5
+.github/workflows/security.yml:      uses: github/codeql-action/init@v4
+.github/workflows/security.yml:      uses: github/codeql-action/analyze@v4
+.github/workflows/security.yml:      uses: actions/checkout@v5
+.github/workflows/security.yml:      uses: actions/setup-python@v6
+.github/workflows/security.yml:      uses: astral-sh/setup-uv@v3
+.github/workflows/security.yml:      uses: actions/cache@v4
+.github/workflows/security.yml:      uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: dorny/paths-filter@v3
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-node@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-go@v5
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: test-summary/action@v2
+.github/workflows/tests.yml:        uses: peter-evans/find-comment@v3
+.github/workflows/tests.yml:        uses: peter-evans/create-or-update-comment@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: codecov/codecov-action@v5
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: codecov/codecov-action@v5
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-node@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:        uses: peter-evans/find-comment@v3
+.github/workflows/tests.yml:        uses: peter-evans/create-or-update-comment@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-node@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/tests.yml:      - uses: actions/checkout@v5
+.github/workflows/tests.yml:        uses: actions/setup-python@v6
+.github/workflows/tests.yml:        uses: actions/cache@v4
+.github/workflows/tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/semgrep.yml:        uses: actions/checkout@v5
+.github/workflows/semgrep.yml:        uses: github/codeql-action/upload-sarif@v3
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/checkout@v5
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/setup-python@v6
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/upload-artifact@v4
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/checkout@v5
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/setup-python@v6
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/upload-artifact@v4
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/checkout@v5
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/setup-python@v6
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/download-artifact@v4
+.github/workflows/multi-exchange-replay-regression.yml:        uses: actions/upload-artifact@v4
+.github/workflows/progressive-release-gates.yml:        uses: actions/checkout@v4
+.github/workflows/progressive-release-gates.yml:        uses: actions/setup-python@v5
+.github/workflows/progressive-release-gates.yml:        uses: actions/upload-artifact@v4
+.github/workflows/performance-regression.yml:        uses: actions/checkout@v5
+.github/workflows/performance-regression.yml:        uses: actions/setup-python@v6
+.github/workflows/performance-regression.yml:        uses: astral-sh/setup-uv@v3
+.github/workflows/performance-regression.yml:        uses: actions/cache@v4
+.github/workflows/performance-regression.yml:        uses: actions/checkout@v5
+.github/workflows/performance-regression.yml:        uses: actions/upload-artifact@v4
+.github/workflows/dependency-review.yml:        uses: actions/checkout@v5
+.github/workflows/dependency-review.yml:        uses: actions/dependency-review-action@v4
+.github/workflows/dependency-review.yml:        uses: actions/checkout@v5
+.github/workflows/dependency-review.yml:        uses: actions/setup-python@v6
+.github/workflows/dependency-review.yml:        uses: actions/upload-artifact@v4
+.github/workflows/dependency-review.yml:        uses: actions/github-script@v7
+.github/workflows/ossf-scorecard.yml:        uses: actions/checkout@v5
+.github/workflows/ossf-scorecard.yml:        uses: ossf/scorecard-action@v2.4.0
+.github/workflows/ossf-scorecard.yml:        uses: github/codeql-action/upload-sarif@v3
+.github/workflows/ossf-scorecard.yml:        uses: actions/upload-artifact@v4
+.github/workflows/ossf-scorecard.yml:        uses: actions/download-artifact@v4
+.github/workflows/ossf-scorecard.yml:        uses: actions/download-artifact@v4
+.github/workflows/ossf-scorecard.yml:        uses: actions/github-script@v7
+.github/workflows/publish-python.yml:        uses: actions/checkout@v5
+.github/workflows/publish-python.yml:        uses: actions/setup-python@v6
+.github/workflows/publish-python.yml:        uses: actions/upload-artifact@v4
+.github/workflows/publish-python.yml:        uses: actions/github-script@v7
+.github/workflows/publish-python.yml:        uses: actions/checkout@v4
+.github/workflows/publish-python.yml:        uses: actions/setup-python@v6
+.github/workflows/publish-python.yml:        uses: softprops/action-gh-release@v2
+.github/workflows/publish-python.yml:        uses: sigstore/gh-action-sigstore-python@v3.4.0
+.github/workflows/publish-python.yml:        uses: actions/upload-artifact@v4
+.github/workflows/publish-python.yml:        uses: actions/upload-artifact@v4
+.github/workflows/publish-python.yml:        uses: actions/download-artifact@v4
+.github/workflows/publish-python.yml:        uses: pypa/gh-action-pypi-publish@release/v1
+.github/workflows/publish-python.yml:        uses: actions/download-artifact@v4
+.github/workflows/publish-python.yml:        uses: pypa/gh-action-pypi-publish@release/v1
+.github/workflows/publish-python.yml:        uses: actions/download-artifact@v4
+.github/workflows/publish-python.yml:        uses: softprops/action-gh-release@v2
+.github/workflows/mutation-tests.yml:  statuses: write
+.github/workflows/mutation-tests.yml:      - uses: actions/checkout@v5
+.github/workflows/mutation-tests.yml:        uses: actions/setup-python@v6
+.github/workflows/mutation-tests.yml:        uses: astral-sh/setup-uv@v3
+.github/workflows/mutation-tests.yml:        uses: actions/upload-artifact@v4
+.github/workflows/pin-terraform-version.yml:        uses: actions/checkout@v4
+.github/workflows/pin-terraform-version.yml:        uses: actions/setup-go@v5
+.github/workflows/pin-terraform-version.yml:        uses: actions/cache@v4
+.github/workflows/pin-terraform-version.yml:        uses: hashicorp/setup-terraform@v3
+.github/workflows/smoke-e2e.yml:      - uses: actions/checkout@v5
+.github/workflows/smoke-e2e.yml:        uses: actions/setup-python@v6
+.github/workflows/smoke-e2e.yml:        uses: actions/upload-artifact@v4
+.github/workflows/smoke-e2e.yml:        uses: slackapi/slack-github-action@v1.27.0
+.github/workflows/smoke-e2e.yml:        uses: dawidd6/action-send-mail@v3
+.github/workflows/exchange-matrix.yml:        uses: actions/checkout@v4
+.github/workflows/exchange-matrix.yml:        uses: actions/setup-python@v5
+.github/workflows/progressive-rollout.yml:        uses: actions/checkout@v4
+.github/workflows/progressive-rollout.yml:        uses: actions/setup-python@v5
+.github/workflows/progressive-rollout.yml:        uses: actions/checkout@v4
+.github/workflows/progressive-rollout.yml:        uses: actions/setup-python@v5
+.github/workflows/progressive-rollout.yml:        uses: aws-actions/configure-aws-credentials@v4
+.github/workflows/publish-image.yml:        uses: actions/checkout@v4
+.github/workflows/publish-image.yml:        uses: docker/setup-qemu-action@v3
+.github/workflows/publish-image.yml:        uses: docker/setup-buildx-action@v3
+.github/workflows/publish-image.yml:        uses: docker/login-action@v3
+.github/workflows/publish-image.yml:        uses: docker/metadata-action@v5
+.github/workflows/publish-image.yml:        uses: docker/build-push-action@v5
+.github/workflows/publish-image.yml:        uses: sigstore/cosign-installer@v3.5.0
+.github/workflows/publish-image.yml:    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
+.github/workflows/neural-controller-ci.yml:      - uses: actions/checkout@v4
+.github/workflows/neural-controller-ci.yml:      - uses: actions/setup-python@v5
+.github/workflows/neural-controller-ci.yml:      - uses: actions/checkout@v4
+.github/workflows/neural-controller-ci.yml:      - uses: returntocorp/semgrep-action@v1
+.github/workflows/neural-controller-ci.yml:      - uses: actions/checkout@v4
+.github/workflows/neural-controller-ci.yml:      - uses: github/codeql-action/init@v3
+.github/workflows/neural-controller-ci.yml:      - uses: github/codeql-action/autobuild@v3
+.github/workflows/neural-controller-ci.yml:      - uses: github/codeql-action/analyze@v3

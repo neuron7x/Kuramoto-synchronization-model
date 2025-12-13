@@ -71,12 +71,14 @@ class TestModels:
     def test_task_context_dataclass(self) -> None:
         """Test TaskContext dataclass creation."""
         opts = models.CleanupOptions()
+        # Using Path literal for test validation, not creating actual temp files
+        test_path = Path("/tmp/test")  # nosec B108 - test fixture path, not creating temp files
         context = models.TaskContext(
-            root=Path("/tmp/test"),
+            root=test_path,
             options=opts,
         )
 
-        assert context.root == Path("/tmp/test")
+        assert context.root == test_path  # nosec B108 - comparing test fixture paths
         assert context.options is opts
 
 

@@ -133,15 +133,17 @@ def _resolve_port(
 
 
 def _fetch_json(url: str, timeout: float) -> dict[str, object]:
+    """Fetch JSON from URL. URL is controlled and validated by caller (localhost health checks)."""
     request = Request(url, headers={"Accept": "application/json"})
-    with urlopen(request, timeout=timeout) as response:  # noqa: S310 (controlled URL)
+    with urlopen(request, timeout=timeout) as response:  # nosec B310 - URL is controlled, only used for localhost health checks
         payload = response.read()
     return json.loads(payload.decode("utf-8"))
 
 
 def _fetch_text(url: str, timeout: float) -> str:
+    """Fetch text from URL. URL is controlled and validated by caller (localhost health checks)."""
     request = Request(url)
-    with urlopen(request, timeout=timeout) as response:  # noqa: S310 (controlled URL)
+    with urlopen(request, timeout=timeout) as response:  # nosec B310 - URL is controlled, only used for localhost health checks
         return response.read().decode("utf-8")
 
 

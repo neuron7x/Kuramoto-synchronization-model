@@ -1,0 +1,9 @@
+configs/tls/dev/cortex-db-client.key.pem
+configs/tls/dev/cortex-db-client.pem
+configs/tls/dev/cortex-db-server.key.pem
+configs/tls/dev/cortex-db-server.pem
+configs/tls/dev/cortex-server.key.pem
+configs/tls/dev/cortex-server.pem
+configs/tls/dev/root-ca.pem
+configs/tls/dev/tradepulse-server.key.pem
+configs/tls/dev/tradepulse-server.pem
