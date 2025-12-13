@@ -47,6 +47,28 @@ def test_normalize_timestamp_from_numeric_string() -> None:
     assert result.timestamp() == pytest.approx(1_700_000_000.0)
 
 
+def test_normalize_timestamp_from_milliseconds() -> None:
+    # 1_700_000_000_000 represents the same instant as 1_700_000_000 seconds
+    dt = normalize_timestamp(1_700_000_000_000)
+    assert dt == datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc)
+
+
+def test_normalize_timestamp_from_microseconds() -> None:
+    # 1_700_000_000_000_000 represents the same instant as 1_700_000_000 seconds
+    dt = normalize_timestamp(1_700_000_000_000_000)
+    assert dt == datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc)
+
+
+def test_normalize_timestamp_numeric_string_preserves_precision() -> None:
+    dt = normalize_timestamp("1700000000000000")
+    assert dt == datetime(2023, 11, 14, 22, 13, 20, tzinfo=timezone.utc)
+
+
+def test_normalize_timestamp_rejects_nan() -> None:
+    with pytest.raises(ValueError):
+        normalize_timestamp(float("nan"))
+
+
 def test_normalize_timestamp_rejects_empty_string() -> None:
     with pytest.raises(ValueError):
         normalize_timestamp("   ")
@@ -55,6 +77,11 @@ def test_normalize_timestamp_rejects_empty_string() -> None:
 def test_normalize_timestamp_rejects_unparseable_string() -> None:
     with pytest.raises(ValueError):
         normalize_timestamp("not-a-timestamp")
+
+
+def test_normalize_timestamp_rejects_out_of_range_numeric_value() -> None:
+    with pytest.raises(ValueError):
+        normalize_timestamp(10**22)
 
 
 def test_normalize_timestamp_rejects_unsupported_type() -> None:
