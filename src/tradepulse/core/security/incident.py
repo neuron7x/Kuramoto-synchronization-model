@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import smtplib
+import os
 from email.mime.text import MIMEText
 from datetime import datetime
 from typing import Any
@@ -43,7 +44,8 @@ class IncidentResponse:
             msg["From"] = "security@tradepulse.com"
             msg["To"] = "security-team@tradepulse.com"
             # Integrate with SMTP or notification system in production.
-            smtp = smtplib.SMTP("localhost")
+            smtp_host = os.getenv("SMTP_HOST", "localhost")
+            smtp = smtplib.SMTP(smtp_host)
             smtp.send_message(msg)
             smtp.quit()
         except Exception:

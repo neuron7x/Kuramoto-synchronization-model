@@ -17,10 +17,11 @@ class Encryption:
         key_material = os.getenv("ENCRYPTION_KEY")
         if not key_material:
             raise ValueError("ENCRYPTION_KEY environment variable must be set")
+        salt = os.getenv("ENCRYPTION_SALT", "tradepulse").encode()
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b"tradepulse",  # Use a strong unique salt in production
+            salt=salt,
             iterations=480000,
         )
         derived = kdf.derive(key_material.encode())
