@@ -119,14 +119,11 @@ jobs:
 
       - name: Request dynamic credentials from Vault
         id: vault
-        if: ${{ env.MLOPS_VAULT_ADDRESS != '' && env.MLOPS_VAULT_ROLE != '' && env.MLOPS_VAULT_TOKEN != '' }}
+        if: ${{ env.VAULT_ADDRESS != '' && env.VAULT_ROLE != '' && env.VAULT_TOKEN != '' }}
         env:
           VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
           VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
           VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
-          MLOPS_VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
-          MLOPS_VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
-          MLOPS_VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
         run: |
           mkdir -p "${ARTIFACT_ROOT}/secrets"
           python -m scripts.cli secrets-issue-dynamic \
