@@ -36,9 +36,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
 
@@ -53,8 +51,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
+          if [ -f requirements.lock ]; then pip install -c constraints/security.txt -r requirements.lock; fi
+          if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
 
       - name: Run tests with coverage (shard ${{ matrix.shard }})
         run: |
@@ -97,9 +95,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
 
@@ -178,17 +174,15 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: |
-            requirements.txt
             requirements.lock
-            requirements-dev.txt
             requirements-dev.lock
             constraints/security.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -c constraints/security.txt -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -c constraints/security.txt -r requirements-dev.txt; fi
+          if [ -f requirements.lock ]; then pip install -c constraints/security.txt -r requirements.lock; fi
+          if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
 
       - name: Run mutation testing
         id: run_mutmut
