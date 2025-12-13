@@ -62,8 +62,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--host",
         type=str,
-        default="0.0.0.0",
-        help="Host for API server (used only with --api).",
+        default="0.0.0.0",  # nosec B104 - API server intentionally binds to all interfaces for container access
+        help="Host for API server (used only with --api). Default 0.0.0.0 for container/network access.",
     )
     parser.add_argument(
         "--port",
