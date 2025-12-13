@@ -85,7 +85,6 @@ jobs:
 
           print("COV_TARGETS=" + json.dumps(out))
           PY
-          echo "targets=$(python -c \"import os, json; print(json.loads(os.environ.get('COV_TARGETS','[]')))\")" >/dev/null || true
 
       - name: Run pytest with coverage
         run: |
@@ -146,10 +145,18 @@ jobs:
       - name: Validate ci.yml (no bidi/unicode + valid YAML)
         run: |
           set -euo pipefail
-          # Check for bidirectional unicode characters
-          if grep -P '[\u202A-\u202E\u2066-\u2069\u200E\u200F]' .github/workflows/ci.yml; then
-            echo "ERROR: Bidirectional Unicode characters found in ci.yml"
-            exit 1
-          fi
+          # Check for bidirectional unicode characters using Python (portable)
+          python - <<'EOF'
+          import sys
+          # Bidirectional Unicode control characters (U+202A through U+202E, U+2066 through U+2069, U+200E, U+200F)
+          bidi_chars = ['\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069', '\u200E', '\u200F']
+          with open('.github/workflows/ci.yml', 'r', encoding='utf-8') as f:
+              content = f.read()
+              for char in bidi_chars:
+                  if char in content:
+                      print(f"ERROR: Bidirectional Unicode character U+{ord(char):04X} found in ci.yml", file=sys.stderr)
+                      sys.exit(1)
+          print("✓ No bidirectional Unicode characters found")
+          EOF
           # Validate YAML syntax
-          python -c "import sys; import yaml; yaml.safe_load(open('.github/workflows/ci.yml','r',encoding='utf-8')); print('ci.yml is valid YAML')"
+          python -c "import sys; import yaml; yaml.safe_load(open('.github/workflows/ci.yml','r',encoding='utf-8')); print('✓ ci.yml is valid YAML')"
