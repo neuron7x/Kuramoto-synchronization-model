@@ -87,6 +87,10 @@ jobs:
           PY
 
       - name: Run pytest with coverage
+        env:
+          # Test-only environment variables - DO NOT use in production
+          ENCRYPTION_KEY: "github-actions-test-key-32-chars-secure"
+          ENCRYPTION_SALT: "github-actions-test-salt-16-chars"
         run: |
           set -euo pipefail
           python - <<'PY'

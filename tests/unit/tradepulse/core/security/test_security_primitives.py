@@ -51,6 +51,7 @@ def test_secrets_with_custom_client() -> None:
 
 def test_encryption_round_trip(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ENCRYPTION_KEY", "unit-test-key")
+    monkeypatch.setenv("ENCRYPTION_SALT", "unit-test-salt")
     cipher = Encryption()
     payload = b"hello-world"
     encrypted = cipher.encrypt(payload)
