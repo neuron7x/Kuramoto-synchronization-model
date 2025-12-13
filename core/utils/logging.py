@@ -91,10 +91,16 @@ def _resolve_level(level: int | str) -> int:
     """Resolve a logging level from either a string name or numeric value."""
 
     if isinstance(level, str):
-        numeric_level = logging.getLevelName(level.upper())
-        if isinstance(numeric_level, str):
+        normalized = level.strip()
+
+        numeric_level = logging.getLevelName(normalized.upper())
+        if not isinstance(numeric_level, str):
+            return int(numeric_level)
+
+        try:
+            return int(normalized)
+        except ValueError:
             raise ValueError(f"Unknown log level: {level}")
-        return int(numeric_level)
 
     try:
         return int(level)
