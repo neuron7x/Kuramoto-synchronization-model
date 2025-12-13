@@ -322,7 +322,7 @@ jobs:
       actions: read
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tradepulse-distributions
           path: dist
@@ -347,7 +347,7 @@ jobs:
       actions: read
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tradepulse-distributions
           path: dist
@@ -359,7 +359,7 @@ jobs:
           print-hash: true
 
       - name: Download SBOM artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tradepulse-sbom
           path: sbom

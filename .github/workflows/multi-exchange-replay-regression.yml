@@ -182,7 +182,7 @@ jobs:
           pip install -c constraints/security.txt -r requirements-dev.txt
 
       - name: Download historical baselines
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         continue-on-error: true
         with:
           pattern: performance-baseline-*

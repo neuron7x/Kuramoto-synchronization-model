@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - name: Download scorecard results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ossf-scorecard-results
 
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Download scorecard results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         continue-on-error: true
         with:
           name: ossf-scorecard-results
