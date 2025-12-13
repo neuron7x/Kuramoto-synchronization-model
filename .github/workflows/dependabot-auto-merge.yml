@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Rebase Dependabot PR onto base branch
-        uses: peter-evans/rebase@v2
+        uses: peter-evans/rebase@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           head: ${{ github.event.pull_request.head.ref }}
