@@ -236,18 +236,22 @@ def normalize_timestamp(
         candidate = value.strip()
         if not candidate:
             raise ValueError("timestamp string must not be empty")
+
+        # Prefer integer parsing to preserve precision for large epoch values
+        # such as millisecond/microsecond inputs.
         try:
-            numeric_value = float(candidate)
+            value = int(candidate)
         except ValueError:
             try:
-                parsed = pd.Timestamp(candidate)
-            except (TypeError, ValueError) as exc:  # pragma: no cover - defensive guard
-                raise ValueError(f"Unsupported timestamp string: {value!r}") from exc
-            if pd.isna(parsed):
-                raise ValueError(f"Unsupported timestamp string: {value!r}")
-            value = parsed.to_pydatetime()
-        else:
-            value = float(numeric_value)
+                value = float(candidate)
+            except ValueError:
+                try:
+                    parsed = pd.Timestamp(candidate)
+                except (TypeError, ValueError) as exc:  # pragma: no cover - defensive guard
+                    raise ValueError(f"Unsupported timestamp string: {value!r}") from exc
+                if pd.isna(parsed):
+                    raise ValueError(f"Unsupported timestamp string: {value!r}")
+                value = parsed.to_pydatetime()
 
     if isinstance(value, (int, float)):
         numeric_value = float(value)
@@ -257,14 +261,18 @@ def normalize_timestamp(
         # Detect millisecond/microsecond inputs which are commonly used by
         # upstream data providers.  Interpreting these as seconds would yield
         # wildly incorrect dates (often thousands of years in the future).
-        if abs(numeric_value) >= 1e14:
+        magnitude = abs(value if isinstance(value, int) else numeric_value)
+        if magnitude >= 1e15:
             seconds = numeric_value / 1_000_000  # microseconds
-        elif abs(numeric_value) >= 1e12:
+        elif magnitude >= 1e12:
             seconds = numeric_value / 1_000  # milliseconds
         else:
             seconds = numeric_value
 
-        dt = datetime.fromtimestamp(seconds, tz=timezone.utc)
+        try:
+            dt = datetime.fromtimestamp(seconds, tz=timezone.utc)
+        except (OverflowError, OSError) as exc:
+            raise ValueError("timestamp value out of range") from exc
     elif isinstance(value, datetime):
         dt = value
     else:  # pragma: no cover - defensive path
