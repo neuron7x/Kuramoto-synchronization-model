@@ -50,5 +50,14 @@ class AuditLogger:
         }
         self.logger.info(json.dumps(entry))
 
+    def flush(self) -> None:
+        """Flush all handlers to ensure data is written to disk.
+        
+        This is particularly important in testing scenarios where
+        immediate verification of log output is required.
+        """
+        for handler in self.logger.handlers:
+            handler.flush()
+
 
 audit = AuditLogger()

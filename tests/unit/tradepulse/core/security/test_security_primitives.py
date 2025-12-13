@@ -85,6 +85,9 @@ def test_audit_logger_writes_json(tmp_path: Path) -> None:
         result="SUCCESS",
         amount=1.0,
     )
+    # Explicitly flush buffer to ensure data is written to disk
+    logger.flush()
+    
     content = log_path.read_text(encoding="utf-8").strip()
     assert content
     record = json.loads(content)
