@@ -158,6 +158,24 @@ def test_resample_order_book_handles_zero_totals() -> None:
     assert not result["microprice"].isna().any()
 
 
+def test_resample_order_book_all_zero_levels() -> None:
+    index = pd.date_range("2024-01-01", periods=3, freq="1min")
+    levels = pd.DataFrame(
+        {
+            "bid0": [0.0, 0.0, 0.0],
+            "ask0": [0.0, 0.0, 0.0],
+        },
+        index=index,
+    )
+
+    result = resample_order_book(
+        levels, freq="1min", bid_cols=["bid0"], ask_cols=["ask0"]
+    )
+
+    assert (result["microprice"] == 0.0).all()
+    assert (result["imbalance"] == 0.0).all()
+
+
 def test_ensure_datetime_index_localizes_naive_index() -> None:
     frame = pd.DataFrame({"value": [1]}, index=[pd.Timestamp("2024-01-01 00:00:00")])
     converted = _ensure_datetime_index(frame)

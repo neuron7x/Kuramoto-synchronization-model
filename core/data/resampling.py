@@ -116,7 +116,8 @@ def resample_order_book(
     out = pd.concat({"bids": bids, "asks": asks}, axis=1)
     microprice = (bids.iloc[:, 0] * ask_total + asks.iloc[:, 0] * bid_total) / denom
     microprice = microprice.replace([np.inf, -np.inf], np.nan)
-    out["microprice"] = microprice.ffill().bfill()
+    microprice = microprice.ffill().bfill().fillna(0.0)
+    out["microprice"] = microprice
     out["imbalance"] = imbalance.replace([np.inf, -np.inf], np.nan).fillna(0.0)
     return out
 
