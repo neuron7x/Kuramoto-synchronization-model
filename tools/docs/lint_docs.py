@@ -241,14 +241,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     targets: List[Path] = []
+    missing: list[Path] = []
     for candidate in args.paths:
         if candidate.exists():
             targets.append(candidate)
-        elif not args.allow_missing:
-            parser.error(
-                f"Path '{candidate}' does not exist. Use --allow-missing to skip."
-            )
+        else:
+            missing.append(candidate)
+
+    if missing and not args.allow_missing:
+        parser.error(
+            f"Path '{missing[0]}' does not exist. Use --allow-missing to skip."
+        )
+
     if not targets:
+        if args.allow_missing:
+            print("No valid documentation paths supplied; skipping (--allow-missing).")
+            return 0
         parser.error("No valid documentation paths supplied.")
 
     issues = lint_paths(targets)

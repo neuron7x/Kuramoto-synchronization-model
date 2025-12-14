@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import tools.docs.lint_docs as lint_docs
 from tools.docs.lint_docs import (
     DEFAULT_RULES,
     ForbiddenPhraseRule,
@@ -122,3 +123,14 @@ def test_lint_paths_skips_node_modules_directory(tmp_path: Path) -> None:
     issues = lint_paths([tmp_path])
 
     assert issues == []
+
+
+def test_cli_allows_missing_paths(monkeypatch, capsys, tmp_path: Path) -> None:
+    missing = tmp_path / "does_not_exist"
+
+    exit_code = lint_docs.main(["--allow-missing", str(missing)])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "No valid documentation paths supplied" in captured.out
