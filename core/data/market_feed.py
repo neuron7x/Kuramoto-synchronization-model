@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 """Market feed recording infrastructure for reproducible tests.
 
-This module provides schemas and utilities for recording real market data feeds
-in JSONL format with proper validation, timezone synchronization, and quality control.
-Designed for TD(0) RPE, DDM, and Go/No-Go dopamine loop testing with stable,
-reproducible samples for regression tests.
+This module provides schemas and utilities for recording market data feeds. The
+helpers here normalise JSONL payloads with proper validation, timezone
+alignment, and quality control. They are used to build reproducible samples for
+regression testing of dopamine loops such as TD(0) RPE, DDM, and Go/No-Go.
 """
 
 from __future__ import annotations
