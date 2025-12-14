@@ -39,6 +39,11 @@ The module is already integrated into TradePulse's core.neuro package:
 from core.neuro.ecs_regulator import ECSInspiredRegulator, ECSMetrics
 ```
 
+Optional Parquet export in the demo uses either ``pyarrow`` or ``fastparquet``.
+Install with ``pip install .[ecs]`` or run the demo with the CSV fallback by
+setting ``ECS_DEMO_STEPS`` / ``ECS_DEMO_OUTPUT_DIR`` to control runtime and
+outputs.
+
 ## Basic Usage
 
 ```python

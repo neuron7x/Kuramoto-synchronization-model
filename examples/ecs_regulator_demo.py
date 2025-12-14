@@ -1,34 +1,12 @@
-"""Demo of ECS-Inspired Regulator integrated with TradePulse.
+"""Demonstrate ECSInspiredRegulator usage in a reproducible simulation."""
 
-This example demonstrates how to use the ECSInspiredRegulator for
-adaptive trading decisions, integrated with TradePulse's existing
-neuroeconomic stack including FractalMotivationController and
-Kuramoto-Ricci phase analysis.
-"""
-
-import sys
+import os
 from pathlib import Path
-
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import pandas as pd
 
-# Direct import to avoid dependency issues
-try:
-    from core.neuro.ecs_regulator import ECSInspiredRegulator
-except ImportError:
-    # Fallback: load module directly
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "ecs_regulator",
-        Path(__file__).parent.parent / "core" / "neuro" / "ecs_regulator.py",
-    )
-    ecs_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(ecs_module)
-    ECSInspiredRegulator = ecs_module.ECSInspiredRegulator
+from core.neuro.ecs_regulator import ECSInspiredRegulator
 
 
 def simulate_market_data(
@@ -68,8 +46,9 @@ def simulate_market_data(
         phases.append(phase)
 
     returns = np.array(market_returns)
-    cum_returns = np.cumprod(1 + returns)
-    drawdowns = (cum_returns.cummax() - cum_returns) / (cum_returns.cummax() + 1e-10)
+    cum_returns = pd.Series(np.cumprod(1 + returns))
+    peak_curve = cum_returns.cummax()
+    drawdowns = ((peak_curve - cum_returns) / (peak_curve + 1e-10)).to_numpy()
 
     return returns, drawdowns, phases
 
@@ -102,9 +81,8 @@ def calculate_performance_metrics(returns: np.ndarray, actions: list[int]) -> di
     sharpe_ratio = (np.mean(strategy_returns) / (volatility + 1e-10)) * np.sqrt(252)
 
     cum_strategy = np.cumprod(1 + strategy_returns)
-    max_dd = np.max(
-        (cum_strategy.cummax() - cum_strategy) / (cum_strategy.cummax() + 1e-10)
-    )
+    peak_curve = np.maximum.accumulate(cum_strategy)
+    max_dd = np.max((peak_curve - cum_strategy) / (peak_curve + 1e-10))
 
     return {
         "total_return": float(total_return),
@@ -125,8 +103,10 @@ def main():
     print()
 
     # Configuration
-    n_steps = 200
+    n_steps = int(os.getenv("ECS_DEMO_STEPS", "200"))
     seed = 42
+    output_dir = Path(os.getenv("ECS_DEMO_OUTPUT_DIR", "/tmp"))
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Initialize regulator
     print("Initializing ECS-Inspired Regulator...")
@@ -202,7 +182,7 @@ def main():
     print(f"  Is Chronic: {metrics.is_chronic}")
 
     # Action distribution
-    action_counts = np.bincount(np.array(actions) + 1)
+    action_counts = np.bincount(np.array(actions) + 1, minlength=3)
     print("\nAction Distribution:")
     print(f"  Sells:  {action_counts[0]:4d} ({action_counts[0]/n_steps*100:.1f}%)")
     print(f"  Holds:  {action_counts[1]:4d} ({action_counts[1]/n_steps*100:.1f}%)")
@@ -237,10 +217,15 @@ def main():
     trace = regulator.get_trace()
     print(f"  Trace records: {len(trace)}")
 
-    # Save to Parquet for TradePulse integration
-    trace_file = "/tmp/ecs_regulator_trace.parquet"
-    trace.to_parquet(trace_file)
-    print(f"  Saved to: {trace_file}")
+    # Save to Parquet for TradePulse integration (with CSV fallback)
+    trace_file = output_dir / "ecs_regulator_trace.parquet"
+    try:
+        trace.to_parquet(trace_file)
+        print(f"  Saved to: {trace_file}")
+    except (ImportError, ValueError):
+        trace_file = trace_file.with_suffix(".csv")
+        trace.to_csv(trace_file, index=False)
+        print(f"  Parquet engine unavailable, saved CSV to: {trace_file}")
 
     # Create summary CSV
     summary_df = pd.DataFrame(
@@ -256,7 +241,7 @@ def main():
         }
     )
 
-    summary_file = "/tmp/ecs_regulator_summary.csv"
+    summary_file = output_dir / "ecs_regulator_summary.csv"
     summary_df.to_csv(summary_file, index=False)
     print(f"  Summary saved to: {summary_file}")
 

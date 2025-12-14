@@ -519,9 +519,9 @@ class ECSInspiredRegulator:
             if volatility_regime == "moderate":
                 recovery_rate *= 0.95
 
-            self.risk_threshold = min(
-                self._initial_risk_threshold,
-                self.risk_threshold * recovery_rate
+            self.risk_threshold = max(
+                0.001,
+                min(self._initial_risk_threshold, self.risk_threshold * recovery_rate),
             )
             self.compensatory_factor = max(1.0, self.compensatory_factor * 0.98)
 

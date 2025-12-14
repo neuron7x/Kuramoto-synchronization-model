@@ -28,7 +28,6 @@ omit =
     core/indicators/**
     core/messaging/**
     core/metrics/**
-    core/neuro/**
     core/reporting/**
     core/strategies/**
     core/utils/**
@@ -63,7 +62,6 @@ omit =
     core/indicators/**
     core/messaging/**
     core/metrics/**
-    core/neuro/**
     core/reporting/**
     core/strategies/**
     core/utils/**

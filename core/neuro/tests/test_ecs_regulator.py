@@ -2,30 +2,15 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-# Direct import to avoid dependency issues in tests
-import importlib.util
-
 import numpy as np
 import pytest
 
-# Load the module directly
-spec = importlib.util.spec_from_file_location(
-    "ecs_regulator", Path(__file__).parent.parent / "ecs_regulator.py"
+from core.neuro.ecs_regulator import (
+    ECSInspiredRegulator,
+    ECSMetrics,
+    FE_STABILITY_EPSILON,
+    StabilityMetrics,
 )
-ecs_module = importlib.util.module_from_spec(spec)
-sys.modules["ecs_regulator"] = ecs_module
-spec.loader.exec_module(ecs_module)
-
-ECSInspiredRegulator = ecs_module.ECSInspiredRegulator
-ECSMetrics = ecs_module.ECSMetrics
-StabilityMetrics = ecs_module.StabilityMetrics
-FE_STABILITY_EPSILON = ecs_module.FE_STABILITY_EPSILON
 
 
 class TestECSInspiredRegulatorInit:
@@ -680,7 +665,7 @@ class TestIntegrationScenarios:
             assert late_avg <= early_avg * 1.5  # Allow some growth but bounded
 
     def test_trace_export_to_parquet(self, tmp_path) -> None:
-        """Test that trace can be exported to Parquet."""
+        """Test that trace can be exported to Parquet when engine is available."""
         regulator = ECSInspiredRegulator(seed=42)
         rng = np.random.default_rng(42)
 
@@ -693,16 +678,29 @@ class TestIntegrationScenarios:
 
         trace = regulator.get_trace()
 
-        # Export to Parquet
+        # Export to Parquet when supported
         parquet_file = tmp_path / "trace_logs.parquet"
-        trace.to_parquet(parquet_file)
+
+        try:
+            import pyarrow  # noqa: F401
+
+            engine = "pyarrow"
+        except ImportError:
+            try:
+                import fastparquet  # noqa: F401
+
+                engine = "fastparquet"
+            except ImportError:
+                pytest.skip("PyArrow or fastparquet required for parquet export")
+
+        trace.to_parquet(parquet_file, engine=engine)
 
         assert parquet_file.exists()
 
         # Verify can be read back
         import pandas as pd
 
-        loaded = pd.read_parquet(parquet_file)
+        loaded = pd.read_parquet(parquet_file, engine=engine)
         assert len(loaded) == len(trace)
 
 
@@ -1188,3 +1186,76 @@ class TestStabilityMetrics:
         assert regulator._gradient_clipping_events == 0
         assert len(regulator._fe_history) == 0
         assert len(regulator._volatility_history) == 0
+
+
+class TestECSInvariants:
+    """Invariant-focused tests to ensure regulator safety properties."""
+
+    def test_parameter_bounds_are_clamped(self) -> None:
+        """Risk thresholds remain within safe bounds during adaptations."""
+        regulator = ECSInspiredRegulator(initial_risk_threshold=0.05, seed=1)
+        regulator.risk_threshold = 0.002  # Force near-lower bound state
+
+        for _ in range(5):
+            regulator.update_stress(np.array([0.2, -0.2, 0.15]), 0.3)
+            regulator.adapt_parameters(context_phase="chaotic")
+
+        assert 0.001 <= regulator.risk_threshold <= regulator._initial_risk_threshold
+        assert regulator.compensatory_factor >= 1.0
+
+    def test_chronic_counter_behaviour(self) -> None:
+        """Chronic counter increments only under sustained stress."""
+        regulator = ECSInspiredRegulator(stress_threshold=0.05, chronic_threshold=3)
+
+        for _ in range(5):
+            regulator.update_stress(np.array([0.001, -0.001]), 0.0)
+        assert regulator.chronic_counter == 0
+
+        for _ in range(6):
+            regulator.update_stress(np.array([0.3, -0.25, 0.2]), 0.4)
+        assert regulator.chronic_counter > 0
+
+    def test_trace_is_append_only_with_schema(self) -> None:
+        """Trace keeps schema stable and grows monotonically."""
+        regulator = ECSInspiredRegulator(seed=7)
+        baseline_trace = regulator.get_trace()
+        assert set(baseline_trace.columns) in ({"timestamp", "type", "details"}, set())
+
+        regulator.update_stress(np.array([0.05, -0.05]), 0.1)
+        regulator.adapt_parameters()
+        regulator.decide_action(0.2)
+
+        updated_trace = regulator.get_trace()
+        assert set(updated_trace.columns) == {"timestamp", "type", "details"}
+        assert len(updated_trace) >= len(baseline_trace)
+
+    def test_decide_action_is_deterministic_with_fixed_seed(self) -> None:
+        """Decision output is consistent for identical seeded regulators."""
+        regulator_a = ECSInspiredRegulator(seed=123)
+        regulator_b = ECSInspiredRegulator(seed=123)
+
+        for _ in range(3):
+            sample_returns = np.array([0.02, -0.03, 0.01])
+            regulator_a.update_stress(sample_returns, 0.05)
+            regulator_b.update_stress(sample_returns, 0.05)
+            regulator_a.adapt_parameters()
+            regulator_b.adapt_parameters()
+
+        action_a = regulator_a.decide_action(0.15, context_phase="stable")
+        action_b = regulator_b.decide_action(0.15, context_phase="stable")
+
+        assert action_a in {-1, 0, 1}
+        assert action_b in {-1, 0, 1}
+        assert action_a == action_b
+
+
+def test_ecs_regulator_demo_runs(tmp_path, monkeypatch) -> None:
+    """Ensure the ECS demo script runs without raising exceptions."""
+    from importlib import import_module
+
+    monkeypatch.setenv("ECS_DEMO_STEPS", "10")
+    demo = import_module("examples.ecs_regulator_demo")
+
+    # Redirect output files to temporary directory
+    monkeypatch.setenv("ECS_DEMO_OUTPUT_DIR", str(tmp_path))
+    demo.main()
