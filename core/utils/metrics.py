@@ -2290,6 +2290,8 @@ def get_metrics_collector(registry: Optional[Any] = None) -> MetricsCollector:
     global _collector
     if _collector is None:
         _collector = MetricsCollector(registry)
+    elif registry is not None and registry is not _collector.registry:
+        _collector = MetricsCollector(registry)
     return _collector
 
 
