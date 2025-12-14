@@ -348,21 +348,21 @@ class ExporterSetup:
 # SLO definitions & validation
 
 
-def _parse_duration_to_seconds(value: str) -> int:
+def _parse_duration_to_seconds(value: str) -> float:
     value = value.strip().lower()
     if value.endswith("ms"):
-        return max(0, int(float(value[:-2]) / 1000))
+        return max(0.0, float(value[:-2]) / 1000.0)
     if value.endswith("s"):
-        return int(float(value[:-1]))
+        return float(value[:-1])
     if value.endswith("m"):
         minutes = float(value[:-1])
-        return int(minutes * 60)
+        return minutes * 60.0
     if value.endswith("h"):
         hours = float(value[:-1])
-        return int(hours * 3600)
+        return hours * 3600.0
     if value.endswith("d"):
         days = float(value[:-1])
-        return int(days * 86400)
+        return days * 86400.0
     raise ValueError(f"Unsupported duration literal: {value}")
 
 
