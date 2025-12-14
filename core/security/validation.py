@@ -544,17 +544,39 @@ def validate_numeric_input(value: Any) -> float:
 
 
 def sanitize_string_input(value: str, max_length: int = 1000) -> str:
-    """Sanitize string input by removing dangerous characters."""
+    """Sanitize string input by removing dangerous characters and patterns.
+    
+    NOTE: This function provides defense in depth, but parameterized queries
+    are the primary defense against SQL injection.
+    """
     if not isinstance(value, str):
         raise ValueError("Input must be a string")
     
     # Truncate to max length
     value = value[:max_length]
     
-    # Remove SQL injection patterns
-    value = value.replace("'", "''")  # Escape single quotes
-    value = re.sub(r'--.*$', '', value)  # Remove SQL comments
-    value = re.sub(r'/\*.*?\*/', '', value)  # Remove SQL block comments
+    # Remove SQL comments
+    value = re.sub(r'--.*$', '', value, flags=re.MULTILINE)  # Line comments
+    value = re.sub(r'/\*.*?\*/', '', value, flags=re.DOTALL)  # Block comments
+    
+    # Remove dangerous SQL keywords (case-insensitive)
+    sql_keywords = [
+        r'\bDROP\s+TABLE\b',
+        r'\bDROP\s+DATABASE\b',
+        r'\bDELETE\s+FROM\b',
+        r'\bTRUNCATE\b',
+        r'\bEXEC\b',
+        r'\bEXECUTE\b',
+        r'\bUNION\s+SELECT\b',
+        r'\bINSERT\s+INTO\b',
+        r'\bUPDATE\s+\w+\s+SET\b',
+    ]
+    
+    for keyword in sql_keywords:
+        value = re.sub(keyword, '', value, flags=re.IGNORECASE)
+    
+    # Escape single quotes (standard SQL escaping)
+    value = value.replace("'", "''")
     
     # Remove XSS patterns
     value = HTMLSanitizer.sanitize_html(value)
@@ -567,13 +589,26 @@ def validate_file_path(path: str, base_dir: str) -> bool:
     from pathlib import Path
     import os
     
-    # Normalize paths
-    base = os.path.abspath(base_dir)
-    full_path = os.path.abspath(os.path.join(base_dir, path))
-    
-    # Check if path is within base directory
-    if not full_path.startswith(base):
+    # Check for obvious traversal patterns first
+    if ".." in path or path.startswith("/") or path.startswith("\\"):
         raise ValueError("Invalid file path: path traversal detected")
+    
+    # Check for network paths
+    if "\\\\" in path:
+        raise ValueError("Invalid file path: network path not allowed")
+    
+    # Normalize paths using pathlib for consistent handling
+    try:
+        base = Path(base_dir).resolve()
+        # Join base with user input and resolve
+        full_path = (base / path).resolve()
+        
+        # Check if the resolved path is within base directory
+        # Use relative_to which raises ValueError if not a subpath
+        full_path.relative_to(base)
+        
+    except (ValueError, OSError) as e:
+        raise ValueError(f"Invalid file path: {e}")
     
     return True
 

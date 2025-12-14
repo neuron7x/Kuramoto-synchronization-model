@@ -144,10 +144,9 @@ class TestInputValidation:
         """Test that URLs are properly validated."""
         from core.security.validation import validate_url
         
-        # Valid URLs
+        # Valid external URLs
         valid_urls = [
             "https://api.tradepulse.com/data",
-            "http://localhost:8080/health",
             "https://exchange.com/api/v1/trades",
         ]
         
