@@ -39,6 +39,9 @@ jobs:
       contents: read
       actions: write
       id-token: write
+    env:
+      COSIGN_CERT_IDENTITY: ${{ secrets.COSIGN_CERTIFICATE_IDENTITY }}
+      COSIGN_CERT_OIDC_ISSUER: ${{ secrets.COSIGN_CERTIFICATE_OIDC_ISSUER }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -144,9 +147,6 @@ jobs:
 
       - name: Verify the secrets are set and run cosign verification
         if: ${{ github.event_name != 'pull_request' && env.COSIGN_CERT_IDENTITY != '' && env.COSIGN_CERT_OIDC_ISSUER != '' }}
-        env:
-          COSIGN_CERT_IDENTITY: ${{ secrets.COSIGN_CERTIFICATE_IDENTITY }}
-          COSIGN_CERT_OIDC_ISSUER: ${{ secrets.COSIGN_CERTIFICATE_OIDC_ISSUER }}
         run: |
           echo "✅ COSIGN secrets present — running cosign verification"
           # Verify the secrets are set
@@ -172,9 +172,6 @@ jobs:
 
       - name: Skip cosign verification (secrets missing)
         if: ${{ github.event_name != 'pull_request' && (env.COSIGN_CERT_IDENTITY == '' || env.COSIGN_CERT_OIDC_ISSUER == '') }}
-        env:
-          COSIGN_CERT_IDENTITY: ${{ secrets.COSIGN_CERTIFICATE_IDENTITY }}
-          COSIGN_CERT_OIDC_ISSUER: ${{ secrets.COSIGN_CERTIFICATE_OIDC_ISSUER }}
         run: |
           echo "⚠️ COSIGN verification skipped: required repository secrets are not set."
           echo "To enable verification, set the following repository secrets in Settings → Secrets and variables → Actions:"

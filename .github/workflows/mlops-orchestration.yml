@@ -93,6 +93,10 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
+      VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
+      VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
     outputs:
       run-id: ${{ steps.pipeline-summary.outputs.run_id }}
       registry-path: ${{ steps.pipeline-summary.outputs.registry_path }}
@@ -120,10 +124,6 @@ jobs:
       - name: Request dynamic credentials from Vault
         id: vault
         if: ${{ env.VAULT_ADDRESS != '' && env.VAULT_ROLE != '' && env.VAULT_TOKEN != '' }}
-        env:
-          VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
-          VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
-          VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
         run: |
           mkdir -p "${ARTIFACT_ROOT}/secrets"
           python -m scripts.cli secrets-issue-dynamic \
@@ -231,6 +231,8 @@ jobs:
     timeout-minutes: 20
     env:
       TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
+      AWS_MLOPS_ACCESS_KEY_ID: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
+      AWS_MLOPS_SECRET_ACCESS_KEY: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -268,9 +270,6 @@ jobs:
       - name: Configure AWS credentials
         id: aws-creds
         if: ${{ env.AWS_MLOPS_ACCESS_KEY_ID != '' && env.AWS_MLOPS_SECRET_ACCESS_KEY != '' }}
-        env:
-          AWS_MLOPS_ACCESS_KEY_ID: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
-          AWS_MLOPS_SECRET_ACCESS_KEY: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
