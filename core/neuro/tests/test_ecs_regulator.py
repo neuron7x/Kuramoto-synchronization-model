@@ -25,6 +25,7 @@ spec.loader.exec_module(ecs_module)
 ECSInspiredRegulator = ecs_module.ECSInspiredRegulator
 ECSMetrics = ecs_module.ECSMetrics
 StabilityMetrics = ecs_module.StabilityMetrics
+FE_STABILITY_EPSILON = ecs_module.FE_STABILITY_EPSILON
 
 
 class TestECSInspiredRegulatorInit:
@@ -728,7 +729,7 @@ class TestStrictMonotonicDescent:
 
         # Verify strict monotonic descent (FE[i] <= FE[i-1] for all i > 0)
         for i in range(1, len(fe_values)):
-            assert fe_values[i] <= fe_values[i - 1] + 1e-9, (
+            assert fe_values[i] <= fe_values[i - 1] + FE_STABILITY_EPSILON, (
                 f"Monotonicity violated at step {i}: "
                 f"FE[{i}]={fe_values[i]} > FE[{i-1}]={fe_values[i-1]}"
             )
@@ -889,13 +890,14 @@ class TestGradientBounding:
     def test_gradient_clipping_events_tracked(self) -> None:
         """Test that gradient clipping events are tracked."""
         regulator = ECSInspiredRegulator(seed=42)
+        rng = np.random.default_rng(42)
 
         initial_clipping = regulator._gradient_clipping_events
 
         # Run many updates with varying volatility
         for i in range(50):
             vol = 0.01 + i * 0.02
-            returns = np.random.default_rng(42 + i).normal(0, vol, 10)
+            returns = rng.normal(0, vol, 10)
             regulator.update_stress(returns, vol)
 
         # Check clipping events are tracked

@@ -37,6 +37,10 @@ GRADIENT_BOUND_MIN: float = -0.5  # Minimum allowed gradient (descent)
 FE_STABILITY_EPSILON: float = 1e-4  # Numerical stability epsilon (practical threshold)
 VOLATILITY_SPIKE_THRESHOLD: float = 0.15  # High volatility detection
 RISK_AVERSION_MULTIPLIER: float = 0.7  # Conservative multiplier during stress
+FE_DECAY_FACTOR: float = 0.995  # Decay factor for monotonicity correction
+SIGNAL_BOUND_MAX: float = 10.0  # Maximum allowed signal magnitude
+INSTABILITY_PENALTY: float = 1.2  # Threshold increase when system unstable
+FE_VARIANCE_THRESHOLD: float = 0.1  # Variance threshold for stability detection
 
 
 @dataclass(slots=True)
@@ -270,10 +274,11 @@ class ECSInspiredRegulator:
         if gradient > FE_STABILITY_EPSILON:
             self._monotonicity_violations += 1
 
-            # Apply exponential decay correction for strict descent
-            # FE_new = FE_prev * decay_factor where decay_factor < 1
-            decay_factor = 0.995  # Gentle decay to maintain descent
-            corrected_fe = previous_fe * decay_factor
+            # Apply correction that maintains stress-FE relationship while ensuring descent
+            # Use previous_fe minus a small decrement proportional to the violation
+            # This preserves the relationship while ensuring strict descent
+            decrement = min(gradient * FE_DECAY_FACTOR, previous_fe * (1 - FE_DECAY_FACTOR))
+            corrected_fe = max(0.0, previous_fe - decrement)
 
             self.log_action(
                 "Monotonicity correction",
@@ -300,10 +305,15 @@ class ECSInspiredRegulator:
             return
 
         # Compute recent volatility trend
-        recent_vol = np.mean(self._volatility_history[-5:])
-        older_vol = np.mean(self._volatility_history[-10:-5]) if len(
-            self._volatility_history
-        ) >= 10 else recent_vol
+        recent_vol = float(np.mean(self._volatility_history[-5:]))
+
+        # For older volatility, use either older history or decay from recent
+        if len(self._volatility_history) >= 10:
+            older_vol = float(np.mean(self._volatility_history[-10:-5]))
+        else:
+            # Use decayed estimate when not enough history
+            # Assume previous volatility was slightly lower for stability
+            older_vol = recent_vol * 0.9
 
         # Feedback error: positive if volatility increasing
         vol_error = recent_vol - older_vol
@@ -577,8 +587,7 @@ class ECSInspiredRegulator:
         adjusted_signal = filtered_signal * self.compensatory_factor
 
         # Bound the adjusted signal for numerical stability
-        max_signal = 10.0  # Reasonable upper bound
-        adjusted_signal = max(-max_signal, min(max_signal, adjusted_signal))
+        adjusted_signal = max(-SIGNAL_BOUND_MAX, min(SIGNAL_BOUND_MAX, adjusted_signal))
 
         # Get current volatility regime
         volatility_regime = self._compute_volatility_regime(self._current_volatility)
@@ -589,7 +598,7 @@ class ECSInspiredRegulator:
         # Lyapunov stability check: be more conservative if system unstable
         if self._lyapunov_value > 0 and len(self._fe_history) > 5:
             # System showing instability - increase threshold for safety
-            effective_threshold *= 1.2
+            effective_threshold *= INSTABILITY_PENALTY
 
         # Decision with threshold check
         if abs(adjusted_signal) > effective_threshold:
@@ -672,10 +681,17 @@ class ECSInspiredRegulator:
         volatility_regime = self._compute_volatility_regime(self._current_volatility)
 
         # Compute stability margin: how far from instability threshold
-        # Lower is better (more stable)
-        if len(self._fe_history) >= 2:
+        # Requires minimum history for meaningful variance
+        if len(self._fe_history) >= 10:
             recent_fe_variance = float(np.var(self._fe_history[-10:]))
             stability_margin = 1.0 / (1.0 + recent_fe_variance)
+        elif len(self._fe_history) >= 2:
+            # Use available history but note reduced confidence
+            recent_fe_variance = float(np.var(self._fe_history))
+            # Scale margin by history coverage (0-1 range)
+            coverage = len(self._fe_history) / 10.0
+            raw_margin = 1.0 / (1.0 + recent_fe_variance)
+            stability_margin = raw_margin * coverage + 1.0 * (1.0 - coverage)
         else:
             stability_margin = 1.0
 
@@ -709,7 +725,7 @@ class ECSInspiredRegulator:
         # Check recent stability margin
         if len(self._fe_history) >= 10:
             recent_fe_variance = float(np.var(self._fe_history[-10:]))
-            if recent_fe_variance > 0.1:  # High variance indicates instability
+            if recent_fe_variance > FE_VARIANCE_THRESHOLD:
                 return False
 
         return True
@@ -743,4 +759,8 @@ __all__ = [
     "FE_STABILITY_EPSILON",
     "VOLATILITY_SPIKE_THRESHOLD",
     "RISK_AVERSION_MULTIPLIER",
+    "FE_DECAY_FACTOR",
+    "SIGNAL_BOUND_MAX",
+    "INSTABILITY_PENALTY",
+    "FE_VARIANCE_THRESHOLD",
 ]
