@@ -89,3 +89,87 @@ def test_nan_inputs_default_to_hold_for_safety():
     action = regulator.decide_action(float("nan"))
 
     assert action == 0
+
+
+def test_fe_invariant_over_multiple_stress_updates():
+    """FE should not increase beyond previous + max_fe_step_up over multiple updates."""
+    from core.neuro.ecs_regulator import FE_STABILITY_EPSILON
+
+    regulator = ECSInspiredRegulator(
+        initial_risk_threshold=0.05,
+        stress_threshold=0.02,
+        max_fe_step_up=0.0,
+        enforce_monotonicity=True,
+    )
+
+    # First update
+    regulator.update_stress(np.array([0.01, 0.02]), drawdown=0.0, previous_fe=0.0)
+    fe_values = [regulator.free_energy_proxy]
+
+    # Multiple high-stress updates - FE should stay bounded
+    for _ in range(10):
+        prev_fe = regulator.free_energy_proxy
+        regulator.update_stress(
+            np.array([0.2, 0.25, -0.15]), drawdown=0.3, previous_fe=prev_fe
+        )
+        fe_values.append(regulator.free_energy_proxy)
+        # Each FE should not exceed previous + epsilon
+        assert regulator.free_energy_proxy <= prev_fe + FE_STABILITY_EPSILON
+
+
+def test_stress_mode_transitions_correctly():
+    """Stress mode should transition based on actual stress level."""
+    regulator = ECSInspiredRegulator(
+        initial_risk_threshold=0.05,
+        stress_threshold=0.03,
+        crisis_threshold=0.05,
+        smoothing_alpha=0.3,  # Lower alpha for faster response
+    )
+
+    # Initially NORMAL
+    assert regulator.stress_mode == StressMode.NORMAL
+
+    # Low stress - should stay NORMAL
+    regulator.update_stress(np.array([0.01, 0.02]), drawdown=0.01)
+    assert regulator.stress_mode == StressMode.NORMAL
+
+    # Medium stress - should become ELEVATED
+    for _ in range(5):
+        regulator.update_stress(np.array([0.08, -0.06, 0.07]), drawdown=0.1)
+    assert regulator.stress_mode in [StressMode.ELEVATED, StressMode.CRISIS]
+
+    # High stress - should become CRISIS
+    for _ in range(5):
+        regulator.update_stress(np.array([0.15, -0.12, 0.14]), drawdown=0.2)
+    assert regulator.stress_mode == StressMode.CRISIS
+
+
+def test_stress_independent_of_fe_constraint():
+    """Stress level should increase even when FE is constrained.
+    
+    This tests the fix for the semantic bug where FE monotonicity
+    was incorrectly clamping the stress level.
+    """
+    regulator = ECSInspiredRegulator(
+        initial_risk_threshold=0.05,
+        stress_threshold=0.02,
+        max_fe_step_up=0.0,
+        enforce_monotonicity=True,
+        smoothing_alpha=0.5,
+    )
+
+    # First update with low stress
+    regulator.update_stress(np.array([0.001, 0.002]), drawdown=0.0)
+    low_stress = regulator.stress_level
+    prev_fe = regulator.free_energy_proxy
+
+    # High stress update with FE constraint
+    regulator.update_stress(np.array([0.2, 0.25, -0.15]), drawdown=0.3, previous_fe=prev_fe)
+    high_stress = regulator.stress_level
+
+    # Stress should increase despite FE being constrained
+    assert high_stress > low_stress, (
+        f"Stress should increase: {low_stress} -> {high_stress}"
+    )
+    # FE should be constrained
+    assert regulator.free_energy_proxy <= prev_fe + 1e-6
