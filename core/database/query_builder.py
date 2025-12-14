@@ -14,20 +14,35 @@ def build_query(query_template: str, params: Tuple[Any, ...]) -> Tuple[str, Tupl
     This function ensures that user input is always passed as parameters,
     never concatenated into the query string.
     
+    Supported placeholder formats:
+    - '?' for positional parameters (SQLite, many databases)
+    - '$1', '$2', etc. for PostgreSQL-style numbered parameters
+    
     Args:
-        query_template: SQL query with parameter placeholders (?)
+        query_template: SQL query with parameter placeholders
         params: Tuple of parameters to bind
         
     Returns:
         Tuple of (query, params) ready for execution
         
+    Raises:
+        ValueError: If query doesn't use parameterized placeholders
+        
     Example:
         >>> query, params = build_query("SELECT * FROM trades WHERE symbol = ?", ("AAPL",))
         >>> # Execute with: cursor.execute(query, params)
     """
-    # Validate that query uses parameterized placeholders
-    if "?" not in query_template and "$" not in query_template:
-        raise ValueError("Query must use parameterized placeholders (? or $n)")
+    # Check for common placeholder patterns
+    has_placeholders = (
+        '?' in query_template or  # SQLite/MySQL style
+        re.search(r'\$\d+', query_template)  # PostgreSQL style
+    )
+    
+    if not has_placeholders:
+        raise ValueError(
+            "Query must use parameterized placeholders (? or $n). "
+            "Never concatenate user input into SQL queries."
+        )
     
     # Return query and params separately to ensure parameterization
     return query_template, params

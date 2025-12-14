@@ -41,7 +41,7 @@ class TestInputValidation:
         """Test that string inputs are properly sanitized."""
         from core.security.validation import sanitize_string_input
         
-        # SQL injection attempts
+        # SQL injection attempts - should have dangerous keywords removed
         malicious_inputs = [
             "'; DROP TABLE users;--",
             "1' OR '1'='1",
@@ -52,11 +52,11 @@ class TestInputValidation:
         
         for malicious in malicious_inputs:
             sanitized = sanitize_string_input(malicious)
-            # Should not contain SQL metacharacters or script tags
-            assert "DROP TABLE" not in sanitized.upper()
-            assert "UNION SELECT" not in sanitized.upper()
-            assert "<script>" not in sanitized.lower()
-            assert "'" not in sanitized or sanitized.count("'") % 2 == 0
+            # Should not contain SQL keywords or script tags (defense-in-depth)
+            assert "DROP TABLE" not in sanitized.upper(), f"DROP TABLE found in: {sanitized}"
+            assert "UNION SELECT" not in sanitized.upper(), f"UNION SELECT found in: {sanitized}"
+            assert "<script>" not in sanitized.lower(), f"<script> found in: {sanitized}"
+            # Note: Quote escaping removed - always use parameterized queries for SQL
 
     def test_path_traversal_prevention(self):
         """Test that path traversal attacks are prevented."""
@@ -206,10 +206,10 @@ class TestInputValidation:
         with pytest.raises(ValueError):
             validate_json_payload("not json")
         
-        # Oversized payloads should be rejected
-        oversized = '{"data": "' + 'x' * (10 * 1024 * 1024) + '"}'
+        # Oversized payloads should be rejected (2KB payload with 1KB limit)
+        oversized = '{"data": "' + 'x' * 2048 + '"}'
         with pytest.raises(ValueError, match="exceeds maximum size"):
-            validate_json_payload(oversized, max_size=1024 * 1024)
+            validate_json_payload(oversized, max_size=1024)
 
     def test_file_upload_validation(self):
         """Test that file uploads are properly validated."""

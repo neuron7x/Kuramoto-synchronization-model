@@ -46,7 +46,9 @@ class SecurityValidator:
         found_secrets = False
         
         for file_path in python_files + yaml_files:
-            if ".git" in str(file_path) or "test" in str(file_path):
+            # Skip .git directory and test directories/files
+            path_str = str(file_path)
+            if ".git" in path_str or path_str.startswith(str(self.repo_root / "tests")):
                 continue
                 
             try:

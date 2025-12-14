@@ -235,10 +235,12 @@ class TestCryptographicSecurity:
         incorrect_time = time.perf_counter() - start
         
         # Times should be similar (within 10x for variable system load)
-        # Note: In production, use secrets.compare_digest for constant-time comparison
+        # Note: PBKDF2 with 100k iterations naturally provides timing attack resistance
+        # as the hashing dominates the execution time. The secrets.compare_digest()
+        # provides constant-time comparison for the final check.
         time_ratio = max(correct_time, incorrect_time) / min(correct_time, incorrect_time)
-        # Lenient check due to system variability
-        assert time_ratio < 100, f"Timing difference too large: {time_ratio}"
+        # Lenient check (10x) due to system variability in CI environments
+        assert time_ratio < 10, f"Timing difference too large: {time_ratio:.2f}x"
 
 
 class TestSessionManagement:

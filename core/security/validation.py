@@ -546,8 +546,18 @@ def validate_numeric_input(value: Any) -> float:
 def sanitize_string_input(value: str, max_length: int = 1000) -> str:
     """Sanitize string input by removing dangerous characters and patterns.
     
-    NOTE: This function provides defense in depth, but parameterized queries
-    are the primary defense against SQL injection.
+    IMPORTANT: This function provides defense-in-depth only. Parameterized queries
+    (see core.database.query_builder) are the PRIMARY and REQUIRED defense against
+    SQL injection. Never rely on string sanitization alone.
+    
+    This function should be used for:
+    - User-facing error messages
+    - Log entries
+    - Display values
+    
+    This function should NOT be used as:
+    - The sole defense for database queries (use parameterized queries)
+    - A replacement for proper escaping in output contexts
     """
     if not isinstance(value, str):
         raise ValueError("Input must be a string")
@@ -560,6 +570,7 @@ def sanitize_string_input(value: str, max_length: int = 1000) -> str:
     value = re.sub(r'/\*.*?\*/', '', value, flags=re.DOTALL)  # Block comments
     
     # Remove dangerous SQL keywords (case-insensitive)
+    # This is defense-in-depth only - always use parameterized queries
     sql_keywords = [
         r'\bDROP\s+TABLE\b',
         r'\bDROP\s+DATABASE\b',
@@ -575,8 +586,8 @@ def sanitize_string_input(value: str, max_length: int = 1000) -> str:
     for keyword in sql_keywords:
         value = re.sub(keyword, '', value, flags=re.IGNORECASE)
     
-    # Escape single quotes (standard SQL escaping)
-    value = value.replace("'", "''")
+    # Note: Single quote escaping removed - use parameterized queries instead
+    # This prevents false confidence in sanitization as SQL injection defense
     
     # Remove XSS patterns
     value = HTMLSanitizer.sanitize_html(value)
@@ -640,10 +651,13 @@ def validate_integer_range(value: int, min_val: int, max_val: int) -> int:
     return value
 
 
-def validate_url(url: str, allowed_schemes: list[str] | None = None) -> bool:
-    """Validate URL format and scheme."""
-    URLValidator.validate_url(url, allowed_schemes)
-    return True
+def validate_url(url: str, allowed_schemes: list[str] | None = None) -> str:
+    """Validate URL format and scheme.
+    
+    Returns the validated URL string (for API consistency).
+    Raises ValueError if validation fails.
+    """
+    return URLValidator.validate_url(url, allowed_schemes)
 
 
 def validate_email(email: str) -> bool:
