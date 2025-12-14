@@ -750,15 +750,15 @@ jobs:
     if: always()
     steps:
       - name: Send Slack notification
-        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
             {
               "text": "TradePulse CI/CD run for <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.run_id }}> completed with status: ${{ job.status }}"
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Append to job summary
         run: |
