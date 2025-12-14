@@ -44,3 +44,19 @@ def test_configure_logging_emits_structured_payload(
     assert records[0]["component"] == "test"
     assert records[1]["level"] == "error"
     assert records[1]["error_code"] == 500
+
+
+def test_configure_logging_accepts_numeric_string_level(
+    restore_logging: Callable[[], None],
+) -> None:
+    records: list[dict[str, object]] = []
+
+    configure_logging(level="20", sink=records.append)
+
+    logger = logging.getLogger("tradepulse.test")
+    logger.info("info event")
+
+    restore_logging()
+
+    assert records
+    assert records[0]["level"] == "info"

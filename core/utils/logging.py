@@ -92,11 +92,19 @@ def _resolve_level(level: int | str) -> int:
 
     if isinstance(level, str):
         normalized = level.strip()
+        if not normalized:
+            raise ValueError("Unknown log level: ''")
 
+        # First try to interpret the string as a standard logging name in a
+        # case-insensitive manner (e.g., "info", "WARNING").  ``getLevelName``
+        # returns an ``int`` when it recognises the name and a descriptive
+        # string otherwise.
         numeric_level = logging.getLevelName(normalized.upper())
-        if not isinstance(numeric_level, str):
+        if isinstance(numeric_level, int):
             return int(numeric_level)
 
+        # Fall back to accepting numeric strings so callers can pass values
+        # read from configuration files without manual casting.
         try:
             return int(normalized)
         except ValueError:

@@ -198,6 +198,16 @@ def test_configure_logging_accepts_numeric_level_string() -> None:
     assert "debug message" in stream.getvalue()
 
 
+def test_configure_logging_accepts_case_insensitive_level() -> None:
+    stream = io.StringIO()
+
+    configure_logging(level="info", use_json=False, stream=stream)
+    logging.getLogger("tradepulse.tests").info("hello lower")
+
+    assert logging.getLogger().level == logging.INFO
+    assert "hello lower" in stream.getvalue()
+
+
 def test_configure_logging_rejects_invalid_level() -> None:
     with pytest.raises(ValueError):
         configure_logging(level="not-a-level")
