@@ -4,6 +4,7 @@ Database query builder with SQL injection prevention.
 Provides parameterized query building to prevent SQL injection attacks.
 """
 
+import re
 from typing import Tuple, Any, List
 
 

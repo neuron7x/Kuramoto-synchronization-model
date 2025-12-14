@@ -47,9 +47,15 @@ class SecurityValidator:
         
         for file_path in python_files + yaml_files:
             # Skip .git directory and test directories/files
-            path_str = str(file_path)
-            if ".git" in path_str or path_str.startswith(str(self.repo_root / "tests")):
+            try:
+                # Check if path is under tests directory using relative_to
+                file_path.relative_to(self.repo_root / "tests")
+                # If we get here, it's under tests/ - skip it
                 continue
+            except ValueError:
+                # Not under tests/, check for .git
+                if ".git" in str(file_path):
+                    continue
                 
             try:
                 content = file_path.read_text()
