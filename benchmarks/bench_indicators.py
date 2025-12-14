@@ -62,6 +62,7 @@ class TestKuramotoBenchmarks:
     def test_kuramoto_order_2d(self, benchmark):
         """Benchmark Kuramoto order for 2D phase matrix."""
         # 50 oscillators x 200 timesteps
+        np.random.seed(42)  # Fixed seed for reproducible benchmarks
         phases = np.random.uniform(-np.pi, np.pi, (50, 200))
         result = benchmark(kuramoto_order, phases)
         assert isinstance(result, np.ndarray)
@@ -79,6 +80,7 @@ class TestRicciBenchmarks:
     @pytest.fixture
     def volatile_prices(self) -> np.ndarray:
         """Volatile price series."""
+        np.random.seed(42)  # Fixed seed for reproducible benchmarks
         trend = 100 * np.exp(np.linspace(0, 0.1, 500))
         noise = np.random.normal(0, 2, 500)
         return trend + noise
@@ -115,11 +117,13 @@ class TestEntropyBenchmarks:
     @pytest.fixture
     def random_returns(self) -> np.ndarray:
         """Random return series."""
+        np.random.seed(42)  # Fixed seed for reproducible benchmarks
         return np.random.normal(0, 0.02, 1000)
 
     @pytest.fixture
     def structured_returns(self) -> np.ndarray:
         """Structured return series with autocorrelation."""
+        np.random.seed(42)  # Fixed seed for reproducible benchmarks
         noise = np.random.normal(0, 0.01, 1000)
         # Add autocorrelation
         structured = np.zeros(1000)
@@ -147,6 +151,7 @@ class TestEntropyBenchmarks:
 
     def test_entropy_chunked(self, benchmark):
         """Benchmark chunked entropy for large dataset."""
+        np.random.seed(42)  # Fixed seed for reproducible benchmarks
         large_data = np.random.normal(0, 0.02, 100000)
         result = benchmark(entropy, large_data, bins=50, chunk_size=10000)
         assert isinstance(result, (float, np.floating))
@@ -160,6 +165,7 @@ class TestEndToEndBenchmarks:
 
         def compute_indicators():
             # Simulate typical workflow
+            np.random.seed(42)  # Fixed seed for reproducible benchmarks
             prices = 100 * np.exp(np.cumsum(np.random.normal(0.0001, 0.02, 500)))
 
             # Phase analysis

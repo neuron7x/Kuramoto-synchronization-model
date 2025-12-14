@@ -17,7 +17,11 @@ except ImportError:  # pragma: no cover
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
 from core.indicators.entropy import delta_entropy, entropy
-from core.indicators.kuramoto import compute_phase, kuramoto_order
+from core.indicators.kuramoto import (
+    compute_phase,
+    kuramoto_order,
+    multi_asset_kuramoto,
+)
 
 
 @st.composite
@@ -147,15 +151,10 @@ class TestPhaseAnalysisProperties:
             for _ in range(n_assets)
         ]
 
-        # Should not raise
-        try:
-            from core.indicators.kuramoto import multi_asset_kuramoto
-
-            sync = multi_asset_kuramoto(series_list)
-            assert 0.0 <= sync <= 1.0
-            assert np.isfinite(sync)
-        except Exception as e:
-            pytest.fail(f"multi_asset_kuramoto failed: {e}")
+        # Should complete successfully
+        sync = multi_asset_kuramoto(series_list)
+        assert 0.0 <= sync <= 1.0
+        assert np.isfinite(sync)
 
 
 class TestRobustnessProperties:
