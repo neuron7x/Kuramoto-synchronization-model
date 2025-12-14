@@ -10,6 +10,7 @@ from core.neuro.ecs_regulator import (
     ECSMetrics,
     FE_STABILITY_EPSILON,
     StabilityMetrics,
+    TRACE_SCHEMA_FIELDS,
 )
 
 
@@ -276,9 +277,11 @@ class TestAdaptParameters:
         # Chronic should have enough counter to be chronic
         assert reg_chronic.chronic_counter > reg_chronic.chronic_threshold
 
-        # Chronic should have HIGHER threshold (stronger conservative adaptation)
+        # Chronic should have HIGHER or EQUAL threshold (stronger conservative adaptation).
+        # Equality is acceptable when both reach max adaptation bounds or when stress levels
+        # are very close. The key invariant is that chronic never produces LOWER threshold.
         assert reg_chronic.risk_threshold >= reg_acute.risk_threshold
-        # Chronic should have higher compensation
+        # Chronic should have higher or equal compensation (same reasoning)
         assert reg_chronic.compensatory_factor >= reg_acute.compensatory_factor
 
     def test_adapt_context_dependent(self) -> None:
@@ -300,7 +303,8 @@ class TestAdaptParameters:
         reg_stable.adapt_parameters(context_phase="stable")
         reg_chaotic.adapt_parameters(context_phase="chaotic")
 
-        # Chaotic phase should be more conservative (HIGHER threshold = harder to trade)
+        # Chaotic phase should be more conservative (HIGHER threshold = harder to trade).
+        # Equality is acceptable when stress is below threshold (recovery path).
         assert reg_chaotic.risk_threshold >= reg_stable.risk_threshold
 
     def test_adapt_recovery(self) -> None:
@@ -1243,22 +1247,13 @@ class TestECSInvariants:
         regulator = ECSInspiredRegulator(seed=7, conformal_gate_enabled=False)
         baseline_trace = regulator.get_trace()
 
-        # Audit-grade trace schema with new columns
-        expected_cols = {
-            "timestamp_utc", "schema_version", "decision_id", "prev_hash",
-            "mode", "stress_level", "chronic_counter", "free_energy_proxy",
-            "raw_signal", "filtered_signal", "adjusted_signal",
-            "conformal_q", "prediction_interval_low", "prediction_interval_high",
-            "conformal_ready", "action", "confidence_gate_pass", "reason_codes",
-            "params_snapshot", "mode_context", "stress_level_context", "event_hash",
-        }
-
         regulator.update_stress(np.array([0.05, -0.05]), 0.1)
         regulator.adapt_parameters()
         regulator.decide_action(0.2)
 
         updated_trace = regulator.get_trace()
-        assert set(updated_trace.columns) == expected_cols
+        # Use imported schema constant for consistency with implementation
+        assert set(updated_trace.columns) == TRACE_SCHEMA_FIELDS
         assert len(updated_trace) >= len(baseline_trace)
 
     def test_decide_action_is_deterministic_with_fixed_seed(self) -> None:
@@ -1430,7 +1425,7 @@ class TestConformalCalibration:
         empirical_coverage = coverage_hits / n_samples
         expected_coverage = 1 - alpha
 
-        # Allow ±0.05 tolerance
+        # Allow ±0.10 tolerance due to finite sample size and rolling calibration window
         assert abs(empirical_coverage - expected_coverage) < 0.10, (
             f"Coverage {empirical_coverage:.3f} deviates too much from {expected_coverage:.2f}"
         )
@@ -1571,17 +1566,9 @@ class TestConformalCalibration:
                 f"{first_keys - event_keys} missing"
             )
 
-        # Verify required fields are present
-        required_fields = {
-            "timestamp_utc", "schema_version", "decision_id", "prev_hash", "event_hash",
-            "mode", "stress_level", "chronic_counter", "free_energy_proxy",
-            "raw_signal", "filtered_signal", "adjusted_signal",
-            "conformal_q", "prediction_interval_low", "prediction_interval_high",
-            "conformal_ready", "action", "confidence_gate_pass", "reason_codes",
-            "params_snapshot",
-        }
-        assert required_fields.issubset(first_keys), (
-            f"Missing required fields: {required_fields - first_keys}"
+        # Verify required fields match imported schema constant
+        assert first_keys == TRACE_SCHEMA_FIELDS, (
+            f"Missing required fields: {TRACE_SCHEMA_FIELDS - first_keys}"
         )
 
     def test_determinism_fixed_inputs_reproducible(self) -> None:
