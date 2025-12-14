@@ -13,6 +13,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
+import runtime.dual_approval as dual_approval
 from runtime.dual_approval import (
     ApprovalAction,
     ApprovalResult,
@@ -238,6 +239,27 @@ class TestDualApprovalEnhancements:
         manager.validate(action_id=action_id, token=token, source="test")
 
         assert manager.is_action_approved(action_id)
+
+    def test_approval_expires_with_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Approvals should not outlive the encoded token expiration."""
+        base_time = dual_approval.time.time()
+        manager = DualApprovalManager(
+            secret="test_secret",
+            cooldown_seconds=3600.0,
+            token_expiration_seconds=30.0,
+        )
+
+        monkeypatch.setattr(dual_approval.time, "time", lambda: base_time)
+
+        action_id = "test_action"
+        token = manager.issue_service_token(action_id=action_id)
+        manager.validate(action_id=action_id, token=token, source="test")
+
+        assert manager.is_action_approved(action_id)
+
+        monkeypatch.setattr(dual_approval.time, "time", lambda: base_time + 120.0)
+
+        assert not manager.is_action_approved(action_id)
 
     def test_revoke_approval(self) -> None:
         """Test revoking an approval."""

@@ -236,11 +236,19 @@ class DualApprovalManager:
 
         # Success - record approval
         approver = payload.get("sub") or payload.get("approver")
+        exp_claim = payload.get("exp")
+        token_expires_at = (
+            float(exp_claim)
+            if isinstance(exp_claim, (int, float))
+            else now + float(self.token_expiration_seconds)
+        )
+        approval_expires_at = min(token_expires_at, now + self.cooldown_seconds)
+
         self._approvals[action_id] = ApprovalRecord(
             timestamp=now,
             action_id=action_id,
             approver=approver,
-            expires_at=now + self.cooldown_seconds,
+            expires_at=approval_expires_at,
         )
 
         result = ApprovalResult.APPROVED
