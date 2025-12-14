@@ -38,6 +38,23 @@ except ImportError:  # pragma: no cover - optional dependency
 # q=0 would result in log(1)=0 for all cases, breaking the scaling analysis
 _Q_ZERO_THRESHOLD = 0.01
 
+
+def _clamp_q_values(q_values: np.ndarray) -> np.ndarray:
+    """Clamp q-values away from zero while preserving their sign."""
+
+    mask = np.abs(q_values) < _Q_ZERO_THRESHOLD
+    if not np.any(mask):
+        return q_values
+
+    adjusted = np.array(q_values, copy=True)
+    signs = np.sign(adjusted[mask])
+    adjusted[mask] = np.where(
+        signs == 0.0,
+        _Q_ZERO_THRESHOLD,
+        signs * _Q_ZERO_THRESHOLD,
+    )
+    return adjusted
+
 # Minimum absolute coefficient value to include in structure function
 # Values below this are considered numerical noise and excluded
 _COEFF_MIN_THRESHOLD = 1e-12
@@ -288,8 +305,8 @@ def singularity_spectrum(
 
     # q-values for structure function
     q_values = np.linspace(q_range[0], q_range[1], n_q)
-    # Avoid q=0 (undefined log) by clamping near-zero values
-    q_values[np.abs(q_values) < _Q_ZERO_THRESHOLD] = _Q_ZERO_THRESHOLD
+    # Avoid q=0 (undefined log) by clamping near-zero values while preserving sign
+    q_values = _clamp_q_values(q_values)
 
     # Compute structure functions
     scales = []
