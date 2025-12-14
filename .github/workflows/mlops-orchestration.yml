@@ -119,11 +119,11 @@ jobs:
 
       - name: Request dynamic credentials from Vault
         id: vault
+        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
         env:
           VAULT_ADDRESS: ${{ secrets.MLOPS_VAULT_ADDRESS }}
           VAULT_ROLE: ${{ secrets.MLOPS_VAULT_ROLE }}
           VAULT_TOKEN: ${{ secrets.MLOPS_VAULT_TOKEN }}
-        if: ${{ env.VAULT_ADDRESS != '' && env.VAULT_ROLE != '' && env.VAULT_TOKEN != '' }}
         run: |
           mkdir -p "${ARTIFACT_ROOT}/secrets"
           python -m scripts.cli secrets-issue-dynamic \
@@ -267,14 +267,11 @@ jobs:
 
       - name: Configure AWS credentials
         id: aws-creds
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}
-        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
+        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_MLOPS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_MLOPS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform plan

@@ -707,9 +707,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Upload coverage to Codecov (OIDC)
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        if: ${{ !github.event.pull_request.head.repo.fork && env.CODECOV_TOKEN == '' }}
+        if: ${{ !github.event.pull_request.head.repo.fork }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml

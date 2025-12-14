@@ -143,16 +143,20 @@ jobs:
           echo "✓ SBOM artifacts signed successfully"
 
       - name: Verify the secrets are set and run cosign verification
+        if: ${{ github.event_name != 'pull_request' }}
         env:
           COSIGN_CERT_IDENTITY: ${{ secrets.COSIGN_CERTIFICATE_IDENTITY }}
           COSIGN_CERT_OIDC_ISSUER: ${{ secrets.COSIGN_CERTIFICATE_OIDC_ISSUER }}
-        if: ${{ github.event_name != 'pull_request' && env.COSIGN_CERT_IDENTITY != '' && env.COSIGN_CERT_OIDC_ISSUER != '' }}
         run: |
           echo "✅ COSIGN secrets present — running cosign verification"
           # Verify the secrets are set
           if [ -z "${COSIGN_CERT_IDENTITY}" ] || [ -z "${COSIGN_CERT_OIDC_ISSUER}" ]; then
-            echo "❌ ERROR: Required repository secrets are not set."
-            exit 1
+            echo "⚠️ COSIGN verification skipped: required repository secrets are not set."
+            echo "To enable verification, set the following repository secrets in Settings → Secrets and variables → Actions:"
+            echo "  COSIGN_CERTIFICATE_IDENTITY: https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@9abd130449096b0510d111396b9b65516fd8dd49"
+            echo "  COSIGN_CERTIFICATE_OIDC_ISSUER: https://token.actions.githubusercontent.com"
+            echo "See: https://docs.sigstore.dev/cosign/verify/"
+            exit 0
           fi
 
           # Verify the signatures with certificate identity and OIDC issuer
@@ -169,18 +173,6 @@ jobs:
             sbom/cyclonedx-sbom.xml
 
           echo "✓ SBOM signatures verified successfully"
-
-      - name: Skip cosign verification (secrets missing)
-        env:
-          COSIGN_CERT_IDENTITY: ${{ secrets.COSIGN_CERTIFICATE_IDENTITY }}
-          COSIGN_CERT_OIDC_ISSUER: ${{ secrets.COSIGN_CERTIFICATE_OIDC_ISSUER }}
-        if: ${{ github.event_name != 'pull_request' && (env.COSIGN_CERT_IDENTITY == '' || env.COSIGN_CERT_OIDC_ISSUER == '') }}
-        run: |
-          echo "⚠️ COSIGN verification skipped: required repository secrets are not set."
-          echo "To enable verification, set the following repository secrets in Settings → Secrets and variables → Actions:"
-          echo "  COSIGN_CERTIFICATE_IDENTITY: https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@9abd130449096b0510d111396b9b65516fd8dd49"
-          echo "  COSIGN_CERTIFICATE_OIDC_ISSUER: https://token.actions.githubusercontent.com"
-          echo "See: https://docs.sigstore.dev/cosign/verify/"
 
       - name: Check SBOM age
         run: |

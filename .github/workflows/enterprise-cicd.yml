@@ -750,10 +750,10 @@ jobs:
     if: always()
     steps:
       - name: Send Slack notification
+        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: slackapi/slack-github-action@v1.27.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
             {
