@@ -131,8 +131,8 @@ class TestSanitizeFilename:
         result = sanitize_filename("file<script>.txt")
         assert "<" not in result
         assert ">" not in result
-        # Dots are also replaced for security
-        assert result == "file_script__txt"
+        # Extension separator is preserved
+        assert result == "file_script.txt"
 
     def test_sanitize_null_bytes(self):
         """Test sanitization of null bytes."""
@@ -141,9 +141,8 @@ class TestSanitizeFilename:
 
     def test_remove_dots(self):
         """Test removal of dots."""
-        # Dots are replaced with underscores and stripped
         result = sanitize_filename("..file..")
-        assert "." not in result
+        assert result == "file"
 
     def test_handle_empty_result(self):
         """Test that empty results get default name."""

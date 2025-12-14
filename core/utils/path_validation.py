@@ -7,6 +7,7 @@ directory traversal vulnerabilities.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Union
 
 
@@ -130,18 +131,18 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
 
     Examples:
         >>> sanitize_filename("../../etc/passwd")
-        '______etc_passwd'
+        'etc_passwd'
 
         >>> sanitize_filename("file<script>.txt")
-        'file_script_.txt'
+        'file_script.txt'
     """
     if not filename:
         raise ValueError("Filename cannot be empty")
 
     # Remove null bytes
-    filename = filename.replace("\0", "")
+    sanitized = filename.replace("\0", "")
 
-    # Dangerous characters to replace (including dots which can be used in path traversal)
+    # Replace path separators and characters that are dangerous on common filesystems
     dangerous_chars = [
         "/",
         "\\",
@@ -155,17 +156,19 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
         "\n",
         "\r",
         "\t",
-        ".",
     ]
-
-    sanitized = filename
     for char in dangerous_chars:
         sanitized = sanitized.replace(char, replacement)
 
-    # Remove leading/trailing underscores and spaces
-    sanitized = sanitized.strip("_ ")
+    # Collapse repeated dots to a single separator to retain extensions while
+    # neutralising traversal attempts like "..".
+    sanitized = re.sub(r"\.+", ".", sanitized)
+    sanitized = re.sub(rf"{re.escape(replacement)}+(\.)", r"\1", sanitized)
+    sanitized = re.sub(rf"(\.){re.escape(replacement)}+", r"\1", sanitized)
 
-    # Ensure the result is not empty
+    # Strip leading/trailing separators and dots that could create hidden files
+    sanitized = sanitized.strip(f"{replacement} .")
+
     if not sanitized:
         sanitized = "unnamed_file"
 
