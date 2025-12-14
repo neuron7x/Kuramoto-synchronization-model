@@ -81,6 +81,8 @@ class RiskMonitoringConfig:
         enable_performance_tracking: Enable performance tracking.
         enable_fail_safe: Enable fail-safe mechanisms.
         auto_escalate: Automatically escalate based on stress detection.
+        high_drawdown_threshold: Drawdown threshold for high stress escalation.
+        elevated_drawdown_threshold: Drawdown threshold for elevated stress.
     """
 
     entity_id: str = "TRADEPULSE"
@@ -93,6 +95,8 @@ class RiskMonitoringConfig:
     enable_performance_tracking: bool = True
     enable_fail_safe: bool = True
     auto_escalate: bool = True
+    high_drawdown_threshold: float = 0.15  # 15% drawdown triggers high stress
+    elevated_drawdown_threshold: float = 0.10  # 10% drawdown triggers elevated stress
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -107,6 +111,8 @@ class RiskMonitoringConfig:
             "enable_performance_tracking": self.enable_performance_tracking,
             "enable_fail_safe": self.enable_fail_safe,
             "auto_escalate": self.auto_escalate,
+            "high_drawdown_threshold": self.high_drawdown_threshold,
+            "elevated_drawdown_threshold": self.elevated_drawdown_threshold,
         }
 
 
@@ -315,11 +321,11 @@ class RiskMonitoringFramework:
             if self._performance:
                 metrics = self._performance.update_equity(equity)
 
-                # Check for performance-based risk triggers
+                # Check for performance-based risk triggers using configured thresholds
                 if self._fail_safe and self._config.auto_escalate:
-                    if metrics.current_drawdown > 0.15:  # 15% drawdown
+                    if metrics.current_drawdown > self._config.high_drawdown_threshold:
                         self._fail_safe.report_stress("high", source="performance_tracker")
-                    elif metrics.current_drawdown > 0.10:  # 10% drawdown
+                    elif metrics.current_drawdown > self._config.elevated_drawdown_threshold:
                         self._fail_safe.report_stress("elevated", source="performance_tracker")
 
                 return metrics

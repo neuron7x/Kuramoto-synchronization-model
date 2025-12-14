@@ -46,16 +46,22 @@ class StressLevel(str, Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
+    # Order for comparison operations
+    _ORDER = ["normal", "elevated", "high", "critical"]
+
+    def _order_index(self) -> int:
+        """Get the order index for comparison."""
+        return self._ORDER.index(self.value)
+
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, StressLevel):
             return NotImplemented
-        order = [StressLevel.NORMAL, StressLevel.ELEVATED, StressLevel.HIGH, StressLevel.CRITICAL]
-        return order.index(self) < order.index(other)
+        return self._order_index() < other._order_index()
 
     def __le__(self, other: object) -> bool:
         if not isinstance(other, StressLevel):
             return NotImplemented
-        return self == other or self < other
+        return self._order_index() <= other._order_index()
 
 
 @dataclass(slots=True)

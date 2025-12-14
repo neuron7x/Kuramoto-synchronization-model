@@ -176,14 +176,14 @@ class DoddFrankReporter:
         *,
         storage_path: Path | str,
         entity_id: str = "TRADEPULSE",
-        retention_days: int = 2555,  # 7 years
+        retention_days: int = 2557,  # ~7 years (includes leap years: 7*365 + 2)
     ) -> None:
         """Initialize Dodd-Frank reporter.
 
         Args:
             storage_path: Path for storing compliance records.
             entity_id: Legal Entity Identifier (LEI) or internal ID.
-            retention_days: Data retention period in days.
+            retention_days: Data retention period in days (default ~7 years).
         """
         self._storage_path = Path(storage_path)
         self._storage_path.mkdir(parents=True, exist_ok=True)

@@ -182,14 +182,15 @@ class PerformanceTrackerConfig:
 
     Attributes:
         initial_capital: Starting capital.
-        periods_per_year: Number of trading periods per year.
+        periods_per_year: Number of trading periods per year (default 252 for US
+            equity markets which have approximately 252 trading days per year).
         risk_free_rate: Annual risk-free rate.
         rolling_window: Window size for rolling calculations.
         benchmark_returns: Optional benchmark returns for comparison.
     """
 
     initial_capital: float = 100_000.0
-    periods_per_year: int = 252
+    periods_per_year: int = 252  # US equity trading days per year
     risk_free_rate: float = 0.0
     rolling_window: int = 20
     benchmark_returns: NDArray[np.float64] | None = None
