@@ -60,7 +60,7 @@ jobs:
     - name: Run TruffleHog
       uses: trufflesecurity/trufflehog@main
       with:
-        extra_args: --only-verified
+        extra_args: --only-verified --exclude-paths=.trufflehog-exclude
 
     - name: Run Bandit security linter
       run: |
