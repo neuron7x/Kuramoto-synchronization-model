@@ -84,10 +84,14 @@ class _StructuredSinkHandler(logging.Handler):
 def _resolve_level(level: int | str) -> int:
     if isinstance(level, int):
         return level
-    numeric = logging.getLevelName(level.upper())
+    normalized = level.strip()
+    numeric = logging.getLevelName(normalized.upper())
     if isinstance(numeric, int):
-        return numeric
-    raise ValueError(f"Unknown log level: {level}")
+        return int(numeric)
+    try:
+        return int(normalized)
+    except ValueError:
+        raise ValueError(f"Unknown log level: {level}")
 
 
 def configure_logging(
