@@ -29,6 +29,7 @@ class DivergenceConfig:
     causal_max_lag: int = 3
     causal_p_threshold: float | None = 0.05
     causal_feature: str | None = None
+    normalisation: Literal["none", "zscore", "robust"] = "robust"
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +82,32 @@ def _select_causal_series(frame: pd.DataFrame, config: DivergenceConfig) -> pd.S
     if not non_price_columns:
         raise ValueError("features must contain at least one non-price column")
     return frame[non_price_columns[0]]
+
+
+def _normalise_deltas(
+    deltas: pd.DataFrame, mode: Literal["none", "zscore", "robust"], eps: float = 1e-12
+) -> pd.DataFrame:
+    if mode == "none" or deltas.empty:
+        return deltas.copy()
+
+    normalised = pd.DataFrame(index=deltas.index, columns=deltas.columns, dtype=float)
+    for column in deltas.columns:
+        series = deltas[column].astype(float)
+        if mode == "zscore":
+            centre = float(series.mean())
+            scale = float(series.std(ddof=0))
+        else:
+            centre = float(series.median())
+            scale = float(np.median(np.abs(series - centre)))
+
+        if not np.isfinite(scale) or scale < eps:
+            scale = float(series.abs().median())
+        if not np.isfinite(scale) or scale < eps:
+            scale = 1.0
+
+        normalised[column] = (series - centre) / scale
+
+    return normalised
 
 
 def _compute_divergence(
@@ -147,6 +174,8 @@ def compute_divergence_convergence_phi(
     if deltas.empty:
         raise ValueError("unable to compute differences for divergence analysis")
 
+    normalised_deltas = _normalise_deltas(deltas, config.normalisation)
+
     causal_series = _select_causal_series(frame, config)
 
     divergence_values: list[float] = []
@@ -157,7 +186,7 @@ def compute_divergence_convergence_phi(
     causal_flags: list[bool] = []
 
     phi = 0.0
-    for idx, (timestamp, row) in enumerate(deltas.iterrows()):
+    for idx, (timestamp, row) in enumerate(normalised_deltas.iterrows()):
         price_delta = float(row["price"])
         feature_delta = row.drop(labels="price").to_numpy(dtype=float)
 

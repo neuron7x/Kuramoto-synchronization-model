@@ -56,3 +56,34 @@ def test_granger_causality_detects_linear_dependence() -> None:
 
     assert result.causes
     assert 0.0 <= result.p_value <= 0.05
+
+
+def test_normalisation_reduces_scale_bias() -> None:
+    rng = np.random.default_rng(21)
+    index = pd.RangeIndex(250)
+
+    price = pd.Series(
+        np.linspace(100.0, 104.0, len(index)) + rng.normal(0.0, 0.05, len(index)),
+        index=index,
+    )
+    features = pd.DataFrame(
+        {
+            "feature": price * 120 + rng.normal(0.0, 5.0, len(index)),
+            "volume": price * 800 + rng.normal(0.0, 20.0, len(index)),
+        },
+        index=index,
+    )
+
+    baseline = compute_divergence_convergence_phi(
+        price,
+        features,
+        config=DivergenceConfig(normalisation="none", causal_p_threshold=None),
+    )
+    normalised = compute_divergence_convergence_phi(
+        price,
+        features,
+        config=DivergenceConfig(normalisation="robust", causal_p_threshold=None),
+    )
+
+    assert normalised.convergence.mean() > baseline.convergence.mean()
+    assert normalised.divergence.mean() < baseline.divergence.mean()
