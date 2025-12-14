@@ -69,10 +69,9 @@ def test_strategy_callback_crash() -> None:
 
 
 def test_infinite_position_handled() -> None:
-    """Test that infinite/NaN positions from bad signal_fn are handled.
+    """Test that infinite/NaN positions from bad signal_fn are validated and rejected.
     
-    Note: This test documents CURRENT behavior where NaN propagates through.
-    This is a known gap - system should validate and reject NaN signals upfront.
+    The engine now validates signals upfront and raises clear errors for NaN values.
     """
     
     prices = np.array([100.0, 101.0, 102.0, 103.0, 104.0])
@@ -81,22 +80,20 @@ def test_infinite_position_handled() -> None:
     def nan_signal_fn(prices: np.ndarray) -> np.ndarray:
         return np.full_like(prices, np.nan)
     
-    # Run backtest - currently NaN signals produce NaN results (not ideal)
-    result = walk_forward(
-        prices=prices,
-        signal_fn=nan_signal_fn,
-        initial_capital=10000.0,
-        constraints=PortfolioConstraints(),
-        latency=LatencyConfig(),
-    )
+    # Engine should now validate signals and raise ValueError for NaN inputs
+    with pytest.raises(ValueError) as exc_info:
+        walk_forward(
+            prices=prices,
+            signal_fn=nan_signal_fn,
+            initial_capital=10000.0,
+            constraints=PortfolioConstraints(),
+            latency=LatencyConfig(),
+        )
     
-    # Current behavior: NaN propagates through to results
-    assert isinstance(result, Result)
-    # This shows the failure mode - equity curve contains NaN
-    # (excluding last element which might be initial capital)
-    assert np.all(np.isnan(result.equity_curve[:-1]))
-    assert np.isnan(result.pnl)
-    # TODO: Engine should validate signals and raise clear error for NaN
+    # Verify error message is helpful
+    error_msg = str(exc_info.value).lower()
+    assert "non-finite" in error_msg or "nan" in error_msg, \
+        f"Expected error message about non-finite values, got: {exc_info.value}"
 
 
 def test_strategy_returning_invalid_type() -> None:
