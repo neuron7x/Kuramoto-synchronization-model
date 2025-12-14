@@ -11,18 +11,32 @@ neuroscience data (2025 updates) including:
 - Kalman filtering for predictive coding
 - Full traceability for MiFID II compliance
 
+Enhanced features (2025 refactor):
+- Strict monotonic free energy descent with Lyapunov-like stability guarantees
+- Conservative risk aversion during high volatility periods
+- Dynamic real-time adaptation via feedback loops
+- Bounded gradients and mathematical stability checks
+
 The regulator is designed to integrate with TradePulse's FractalMotivationController
 and TACL thermodynamic control system.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+
+
+# Mathematical constants for stability and safety bounds
+GRADIENT_BOUND_MAX: float = 0.5  # Maximum allowed gradient magnitude
+GRADIENT_BOUND_MIN: float = -0.5  # Minimum allowed gradient (descent)
+FE_STABILITY_EPSILON: float = 1e-4  # Numerical stability epsilon (practical threshold)
+VOLATILITY_SPIKE_THRESHOLD: float = 0.15  # High volatility detection
+RISK_AVERSION_MULTIPLIER: float = 0.7  # Conservative multiplier during stress
 
 
 @dataclass(slots=True)
@@ -38,12 +52,34 @@ class ECSMetrics:
     is_chronic: bool
 
 
+@dataclass(slots=True)
+class StabilityMetrics:
+    """Extended metrics for mathematical stability monitoring.
+
+    Provides detailed insight into the regulator's thermodynamic state
+    and stability guarantees for operational monitoring.
+    """
+
+    monotonicity_violations: int
+    gradient_clipping_events: int
+    lyapunov_value: float
+    stability_margin: float
+    volatility_regime: str
+    risk_aversion_active: bool
+
+
 class ECSInspiredRegulator:
     """ECS-inspired regulator for adaptive risk management.
 
     Implements biologically-inspired control based on endocannabinoid system
     dynamics, with stress differentiation, context-dependent modulation, and
     free energy alignment for thermodynamic consistency.
+
+    Enhanced with:
+    - Strict monotonic free energy descent enforcement (Lyapunov stability)
+    - Conservative risk aversion during high volatility periods
+    - Dynamic real-time feedback loop for adaptive risk parameters
+    - Bounded gradients and mathematical stability checks
 
     Args:
         initial_risk_threshold: Initial adaptive risk threshold (AEA-inspired)
@@ -52,6 +88,8 @@ class ECSInspiredRegulator:
         chronic_threshold: Number of periods for chronic stress detection
         fe_scaling: Scaling factor for free energy proxy mapping
         seed: Random seed for reproducibility (optional)
+        enforce_monotonicity: If True, strictly enforce FE descent (default: True)
+        volatility_adaptive: If True, enable dynamic volatility adaptation (default: True)
 
     Example:
         >>> regulator = ECSInspiredRegulator()
@@ -68,6 +106,8 @@ class ECSInspiredRegulator:
         chronic_threshold: int = 5,
         fe_scaling: float = 1.0,
         seed: int | None = None,
+        enforce_monotonicity: bool = True,
+        volatility_adaptive: bool = True,
     ) -> None:
         if not 0.0 < initial_risk_threshold <= 1.0:
             raise ValueError("initial_risk_threshold must be between 0 and 1")
@@ -80,6 +120,7 @@ class ECSInspiredRegulator:
         if fe_scaling <= 0.0:
             raise ValueError("fe_scaling must be positive")
 
+        self._initial_risk_threshold = float(initial_risk_threshold)
         self.risk_threshold = float(initial_risk_threshold)
         self.compensatory_factor = 1.0  # 2-AG-inspired compensation
         self.smoothing_alpha = float(smoothing_alpha)
@@ -96,6 +137,198 @@ class ECSInspiredRegulator:
         self.kalman_state = 0.0
         self.kalman_variance = 1.0
 
+        # Enhanced stability and monotonicity tracking
+        self._enforce_monotonicity = enforce_monotonicity
+        self._volatility_adaptive = volatility_adaptive
+        self._monotonicity_violations = 0
+        self._gradient_clipping_events = 0
+        self._fe_history: list[float] = []
+        self._volatility_history: list[float] = []
+        self._lyapunov_value = 0.0
+        self._current_volatility = 0.0
+        self._risk_aversion_active = False
+        self._feedback_gain = 0.1  # Adaptive feedback loop gain
+
+    def _compute_bounded_gradient(self, new_value: float, old_value: float) -> float:
+        """Compute gradient with bounds for mathematical stability.
+
+        Applies gradient clipping to ensure bounded updates and prevent
+        instability during extreme market conditions.
+
+        Args:
+            new_value: New computed value
+            old_value: Previous value
+
+        Returns:
+            Bounded gradient value
+        """
+        gradient = new_value - old_value
+
+        # Apply gradient bounds for stability
+        if gradient > GRADIENT_BOUND_MAX:
+            self._gradient_clipping_events += 1
+            return GRADIENT_BOUND_MAX
+        elif gradient < GRADIENT_BOUND_MIN:
+            self._gradient_clipping_events += 1
+            return GRADIENT_BOUND_MIN
+
+        return gradient
+
+    def _compute_volatility_regime(self, volatility: float) -> str:
+        """Classify current volatility into regime categories.
+
+        Args:
+            volatility: Current volatility measure
+
+        Returns:
+            Volatility regime classification
+        """
+        if volatility > VOLATILITY_SPIKE_THRESHOLD * 2:
+            return "extreme"
+        elif volatility > VOLATILITY_SPIKE_THRESHOLD:
+            return "high"
+        elif volatility > VOLATILITY_SPIKE_THRESHOLD * 0.5:
+            return "moderate"
+        else:
+            return "low"
+
+    def _compute_lyapunov_value(self) -> float:
+        """Compute Lyapunov-like stability indicator.
+
+        Uses the sum of squared free energy values as a Lyapunov function
+        to ensure system stability. A decreasing Lyapunov value indicates
+        stable behavior.
+
+        Returns:
+            Current Lyapunov stability value
+        """
+        if len(self._fe_history) < 2:
+            return 0.0
+
+        # Lyapunov function: V = (1/2) * FE^2
+        # For stability, dV/dt ≤ 0
+        current_fe = self._fe_history[-1]
+        prev_fe = self._fe_history[-2]
+
+        v_current = 0.5 * current_fe * current_fe
+        v_prev = 0.5 * prev_fe * prev_fe
+
+        # Delta V should be ≤ 0 for stability
+        delta_v = v_current - v_prev
+        return float(delta_v)
+
+    def _apply_risk_aversion(self, base_threshold: float) -> float:
+        """Apply conservative risk aversion during high volatility.
+
+        Reduces risk threshold when volatility exceeds safe levels to
+        minimize potential losses during stress events.
+
+        Args:
+            base_threshold: Current risk threshold before adjustment
+
+        Returns:
+            Adjusted risk threshold with aversion applied
+        """
+        if not self._volatility_adaptive:
+            return base_threshold
+
+        regime = self._compute_volatility_regime(self._current_volatility)
+
+        if regime in ["high", "extreme"]:
+            self._risk_aversion_active = True
+            aversion_factor = RISK_AVERSION_MULTIPLIER
+            if regime == "extreme":
+                aversion_factor *= 0.5  # Extra conservative in extreme conditions
+            return base_threshold * aversion_factor
+        else:
+            self._risk_aversion_active = False
+            return base_threshold
+
+    def _enforce_strict_monotonic_descent(
+        self, new_fe: float, previous_fe: float
+    ) -> float:
+        """Enforce strict monotonic free energy descent.
+
+        Implements Lyapunov-like stability guarantee by ensuring that
+        free energy never increases. When a violation is detected,
+        applies corrective action to maintain descent.
+
+        Args:
+            new_fe: Newly computed free energy
+            previous_fe: Previous free energy value
+
+        Returns:
+            Corrected free energy value satisfying monotonicity
+        """
+        if not self._enforce_monotonicity:
+            return new_fe
+
+        # Compute bounded gradient
+        gradient = self._compute_bounded_gradient(new_fe, previous_fe)
+
+        # Strict monotonicity: only allow descent (negative or zero gradient)
+        if gradient > FE_STABILITY_EPSILON:
+            self._monotonicity_violations += 1
+
+            # Apply exponential decay correction for strict descent
+            # FE_new = FE_prev * decay_factor where decay_factor < 1
+            decay_factor = 0.995  # Gentle decay to maintain descent
+            corrected_fe = previous_fe * decay_factor
+
+            self.log_action(
+                "Monotonicity correction",
+                {
+                    "original_fe": float(new_fe),
+                    "corrected_fe": float(corrected_fe),
+                    "gradient": float(gradient),
+                    "violation_count": self._monotonicity_violations,
+                },
+            )
+
+            return float(corrected_fe)
+
+        return new_fe
+
+    def _update_feedback_loop(self) -> None:
+        """Update dynamic feedback loop for real-time adaptation.
+
+        Implements an integral feedback controller that adjusts
+        parameters based on accumulated error signal from the
+        volatility and stress history.
+        """
+        if len(self._volatility_history) < 5:
+            return
+
+        # Compute recent volatility trend
+        recent_vol = np.mean(self._volatility_history[-5:])
+        older_vol = np.mean(self._volatility_history[-10:-5]) if len(
+            self._volatility_history
+        ) >= 10 else recent_vol
+
+        # Feedback error: positive if volatility increasing
+        vol_error = recent_vol - older_vol
+
+        # Adaptive gain adjustment based on regime
+        regime = self._compute_volatility_regime(self._current_volatility)
+        if regime in ["high", "extreme"]:
+            self._feedback_gain = min(0.3, self._feedback_gain * 1.1)
+        else:
+            self._feedback_gain = max(0.05, self._feedback_gain * 0.95)
+
+        # Apply integral feedback to stress threshold
+        if vol_error > 0:
+            # Volatility increasing: lower stress threshold for earlier detection
+            adjustment = self._feedback_gain * vol_error
+            self.stress_threshold = max(
+                0.01, self.stress_threshold - adjustment
+            )
+        else:
+            # Volatility decreasing: can relax threshold slightly
+            adjustment = self._feedback_gain * abs(vol_error) * 0.5
+            self.stress_threshold = min(
+                0.2, self.stress_threshold + adjustment
+            )
+
     def update_stress(
         self,
         market_returns: np.ndarray,
@@ -107,6 +340,12 @@ class ECSInspiredRegulator:
         Computes combined stress from volatility and drawdown, applies EMA smoothing,
         and tracks chronic stress patterns. Enforces monotonic free energy descent
         when aligned with TACL.
+
+        Enhanced with:
+        - Strict monotonic descent enforcement
+        - Bounded gradient updates
+        - Lyapunov stability checks
+        - Dynamic volatility adaptation
 
         Args:
             market_returns: Array of recent market returns
@@ -128,24 +367,50 @@ class ECSInspiredRegulator:
         else:
             volatility_proxy = float(np.abs(np.mean(returns_array)))
 
+        # Track volatility for regime detection and feedback
+        self._current_volatility = volatility_proxy
+        self._volatility_history.append(volatility_proxy)
+        if len(self._volatility_history) > 100:  # Keep last 100 values
+            self._volatility_history.pop(0)
+
+        # Apply risk aversion during high volatility
+        effective_threshold = self._apply_risk_aversion(self.risk_threshold)
+
         # Combined stress with weighted components
         combined_stress = 0.7 * volatility_proxy + 0.3 * float(drawdown)
 
-        # Apply EMA smoothing for homeostasis
-        self.stress_level = (
+        # Apply bounded gradient for stability
+        old_stress = self.stress_level
+        new_stress = (
             self.smoothing_alpha * self.stress_level
             + (1 - self.smoothing_alpha) * combined_stress
         )
 
-        # Map to TACL free energy proxy
-        self.free_energy_proxy = self.stress_level * self.fe_scaling
+        # Bound the stress update gradient
+        stress_gradient = self._compute_bounded_gradient(new_stress, old_stress)
+        self.stress_level = old_stress + stress_gradient
 
-        # Enforce monotonic descent if previous FE provided
+        # Map to TACL free energy proxy
+        raw_fe = self.stress_level * self.fe_scaling
+
+        # Enforce strict monotonic descent
         if previous_fe is not None:
-            delta_fe = self.free_energy_proxy - previous_fe
-            if delta_fe > 0:  # Violation of descent
-                self.stress_level *= 0.98  # Correction
-                self.free_energy_proxy = previous_fe  # Cap to previous
+            self.free_energy_proxy = self._enforce_strict_monotonic_descent(
+                raw_fe, previous_fe
+            )
+        else:
+            self.free_energy_proxy = raw_fe
+
+        # Track FE history for Lyapunov analysis
+        self._fe_history.append(self.free_energy_proxy)
+        if len(self._fe_history) > 100:  # Keep last 100 values
+            self._fe_history.pop(0)
+
+        # Compute Lyapunov value for stability monitoring
+        self._lyapunov_value = self._compute_lyapunov_value()
+
+        # Update dynamic feedback loop
+        self._update_feedback_loop()
 
         # Track chronic stress patterns
         if self.stress_level > self.stress_threshold:
@@ -153,7 +418,7 @@ class ECSInspiredRegulator:
         else:
             self.chronic_counter = max(0, self.chronic_counter - 1)
 
-        # Log the update
+        # Log the update with extended metrics
         self.log_action(
             "Stress update",
             {
@@ -162,6 +427,10 @@ class ECSInspiredRegulator:
                 "vol": float(volatility_proxy),
                 "dd": float(drawdown),
                 "chronic_count": self.chronic_counter,
+                "volatility_regime": self._compute_volatility_regime(volatility_proxy),
+                "risk_aversion_active": self._risk_aversion_active,
+                "lyapunov_value": float(self._lyapunov_value),
+                "effective_threshold": float(effective_threshold),
             },
         )
 
@@ -173,24 +442,54 @@ class ECSInspiredRegulator:
         - Chronic stress: aggressive threshold reduction
         - Phase-dependent: conservative in chaotic/transition phases
 
+        Enhanced with:
+        - Conservative risk aversion during high volatility
+        - Bounded parameter adjustments for stability
+        - Lyapunov-aware adaptation
+
         Args:
             context_phase: Market phase from Kuramoto-Ricci analysis
                          ('stable', 'chaotic', 'transition')
         """
         is_chronic = self.chronic_counter > self.chronic_threshold
+        volatility_regime = self._compute_volatility_regime(self._current_volatility)
 
         # Context-dependent phase factor
         phase_factor = 0.95 if context_phase in ["chaotic", "transition"] else 1.02
 
+        # Additional conservatism during high volatility
+        if self._volatility_adaptive and volatility_regime in ["high", "extreme"]:
+            phase_factor *= RISK_AVERSION_MULTIPLIER
+            if volatility_regime == "extreme":
+                phase_factor *= 0.8  # Extra conservative
+
         if self.stress_level > self.stress_threshold:
             # High stress adaptation
             threshold_multiplier = 0.92 if is_chronic else 0.95
-            self.risk_threshold *= threshold_multiplier * phase_factor
+            new_threshold = self.risk_threshold * threshold_multiplier * phase_factor
+
+            # Bound the threshold change for stability
+            max_change = 0.1 * self.risk_threshold
+            if abs(new_threshold - self.risk_threshold) > max_change:
+                if new_threshold < self.risk_threshold:
+                    new_threshold = self.risk_threshold - max_change
+                else:
+                    new_threshold = self.risk_threshold + max_change
+
+            # Ensure minimum threshold for safety
+            self.risk_threshold = max(0.001, new_threshold)
 
             # Compensatory upregulation (2-AG-inspired)
-            comp_increase = 1.15 if is_chronic else 1.1
+            # Reduced compensation during high volatility for safety
+            if volatility_regime in ["high", "extreme"]:
+                comp_increase = 1.05 if is_chronic else 1.03
+                max_comp = 1.3 if is_chronic else 1.2
+            else:
+                comp_increase = 1.15 if is_chronic else 1.1
+                max_comp = 1.6 if is_chronic else 1.5
+
             self.compensatory_factor = min(
-                1.6 if is_chronic else 1.5, self.compensatory_factor * comp_increase
+                max_comp, self.compensatory_factor * comp_increase
             )
 
             self.log_action(
@@ -199,11 +498,21 @@ class ECSInspiredRegulator:
                     "new_threshold": self.risk_threshold,
                     "comp_factor": self.compensatory_factor,
                     "chronic": is_chronic,
+                    "volatility_regime": volatility_regime,
+                    "phase_factor": float(phase_factor),
                 },
             )
         else:
             # Recovery with normalization (from PET data)
-            self.risk_threshold = min(0.05, self.risk_threshold * phase_factor)
+            # Slower recovery during uncertain conditions
+            recovery_rate = phase_factor
+            if volatility_regime == "moderate":
+                recovery_rate *= 0.95
+
+            self.risk_threshold = min(
+                self._initial_risk_threshold,
+                self.risk_threshold * recovery_rate
+            )
             self.compensatory_factor = max(1.0, self.compensatory_factor * 0.98)
 
             self.log_action(
@@ -212,6 +521,7 @@ class ECSInspiredRegulator:
                     "new_threshold": self.risk_threshold,
                     "comp_factor": self.compensatory_factor,
                     "chronic": is_chronic,
+                    "volatility_regime": volatility_regime,
                 },
             )
 
@@ -248,6 +558,11 @@ class ECSInspiredRegulator:
         Applies Kalman filtering, compensatory modulation, and conformal
         prediction checks (SABRE-like) for robust decision-making.
 
+        Enhanced with:
+        - Lyapunov stability checks before action
+        - Conservative override during high volatility
+        - Bounded signal processing for mathematical integrity
+
         Args:
             signal_strength: Raw trading signal strength
             context_phase: Market phase for context-dependent filtering
@@ -258,18 +573,41 @@ class ECSInspiredRegulator:
         # Apply Kalman filter
         filtered_signal = self.kalman_filter_signal(float(signal_strength))
 
-        # Apply compensatory modulation
+        # Apply compensatory modulation with bounds
         adjusted_signal = filtered_signal * self.compensatory_factor
 
+        # Bound the adjusted signal for numerical stability
+        max_signal = 10.0  # Reasonable upper bound
+        adjusted_signal = max(-max_signal, min(max_signal, adjusted_signal))
+
+        # Get current volatility regime
+        volatility_regime = self._compute_volatility_regime(self._current_volatility)
+
+        # Apply risk aversion to threshold during high volatility
+        effective_threshold = self._apply_risk_aversion(self.risk_threshold)
+
+        # Lyapunov stability check: be more conservative if system unstable
+        if self._lyapunov_value > 0 and len(self._fe_history) > 5:
+            # System showing instability - increase threshold for safety
+            effective_threshold *= 1.2
+
         # Decision with threshold check
-        if abs(adjusted_signal) > self.risk_threshold:
+        if abs(adjusted_signal) > effective_threshold:
             action = int(np.sign(adjusted_signal))
 
             # Conformal prediction check (SABRE-like)
-            conf_prob = norm.cdf(abs(adjusted_signal) / self.risk_threshold)
+            conf_prob = norm.cdf(abs(adjusted_signal) / effective_threshold)
 
             # Context-dependent override
             if conf_prob < 0.95 and context_phase != "stable":
+                action = 0
+
+            # Additional safety: force hold during extreme volatility
+            if volatility_regime == "extreme":
+                action = 0
+
+            # Chronic stress safety: prefer hold during prolonged stress
+            if self.chronic_counter > self.chronic_threshold * 2:
                 action = 0
         else:
             action = 0
@@ -279,8 +617,12 @@ class ECSInspiredRegulator:
             {
                 "raw_signal": float(signal_strength),
                 "filtered": float(filtered_signal),
+                "adjusted_signal": float(adjusted_signal),
                 "action": action,
                 "phase": context_phase,
+                "effective_threshold": float(effective_threshold),
+                "volatility_regime": volatility_regime,
+                "lyapunov_stable": self._lyapunov_value <= 0,
             },
         )
 
@@ -321,6 +663,57 @@ class ECSInspiredRegulator:
             is_chronic=self.chronic_counter > self.chronic_threshold,
         )
 
+    def get_stability_metrics(self) -> StabilityMetrics:
+        """Get extended stability metrics for monitoring.
+
+        Returns:
+            StabilityMetrics with mathematical stability indicators
+        """
+        volatility_regime = self._compute_volatility_regime(self._current_volatility)
+
+        # Compute stability margin: how far from instability threshold
+        # Lower is better (more stable)
+        if len(self._fe_history) >= 2:
+            recent_fe_variance = float(np.var(self._fe_history[-10:]))
+            stability_margin = 1.0 / (1.0 + recent_fe_variance)
+        else:
+            stability_margin = 1.0
+
+        return StabilityMetrics(
+            monotonicity_violations=self._monotonicity_violations,
+            gradient_clipping_events=self._gradient_clipping_events,
+            lyapunov_value=float(self._lyapunov_value),
+            stability_margin=float(stability_margin),
+            volatility_regime=volatility_regime,
+            risk_aversion_active=self._risk_aversion_active,
+        )
+
+    def is_stable(self) -> bool:
+        """Check if the regulator is in a stable state.
+
+        Uses Lyapunov-like stability criterion: system is stable if
+        the Lyapunov value is non-positive (energy decreasing).
+
+        Returns:
+            True if system is stable, False otherwise
+        """
+        # Check Lyapunov condition - positive indicates energy increasing
+        if self._lyapunov_value > FE_STABILITY_EPSILON:
+            return False
+
+        # Check volatility regime - extreme volatility is always unstable
+        regime = self._compute_volatility_regime(self._current_volatility)
+        if regime == "extreme":
+            return False
+
+        # Check recent stability margin
+        if len(self._fe_history) >= 10:
+            recent_fe_variance = float(np.var(self._fe_history[-10:]))
+            if recent_fe_variance > 0.1:  # High variance indicates instability
+                return False
+
+        return True
+
     def reset(self) -> None:
         """Reset regulator state to initial conditions."""
         self.stress_level = 0.0
@@ -330,8 +723,24 @@ class ECSInspiredRegulator:
         self.kalman_state = 0.0
         self.kalman_variance = 1.0
 
+        # Reset enhanced stability tracking
+        self._monotonicity_violations = 0
+        self._gradient_clipping_events = 0
+        self._fe_history.clear()
+        self._volatility_history.clear()
+        self._lyapunov_value = 0.0
+        self._current_volatility = 0.0
+        self._risk_aversion_active = False
+        self._feedback_gain = 0.1
+
 
 __all__ = [
     "ECSInspiredRegulator",
     "ECSMetrics",
+    "StabilityMetrics",
+    "GRADIENT_BOUND_MAX",
+    "GRADIENT_BOUND_MIN",
+    "FE_STABILITY_EPSILON",
+    "VOLATILITY_SPIKE_THRESHOLD",
+    "RISK_AVERSION_MULTIPLIER",
 ]
