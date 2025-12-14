@@ -23,13 +23,16 @@ and TACL thermodynamic control system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+import hashlib
+import json
+from collections import deque
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 
 
 # Mathematical constants for stability and safety bounds
@@ -43,6 +46,10 @@ SIGNAL_BOUND_MAX: float = 10.0  # Maximum allowed signal magnitude
 INSTABILITY_PENALTY: float = 1.2  # Threshold increase when system unstable
 FE_VARIANCE_THRESHOLD: float = 0.1  # Variance threshold for stability detection
 RECOVERY_SMOOTHING_FACTOR: float = 10.0  # Controls recovery speed (higher = slower)
+
+# Trace and conformal defaults
+TRACE_SCHEMA_VERSION = "1.0"
+TRACE_EMPTY_HASH = "0" * 64
 
 
 class StressMode(str, Enum):
@@ -128,6 +135,13 @@ class ECSInspiredRegulator:
         max_fe_step_up: float = 0.0,
         research_mode: bool = False,
         crisis_action_mode: str = "hold",
+        conformal_gate_enabled: bool = True,
+        calibration_window: int = 256,
+        alpha: float = 0.1,
+        min_calibration: int = 32,
+        stress_q_multiplier: float = 1.25,
+        crisis_q_multiplier: float = 1.5,
+        time_provider: Optional[Callable[[], datetime]] = None,
     ) -> None:
         if not 0.0 < initial_risk_threshold <= 1.0:
             raise ValueError("initial_risk_threshold must be between 0 and 1")
@@ -145,6 +159,14 @@ class ECSInspiredRegulator:
             raise ValueError("max_fe_step_up must be non-negative")
         if crisis_action_mode not in {"hold", "reduce_only"}:
             raise ValueError("crisis_action_mode must be 'hold' or 'reduce_only'")
+        if calibration_window < 1:
+            raise ValueError("calibration_window must be >= 1")
+        if not 0 < alpha < 1:
+            raise ValueError("alpha must be between 0 and 1")
+        if min_calibration < 0:
+            raise ValueError("min_calibration must be non-negative")
+        if stress_q_multiplier < 1.0 or crisis_q_multiplier < 1.0:
+            raise ValueError("stress multipliers must be >= 1.0 for monotonic safety")
 
         if action_threshold is not None:
             import warnings
@@ -180,6 +202,7 @@ class ECSInspiredRegulator:
         self.crisis_action_mode = crisis_action_mode
         self.history: list[dict] = []
         self._rng = np.random.default_rng(seed)
+        self._time_provider = time_provider or (lambda: datetime.now(timezone.utc))
 
         self.stress_mode: StressMode = StressMode.NORMAL
 
@@ -198,6 +221,26 @@ class ECSInspiredRegulator:
         self._current_volatility = 0.0
         self._risk_aversion_active = False
         self._feedback_gain = 0.1  # Adaptive feedback loop gain
+
+        # Conformal calibration state
+        self._calibration_scores: deque[float] = deque(maxlen=int(calibration_window))
+        self.alpha = float(alpha)
+        self.min_calibration = int(min_calibration)
+        self.calibration_window = int(calibration_window)
+        self.conformal_gate_enabled = bool(conformal_gate_enabled)
+        self._coverage_events = 0
+        self._coverage_hits = 0
+        self._last_conformal_q = float("nan")
+        self._last_prediction_interval: tuple[float, float] | None = None
+        self._last_conformal_ready = False
+        self._last_confidence_gate_pass = False
+        self._stress_q_multiplier = float(stress_q_multiplier)
+        self._crisis_q_multiplier = float(crisis_q_multiplier)
+
+        # Audit-grade trace
+        self.history: list[dict] = []
+        self._last_event_hash: str = TRACE_EMPTY_HASH
+        self._last_timestamp: Optional[datetime] = None
 
     @property
     def action_threshold(self) -> float:
@@ -415,8 +458,50 @@ class ECSInspiredRegulator:
                     "stress_level": float(self.stress_level),
                     "stress_threshold": float(self.stress_threshold),
                     "crisis_threshold": float(self.crisis_threshold),
+                    "reason_codes": ["stress_mode_transition"],
                 },
             )
+
+    def _stress_multiplier_factor(self) -> float:
+        if self.stress_mode == StressMode.CRISIS:
+            return self._crisis_q_multiplier
+        if self.stress_mode == StressMode.ELEVATED:
+            return self._stress_q_multiplier
+        return 1.0
+
+    def _compute_conformal_q(self, *, stress_scaled: bool = True) -> float:
+        if len(self._calibration_scores) == 0:
+            return float("nan")
+
+        raw_q = float(np.quantile(self._calibration_scores, 1 - self.alpha))
+        q = max(0.0, raw_q)
+        if stress_scaled:
+            q *= self._stress_multiplier_factor()
+        return float(q)
+
+    def get_prediction_interval(self, y_pred: float) -> tuple[float, float]:
+        q = self._compute_conformal_q()
+        if not np.isfinite(q):
+            return (float("nan"), float("nan"))
+        interval = (float(y_pred - q), float(y_pred + q))
+        assert q >= 0, "conformal_q must be non-negative"
+        return interval
+
+    def update_with_realized(self, y_realized: float, y_pred: float) -> None:
+        if not (np.isfinite(y_realized) and np.isfinite(y_pred)):
+            return
+
+        score = float(abs(y_realized - y_pred))
+        self._calibration_scores.append(score)
+
+        q = self._compute_conformal_q()
+        if len(self._calibration_scores) >= self.min_calibration and np.isfinite(q):
+            self._coverage_events += 1
+            if score <= q:
+                self._coverage_hits += 1
+
+    def get_conformal_threshold(self) -> float:
+        return self._compute_conformal_q()
 
     def update_stress(
         self,
@@ -732,26 +817,22 @@ class ECSInspiredRegulator:
             # System showing instability - increase threshold for safety
             effective_threshold *= INSTABILITY_PENALTY
 
+        reason_codes: list[str] = []
+
         # Decision with threshold check
         if abs(adjusted_signal) > effective_threshold:
-            action = int(np.sign(adjusted_signal))
-
-            # Conformal prediction check (SABRE-like)
-            conf_prob = norm.cdf(abs(adjusted_signal) / effective_threshold)
-
-            # Context-dependent override
-            if conf_prob < 0.95 and context_phase != "stable":
-                action = 0
-
-            # Additional safety: force hold during extreme volatility
-            if volatility_regime == "extreme":
-                action = 0
-
-            # Chronic stress safety: prefer hold during prolonged stress
-            if self.chronic_counter > self.chronic_threshold * 2:
-                action = 0
+            action_candidate = int(np.sign(adjusted_signal))
         else:
-            action = 0
+            action_candidate = 0
+            reason_codes.append("below_threshold")
+
+        if volatility_regime == "extreme":
+            action_candidate = 0
+            reason_codes.append("extreme_volatility_hold")
+
+        if self.chronic_counter > self.chronic_threshold * 2:
+            action_candidate = 0
+            reason_codes.append("chronic_stress_hold")
 
         # Crisis-mode safety guard
         if self.stress_mode == StressMode.CRISIS:
@@ -759,23 +840,65 @@ class ECSInspiredRegulator:
                 "stress_level": float(self.stress_level),
                 "threshold": float(effective_threshold),
                 "mode": self.stress_mode.value,
-                "action_before_guard": action,
+                "action_before_guard": action_candidate,
                 "crisis_action_mode": self.crisis_action_mode,
             }
             if self.crisis_action_mode == "hold":
-                action = 0
+                action_candidate = 0
+                reason_codes.append("crisis_hold")
             elif self.crisis_action_mode == "reduce_only":
-                action = -1 if adjusted_signal < -effective_threshold else 0
+                action_candidate = -1 if adjusted_signal < -effective_threshold else 0
                 crisis_reason["reduce_only_applied"] = True
+                if action_candidate == 0:
+                    reason_codes.append("crisis_reduce_only_block")
             self.log_action("Crisis guard", crisis_reason)
+
+        # Conformal prediction gate (last safety filter)
+        q = self._compute_conformal_q()
+        conformal_ready = len(self._calibration_scores) >= self.min_calibration
+        interval: tuple[float, float] | None = None
+        confidence_gate_pass = True
+
+        if self.conformal_gate_enabled:
+            if not conformal_ready or not np.isfinite(q):
+                action_candidate = 0
+                confidence_gate_pass = False
+                reason_codes.append("conformal_not_ready")
+            else:
+                interval = (float(adjusted_signal - q), float(adjusted_signal + q))
+                assert q >= 0, "conformal_q must be non-negative"
+                confidence_gate_pass = not (interval[0] <= 0.0 <= interval[1])
+                if not confidence_gate_pass:
+                    action_candidate = 0
+                    reason_codes.append("conformal_reject")
+        else:
+            conformal_ready = False
+            confidence_gate_pass = True
+            reason_codes.append("conformal_disabled")
+
+        action = action_candidate
+        if not confidence_gate_pass:
+            assert action == 0, "Action must be HOLD when confidence gate fails"
+        if not conformal_ready and self.conformal_gate_enabled:
+            assert action == 0, "Action must be HOLD when conformal calibration is not ready"
+
+        self._last_conformal_q = float(q)
+        self._last_prediction_interval = interval
+        self._last_conformal_ready = bool(conformal_ready)
+        self._last_confidence_gate_pass = bool(confidence_gate_pass)
 
         self.log_action(
             "Decision",
             {
                 "raw_signal": float(signal_strength),
-                "filtered": float(filtered_signal),
+                "filtered_signal": float(filtered_signal),
                 "adjusted_signal": float(adjusted_signal),
                 "action": action,
+                "conformal_q": self._last_conformal_q,
+                "prediction_interval": self._last_prediction_interval,
+                "conformal_ready": conformal_ready,
+                "confidence_gate_pass": confidence_gate_pass,
+                "reason_codes": reason_codes,
                 "phase": context_phase,
                 "effective_threshold": float(effective_threshold),
                 "volatility_regime": volatility_regime,
@@ -786,23 +909,94 @@ class ECSInspiredRegulator:
 
         return action
 
-    def log_action(self, action_type: str, details: dict) -> None:
-        """Log an action with timestamp and details.
+    def _canonical_json(self, payload: dict) -> str:
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
-        Args:
-            action_type: Type of action being logged
-            details: Dictionary of action details
-        """
-        self.history.append(
-            {"timestamp": len(self.history), "type": action_type, "details": details}
+    def _next_timestamp(self) -> str:
+        timestamp = self._time_provider()
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        if self._last_timestamp and timestamp < self._last_timestamp:
+            timestamp = self._last_timestamp
+        self._last_timestamp = timestamp
+        return timestamp.isoformat().replace("+00:00", "Z")
+
+    def _compute_decision_id(self, timestamp: str) -> str:
+        payload = f"{timestamp}|{len(self.history)}|{self.stress_mode.value}|{self.risk_threshold}"
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def log_action(self, action_type: str, details: dict) -> None:
+        """Append tamper-evident audit trace event with stable schema."""
+
+        timestamp = self._next_timestamp()
+        params_snapshot = {
+            "action_threshold": float(self.risk_threshold),
+            "smoothing_alpha": float(self.smoothing_alpha),
+            "stress_threshold": float(self.stress_threshold),
+            "crisis_threshold": float(self.crisis_threshold),
+            "alpha": float(self.alpha),
+            "calibration_window": int(self.calibration_window),
+            "min_calibration": int(self.min_calibration),
+            "conformal_gate_enabled": bool(self.conformal_gate_enabled),
+            "stress_q_multiplier": float(self._stress_q_multiplier),
+            "crisis_q_multiplier": float(self._crisis_q_multiplier),
+        }
+
+        conformal_q = float(details.get("conformal_q", self._last_conformal_q))
+        prediction_interval = details.get("prediction_interval", self._last_prediction_interval)
+        prediction_interval_low = (
+            float(prediction_interval[0]) if prediction_interval else float("nan")
+        )
+        prediction_interval_high = (
+            float(prediction_interval[1]) if prediction_interval else float("nan")
         )
 
-    def get_trace(self) -> pd.DataFrame:
-        """Export trace history as DataFrame for Parquet logging.
+        event_without_hash = {
+            "timestamp_utc": timestamp,
+            "schema_version": TRACE_SCHEMA_VERSION,
+            "decision_id": self._compute_decision_id(timestamp),
+            "prev_hash": self._last_event_hash,
+            "mode": self.stress_mode.value,
+            "stress_level": float(self.stress_level),
+            "chronic_counter": int(self.chronic_counter),
+            "free_energy_proxy": float(self.free_energy_proxy),
+            "raw_signal": float(details.get("raw_signal", np.nan)),
+            "filtered_signal": float(details.get("filtered_signal", np.nan)),
+            "adjusted_signal": float(details.get("adjusted_signal", np.nan)),
+            "conformal_q": float(conformal_q),
+            "prediction_interval_low": prediction_interval_low,
+            "prediction_interval_high": prediction_interval_high,
+            "conformal_ready": bool(details.get("conformal_ready", self._last_conformal_ready)),
+            "action": int(details.get("action", 0)),
+            "confidence_gate_pass": bool(
+                details.get("confidence_gate_pass", self._last_confidence_gate_pass)
+            ),
+            "reason_codes": list(details.get("reason_codes", [])) + [action_type],
+            "params_snapshot": params_snapshot,
+            "mode_context": details.get("mode", self.stress_mode.value),
+            "stress_level_context": float(details.get("stress_level", self.stress_level)),
+        }
 
-        Returns:
-            DataFrame with complete trace history
-        """
+        event_json = self._canonical_json(event_without_hash)
+        event_hash = hashlib.sha256(
+            (event_without_hash["prev_hash"] + event_json).encode("utf-8")
+        ).hexdigest()
+
+        event = {**event_without_hash, "event_hash": event_hash}
+        self.history.append(event)
+        self._last_event_hash = event_hash
+
+    def get_trace(self) -> pd.DataFrame:
+        """Export trace history as DataFrame with stable schema."""
+
+        return pd.DataFrame(self.history)
+
+    def export_trace_jsonl(self, path: str) -> None:
+        with open(path, "w", encoding="utf-8") as f:
+            for event in self.history:
+                f.write(self._canonical_json(event) + "\n")
+
+    def export_trace_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.history)
 
     def get_metrics(self) -> ECSMetrics:
@@ -885,6 +1079,8 @@ class ECSInspiredRegulator:
         self.free_energy_proxy = 0.0
         self.chronic_counter = 0
         self.history.clear()
+        self._last_event_hash = TRACE_EMPTY_HASH
+        self._last_timestamp = None
         self.kalman_state = 0.0
         self.kalman_variance = 1.0
 
@@ -897,6 +1093,15 @@ class ECSInspiredRegulator:
         self._current_volatility = 0.0
         self._risk_aversion_active = False
         self._feedback_gain = 0.1
+
+        # Reset conformal calibration
+        self._calibration_scores.clear()
+        self._coverage_events = 0
+        self._coverage_hits = 0
+        self._last_conformal_q = float("nan")
+        self._last_prediction_interval = None
+        self._last_conformal_ready = False
+        self._last_confidence_gate_pass = False
 
 
 __all__ = [

@@ -28,9 +28,12 @@ Integrates with Kuramoto-Ricci phase analysis from TradePulse:
 - Reduces measurement noise (σ = 0.01)
 - Smooth signal transitions
 
-### 5. Conformal Prediction
-- SABRE-like confidence checks (threshold: 0.95)
-- Context-dependent override in non-stable phases
+### 5. Conformal Prediction (real conformal gate)
+- Rolling split conformal with deque window (`calibration_window`, default 256)
+- Nonconformity: absolute residual `|y_t - ŷ_t|`
+- Quantile `q = quantile_{1-α}(S_calib)` with stress-aware multipliers (≥1.0)
+- Prediction interval: `[ŷ_t - q, ŷ_t + q]`; trade allowed only if `0 ∉ interval`
+- Safety: if `len(S_calib) < min_calibration` or `q` is NaN ⇒ **force HOLD**
 
 ## Installation
 
@@ -103,6 +106,42 @@ for i in range(n_steps):
 - Monotonic invariant: `FE_t <= FE_{t-1} + max_fe_step_up` (default `max_fe_step_up = 0`)
 - FE proxy is constrained independently of stress level to maintain thermodynamic consistency
 - **Stress level is NOT modified by FE constraint** — this ensures stress detection and conservative behavior remain responsive to actual market conditions
+
+## Audit-grade traceability
+
+- Stable schema (`schema_version=1.0`) with canonical JSON serialization (sorted keys, compact separators)
+- Tamper-evident hash chain: `event_hash = sha256(prev_hash + canonical_json(event_without_hash))`
+- Monotonic `timestamp_utc` (ISO8601 UTC) driven by injectable `time_provider`
+- Deterministic `decision_id` derived from timestamp, stress mode, and threshold
+- Events are append-only; exported via `export_trace_jsonl(path)` or `export_trace_dataframe()`
+
+### Trace event schema (per decision)
+- `timestamp_utc`, `schema_version`, `decision_id`, `prev_hash`, `event_hash`
+- `mode`, `stress_level`, `chronic_counter`, `free_energy_proxy`
+- `raw_signal`, `filtered_signal`, `adjusted_signal`
+- `conformal_q`, `prediction_interval_low`, `prediction_interval_high`, `conformal_ready`
+- `action`, `confidence_gate_pass`, `reason_codes`
+- `params_snapshot` (action threshold, smoothing alpha, stress thresholds, conformal params, stress multipliers)
+
+### Example configuration
+
+```python
+regulator = ECSInspiredRegulator(
+    initial_risk_threshold=0.02,
+    calibration_window=256,
+    min_calibration=32,
+    alpha=0.1,
+    stress_q_multiplier=1.25,
+    crisis_q_multiplier=1.5,
+    conformal_gate_enabled=True,
+)
+```
+
+### Example JSONL event
+
+```json
+{"timestamp_utc":"2024-01-01T00:00:01Z","schema_version":"1.0","decision_id":"92c1...","prev_hash":"0000...","mode":"NORMAL","stress_level":0.0,"chronic_counter":0,"free_energy_proxy":0.0,"raw_signal":0.2,"filtered_signal":0.19,"adjusted_signal":0.19,"conformal_q":0.05,"prediction_interval_low":0.14,"prediction_interval_high":0.24,"conformal_ready":true,"action":1,"confidence_gate_pass":true,"reason_codes":["Decision"],"params_snapshot":{"action_threshold":0.02,"smoothing_alpha":0.9,"stress_threshold":0.1,"crisis_threshold":0.15,"alpha":0.1,"calibration_window":256,"min_calibration":32,"conformal_gate_enabled":true,"stress_q_multiplier":1.25,"crisis_q_multiplier":1.5},"mode_context":"NORMAL","stress_level_context":0.0,"event_hash":"bafc..."}
+```
 
 ## Integration with TradePulse Components
 
