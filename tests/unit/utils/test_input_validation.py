@@ -107,13 +107,17 @@ class TestValidatePrice:
 
     def test_zero_price_rejected(self):
         """Test that zero price is rejected."""
-        with pytest.raises(ValidationError, match="must be greater than"):
+        with pytest.raises(ValidationError, match="cannot be zero"):
             validate_price(0)
 
     def test_negative_price_rejected(self):
         """Test that negative price is rejected."""
         with pytest.raises(ValidationError):
             validate_price(-10)
+
+    def test_price_at_minimum_is_accepted(self):
+        """Prices equal to the configured minimum should be valid."""
+        assert validate_price(10, min_value=10) == Decimal("10")
 
     def test_price_above_maximum_rejected(self):
         """Test that price above maximum is rejected."""

@@ -88,8 +88,14 @@ class TestNumericRangeValidator:
         """Test rejection of prices below minimum."""
         validator = NumericRangeValidator()
 
-        with pytest.raises(ValidationError, match="must be greater than"):
+        with pytest.raises(ValidationError, match="at least"):
             validator.validate_price(0.0)
+
+    def test_price_at_minimum_is_accepted(self):
+        """Boundary price equal to minimum should be accepted."""
+        validator = NumericRangeValidator()
+
+        assert validator.validate_price(0.0001) == Decimal("0.0001")
 
     def test_price_too_high(self):
         """Test rejection of prices above maximum."""
