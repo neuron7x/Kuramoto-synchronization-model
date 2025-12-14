@@ -52,6 +52,17 @@ from .framework import (
     RiskAssessment,
     RiskMonitoringConfig,
 )
+from .advanced_risk_manager import (
+    AdvancedRiskManager,
+    AdvancedRiskConfig,
+    AdvancedRiskAssessment,
+    RiskState,
+    StressResponseProtocol,
+    MarketDepthData,
+    LiquidityMetrics,
+    FreeEnergyState,
+    RiskAuditEntry,
+)
 
 __all__ = [
     # Adaptive thresholds
@@ -80,4 +91,14 @@ __all__ = [
     "RiskMonitoringFramework",
     "RiskAssessment",
     "RiskMonitoringConfig",
+    # Advanced risk management
+    "AdvancedRiskManager",
+    "AdvancedRiskConfig",
+    "AdvancedRiskAssessment",
+    "RiskState",
+    "StressResponseProtocol",
+    "MarketDepthData",
+    "LiquidityMetrics",
+    "FreeEnergyState",
+    "RiskAuditEntry",
 ]
