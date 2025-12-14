@@ -10,6 +10,45 @@ import pytest
 
 from core.utils.security import SecretDetector, check_for_hardcoded_secrets
 
+# Test fixture for private key content
+_TEST_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\nfake-key-data\n-----END PRIVATE KEY-----"
+
+
+def test_secret_detector_ignores_dev_tls_certs(tmp_path: Path) -> None:
+    """Test that dev TLS certificates are ignored."""
+    tls_dir = tmp_path / "configs" / "tls" / "dev"
+    tls_dir.mkdir(parents=True)
+    cert_file = tls_dir / "server.key.pem"
+    cert_file.write_text(_TEST_PRIVATE_KEY, encoding="utf-8")
+
+    detector = SecretDetector()
+    findings = detector.scan_file(cert_file)
+    assert findings == [], "Dev TLS certificates should be ignored"
+
+
+def test_secret_detector_ignores_audit_artifacts(tmp_path: Path) -> None:
+    """Test that audit artifacts are ignored."""
+    audit_dir = tmp_path / "audit" / "artifacts"
+    audit_dir.mkdir(parents=True)
+    report = audit_dir / "gitleaks.json"
+    report.write_text('{"secret": "should-be-ignored"}', encoding="utf-8")
+
+    detector = SecretDetector()
+    findings = detector.scan_file(report)
+    assert findings == [], "Audit artifacts should be ignored"
+
+
+def test_secret_detector_detects_production_tls_certs(tmp_path: Path) -> None:
+    """Test that production TLS certificates are NOT ignored."""
+    tls_dir = tmp_path / "configs" / "tls" / "production"
+    tls_dir.mkdir(parents=True)
+    cert_file = tls_dir / "server.key.pem"
+    cert_file.write_text(_TEST_PRIVATE_KEY, encoding="utf-8")
+
+    detector = SecretDetector()
+    findings = detector.scan_file(cert_file)
+    assert len(findings) > 0, "Production TLS certificates should be detected"
+
 
 def test_secret_detector_masks_findings() -> None:
     workspace = Path(tempfile.mkdtemp(prefix="secretdetector"))

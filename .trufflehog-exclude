@@ -1,0 +1,8 @@
+# Exclude development TLS certificates (not production secrets)
+configs/tls/dev/.*
+
+# Exclude security audit artifacts and reports
+audit/artifacts/.*
+
+# Exclude secrets baseline file
+\.secrets\.baseline
