@@ -48,14 +48,14 @@ class TestAdvancedRiskManagerProperties:
         self, manager: AdvancedRiskManager, seed: int
     ) -> None:
         """Property: Risk score is always in [0, 1] for any valid input."""
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
         
         # Generate random market data
-        price = np.random.uniform(50, 150)
-        volatility = np.random.uniform(0.001, 0.2)
+        price = rng.uniform(50, 150)
+        volatility = rng.uniform(0.001, 0.2)
         
-        bids = [(price * (1 - 0.01 * i), np.random.uniform(100, 2000)) for i in range(5)]
-        asks = [(price * (1 + 0.01 * i), np.random.uniform(100, 2000)) for i in range(5)]
+        bids = [(price * (1 - 0.01 * i), rng.uniform(100, 2000)) for i in range(5)]
+        asks = [(price * (1 + 0.01 * i), rng.uniform(100, 2000)) for i in range(5)]
         
         depth = MarketDepthData(bids=bids, asks=asks)
         liquidity = manager.analyze_liquidity(depth)
@@ -159,14 +159,14 @@ class TestStressDetectorProperties:
     @pytest.mark.parametrize("seed", [1, 2, 3, 4, 5])
     def test_composite_score_bounded(self, detector: StressDetector, seed: int) -> None:
         """Property: Composite stress score is always bounded."""
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
         
         signals = MarketSignals(
-            current_price=np.random.uniform(80, 120),
-            peak_price=np.random.uniform(100, 150),
-            current_volatility=np.random.uniform(0.01, 0.10),
-            baseline_volatility=np.random.uniform(0.01, 0.05),
-            liquidity_score=np.random.uniform(0.0, 1.0),
+            current_price=rng.uniform(80, 120),
+            peak_price=rng.uniform(100, 150),
+            current_volatility=rng.uniform(0.01, 0.10),
+            baseline_volatility=rng.uniform(0.01, 0.05),
+            liquidity_score=rng.uniform(0.0, 1.0),
         )
         
         assessment = detector.assess(signals)

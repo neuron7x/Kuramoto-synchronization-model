@@ -147,9 +147,10 @@ class TestECSRegulatorEdgeCases:
     def test_regulator_stress_mode_transitions(self) -> None:
         """Test regulator transitions through stress modes correctly."""
         regulator = ECSInspiredRegulator()
+        rng = np.random.default_rng(42)
         
         # Normal conditions
-        normal_returns = np.random.normal(0.001, 0.01, 20)
+        normal_returns = rng.normal(0.001, 0.01, 20)
         for _ in range(5):
             regulator.update_stress(
                 market_returns=normal_returns,
@@ -157,7 +158,7 @@ class TestECSRegulatorEdgeCases:
             )
         
         # Stress conditions
-        stress_returns = np.random.normal(-0.02, 0.05, 20)
+        stress_returns = rng.normal(-0.02, 0.05, 20)
         for _ in range(10):
             regulator.update_stress(
                 market_returns=stress_returns,
@@ -205,9 +206,10 @@ class TestECSRegulatorEdgeCases:
     def test_reset_clears_state(self) -> None:
         """Test reset clears regulator state."""
         regulator = ECSInspiredRegulator()
+        rng = np.random.default_rng(42)
         
         # Add some stress
-        stress_returns = np.random.normal(-0.01, 0.03, 20)
+        stress_returns = rng.normal(-0.01, 0.03, 20)
         for _ in range(10):
             regulator.update_stress(
                 market_returns=stress_returns,
