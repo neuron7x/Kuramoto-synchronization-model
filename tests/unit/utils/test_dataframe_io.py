@@ -299,6 +299,17 @@ def test_read_dataframe_resolves_base_path(tmp_path, monkeypatch):
     pd.testing.assert_frame_equal(loaded, frame)
 
 
+def test_read_dataframe_allows_explicit_json_without_fallback(tmp_path):
+    frame = pd.DataFrame({"alpha": [1, 2, 3]})
+    target = tmp_path / "payload.json"
+
+    dataframe_io.write_dataframe(frame, target, allow_json_fallback=True)
+
+    loaded = dataframe_io.read_dataframe(target)
+
+    pd.testing.assert_frame_equal(loaded, frame)
+
+
 def test_read_dataframe_rejects_unknown_suffix(tmp_path):
     path = tmp_path / "payload.csv"
     path.write_text("irrelevant")

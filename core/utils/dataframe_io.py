@@ -317,7 +317,10 @@ def read_dataframe(path: Path, *, allow_json_fallback: bool = False) -> pd.DataF
                 if backend_name == "polars":
                     _drop_polars_index_columns(frame, index_frame)
             return frame
-        if allow_json_fallback and suffix == _JSON_SUFFIX:
+        if suffix == _JSON_SUFFIX:
+            # Explicit JSON files should always be readable; the
+            # ``allow_json_fallback`` flag only controls implicit fallback when
+            # no suffix is provided.
             return _json_backend().read_fn(path)
         raise ValueError(f"Unsupported dataframe suffix '{suffix}'")
 
