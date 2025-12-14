@@ -438,66 +438,70 @@ def validate_with_retry(
 
 class HTMLSanitizer:
     """Sanitizes HTML input to prevent XSS attacks.
-    
+
     Aligned with OWASP XSS Prevention Cheat Sheet.
     """
-    
+
     @staticmethod
     def sanitize_html(html: str, field_name: str = "html") -> str:
         """Sanitize HTML input by removing dangerous tags and attributes.
-        
+
         Args:
             html: HTML string to sanitize
             field_name: Name of field for error reporting
-            
+
         Returns:
             Sanitized HTML string
         """
         # Remove script tags and content
-        html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.IGNORECASE | re.DOTALL)
-        
+        html = re.sub(
+            r"<script[^>]*>.*?</script>", "", html, flags=re.IGNORECASE | re.DOTALL
+        )
+
         # Remove event handlers
-        html = re.sub(r'\s*on\w+\s*=\s*["\']?[^"\']*["\']?', '', html, flags=re.IGNORECASE)
-        
+        html = re.sub(
+            r'\s*on\w+\s*=\s*["\']?[^"\']*["\']?', "", html, flags=re.IGNORECASE
+        )
+
         # Remove javascript: protocol
-        html = re.sub(r'javascript:', '', html, flags=re.IGNORECASE)
-        
+        html = re.sub(r"javascript:", "", html, flags=re.IGNORECASE)
+
         # Remove iframe, object, embed tags
-        dangerous_tags = ['iframe', 'object', 'embed', 'applet', 'meta']
+        dangerous_tags = ["iframe", "object", "embed", "applet", "meta"]
         for tag in dangerous_tags:
-            html = re.sub(rf'<{tag}[^>]*>.*?</{tag}>', '', html, flags=re.IGNORECASE | re.DOTALL)
-            html = re.sub(rf'<{tag}[^>]*/?>', '', html, flags=re.IGNORECASE)
-        
+            html = re.sub(
+                rf"<{tag}[^>]*>.*?</{tag}>", "", html, flags=re.IGNORECASE | re.DOTALL
+            )
+            html = re.sub(rf"<{tag}[^>]*/?>", "", html, flags=re.IGNORECASE)
+
         return html
 
 
 class URLValidator:
     """Validates URLs to prevent SSRF and protocol smuggling attacks."""
-    
+
     @staticmethod
     def validate_url(
-        url: str,
-        allowed_schemes: list[str] | None = None,
-        field_name: str = "url"
+        url: str, allowed_schemes: list[str] | None = None, field_name: str = "url"
     ) -> str:
         """Validate URL format and scheme.
-        
+
         Args:
             url: URL to validate
             allowed_schemes: List of allowed schemes (default: http, https)
             field_name: Name of field for error reporting
-            
+
         Returns:
             Validated URL
-            
+
         Raises:
             ValidationError: If URL is invalid or uses disallowed scheme
         """
         from urllib.parse import urlparse
-        
+
         if allowed_schemes is None:
             allowed_schemes = ["http", "https"]
-        
+
         try:
             parsed = urlparse(url)
         except Exception as e:
@@ -506,7 +510,7 @@ class URLValidator:
                 message=f"Invalid URL format: {e}",
                 value=url,
             ) from e
-        
+
         # Check scheme
         if parsed.scheme not in allowed_schemes:
             raise ValidationError(
@@ -514,15 +518,15 @@ class URLValidator:
                 message=f"URL scheme '{parsed.scheme}' not allowed. Allowed: {allowed_schemes}",
                 value=url,
             )
-        
+
         # Prevent SSRF to internal networks
         if parsed.hostname:
             dangerous_hosts = [
-                'localhost',
-                '127.0.0.1',
-                '0.0.0.0',
-                '::1',
-                '169.254.169.254',  # AWS metadata endpoint
+                "localhost",
+                "127.0.0.1",
+                "0.0.0.0",
+                "::1",
+                "169.254.169.254",  # AWS metadata endpoint
             ]
             if parsed.hostname.lower() in dangerous_hosts:
                 raise ValidationError(
@@ -530,7 +534,7 @@ class URLValidator:
                     message=f"Access to internal host '{parsed.hostname}' not allowed",
                     value=url,
                 )
-        
+
         return url
 
 
@@ -545,93 +549,94 @@ def validate_numeric_input(value: Any) -> float:
 
 def sanitize_string_input(value: str, max_length: int = 1000) -> str:
     """Sanitize string input by removing dangerous characters and patterns.
-    
+
     IMPORTANT: This function provides defense-in-depth only. Parameterized queries
     (see core.database.query_builder) are the PRIMARY and REQUIRED defense against
     SQL injection. Never rely on string sanitization alone.
-    
+
     This function should be used for:
     - User-facing error messages
     - Log entries
     - Display values
-    
+
     This function should NOT be used as:
     - The sole defense for database queries (use parameterized queries)
     - A replacement for proper escaping in output contexts
     """
     if not isinstance(value, str):
         raise ValueError("Input must be a string")
-    
+
     # Truncate to max length
     value = value[:max_length]
-    
+
     # Remove SQL comments
-    value = re.sub(r'--.*$', '', value, flags=re.MULTILINE)  # Line comments
-    value = re.sub(r'/\*.*?\*/', '', value, flags=re.DOTALL)  # Block comments
-    
+    value = re.sub(r"--.*$", "", value, flags=re.MULTILINE)  # Line comments
+    value = re.sub(r"/\*.*?\*/", "", value, flags=re.DOTALL)  # Block comments
+
     # Remove dangerous SQL keywords (case-insensitive)
     # This is defense-in-depth only - always use parameterized queries
     sql_keywords = [
-        r'\bDROP\s+TABLE\b',
-        r'\bDROP\s+DATABASE\b',
-        r'\bDELETE\s+FROM\b',
-        r'\bTRUNCATE\b',
-        r'\bEXEC\b',
-        r'\bEXECUTE\b',
-        r'\bUNION\s+SELECT\b',
-        r'\bINSERT\s+INTO\b',
-        r'\bUPDATE\s+\w+\s+SET\b',
+        r"\bDROP\s+TABLE\b",
+        r"\bDROP\s+DATABASE\b",
+        r"\bDELETE\s+FROM\b",
+        r"\bTRUNCATE\b",
+        r"\bEXEC\b",
+        r"\bEXECUTE\b",
+        r"\bUNION\s+SELECT\b",
+        r"\bINSERT\s+INTO\b",
+        r"\bUPDATE\s+\w+\s+SET\b",
     ]
-    
+
     for keyword in sql_keywords:
-        value = re.sub(keyword, '', value, flags=re.IGNORECASE)
-    
+        value = re.sub(keyword, "", value, flags=re.IGNORECASE)
+
     # Note: Single quote escaping removed - use parameterized queries instead
     # This prevents false confidence in sanitization as SQL injection defense
-    
+
     # Remove XSS patterns
     value = HTMLSanitizer.sanitize_html(value)
-    
+
     return value
 
 
 def validate_file_path(path: str, base_dir: str) -> bool:
     """Validate file path and ensure it's within base directory."""
     from pathlib import Path
-    import os
-    
+
     # Check for obvious traversal patterns first
     if ".." in path or path.startswith("/") or path.startswith("\\"):
         raise ValueError("Invalid file path: path traversal detected")
-    
+
     # Check for network paths
     if "\\\\" in path:
         raise ValueError("Invalid file path: network path not allowed")
-    
+
     # Normalize paths using pathlib for consistent handling
     try:
         base = Path(base_dir).resolve()
         # Join base with user input and resolve
         full_path = (base / path).resolve()
-        
+
         # Check if the resolved path is within base directory
         # Use relative_to which raises ValueError if not a subpath
         full_path.relative_to(base)
-        
+
     except (ValueError, OSError) as e:
         raise ValueError(f"Invalid file path: {e}")
-    
+
     return True
 
 
 def validate_command_arg(arg: str) -> bool:
     """Validate command argument to prevent command injection."""
-    dangerous_chars = [';', '|', '&', '$', '`', '\n', '\r', '>', '<']
-    
+    dangerous_chars = [";", "|", "&", "$", "`", "\n", "\r", ">", "<"]
+
     for char in dangerous_chars:
         if char in arg:
-            raise ValueError(f"Invalid command argument: contains dangerous character '{char}'")
-    
+            raise ValueError(
+                f"Invalid command argument: contains dangerous character '{char}'"
+            )
+
     return True
 
 
@@ -644,16 +649,18 @@ def validate_integer_range(value: int, min_val: int, max_val: int) -> int:
     """Validate integer is within safe range."""
     if not isinstance(value, int):
         raise ValueError(f"Value must be an integer, got {type(value)}")
-    
+
     if value < min_val or value > max_val:
-        raise ValueError(f"Value {value} is outside allowed range [{min_val}, {max_val}]")
-    
+        raise ValueError(
+            f"Value {value} is outside allowed range [{min_val}, {max_val}]"
+        )
+
     return value
 
 
 def validate_url(url: str, allowed_schemes: list[str] | None = None) -> str:
     """Validate URL format and scheme.
-    
+
     Returns the validated URL string (for API consistency).
     Raises ValueError if validation fails.
     """
@@ -662,7 +669,7 @@ def validate_url(url: str, allowed_schemes: list[str] | None = None) -> str:
 
 def validate_email(email: str) -> bool:
     """Validate email address format."""
-    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(email_pattern, email):
         raise ValueError(f"Invalid email format: {email}")
     return True
@@ -671,28 +678,30 @@ def validate_email(email: str) -> bool:
 def validate_json_payload(payload: str, max_size: int = 1024 * 1024) -> bool:
     """Validate JSON payload."""
     import json
-    
+
     # Check size
     if len(payload) > max_size:
         raise ValueError(f"JSON payload exceeds maximum size of {max_size} bytes")
-    
+
     # Validate JSON format
     try:
         json.loads(payload)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON: {e}") from e
-    
+
     return True
 
 
 def validate_file_upload(filename: str, allowed_extensions: list[str]) -> bool:
     """Validate file upload based on extension."""
     from pathlib import Path
-    
+
     extension = Path(filename).suffix.lower()
     if extension not in allowed_extensions:
-        raise ValueError(f"File extension '{extension}' not allowed. Allowed: {allowed_extensions}")
-    
+        raise ValueError(
+            f"File extension '{extension}' not allowed. Allowed: {allowed_extensions}"
+        )
+
     return True
 
 
@@ -700,14 +709,16 @@ def validate_api_key(key: str, min_length: int = 20, max_length: int = 100) -> b
     """Validate API key format."""
     if not isinstance(key, str):
         raise ValueError("API key must be a string")
-    
+
     if len(key) < min_length or len(key) > max_length:
-        raise ValueError(f"API key length must be between {min_length} and {max_length}")
-    
+        raise ValueError(
+            f"API key length must be between {min_length} and {max_length}"
+        )
+
     # Check for dangerous characters
-    if not re.match(r'^[a-zA-Z0-9_-]+$', key):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", key):
         raise ValueError("API key contains invalid characters")
-    
+
     return True
 
 
