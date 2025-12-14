@@ -40,7 +40,6 @@ from __future__ import annotations
 import logging
 import math
 import threading
-import time
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -69,6 +68,23 @@ LOGGER = logging.getLogger(__name__)
 # Enumerations
 # =============================================================================
 
+# Module-level order maps for O(1) lookup in enum comparison operators
+_PROTOCOL_ORDER_MAP: dict[str, int] = {
+    "normal": 0,
+    "defensive": 1,
+    "protective": 2,
+    "halt": 3,
+    "emergency": 4,
+}
+
+_RISK_STATE_ORDER_MAP: dict[str, int] = {
+    "optimal": 0,
+    "stable": 1,
+    "elevated": 2,
+    "stressed": 3,
+    "critical": 4,
+}
+
 
 class StressResponseProtocol(str, Enum):
     """Stress response protocol levels for adaptive behavior.
@@ -86,6 +102,30 @@ class StressResponseProtocol(str, Enum):
     PROTECTIVE = "protective"
     HALT = "halt"
     EMERGENCY = "emergency"
+
+    def _order_index(self) -> int:
+        """Get the order index for severity comparison."""
+        return _PROTOCOL_ORDER_MAP[self.value]
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, StressResponseProtocol):
+            return NotImplemented
+        return self._order_index() < other._order_index()
+
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, StressResponseProtocol):
+            return NotImplemented
+        return self._order_index() <= other._order_index()
+
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, StressResponseProtocol):
+            return NotImplemented
+        return self._order_index() > other._order_index()
+
+    def __ge__(self, other: object) -> bool:
+        if not isinstance(other, StressResponseProtocol):
+            return NotImplemented
+        return self._order_index() >= other._order_index()
 
 
 class RiskState(str, Enum):
@@ -107,14 +147,7 @@ class RiskState(str, Enum):
 
     def _order_index(self) -> int:
         """Get the order index for severity comparison."""
-        order = [
-            RiskState.OPTIMAL,
-            RiskState.STABLE,
-            RiskState.ELEVATED,
-            RiskState.STRESSED,
-            RiskState.CRITICAL,
-        ]
-        return order.index(self)
+        return _RISK_STATE_ORDER_MAP[self.value]
 
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, RiskState):
@@ -375,6 +408,9 @@ class AdvancedRiskConfig:
         position_reduction_protective: Position multiplier for protective.
         audit_log_max_entries: Maximum audit entries to retain.
         enable_fault_tolerance: Enable graceful degradation.
+
+    Raises:
+        ValueError: If configuration parameters are invalid.
     """
 
     volatility_lookback: int = 20
@@ -394,6 +430,43 @@ class AdvancedRiskConfig:
     position_reduction_protective: float = 0.3
     audit_log_max_entries: int = 10000
     enable_fault_tolerance: bool = True
+
+    def __post_init__(self) -> None:
+        """Validate configuration parameters."""
+        if self.volatility_lookback < 2:
+            raise ValueError("volatility_lookback must be >= 2")
+        if self.liquidity_depth_levels < 1:
+            raise ValueError("liquidity_depth_levels must be >= 1")
+        if self.spread_stress_threshold_bps <= 0:
+            raise ValueError("spread_stress_threshold_bps must be positive")
+        if not 0 < self.imbalance_stress_threshold <= 1:
+            raise ValueError("imbalance_stress_threshold must be in (0, 1]")
+        if not 0 < self.drawdown_elevated_threshold < self.drawdown_stressed_threshold:
+            raise ValueError(
+                "drawdown thresholds must be: 0 < elevated < stressed < critical"
+            )
+        if not self.drawdown_stressed_threshold < self.drawdown_critical_threshold <= 1:
+            raise ValueError(
+                "drawdown thresholds must be: 0 < elevated < stressed < critical <= 1"
+            )
+        if not 1 < self.volatility_elevated_ratio < self.volatility_stressed_ratio:
+            raise ValueError(
+                "volatility ratios must be: 1 < elevated < stressed < critical"
+            )
+        if not self.volatility_stressed_ratio < self.volatility_critical_ratio:
+            raise ValueError(
+                "volatility ratios must be: 1 < elevated < stressed < critical"
+            )
+        if not 0 < self.fe_learning_rate <= 1:
+            raise ValueError("fe_learning_rate must be in (0, 1]")
+        if self.fe_precision_base <= 0:
+            raise ValueError("fe_precision_base must be positive")
+        if not 0 < self.position_reduction_defensive <= 1:
+            raise ValueError("position_reduction_defensive must be in (0, 1]")
+        if not 0 < self.position_reduction_protective <= 1:
+            raise ValueError("position_reduction_protective must be in (0, 1]")
+        if self.audit_log_max_entries < 1:
+            raise ValueError("audit_log_max_entries must be >= 1")
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -1037,6 +1110,71 @@ class AdvancedRiskManager:
             self._consecutive_errors = 0
 
             LOGGER.info("Advanced risk manager reset")
+
+    def get_historical_statistics(self) -> dict[str, Any]:
+        """Get statistical summary of historical risk data.
+
+        Provides insights into the manager's performance over time,
+        useful for backtesting and optimization.
+
+        Returns:
+            Dictionary with historical statistics.
+        """
+        with self._lock:
+            stats: dict[str, Any] = {
+                "data_points": {
+                    "returns": len(self._returns_history),
+                    "volatility": len(self._volatility_history),
+                    "drawdown": len(self._drawdown_history),
+                    "free_energy": len(self._fe_history),
+                },
+            }
+
+            # Volatility statistics
+            if self._volatility_history:
+                vol_list = list(self._volatility_history)
+                stats["volatility_stats"] = {
+                    "mean": float(np.mean(vol_list)),
+                    "std": float(np.std(vol_list)) if len(vol_list) > 1 else 0.0,
+                    "min": float(min(vol_list)),
+                    "max": float(max(vol_list)),
+                    "current": vol_list[-1] if vol_list else None,
+                }
+
+            # Drawdown statistics
+            if self._drawdown_history:
+                dd_list = list(self._drawdown_history)
+                stats["drawdown_stats"] = {
+                    "mean": float(np.mean(dd_list)),
+                    "max": float(max(dd_list)),
+                    "current": dd_list[-1] if dd_list else None,
+                }
+
+            # Free energy statistics
+            if self._fe_history:
+                fe_list = list(self._fe_history)
+                stats["free_energy_stats"] = {
+                    "mean": float(np.mean(fe_list)),
+                    "std": float(np.std(fe_list)) if len(fe_list) > 1 else 0.0,
+                    "min": float(min(fe_list)),
+                    "max": float(max(fe_list)),
+                    "current": fe_list[-1] if fe_list else None,
+                    "is_stable": self._fe_state.stability_metric > 0.5,
+                }
+
+            # Audit statistics
+            if self._audit_trail:
+                action_counts: dict[str, int] = {}
+                for entry in self._audit_trail:
+                    action_counts[entry.action_type] = (
+                        action_counts.get(entry.action_type, 0) + 1
+                    )
+                stats["audit_stats"] = {
+                    "total_entries": len(self._audit_trail),
+                    "action_counts": action_counts,
+                }
+
+            return stats
 
     # =========================================================================
     # Private Methods

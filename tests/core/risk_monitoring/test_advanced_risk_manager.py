@@ -857,3 +857,128 @@ class TestAdvancedRiskAssessment:
         assert result["risk_score"] == 0.65
         assert len(result["recommendations"]) == 2
         assert result["is_trading_allowed"] is True
+
+
+# =============================================================================
+# AdvancedRiskConfig Validation Tests
+# =============================================================================
+
+
+class TestAdvancedRiskConfigValidation:
+    """Tests for AdvancedRiskConfig validation."""
+
+    def test_valid_default_config(self):
+        """Test that default config is valid."""
+        config = AdvancedRiskConfig()
+        assert config.volatility_lookback == 20
+        assert config.drawdown_critical_threshold == 0.15
+
+    def test_invalid_volatility_lookback(self):
+        """Test validation of volatility_lookback."""
+        with pytest.raises(ValueError, match="volatility_lookback must be >= 2"):
+            AdvancedRiskConfig(volatility_lookback=1)
+
+    def test_invalid_liquidity_depth_levels(self):
+        """Test validation of liquidity_depth_levels."""
+        with pytest.raises(ValueError, match="liquidity_depth_levels must be >= 1"):
+            AdvancedRiskConfig(liquidity_depth_levels=0)
+
+    def test_invalid_spread_stress_threshold(self):
+        """Test validation of spread_stress_threshold_bps."""
+        with pytest.raises(ValueError, match="spread_stress_threshold_bps must be positive"):
+            AdvancedRiskConfig(spread_stress_threshold_bps=0)
+
+    def test_invalid_imbalance_threshold(self):
+        """Test validation of imbalance_stress_threshold."""
+        with pytest.raises(ValueError, match="imbalance_stress_threshold must be in"):
+            AdvancedRiskConfig(imbalance_stress_threshold=1.5)
+
+    def test_invalid_drawdown_threshold_order(self):
+        """Test validation of drawdown threshold ordering."""
+        with pytest.raises(ValueError, match="drawdown thresholds"):
+            AdvancedRiskConfig(
+                drawdown_elevated_threshold=0.10,
+                drawdown_stressed_threshold=0.05,  # Wrong order
+            )
+
+    def test_invalid_volatility_ratio_order(self):
+        """Test validation of volatility ratio ordering."""
+        with pytest.raises(ValueError, match="volatility ratios"):
+            AdvancedRiskConfig(
+                volatility_elevated_ratio=2.5,
+                volatility_stressed_ratio=1.5,  # Wrong order
+            )
+
+    def test_invalid_learning_rate(self):
+        """Test validation of fe_learning_rate."""
+        with pytest.raises(ValueError, match="fe_learning_rate must be in"):
+            AdvancedRiskConfig(fe_learning_rate=0)
+
+    def test_invalid_precision_base(self):
+        """Test validation of fe_precision_base."""
+        with pytest.raises(ValueError, match="fe_precision_base must be positive"):
+            AdvancedRiskConfig(fe_precision_base=-1)
+
+
+# =============================================================================
+# StressResponseProtocol Comparison Tests
+# =============================================================================
+
+
+class TestStressResponseProtocolComparison:
+    """Tests for StressResponseProtocol comparison operators."""
+
+    def test_protocol_ordering(self):
+        """Test that protocols are ordered by severity."""
+        assert StressResponseProtocol.NORMAL < StressResponseProtocol.DEFENSIVE
+        assert StressResponseProtocol.DEFENSIVE < StressResponseProtocol.PROTECTIVE
+        assert StressResponseProtocol.PROTECTIVE < StressResponseProtocol.HALT
+        assert StressResponseProtocol.HALT < StressResponseProtocol.EMERGENCY
+
+    def test_protocol_le_ge(self):
+        """Test less than or equal and greater than or equal."""
+        assert StressResponseProtocol.NORMAL <= StressResponseProtocol.NORMAL
+        assert StressResponseProtocol.EMERGENCY >= StressResponseProtocol.EMERGENCY
+        assert StressResponseProtocol.HALT <= StressResponseProtocol.EMERGENCY
+        assert StressResponseProtocol.PROTECTIVE >= StressResponseProtocol.DEFENSIVE
+
+    def test_protocol_comparison_with_non_protocol(self):
+        """Test comparison with non-protocol returns NotImplemented."""
+        result = StressResponseProtocol.NORMAL.__lt__("invalid")
+        assert result is NotImplemented
+
+
+# =============================================================================
+# Historical Statistics Tests
+# =============================================================================
+
+
+class TestHistoricalStatistics:
+    """Tests for historical statistics functionality."""
+
+    def test_get_historical_statistics_empty(self, manager):
+        """Test statistics with no data."""
+        stats = manager.get_historical_statistics()
+        assert stats["data_points"]["returns"] == 0
+        assert stats["data_points"]["volatility"] == 0
+
+    def test_get_historical_statistics_with_data(self, manager):
+        """Test statistics after assessments."""
+        for _ in range(10):
+            manager.assess_risk(volatility=0.02)
+
+        stats = manager.get_historical_statistics()
+        assert stats["data_points"]["volatility"] == 10
+        assert "volatility_stats" in stats
+        assert stats["volatility_stats"]["mean"] == pytest.approx(0.02, abs=0.001)
+
+    def test_get_historical_statistics_audit(self, manager):
+        """Test audit statistics."""
+        manager.assess_risk(volatility=0.02)
+        manager.escalate_protocol("Test")
+        manager.assess_risk(volatility=0.02)
+
+        stats = manager.get_historical_statistics()
+        assert "audit_stats" in stats
+        assert stats["audit_stats"]["total_entries"] == 3
+        assert "risk_assessment" in stats["audit_stats"]["action_counts"]
