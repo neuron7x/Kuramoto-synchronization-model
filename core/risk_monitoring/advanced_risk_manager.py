@@ -105,6 +105,37 @@ class RiskState(str, Enum):
     STRESSED = "stressed"
     CRITICAL = "critical"
 
+    def _order_index(self) -> int:
+        """Get the order index for severity comparison."""
+        order = [
+            RiskState.OPTIMAL,
+            RiskState.STABLE,
+            RiskState.ELEVATED,
+            RiskState.STRESSED,
+            RiskState.CRITICAL,
+        ]
+        return order.index(self)
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, RiskState):
+            return NotImplemented
+        return self._order_index() < other._order_index()
+
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, RiskState):
+            return NotImplemented
+        return self._order_index() <= other._order_index()
+
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, RiskState):
+            return NotImplemented
+        return self._order_index() > other._order_index()
+
+    def __ge__(self, other: object) -> bool:
+        if not isinstance(other, RiskState):
+            return NotImplemented
+        return self._order_index() >= other._order_index()
+
 
 # =============================================================================
 # Data Classes
@@ -1221,9 +1252,15 @@ class AdvancedRiskManager:
         # If we have a recent successful assessment, use conservative version
         if self._last_successful_assessment is not None:
             base = self._last_successful_assessment
+            # Use custom comparison operators for proper severity ordering
+            fallback_risk_state = (
+                base.risk_state
+                if base.risk_state >= RiskState.ELEVATED
+                else RiskState.ELEVATED
+            )
             return AdvancedRiskAssessment(
                 timestamp=self._time(),
-                risk_state=max(base.risk_state, RiskState.ELEVATED, key=lambda x: x.value),
+                risk_state=fallback_risk_state,
                 protocol=StressResponseProtocol.DEFENSIVE,
                 risk_score=min(1.0, base.risk_score + 0.2),
                 volatility_contribution=base.volatility_contribution,
