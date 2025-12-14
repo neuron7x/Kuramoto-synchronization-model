@@ -262,7 +262,9 @@ def normalize_timestamp(
         # upstream data providers.  Interpreting these as seconds would yield
         # wildly incorrect dates (often thousands of years in the future).
         magnitude = abs(value if isinstance(value, int) else numeric_value)
-        if magnitude >= 1e15:
+        if magnitude >= 1e18:
+            seconds = numeric_value / 1_000_000_000  # nanoseconds
+        elif magnitude >= 1e15:
             seconds = numeric_value / 1_000_000  # microseconds
         elif magnitude >= 1e12:
             seconds = numeric_value / 1_000  # milliseconds
