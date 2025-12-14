@@ -61,7 +61,9 @@ jobs:
 
       - name: Quick Python syntax check
         shell: bash
-        run: python3 -m compileall -q core backtest execution 2>/dev/null || true
+        run: |
+          # Quick validation of Python syntax in critical modules (non-blocking)
+          python3 -m compileall -q core backtest execution || echo "::warning::Some Python files have syntax issues"
 
   test-coverage:
     runs-on: ubuntu-latest
@@ -295,14 +297,11 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Compute lowercase image names
-        id: image-names
         shell: bash
         run: |
           # Convert GHCR image name to lowercase for OCI compliance
           GHCR_IMAGE="$(echo "${GHCR_IMAGE_RAW}" | tr '[:upper:]' '[:lower:]')"
           echo "GHCR_IMAGE=${GHCR_IMAGE}" >> "$GITHUB_ENV"
-          # Export for downstream steps
-          echo "ghcr_image=${GHCR_IMAGE}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
