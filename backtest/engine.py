@@ -525,6 +525,17 @@ class WalkForwardEngine(BacktestEngine[Result]):
                     "signal_fn must return an array with the same length as prices"
                 )
 
+            # Validate signals for NaN/inf values to prevent silent failures
+            if not np.all(np.isfinite(raw_signals)):
+                nan_count = np.sum(np.isnan(raw_signals))
+                inf_count = np.sum(np.isinf(raw_signals))
+                raise ValueError(
+                    f"signal_fn returned non-finite values: {nan_count} NaN(s), "
+                    f"{inf_count} inf(s). Signals must contain only finite numbers. "
+                    "Check your strategy implementation for division by zero or "
+                    "invalid mathematical operations."
+                )
+
             signals = np.clip(raw_signals, -1.0, 1.0)
             if constraints is not None:
                 signals = _apply_portfolio_constraints(
