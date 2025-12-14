@@ -44,8 +44,8 @@ IGNORE_PATTERNS = [
     r"\.rst$",  # Documentation
     r"(^|[\\/])test_",  # Test files often have mock secrets
     r"conftest\.py$",
-    r"configs/tls/dev/",  # Dev TLS certificates for local testing
-    r"audit/artifacts/",  # Security scan artifacts/reports
+    r"(^|/)configs/tls/dev/",  # Dev TLS certificates for local testing
+    r"(^|/)audit/artifacts/",  # Security scan artifacts/reports
 ]
 
 
