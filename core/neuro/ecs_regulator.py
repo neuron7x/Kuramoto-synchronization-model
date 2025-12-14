@@ -51,6 +51,15 @@ RECOVERY_SMOOTHING_FACTOR: float = 10.0  # Controls recovery speed (higher = slo
 TRACE_SCHEMA_VERSION = "1.0"
 TRACE_EMPTY_HASH = "0" * 64
 
+# Audit-grade trace schema fields (for consistency between implementation and tests)
+TRACE_SCHEMA_FIELDS = frozenset({
+    "timestamp_utc", "schema_version", "decision_id", "prev_hash",
+    "mode", "stress_level", "chronic_counter", "free_energy_proxy",
+    "raw_signal", "filtered_signal", "adjusted_signal",
+    "conformal_q", "prediction_interval_low", "prediction_interval_high",
+    "conformal_ready", "action", "confidence_gate_pass", "reason_codes",
+    "params_snapshot", "mode_context", "stress_level_context", "event_hash",
+})
 
 class StressMode(str, Enum):
     """Stress operating modes for conservative behavior."""
@@ -1119,4 +1128,6 @@ __all__ = [
     "INSTABILITY_PENALTY",
     "FE_VARIANCE_THRESHOLD",
     "RECOVERY_SMOOTHING_FACTOR",
+    "TRACE_SCHEMA_VERSION",
+    "TRACE_SCHEMA_FIELDS",
 ]
