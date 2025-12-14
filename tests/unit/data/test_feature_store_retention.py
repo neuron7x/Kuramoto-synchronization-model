@@ -88,6 +88,26 @@ def test_redis_ttl_retention(base_frame: pd.DataFrame) -> None:
     assert stored["ts"].min() >= clock.now() - pd.Timedelta(hours=1)
 
 
+def test_retention_casts_string_timestamps(base_frame: pd.DataFrame) -> None:
+    clock = _MutableClock(pd.Timestamp("2024-01-01 00:00:00", tz=UTC))
+    policy = RetentionPolicy(ttl=pd.Timedelta(hours=1))
+    store = RedisOnlineFeatureStore(
+        client=_DictClient(), retention_policy=policy, clock=clock.now
+    )
+
+    string_frame = base_frame.copy()
+    string_frame.loc[:, "ts"] = string_frame["ts"].dt.tz_convert("UTC").dt.strftime(
+        "%Y-%m-%dT%H:%M:%S%z"
+    )
+
+    store.sync("demo.fv", string_frame, mode="overwrite", validate=False)
+
+    stored = store.load("demo.fv")
+    assert stored.shape[0] == 2
+    assert stored["ts"].dtype == "datetime64[ns, UTC]"
+    assert stored["ts"].min() >= clock.now() - pd.Timedelta(hours=1)
+
+
 def test_redis_ttl_uses_native_expiry(base_frame: pd.DataFrame) -> None:
     client = _TTLDictClient()
     policy = RetentionPolicy(ttl=pd.Timedelta(seconds=90))
