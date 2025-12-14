@@ -1,0 +1,9 @@
+# Dev/test TLS certificates - not production secrets
+configs/tls/dev/*.pem
+configs/tls/dev/*.key
+
+# Security audit artifacts
+audit/artifacts/*
+
+# Secrets baseline file
+.secrets.baseline
