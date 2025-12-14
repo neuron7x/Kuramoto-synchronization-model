@@ -8,18 +8,19 @@ The ECS-Inspired Regulator is a biologically-inspired adaptive risk management s
 
 ### 1. Acute vs Chronic Stress Differentiation
 Based on longitudinal studies (2025 updates), the regulator differentiates between:
-- **Acute stress** (<3 periods): Moderate AEA-inspired threshold reduction (25-35% adjustment)
-- **Chronic stress** (>5 periods): Aggressive threshold reduction with 2-AG-inspired compensation (25% AEA-depletion simulation, 60% 2-AG compensation)
+- **Acute stress** (<3 periods): Moderate *increase* of the action threshold (8–12%) so signals must be stronger to fire.
+- **Chronic stress** (>5 periods): Larger hardening of the threshold (20%+) with constrained 2-AG-inspired compensation capped for safety.
 
 ### 2. Context-Dependent Normalization
 Integrates with Kuramoto-Ricci phase analysis from TradePulse:
-- **Stable phase**: Normal risk parameters
-- **Chaotic/Transition phases**: Conservative modulation (95% phase factor)
+- **Stable phase**: Normal action threshold
+- **Chaotic/Transition phases**: Conservative modulation (≥1.05x hardening)
 - Based on scRNA-seq analysis showing CB1-receptor feedback loops
 
 ### 3. TACL Free Energy Alignment
-- Maps stress_level to free_energy_proxy
-- Enforces monotonic descent (ΔFE ≤ 0)
+- Maps `stress_level` to `free_energy_proxy`
+- Enforces monotonic descent (ΔFE ≤ max_fe_step_up, default 0)
+- Adjusts internal stress so free energy invariants stay consistent (no cosmetic clamps)
 - Lyapunov-like stability checks
 
 ### 4. Kalman Filtering
@@ -83,6 +84,24 @@ for i in range(n_steps):
     metrics = regulator.get_metrics()
     print(f"Stress: {metrics.stress_level:.4f}, FE: {metrics.free_energy_proxy:.4f}")
 ```
+
+### Threshold semantics
+
+- `initial_risk_threshold` / `action_threshold` is the **minimum absolute signal magnitude required to trade**. Higher values mean fewer trades and lower risk.
+- Under higher stress or volatility the regulator **increases** this threshold (more conservative). Recovery phases gently lower it back toward the initial value.
+- The optional `crisis_action_mode` forces either hold-only (`"hold"`) or reduce-only (`"reduce_only"`) behavior when `stress_level >= crisis_threshold`.
+
+### Stress modes
+
+- `NORMAL`: `stress_level < stress_threshold`
+- `ELEVATED`: `stress_threshold <= stress_level < crisis_threshold` (threshold hardened)
+- `CRISIS`: `stress_level >= crisis_threshold` (actions suppressed or reduce-only, with audit-grade logging)
+
+### Free energy invariant
+
+- `free_energy_proxy = stress_level * fe_scaling`
+- Monotonic invariant: `FE_t <= FE_{t-1} + max_fe_step_up` (default `max_fe_step_up = 0`)
+- Violations adjust **stress** downward to restore the invariant instead of clamping the FE output only.
 
 ## Integration with TradePulse Components
 
@@ -221,9 +240,9 @@ for step in range(n_steps):
 
 ### Core Parameters
 
-- **initial_risk_threshold** (0.0-1.0): Starting adaptive threshold
+- **initial_risk_threshold** (0.0-1.0) / **action_threshold**: Starting action threshold (minimum |signal| to trade)
   - Default: 0.05
-  - Lower = more conservative
+  - Higher = more conservative (fewer trades)
 
 - **smoothing_alpha** (0.0-1.0): EMA smoothing for homeostasis
   - Default: 0.9
@@ -232,6 +251,16 @@ for step in range(n_steps):
 - **stress_threshold** (>0.0): Threshold for high stress detection
   - Default: 0.1
   - Higher = less sensitive
+
+- **crisis_threshold** (>stress_threshold): Level that activates CRISIS safety guard
+  - Default: 1.5 * `stress_threshold`
+
+- **crisis_action_mode** ("hold" or "reduce_only"): Behavior in CRISIS mode
+  - Default: "hold"
+
+- **max_fe_step_up** (>=0): Allowed FE increase vs previous step (default 0 for strict descent)
+
+- **research_mode** (bool): Allow experimental looser FE bound (otherwise FE increases are capped by `max_fe_step_up`)
 
 - **chronic_threshold** (≥1): Periods for chronic stress
   - Default: 5
@@ -266,7 +295,21 @@ ECSInspiredRegulator(
 ECSInspiredRegulator(
     initial_risk_threshold=0.02,
     stress_threshold=0.05,
-    chronic_threshold=2
+    chronic_threshold=2,
+    crisis_threshold=0.08,
+    crisis_action_mode="reduce_only",
+    max_fe_step_up=0.0,
+)
+```
+
+**Audit-grade conservative mode (strict FE descent)**
+```python
+ECSInspiredRegulator(
+    action_threshold=0.06,
+    stress_threshold=0.03,
+    crisis_threshold=0.05,
+    crisis_action_mode="hold",
+    max_fe_step_up=0.0,
 )
 ```
 
