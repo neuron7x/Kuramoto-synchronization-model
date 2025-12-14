@@ -106,6 +106,7 @@ def validate_price(
     price: float | Decimal | int,
     min_value: float = 0.0,
     max_value: float | None = None,
+    allow_zero: bool = False,
 ) -> Decimal:
     """Validate a trading price.
 
@@ -113,6 +114,7 @@ def validate_price(
         price: The price to validate
         min_value: Minimum allowed value
         max_value: Maximum allowed value (None for no limit)
+        allow_zero: Whether a zero price is permitted
 
     Returns:
         The validated price as a Decimal
@@ -131,8 +133,12 @@ def validate_price(
     if not p.is_finite():
         raise ValidationError(f"Price must be finite: {p}")
 
-    if p <= Decimal(str(min_value)):
-        raise ValidationError(f"Price {p} must be greater than {min_value}")
+    min_decimal = Decimal(str(min_value))
+    if p == 0 and not allow_zero:
+        raise ValidationError("Price cannot be zero")
+
+    if p < min_decimal:
+        raise ValidationError(f"Price {p} must be at least {min_value}")
 
     if max_value is not None and p > Decimal(str(max_value)):
         raise ValidationError(f"Price {p} exceeds maximum {max_value}")

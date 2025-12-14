@@ -125,10 +125,11 @@ class NumericRangeValidator:
                 value=value,
             ) from e
 
-        if price <= Decimal(str(min_price)):
+        min_decimal = Decimal(str(min_price))
+        if price < min_decimal:
             raise ValidationError(
                 field=field_name,
-                message=f"Price must be greater than {min_price}",
+                message=f"Price must be at least {min_price}",
                 value=value,
             )
 
