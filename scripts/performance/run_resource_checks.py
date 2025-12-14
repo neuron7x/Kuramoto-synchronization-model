@@ -288,14 +288,14 @@ def _normalize_df_response_time() -> Metric:
         }
     )
 
-    duration = _measure_response_seconds(lambda: normalize_df(frame), rounds=1)
+    duration = _measure_response_seconds(lambda: normalize_df(frame), rounds=3)
     return Metric(
         name="preprocess.normalize_df.response_seconds",
         value=float(duration),
         unit="seconds",
         category="response",
         budget=5.0,
-        details={"rows": n},
+        details={"rows": n, "rounds": 3},
     )
 
 
