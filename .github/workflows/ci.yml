@@ -13,6 +13,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Workflow Lint (actionlint + bidi detection)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install actionlint
+        shell: bash
+        run: |
+          ACTIONLINT_VERSION="1.7.4"
+          curl -sL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C /tmp
+          chmod +x /tmp/actionlint
+
+      - name: Run actionlint
+        shell: bash
+        run: /tmp/actionlint -color
+
+      - name: Check for bidi/zero-width Unicode in workflows
+        shell: bash
+        run: |
+          # Detect dangerous bidirectional and zero-width Unicode characters
+          python3 -c "
+          import sys, unicodedata, glob
+
+          BIDI_CHARS = {
+              0x202A, 0x202B, 0x202C, 0x202D, 0x202E,  # LRE, RLE, PDF, LRO, RLO
+              0x2066, 0x2067, 0x2068, 0x2069,          # LRI, RLI, FSI, PDI
+              0x200E, 0x200F,                          # LRM, RLM
+              0x200B, 0x200C, 0x200D, 0xFEFF,          # Zero-width chars
+          }
+
+          found = False
+          for path in glob.glob('.github/workflows/**/*.yml', recursive=True):
+              with open(path, 'r') as f:
+                  for i, line in enumerate(f, 1):
+                      for j, ch in enumerate(line):
+                          if ord(ch) in BIDI_CHARS:
+                              name = unicodedata.name(ch, 'UNKNOWN')
+                              print(f'{path}:{i}:{j}: U+{ord(ch):04X} ({name})')
+                              found = True
+          sys.exit(1 if found else 0)
+          "
+
+      - name: Quick Python syntax check
+        shell: bash
+        run: python3 -m compileall -q core backtest execution 2>/dev/null || true
+
   test-coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -20,7 +70,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3]
-    name: Test Coverage — shard ${{ matrix.shard }} of ${{ strategy.job-total }}
+    name: Test Coverage - shard ${{ matrix.shard }} of ${{ strategy.job-total }}
     env:
       COVERAGE_FILE: .coverage.${{ matrix.shard }}
 
@@ -39,14 +89,6 @@ jobs:
             requirements.lock
             requirements-dev.lock
             constraints/security.txt
-
-      - name: Cache Python packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-ci-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
-          restore-keys: |
-            pip-ci-${{ runner.os }}-py3.11-
 
       - name: Install dependencies
         run: |
@@ -82,6 +124,8 @@ jobs:
     timeout-minutes: 20
     needs: test-coverage
     name: Aggregate coverage & enforce guardrail
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -98,14 +142,6 @@ jobs:
             requirements.lock
             requirements-dev.lock
             constraints/security.txt
-
-      - name: Cache Python packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-coverage-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
-          restore-keys: |
-            pip-coverage-${{ runner.os }}-py3.11-
 
       - name: Install coverage tooling
         run: |
@@ -146,11 +182,12 @@ jobs:
           if-no-files-found: error
 
           retention-days: 14
+
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: py311
           name: coverage-py311
@@ -202,14 +239,14 @@ jobs:
         id: check_mutations
         run: |
           if [ -f .mutmut-cache ] && [ -s .mutmut-cache ]; then
-            echo "mutations_exist=true" >> $GITHUB_OUTPUT
+            echo "mutations_exist=true" >> "$GITHUB_OUTPUT"
             echo "Mutations were generated, proceeding with enforcement"
           else
-            echo "mutations_exist=false" >> $GITHUB_OUTPUT
+            echo "mutations_exist=false" >> "$GITHUB_OUTPUT"
             echo "No mutations were generated, skipping enforcement"
           fi
 
-      - name: Enforce mutation kill rate (≥90%)
+      - name: Enforce mutation kill rate (>=90%)
         if: steps.check_mutations.outputs.mutations_exist == 'true'
         run: |
           python -m tools.mutation.kill_rate_guard \
@@ -222,7 +259,7 @@ jobs:
       - name: Skip mutation gate if no mutations
         if: steps.check_mutations.outputs.mutations_exist != 'true'
         run: |
-          echo "ℹ️ Mutation testing gate skipped - no mutations were generated."
+          echo "[INFO] Mutation testing gate skipped - no mutations were generated."
           echo "This can happen on PRs that only modify non-code files or documentation."
 
       - name: Upload mutation test artifacts
@@ -236,6 +273,7 @@ jobs:
           if-no-files-found: warn
 
           retention-days: 14
+
   publish-containers:
     if: github.event_name == 'push'
     needs: [coverage-aggregate, mutation-testing-gate]
@@ -246,12 +284,25 @@ jobs:
       contents: read
       packages: write
     env:
-      GHCR_IMAGE: ghcr.io/${{ toLower(github.repository) }}
-      DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_REPOSITORY }}
+      # Raw image name (may contain uppercase); lowercase computed in step
+      GHCR_IMAGE_RAW: ghcr.io/${{ github.repository }}
+      DOCKERHUB_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Compute lowercase image names
+        id: image-names
+        shell: bash
+        run: |
+          # Convert GHCR image name to lowercase for OCI compliance
+          GHCR_IMAGE="$(echo "${GHCR_IMAGE_RAW}" | tr '[:upper:]' '[:lower:]')"
+          echo "GHCR_IMAGE=${GHCR_IMAGE}" >> "$GITHUB_ENV"
+          # Export for downstream steps
+          echo "ghcr_image=${GHCR_IMAGE}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -265,8 +316,8 @@ jobs:
         run: |
           set -euo pipefail
           targets=("${GHCR_IMAGE}")
-          if [[ -n "${DOCKERHUB_IMAGE}" ]]; then
-            targets+=("docker.io/${DOCKERHUB_IMAGE}")
+          if [[ -n "${DOCKERHUB_REPOSITORY:-}" ]]; then
+            targets+=("docker.io/${DOCKERHUB_REPOSITORY}")
           fi
           {
             echo "list<<EOF"
@@ -282,11 +333,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
       - name: Extract Docker metadata
         id: meta
