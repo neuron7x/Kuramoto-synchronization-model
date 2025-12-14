@@ -76,6 +76,7 @@ class _RetentionManager:
         if self._policy.ttl is not None:
             if "ts" not in result.columns:
                 raise KeyError("Retention policy with ttl requires a 'ts' column")
+            result["ts"] = pd.to_datetime(result["ts"], utc=True, errors="raise")
             cutoff = self._clock() - self._policy.ttl
             result = result[result["ts"] >= cutoff]
 
