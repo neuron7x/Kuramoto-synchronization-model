@@ -208,7 +208,7 @@ def normalize_numeric_columns(
 
         if columns is None:
             candidate_columns = list(
-                normalized.select_dtypes(include=["number"]).columns
+                normalized.select_dtypes(include=["number"], exclude=["bool"]).columns
             )
         else:
             candidate_columns = list(columns)
@@ -222,6 +222,8 @@ def normalize_numeric_columns(
                 raise KeyError(f"Column {column!r} not found in dataframe")
 
             series = normalized[column]
+            if pd.api.types.is_bool_dtype(series.dtype):
+                raise TypeError(f"Column {column!r} has boolean dtype which cannot be scaled")
             if not is_numeric_dtype(series.dtype):
                 raise TypeError(
                     f"Column {column!r} has non-numeric dtype {series.dtype}"

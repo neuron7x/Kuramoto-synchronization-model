@@ -110,3 +110,30 @@ def test_normalize_numeric_columns_rejects_invalid_columns() -> None:
 
     with pytest.raises(TypeError):
         normalize_numeric_columns(frame, columns=["b"])  # type: ignore[list-item]
+
+
+def test_normalize_numeric_columns_skips_boolean_columns_by_default() -> None:
+    frame = pd.DataFrame(
+        {
+            "feature": [1.0, 2.0, 3.0],
+            "flag": [True, False, True],
+        }
+    )
+
+    normalized = normalize_numeric_columns(frame)
+
+    assert normalized["flag"].dtype == bool
+    assert normalized["flag"].tolist() == [True, False, True]
+    assert normalized["feature"].mean() == pytest.approx(0.0)
+
+
+def test_normalize_numeric_columns_rejects_explicit_boolean_columns() -> None:
+    frame = pd.DataFrame(
+        {
+            "value": [1.0, 2.0, 3.0],
+            "flag": [True, False, True],
+        }
+    )
+
+    with pytest.raises(TypeError, match="boolean dtype"):
+        normalize_numeric_columns(frame, columns=["value", "flag"])
