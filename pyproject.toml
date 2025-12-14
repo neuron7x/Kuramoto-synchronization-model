@@ -80,6 +80,9 @@ feature_store = [
     "pyarrow>=21.0.0",
     "polars>=1.34.0",
 ]
+ecs = [
+    "pyarrow>=21.0.0",
+]
 neuro_advanced = [
     "gudhi>=3.10.0",
     "POT>=0.9.5",

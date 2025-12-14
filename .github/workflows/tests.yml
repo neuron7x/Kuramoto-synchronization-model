@@ -320,6 +320,10 @@ jobs:
             --html=reports/fast-unit-tests-report.html --self-contained-html \
             --json-report --json-report-file=reports/test-results.json \
             -q
+      - name: Run ECS regulator coverage
+        run: |
+          .venv/bin/python -m pytest core/neuro/tests/test_ecs_regulator.py \
+            --cov=core.neuro.ecs_regulator --cov-report=term-missing
       - name: Track test performance
         if: always()
         continue-on-error: true
