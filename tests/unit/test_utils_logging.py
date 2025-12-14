@@ -211,3 +211,11 @@ def test_configure_logging_accepts_case_insensitive_level() -> None:
 def test_configure_logging_rejects_invalid_level() -> None:
     with pytest.raises(ValueError):
         configure_logging(level="not-a-level")
+
+
+def test_configure_logging_rejects_boolean_level() -> None:
+    with pytest.raises(ValueError):
+        configure_logging(level=True)
+
+    with pytest.raises(ValueError):
+        configure_logging(level=False)
