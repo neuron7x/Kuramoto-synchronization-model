@@ -11,8 +11,6 @@ import pandas as pd
 import pytest
 
 from core.indicators.cache import (
-    BackfillState,
-    CacheRecord,
     FileSystemIndicatorCache,
     hash_input_data,
     make_fingerprint,
@@ -192,7 +190,7 @@ class TestFileSystemIndicatorCache:
         df = pd.DataFrame({"a": [1, 2, 3], "b": [4.0, 5.0, 6.0]})
         data_hash = hash_input_data(df)
 
-        fingerprint = cache.store(
+        cache.store(
             indicator_name="test_df",
             params={},
             data_hash=data_hash,
@@ -217,7 +215,7 @@ class TestFileSystemIndicatorCache:
         coverage_start = datetime(2024, 1, 1, tzinfo=UTC)
         coverage_end = datetime(2024, 12, 31, tzinfo=UTC)
 
-        fingerprint = cache.store(
+        cache.store(
             indicator_name="test_meta",
             params={"window": 10},
             data_hash=data_hash,

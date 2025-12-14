@@ -524,7 +524,7 @@ class WalkForwardEngine(BacktestEngine[Result]):
                 raise ValueError(
                     "signal_fn must return an array with the same length as prices"
                 )
-            
+
             # Validate signals for NaN/inf values to prevent silent failures
             if not np.all(np.isfinite(raw_signals)):
                 nan_count = np.sum(np.isnan(raw_signals))
