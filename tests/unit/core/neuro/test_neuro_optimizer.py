@@ -206,6 +206,31 @@ class TestNeuroOptimizer:
         second_best = optimizer._best_objective
         
         assert second_best >= first_best
+
+    def test_learning_rate_decays_on_plateau(self, sample_params, sample_state):
+        """Test adaptive learning rate decay when improvements stall."""
+        config = OptimizationConfig(
+            balance_weight=0.35,
+            performance_weight=0.45,
+            stability_weight=0.20,
+            learning_rate=0.02,
+            learning_rate_floor=0.005,
+            adaptive_decay=0.5,
+            plateau_patience=2,
+            ema_alpha=0.6,
+        )
+
+        optimizer = NeuroOptimizer(config)
+
+        # Kick off with strong performance then sustain weaker returns
+        optimizer.optimize(sample_params, sample_state, performance_score=2.0)
+        initial_lr = optimizer._current_lr
+
+        for _ in range(4):
+            optimizer.optimize(sample_params, sample_state, performance_score=0.2)
+
+        assert optimizer._current_lr < initial_lr
+        assert optimizer._current_lr >= config.learning_rate_floor
         
     def test_estimate_gradients(self, opt_config, sample_params, sample_state):
         """Test gradient estimation."""
@@ -237,6 +262,29 @@ class TestNeuroOptimizer:
         }
         
         updated = optimizer._apply_updates(sample_params, gradients)
+
+        assert updated['dopamine']['learning_rate'] != sample_params['dopamine']['learning_rate']
+
+    def test_gradient_clipping_limits_step(self):
+        """Test that gradient clipping constrains update magnitude."""
+        config = OptimizationConfig(
+            learning_rate=0.5,
+            learning_rate_floor=0.001,
+            adaptive_decay=0.5,
+            plateau_patience=2,
+            max_gradient_norm=0.01,
+            momentum=0.0,
+        )
+        optimizer = NeuroOptimizer(config)
+
+        params = {'dopamine': {'learning_rate': 1.0}}
+        gradients = {'dopamine': {'learning_rate': 5.0}}
+
+        updated = optimizer._apply_updates(params, gradients)
+
+        # Max step should be capped at 1% of the parameter value
+        assert updated['dopamine']['learning_rate'] <= 1.01
+        assert updated['dopamine']['learning_rate'] >= 0.99
         
         assert isinstance(updated, dict)
         assert 'dopamine' in updated
