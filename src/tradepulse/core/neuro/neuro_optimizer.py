@@ -41,6 +41,16 @@ class OptimizationConfig:
         Weight for stability objective (0-1)
     learning_rate : float
         Base learning rate for parameter updates
+    learning_rate_floor : float
+        Minimum adaptive learning rate when plateauing
+    adaptive_decay : float
+        Multiplicative decay factor applied when improvements stall
+    plateau_patience : int
+        Number of stagnant iterations before applying decay
+    ema_alpha : float
+        Smoothing factor for exponential moving average of the objective
+    max_gradient_norm : float
+        Maximum relative gradient magnitude applied per update
     momentum : float
         Momentum factor for gradient updates
     max_iterations : int
@@ -59,6 +69,11 @@ class OptimizationConfig:
     performance_weight: float = 0.45
     stability_weight: float = 0.20
     learning_rate: float = 0.01
+    learning_rate_floor: float = 0.001
+    adaptive_decay: float = 0.6
+    plateau_patience: int = 5
+    ema_alpha: float = 0.2
+    max_gradient_norm: float = 0.05
     momentum: float = 0.9
     max_iterations: int = 100
     convergence_threshold: float = 0.001
@@ -72,10 +87,25 @@ class OptimizationConfig:
             self.balance_weight + self.performance_weight + self.stability_weight, 1.0
         ):
             raise ValueError("Objective weights must sum to 1.0")
-            
+
         if not 0 < self.learning_rate < 1:
             raise ValueError("Learning rate must be in (0, 1)")
-            
+
+        if not 0 < self.learning_rate_floor <= self.learning_rate:
+            raise ValueError("Learning rate floor must be in (0, learning_rate]")
+
+        if not 0 < self.adaptive_decay < 1:
+            raise ValueError("Adaptive decay must be in (0, 1)")
+
+        if self.plateau_patience < 1:
+            raise ValueError("Plateau patience must be positive")
+
+        if not 0 < self.ema_alpha <= 1:
+            raise ValueError("EMA alpha must be in (0, 1]")
+
+        if not 0 < self.max_gradient_norm <= 1:
+            raise ValueError("Max gradient norm must be in (0, 1]")
+
         if not 0 <= self.momentum < 1:
             raise ValueError("Momentum must be in [0, 1)")
 
@@ -128,13 +158,17 @@ class NeuroOptimizer:
         """Initialize the neuro-optimizer."""
         self.config = config
         self._logger = logger or (lambda name, value: None)
-        
+
         # Optimization state
         self._velocity: Dict[str, Dict[str, float]] = {}
+        self._current_lr = self.config.learning_rate
         self._iteration = 0
         self._best_objective = -np.inf
+        self._last_improvement = 0
         self._convergence_history: List[float] = []
-        
+        self._plateau_steps = 0
+        self._ema_objective: Optional[float] = None
+
         # Homeostatic setpoints
         self._setpoints = self._initialize_setpoints()
         
@@ -186,14 +220,16 @@ class NeuroOptimizer:
         # Calculate balance metrics
         balance = self._calculate_balance_metrics(current_state)
         self._balance_history.append(balance)
-        
+
         # Calculate composite objective
         objective = self._calculate_objective(performance_score, balance, current_state)
         self._performance_history.append(objective)
-        
+        self._update_learning_rate(objective)
+
         # Update best
         if objective > self._best_objective:
             self._best_objective = objective
+            self._last_improvement = self._iteration
             
         # Calculate gradients (approximated via finite differences)
         gradients = self._estimate_gradients(
@@ -364,7 +400,7 @@ class NeuroOptimizer:
                 else:
                     grad = 0.0
                     
-                gradients[module][param_name] = grad * self.config.learning_rate
+                gradients[module][param_name] = grad * self._current_lr
                 
         return gradients
         
@@ -416,16 +452,47 @@ class NeuroOptimizer:
                     + module_grads[param_name]
                 )
                 self._velocity[module][param_name] = velocity
-                
+
+                # Gradient clipping relative to parameter magnitude
+                max_step = abs(param_value) * self.config.max_gradient_norm
+                clipped_velocity = float(np.clip(velocity, -max_step, max_step))
+
                 # Apply update
-                new_value = param_value + velocity
+                new_value = param_value + clipped_velocity
                 
                 # Clip to reasonable bounds (prevent instability)
                 new_value = np.clip(new_value, param_value * 0.8, param_value * 1.2)
                 
                 updated[module][param_name] = new_value
-                
+
         return updated
+
+    def _update_learning_rate(self, objective: float) -> None:
+        """Adapt learning rate based on progress and stability."""
+
+        if self._ema_objective is None:
+            self._ema_objective = objective
+        else:
+            self._ema_objective = (
+                self.config.ema_alpha * objective
+                + (1 - self.config.ema_alpha) * self._ema_objective
+            )
+
+        improving = objective >= self._ema_objective
+        if improving:
+            self._plateau_steps = 0
+            # Gradually recover toward base learning rate after decay events
+            recovery_step = (self.config.learning_rate - self._current_lr) * 0.25
+            self._current_lr = min(self.config.learning_rate, self._current_lr + recovery_step)
+            return
+
+        self._plateau_steps += 1
+        if self._plateau_steps >= self.config.plateau_patience:
+            decayed_lr = self._current_lr * self.config.adaptive_decay
+            self._current_lr = max(self.config.learning_rate_floor, decayed_lr)
+            self._plateau_steps = 0
+            # Reset velocity to avoid stale momentum during plateaus
+            self._velocity = {}
         
     def _log_metrics(self, objective: float, balance: BalanceMetrics) -> None:
         """Log optimization metrics.
