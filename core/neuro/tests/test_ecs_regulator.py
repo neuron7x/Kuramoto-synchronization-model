@@ -221,7 +221,7 @@ class TestAdaptParameters:
 
         With EMA smoothing, we need multiple high-stress updates to build
         the stress level above threshold before adapt_parameters will
-        trigger threshold reduction.
+        trigger threshold increase (more conservative behavior).
         """
         regulator = ECSInspiredRegulator(
             initial_risk_threshold=0.05, stress_threshold=0.02
@@ -238,8 +238,8 @@ class TestAdaptParameters:
         # Adapt parameters
         regulator.adapt_parameters(context_phase="stable")
 
-        # Risk threshold should decrease
-        assert regulator.risk_threshold < initial_threshold
+        # Risk threshold should INCREASE (more conservative = higher action threshold)
+        assert regulator.risk_threshold > initial_threshold
         # Compensatory factor should increase
         assert regulator.compensatory_factor > 1.0
 
@@ -249,7 +249,8 @@ class TestAdaptParameters:
         We use a lower stress_threshold so that with EMA smoothing,
         both regulators can exceed the threshold and trigger high-stress
         adaptation. The difference in chronic_threshold determines whether
-        the adaptation uses chronic or acute multipliers.
+        the adaptation uses chronic or acute multipliers. Higher stress
+        leads to higher thresholds (more conservative behavior).
         """
         reg_acute = ECSInspiredRegulator(
             initial_risk_threshold=0.05, stress_threshold=0.02, chronic_threshold=20
@@ -273,8 +274,8 @@ class TestAdaptParameters:
         reg_acute.adapt_parameters()
         reg_chronic.adapt_parameters()
 
-        # Chronic should have lower threshold (stronger reduction)
-        assert reg_chronic.risk_threshold < reg_acute.risk_threshold
+        # Chronic should have HIGHER threshold (stronger conservative adaptation)
+        assert reg_chronic.risk_threshold > reg_acute.risk_threshold
         # Chronic should have higher compensation
         assert reg_chronic.compensatory_factor > reg_acute.compensatory_factor
 
@@ -294,26 +295,31 @@ class TestAdaptParameters:
         reg_stable.adapt_parameters(context_phase="stable")
         reg_chaotic.adapt_parameters(context_phase="chaotic")
 
-        # Chaotic phase should be more conservative
-        assert reg_chaotic.risk_threshold < reg_stable.risk_threshold
+        # Chaotic phase should be more conservative (HIGHER threshold = harder to trade)
+        assert reg_chaotic.risk_threshold > reg_stable.risk_threshold
 
     def test_adapt_recovery(self) -> None:
-        """Test parameter recovery during low stress."""
+        """Test parameter recovery during low stress.
+        
+        When stress is below threshold and volatility is low, the threshold
+        should gradually recover (decrease) toward the initial value.
+        """
         regulator = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.1
+            initial_risk_threshold=0.05, stress_threshold=0.1, volatility_adaptive=True
         )
 
-        # High stress first
-        regulator.update_stress(np.array([0.2, -0.2]), 0.3)
-        regulator.adapt_parameters()
-        threshold_after_stress = regulator.risk_threshold
-
-        # Low stress recovery
+        # Force threshold to be higher than initial (simulating post-stress state)
+        regulator.risk_threshold = 0.08
+        
+        # Low stress, low volatility for recovery
         regulator.update_stress(np.array([0.001, -0.001]), 0.01)
         regulator.adapt_parameters()
 
-        # Threshold should recover towards initial
-        assert regulator.risk_threshold >= threshold_after_stress
+        # Threshold should recover toward initial (decrease from 0.08 toward 0.05)
+        assert regulator.risk_threshold < 0.08, f"Expected recovery: {regulator.risk_threshold}"
+        assert regulator.risk_threshold > regulator._initial_action_threshold * 0.9, (
+            f"Recovery should be gradual: {regulator.risk_threshold}"
+        )
 
 
 class TestKalmanFilter:
@@ -1192,7 +1198,11 @@ class TestECSInvariants:
     """Invariant-focused tests to ensure regulator safety properties."""
 
     def test_parameter_bounds_are_clamped(self) -> None:
-        """Risk thresholds remain within safe bounds during adaptations."""
+        """Risk thresholds remain within safe bounds during adaptations.
+        
+        Under high stress, the threshold should increase (more conservative).
+        The threshold has a minimum bound of 0.001 and increases from initial.
+        """
         regulator = ECSInspiredRegulator(initial_risk_threshold=0.05, seed=1)
         regulator.risk_threshold = 0.002  # Force near-lower bound state
 
@@ -1200,7 +1210,9 @@ class TestECSInvariants:
             regulator.update_stress(np.array([0.2, -0.2, 0.15]), 0.3)
             regulator.adapt_parameters(context_phase="chaotic")
 
-        assert 0.001 <= regulator.risk_threshold <= regulator._initial_risk_threshold
+        # Threshold should be at least the minimum bound
+        assert regulator.risk_threshold >= 0.001
+        # Under high stress, threshold increases for conservative behavior
         assert regulator.compensatory_factor >= 1.0
 
     def test_chronic_counter_behaviour(self) -> None:

@@ -42,6 +42,7 @@ FE_DECAY_FACTOR: float = 0.995  # Decay factor for monotonicity correction
 SIGNAL_BOUND_MAX: float = 10.0  # Maximum allowed signal magnitude
 INSTABILITY_PENALTY: float = 1.2  # Threshold increase when system unstable
 FE_VARIANCE_THRESHOLD: float = 0.1  # Variance threshold for stability detection
+RECOVERY_SMOOTHING_FACTOR: float = 10.0  # Controls recovery speed (higher = slower)
 
 
 class StressMode(str, Enum):
@@ -306,49 +307,48 @@ class ECSInspiredRegulator:
 
     def _enforce_strict_monotonic_descent(
         self, new_fe: float, previous_fe: float
-    ) -> tuple[float, float]:
+    ) -> float:
         """Enforce strict monotonic free energy descent as an invariant.
 
-        Instead of clamping the free energy proxy directly, this adjusts
-        the internal stress state so that the derived free energy does not
-        exceed the previous value (within ``max_fe_step_up`` tolerance).
+        This method constrains the FE proxy value to maintain thermodynamic
+        consistency (FE_t <= FE_{t-1} + max_fe_step_up). The actual stress
+        level is NOT modified - only the FE proxy is constrained. This
+        separation ensures that stress detection and conservative behavior
+        remain responsive to actual market conditions.
 
         Args:
             new_fe: Newly computed free energy
             previous_fe: Previous free energy value
 
         Returns:
-            Tuple of (corrected free energy, corrected stress level)
+            Corrected free energy value (stress level unchanged)
         """
         if not self._enforce_monotonicity:
-            return new_fe, self.stress_level
+            return new_fe
 
         allowed_fe = previous_fe + self.max_fe_step_up
         if not self.research_mode:
             allowed_fe = min(allowed_fe, previous_fe + FE_STABILITY_EPSILON)
 
         if new_fe <= allowed_fe + FE_STABILITY_EPSILON:
-            return new_fe, self.stress_level
+            return new_fe
 
         self._monotonicity_violations += 1
 
         corrected_fe = max(0.0, allowed_fe)
-        corrected_stress = corrected_fe / self.fe_scaling
-        corrected_stress = min(self.stress_level, corrected_stress)
 
         self.log_action(
             "Monotonicity correction",
             {
                 "original_fe": float(new_fe),
                 "corrected_fe": float(corrected_fe),
-                "original_stress": float(self.stress_level),
-                "corrected_stress": float(corrected_stress),
+                "stress_level": float(self.stress_level),
                 "allowed_fe": float(allowed_fe),
                 "violation_count": self._monotonicity_violations,
             },
         )
 
-        return float(corrected_fe), float(corrected_stress)
+        return float(corrected_fe)
 
     def _update_feedback_loop(self) -> None:
         """Update dynamic feedback loop for real-time adaptation.
@@ -487,13 +487,13 @@ class ECSInspiredRegulator:
         # Map to TACL free energy proxy
         raw_fe = self.stress_level * self.fe_scaling
 
-        # Enforce strict monotonic descent
+        # Enforce strict monotonic descent on FE proxy only.
+        # Stress level is NOT modified - this ensures stress detection and
+        # conservative behavior remain responsive to actual market conditions.
         if previous_fe is not None:
-            corrected_fe, corrected_stress = self._enforce_strict_monotonic_descent(
+            self.free_energy_proxy = self._enforce_strict_monotonic_descent(
                 raw_fe, previous_fe
             )
-            self.free_energy_proxy = corrected_fe
-            self.stress_level = corrected_stress
         else:
             self.free_energy_proxy = raw_fe
 
@@ -606,18 +606,34 @@ class ECSInspiredRegulator:
             )
         else:
             # Recovery with normalization (from PET data)
-            # Slower recovery during uncertain conditions
-            recovery_rate = phase_factor
+            # During recovery, we gradually return threshold toward initial value
+            # High volatility should SLOW recovery (not accelerate it)
+            recovery_rate = 1.0
+
+            # Slow down recovery during chaotic/transition phases
+            if context_phase in ["chaotic", "transition"]:
+                recovery_rate *= 1.02  # Slightly slower recovery
+
+            # Slow down recovery during high volatility (stay conservative longer)
+            if self._volatility_adaptive and volatility_regime in ["high", "extreme"]:
+                recovery_rate *= 1.05  # Even slower recovery
+                if volatility_regime == "extreme":
+                    recovery_rate *= 1.1  # Much slower recovery
+
             if volatility_regime == "moderate":
-                recovery_rate *= 0.98
+                recovery_rate *= 0.98  # Slightly faster recovery in calm conditions
 
             recovery_target = self._initial_action_threshold
             if self.research_mode:
                 recovery_target = min(self._initial_action_threshold, self.risk_threshold)
 
+            # Gradually move threshold toward initial (recovery_target).
+            # Higher recovery_rate slows recovery; RECOVERY_SMOOTHING_FACTOR
+            # controls the base smoothing (higher = slower convergence).
             self.risk_threshold = max(
                 0.001,
-                min(recovery_target, self.risk_threshold / max(recovery_rate, 1e-6)),
+                self.risk_threshold + (recovery_target - self.risk_threshold)
+                / (recovery_rate * RECOVERY_SMOOTHING_FACTOR),
             )
             self.compensatory_factor = max(1.0, self.compensatory_factor * 0.98)
 
@@ -897,4 +913,5 @@ __all__ = [
     "SIGNAL_BOUND_MAX",
     "INSTABILITY_PENALTY",
     "FE_VARIANCE_THRESHOLD",
+    "RECOVERY_SMOOTHING_FACTOR",
 ]

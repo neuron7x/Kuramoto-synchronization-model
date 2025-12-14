@@ -101,7 +101,8 @@ for i in range(n_steps):
 
 - `free_energy_proxy = stress_level * fe_scaling`
 - Monotonic invariant: `FE_t <= FE_{t-1} + max_fe_step_up` (default `max_fe_step_up = 0`)
-- Violations adjust **stress** downward to restore the invariant instead of clamping the FE output only.
+- FE proxy is constrained independently of stress level to maintain thermodynamic consistency
+- **Stress level is NOT modified by FE constraint** — this ensures stress detection and conservative behavior remain responsive to actual market conditions
 
 ## Integration with TradePulse Components
 
