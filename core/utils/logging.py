@@ -90,6 +90,13 @@ class JSONFormatter(logging.Formatter):
 def _resolve_level(level: int | str) -> int:
     """Resolve a logging level from either a string name or numeric value."""
 
+    if isinstance(level, bool):
+        # ``bool`` is a subclass of ``int`` but treating it as a valid logging
+        # level leads to confusing behaviour (e.g. ``True`` maps to level 1).
+        # Reject boolean inputs explicitly so callers provide an actual level
+        # name/number.
+        raise ValueError("Invalid log level: True" if level else "Invalid log level: False")
+
     if isinstance(level, str):
         normalized = level.strip()
         if not normalized:
