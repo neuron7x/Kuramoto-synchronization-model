@@ -1,6 +1,10 @@
 import numpy as np
 
-from core.neuro.ecs_regulator import ECSInspiredRegulator, StressMode
+from core.neuro.ecs_regulator import (
+    ECSInspiredRegulator,
+    FE_STABILITY_EPSILON,
+    StressMode,
+)
 
 
 def test_stress_increase_raises_threshold_and_actions_contract():
@@ -93,8 +97,6 @@ def test_nan_inputs_default_to_hold_for_safety():
 
 def test_fe_invariant_over_multiple_stress_updates():
     """FE should not increase beyond previous + max_fe_step_up over multiple updates."""
-    from core.neuro.ecs_regulator import FE_STABILITY_EPSILON
-
     regulator = ECSInspiredRegulator(
         initial_risk_threshold=0.05,
         stress_threshold=0.02,

@@ -42,6 +42,7 @@ FE_DECAY_FACTOR: float = 0.995  # Decay factor for monotonicity correction
 SIGNAL_BOUND_MAX: float = 10.0  # Maximum allowed signal magnitude
 INSTABILITY_PENALTY: float = 1.2  # Threshold increase when system unstable
 FE_VARIANCE_THRESHOLD: float = 0.1  # Variance threshold for stability detection
+RECOVERY_SMOOTHING_FACTOR: float = 10.0  # Controls recovery speed (higher = slower)
 
 
 class StressMode(str, Enum):
@@ -486,9 +487,9 @@ class ECSInspiredRegulator:
         # Map to TACL free energy proxy
         raw_fe = self.stress_level * self.fe_scaling
 
-        # Enforce strict monotonic descent on FE proxy only
-        # NOTE: stress_level is NOT modified by FE constraint - this ensures
-        # stress detection and conservative behavior respond to actual conditions
+        # Enforce strict monotonic descent on FE proxy only.
+        # Stress level is NOT modified - this ensures stress detection and
+        # conservative behavior remain responsive to actual market conditions.
         if previous_fe is not None:
             self.free_energy_proxy = self._enforce_strict_monotonic_descent(
                 raw_fe, previous_fe
@@ -626,12 +627,13 @@ class ECSInspiredRegulator:
             if self.research_mode:
                 recovery_target = min(self._initial_action_threshold, self.risk_threshold)
 
-            # Recovery: gradually move threshold toward initial (recovery_target)
-            # With recovery_rate > 1, this slows recovery; with < 1, speeds it up
-            # The formula moves threshold toward recovery_target at rate 1/recovery_rate
+            # Gradually move threshold toward initial (recovery_target).
+            # Higher recovery_rate slows recovery; RECOVERY_SMOOTHING_FACTOR
+            # controls the base smoothing (higher = slower convergence).
             self.risk_threshold = max(
                 0.001,
-                self.risk_threshold + (recovery_target - self.risk_threshold) / (recovery_rate * 10),
+                self.risk_threshold + (recovery_target - self.risk_threshold)
+                / (recovery_rate * RECOVERY_SMOOTHING_FACTOR),
             )
             self.compensatory_factor = max(1.0, self.compensatory_factor * 0.98)
 
@@ -911,4 +913,5 @@ __all__ = [
     "SIGNAL_BOUND_MAX",
     "INSTABILITY_PENALTY",
     "FE_VARIANCE_THRESHOLD",
+    "RECOVERY_SMOOTHING_FACTOR",
 ]
