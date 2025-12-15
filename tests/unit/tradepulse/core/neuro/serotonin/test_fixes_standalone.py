@@ -52,7 +52,7 @@ def create_controller():
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump(config, f)
+        yaml.dump({"active_profile": "legacy", "serotonin_legacy": config}, f)
         config_path = f.name
 
     Controller = load_controller()
@@ -265,14 +265,20 @@ def test_config_validation():
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump(incomplete_config, f)
+        yaml.dump(
+            {
+                "active_profile": "legacy",
+                "serotonin_legacy": incomplete_config,
+            },
+            f,
+        )
         config_path = f.name
 
     try:
         Controller(config_path)
         raise AssertionError("Should have raised ValueError for missing keys")
     except ValueError as e:
-        assert "Missing serotonin config keys" in str(e)
+        assert "Missing serotonin_legacy keys" in str(e)
         print("✓ Properly rejects incomplete config")
     finally:
         Path(config_path).unlink()

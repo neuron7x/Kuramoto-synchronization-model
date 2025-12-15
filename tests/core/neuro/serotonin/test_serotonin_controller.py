@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import yaml
 
 
 def _load_serotonin_module() -> tuple[object, object]:
@@ -49,7 +50,9 @@ def serotonin_cls(serotonin_module_and_cls):
 def serotonin_config_path(tmp_path: Path) -> Path:
     cfg_source = Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
     target = tmp_path / "serotonin.yaml"
-    target.write_text(cfg_source.read_text(encoding="utf-8"), encoding="utf-8")
+    loaded = yaml.safe_load(cfg_source.read_text(encoding="utf-8")) or {}
+    loaded["active_profile"] = "v24"
+    target.write_text(yaml.safe_dump(loaded), encoding="utf-8")
     return target
 
 
@@ -86,6 +89,40 @@ def test_resolve_config_path_missing(monkeypatch, serotonin_cls, tmp_path: Path)
     monkeypatch.delenv("TRADEPULSE_CONFIG_DIR", raising=False)
     with pytest.raises(FileNotFoundError):
         serotonin_cls._resolve_config_path(str(tmp_path / "missing.yaml"))
+
+
+def test_config_profile_mismatch_rejected(serotonin_cls, tmp_path: Path):
+    cfg = {
+        "active_profile": "legacy",
+        "serotonin_legacy": {"tonic_beta": 0.1},
+        "serotonin_v24": {},
+    }
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    with pytest.raises(ValueError):
+        serotonin_cls(str(cfg_path))
+
+
+def test_config_unknown_root_rejected(serotonin_cls, tmp_path: Path):
+    cfg = {"active_profile": "v24", "serotonin_v24": {}, "unexpected": 1}
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    with pytest.raises(ValueError):
+        serotonin_cls(str(cfg_path))
+
+
+def test_config_missing_profile_section(serotonin_cls, tmp_path: Path):
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text(yaml.safe_dump({"active_profile": "v24"}), encoding="utf-8")
+    with pytest.raises(ValueError):
+        serotonin_cls(str(cfg_path))
+
+
+def test_multi_document_config_rejected(serotonin_cls, tmp_path: Path):
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text("---\nactive_profile: v24\n---\n{}", encoding="utf-8")
+    with pytest.raises(ValueError):
+        serotonin_cls(str(cfg_path))
 
 
 def test_estimate_aversive_state_matches_formula(serotonin_controller):
@@ -291,68 +328,46 @@ def test_save_state_persists_json(
     assert "serotonin_level" in data
 
 
-def test_config_ignores_extra_fields(serotonin_cls, tmp_path: Path):
-    """Test that SerotoninConfig properly ignores extra fields for backward compatibility."""
+def test_config_rejects_extra_fields(serotonin_cls, tmp_path: Path):
+    """Test that SerotoninConfig rejects unexpected fields."""
     config_with_extra = tmp_path / "config_extra.yaml"
 
-    # Create a config with both required fields and extra legacy fields
-    config_content = """
-# Required v2.4.0 fields
-alpha: 0.5
-beta: 0.3
-gamma: 0.4
-delta_rho: 0.2
-k: 1.5
-theta: 0.0
-delta: 0.5
-za_bias: 0.0
-decay_rate: 0.01
-cooldown_threshold: 0.7
-desens_threshold_ticks: 3
-desens_rate: 0.05
-target_dd: 0.15
-target_sharpe: 1.5
-beta_temper: 0.5
-phase_threshold: 0.7
-phase_kappa: 2.0
-burst_factor: 0.35
-mod_t_max: 10.0
-mod_t_half: 5.0
-mod_k: 0.5
-max_desens_counter: 10
-desens_gain: 0.8
+    base_cfg = {
+        "alpha": 0.5,
+        "beta": 0.3,
+        "gamma": 0.4,
+        "delta_rho": 0.2,
+        "k": 1.5,
+        "theta": 0.0,
+        "delta": 0.5,
+        "za_bias": 0.0,
+        "decay_rate": 0.01,
+        "cooldown_threshold": 0.7,
+        "desens_threshold_ticks": 3,
+        "desens_rate": 0.05,
+        "target_dd": 0.15,
+        "target_sharpe": 1.5,
+        "beta_temper": 0.5,
+        "phase_threshold": 0.7,
+        "phase_kappa": 2.0,
+        "burst_factor": 0.35,
+        "mod_t_max": 10.0,
+        "mod_t_half": 5.0,
+        "mod_k": 0.5,
+        "max_desens_counter": 10,
+        "desens_gain": 0.8,
+        # Extra field that should be rejected
+        "tonic_beta": 0.35,
+    }
+    config_with_extra.write_text(
+        yaml.safe_dump(
+            {"active_profile": "v24", "serotonin_v24": base_cfg},
+        ),
+        encoding="utf-8",
+    )
 
-# Extra legacy fields (should be ignored, not cause validation errors)
-tonic_beta: 0.35
-phasic_beta: 0.55
-stress_gain: 1.0
-drawdown_gain: 1.2
-novelty_gain: 0.6
-stress_threshold: 0.7
-release_threshold: 0.4
-hysteresis: 0.1
-cooldown_ticks: 3
-chronic_window: 6
-desensitization_rate: 0.05
-desensitization_decay: 0.05
-max_desensitization: 0.6
-floor_min: 0.1
-floor_max: 0.6
-floor_gain: 0.8
-cooldown_extension: 2
-"""
-    config_with_extra.write_text(config_content, encoding="utf-8")
-
-    # Should not raise validation error despite extra fields
-    ctrl = serotonin_cls(str(config_with_extra))
-
-    # Verify controller was initialized successfully
-    assert ctrl.config is not None
-    assert ctrl.config["alpha"] == 0.5
-    assert ctrl.config["beta"] == 0.3
-    # Extra fields should not appear in the validated config
-    assert "tonic_beta" not in ctrl.config
-    assert "phasic_beta" not in ctrl.config
+    with pytest.raises(ValueError):
+        serotonin_cls(str(config_with_extra))
 
 
 def test_config_validates_required_fields(serotonin_cls, tmp_path: Path):
@@ -365,7 +380,15 @@ alpha: 0.5
 beta: 0.3
 # Missing many required fields
 """
-    incomplete_config.write_text(incomplete_content, encoding="utf-8")
+    incomplete_config.write_text(
+        yaml.safe_dump(
+            {
+                "active_profile": "v24",
+                "serotonin_v24": yaml.safe_load(incomplete_content),
+            }
+        ),
+        encoding="utf-8",
+    )
 
     # Should raise ValueError due to missing required fields
     with pytest.raises(ValueError, match="Invalid serotonin configuration"):
@@ -406,32 +429,40 @@ def test_config_field_types_are_validated(serotonin_cls, tmp_path: Path):
     invalid_config = tmp_path / "invalid_types.yaml"
 
     # Config with invalid type for numeric field
-    invalid_content = """
-alpha: "not_a_number"
-beta: 0.3
-gamma: 0.4
-delta_rho: 0.2
-k: 1.5
-theta: 0.0
-delta: 0.5
-za_bias: 0.0
-decay_rate: 0.01
-cooldown_threshold: 0.7
-desens_threshold_ticks: 3
-desens_rate: 0.05
-target_dd: 0.15
-target_sharpe: 1.5
-beta_temper: 0.5
-phase_threshold: 0.7
-phase_kappa: 2.0
-burst_factor: 0.35
-mod_t_max: 10.0
-mod_t_half: 5.0
-mod_k: 0.5
-max_desens_counter: 10
-desens_gain: 0.8
-"""
-    invalid_config.write_text(invalid_content, encoding="utf-8")
+    invalid_body = {
+        "alpha": "not_a_number",
+        "beta": 0.3,
+        "gamma": 0.4,
+        "delta_rho": 0.2,
+        "k": 1.5,
+        "theta": 0.0,
+        "delta": 0.5,
+        "za_bias": 0.0,
+        "decay_rate": 0.01,
+        "cooldown_threshold": 0.7,
+        "desens_threshold_ticks": 3,
+        "desens_rate": 0.05,
+        "target_dd": 0.15,
+        "target_sharpe": 1.5,
+        "beta_temper": 0.5,
+        "phase_threshold": 0.7,
+        "phase_kappa": 2.0,
+        "burst_factor": 0.35,
+        "mod_t_max": 10.0,
+        "mod_t_half": 5.0,
+        "mod_k": 0.5,
+        "max_desens_counter": 10,
+        "desens_gain": 0.8,
+    }
+    invalid_config.write_text(
+        yaml.safe_dump(
+            {
+                "active_profile": "v24",
+                "serotonin_v24": invalid_body,
+            }
+        ),
+        encoding="utf-8",
+    )
 
     # Should raise ValueError due to type validation error
     with pytest.raises(ValueError, match="Invalid serotonin configuration"):
@@ -443,33 +474,54 @@ def test_config_constraints_are_enforced(serotonin_cls, tmp_path: Path):
     invalid_config = tmp_path / "invalid_constraints.yaml"
 
     # Config with value outside allowed range (alpha should be >= 0.0)
-    invalid_content = """
-alpha: -1.0
-beta: 0.3
-gamma: 0.4
-delta_rho: 0.2
-k: 1.5
-theta: 0.0
-delta: 0.5
-za_bias: 0.0
-decay_rate: 0.01
-cooldown_threshold: 0.7
-desens_threshold_ticks: 3
-desens_rate: 0.05
-target_dd: 0.15
-target_sharpe: 1.5
-beta_temper: 0.5
-phase_threshold: 0.7
-phase_kappa: 2.0
-burst_factor: 0.35
-mod_t_max: 10.0
-mod_t_half: 5.0
-mod_k: 0.5
-max_desens_counter: 10
-desens_gain: 0.8
-"""
-    invalid_config.write_text(invalid_content, encoding="utf-8")
+    invalid_body = {
+        "alpha": -1.0,
+        "beta": 0.3,
+        "gamma": 0.4,
+        "delta_rho": 0.2,
+        "k": 1.5,
+        "theta": 0.0,
+        "delta": 0.5,
+        "za_bias": 0.0,
+        "decay_rate": 0.01,
+        "cooldown_threshold": 0.7,
+        "desens_threshold_ticks": 3,
+        "desens_rate": 0.05,
+        "target_dd": 0.15,
+        "target_sharpe": 1.5,
+        "beta_temper": 0.5,
+        "phase_threshold": 0.7,
+        "phase_kappa": 2.0,
+        "burst_factor": 0.35,
+        "mod_t_max": 10.0,
+        "mod_t_half": 5.0,
+        "mod_k": 0.5,
+        "max_desens_counter": 10,
+        "desens_gain": 0.8,
+    }
+    invalid_config.write_text(
+        yaml.safe_dump(
+            {"active_profile": "v24", "serotonin_v24": invalid_body},
+        ),
+        encoding="utf-8",
+    )
 
     # Should raise ValueError due to constraint violation
     with pytest.raises(ValueError, match="Invalid serotonin configuration"):
         serotonin_cls(str(invalid_config))
+
+
+def test_risk_budget_monotone_in_stress(serotonin_controller):
+    budgets = [
+        serotonin_controller._derive_risk_budget(
+            serotonin_controller.serotonin_level, stress
+        )
+        for stress in (0.0, 0.5, 1.0, 2.0)
+    ]
+    assert budgets == sorted(budgets, reverse=True)
+
+
+def test_serotonin_signal_stays_bounded(serotonin_controller):
+    val = serotonin_controller.compute_serotonin_signal(1e6)
+    assert 0.0 <= val <= 1.0
+    assert math.isfinite(val)

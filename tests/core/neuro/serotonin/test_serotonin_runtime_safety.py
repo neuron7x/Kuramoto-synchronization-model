@@ -39,7 +39,9 @@ def serotonin_controller(tmp_path: Path, serotonin_module):
     module, SerotoninController, _ = _load_serotonin_module()
     cfg_source = Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
     cfg_path = tmp_path / "serotonin.yaml"
-    cfg_path.write_text(cfg_source.read_text(encoding="utf-8"), encoding="utf-8")
+    loaded = yaml.safe_load(cfg_source.read_text(encoding="utf-8")) or {}
+    loaded["active_profile"] = "v24"
+    cfg_path.write_text(yaml.safe_dump(loaded), encoding="utf-8")
     return SerotoninController(str(cfg_path))
 
 
@@ -127,6 +129,7 @@ def test_trace_schema_stable_keys(serotonin_controller):
     expected_keys = [
         "timestamp_utc",
         "schema_version",
+        "active_profile",
         "mode",
         "serotonin_level",
         "stress",
