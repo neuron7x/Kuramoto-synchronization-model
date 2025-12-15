@@ -273,7 +273,7 @@ tests/integration/test_golden_path_backtest.py . [100%]
 ✅ Golden Path Complete!
 ```
 
-> **Note:** This is a demonstration workflow using synthetic data. For production use with real market data, see [DEPLOYMENT.md](DEPLOYMENT.md) and [docs/live_trading.md](docs/live_trading.md).
+> **Note:** This is a demonstration workflow using synthetic data. For production use with real market data, see [DEPLOYMENT.md](DEPLOYMENT.md) and [docs/runbook_live_trading.md](docs/runbook_live_trading.md).
 
 ---
 

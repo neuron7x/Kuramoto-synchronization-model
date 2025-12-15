@@ -1,0 +1,56 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://img\\.shields\\.io/"
+    },
+    {
+      "pattern": "^https://stackoverflow\\.com"
+    },
+    {
+      "pattern": "^https://www\\.python\\.org"
+    },
+    {
+      "pattern": "/discussions$"
+    },
+    {
+      "pattern": "^https://example\\.com"
+    },
+    {
+      "pattern": "^https://www\\.esma\\.europa\\.eu"
+    },
+    {
+      "pattern": "^https://www\\.reuters\\.com"
+    },
+    {
+      "pattern": "^https://docs\\.sigstore\\.dev"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": [
+        "https://doi.org",
+        "https://keepachangelog.com",
+        "https://semver.org",
+        "https://opensource.org",
+        "https://www.conventionalcommits.org",
+        "https://git-scm.com",
+        "https://www.contributor-covenant.org",
+        "https://martinfowler.com",
+        "https://alembic.sqlalchemy.org",
+        "https://www.postgresql.org",
+        "https://cheatsheetseries.owasp.org",
+        "https://docs.github.com",
+        "https://github.com"
+      ],
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (compatible; markdown-link-check/3.0)"
+      }
+    }
+  ],
+  "aliveStatusCodes": [200, 206, 301, 302, 403, 429],
+  "timeout": "15s",
+  "retryCount": 3
+}
