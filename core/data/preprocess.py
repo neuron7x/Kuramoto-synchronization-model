@@ -223,7 +223,9 @@ def normalize_numeric_columns(
 
             series = normalized[column]
             if pd.api.types.is_bool_dtype(series.dtype):
-                raise TypeError(f"Column {column!r} has boolean dtype which cannot be scaled")
+                raise TypeError(
+                    f"Column {column!r} has boolean dtype which cannot be scaled"
+                )
             if not is_numeric_dtype(series.dtype):
                 raise TypeError(
                     f"Column {column!r} has non-numeric dtype {series.dtype}"

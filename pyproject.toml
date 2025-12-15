@@ -214,6 +214,9 @@ ignore = ["E203", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "examples/*.py" = ["E402"]
+"benchmarks/*.py" = ["E402"]
+"docs/archive/*.py" = ["E402"]
+"tests/scripts/*.py" = ["E402"]
 
 [tool.isort]
 profile = "black"

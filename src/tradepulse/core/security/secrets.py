@@ -20,7 +20,9 @@ class Secrets:
             self.vault = client
         else:
             if hvac is None:
-                raise ImportError("hvac must be installed to use Secrets without a custom client")
+                raise ImportError(
+                    "hvac must be installed to use Secrets without a custom client"
+                )
             self.vault = hvac.Client(
                 url=os.getenv("VAULT_ADDR"),
                 token=os.getenv("VAULT_TOKEN"),

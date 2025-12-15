@@ -308,7 +308,9 @@ class AlmgrenChrissOptimizer:
         if time_step > 0:
             for s in slices:
                 trade_rate = s.quantity / time_step
-                temporary_cost += p.temporary_impact * trade_rate * trade_rate * time_step
+                temporary_cost += (
+                    p.temporary_impact * trade_rate * trade_rate * time_step
+                )
 
         return permanent_cost + temporary_cost
 

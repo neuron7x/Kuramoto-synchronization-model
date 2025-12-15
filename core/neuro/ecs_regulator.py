@@ -23,17 +23,16 @@ and TACL thermodynamic control system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from enum import Enum
 import hashlib
 import json
 from collections import deque
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Enum
 from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
-
 
 # Mathematical constants for stability and safety bounds
 GRADIENT_BOUND_MAX: float = 0.5  # Maximum allowed gradient magnitude
@@ -52,14 +51,33 @@ TRACE_SCHEMA_VERSION = "1.0"
 TRACE_EMPTY_HASH = "0" * 64
 
 # Audit-grade trace schema fields (for consistency between implementation and tests)
-TRACE_SCHEMA_FIELDS = frozenset({
-    "timestamp_utc", "schema_version", "decision_id", "prev_hash",
-    "mode", "stress_level", "chronic_counter", "free_energy_proxy",
-    "raw_signal", "filtered_signal", "adjusted_signal",
-    "conformal_q", "prediction_interval_low", "prediction_interval_high",
-    "conformal_ready", "action", "confidence_gate_pass", "reason_codes",
-    "params_snapshot", "mode_context", "stress_level_context", "event_hash",
-})
+TRACE_SCHEMA_FIELDS = frozenset(
+    {
+        "timestamp_utc",
+        "schema_version",
+        "decision_id",
+        "prev_hash",
+        "mode",
+        "stress_level",
+        "chronic_counter",
+        "free_energy_proxy",
+        "raw_signal",
+        "filtered_signal",
+        "adjusted_signal",
+        "conformal_q",
+        "prediction_interval_low",
+        "prediction_interval_high",
+        "conformal_ready",
+        "action",
+        "confidence_gate_pass",
+        "reason_codes",
+        "params_snapshot",
+        "mode_context",
+        "stress_level_context",
+        "event_hash",
+    }
+)
+
 
 class StressMode(str, Enum):
     """Stress operating modes for conservative behavior."""
@@ -437,15 +455,11 @@ class ECSInspiredRegulator:
         if vol_error > 0:
             # Volatility increasing: lower stress threshold for earlier detection
             adjustment = self._feedback_gain * vol_error
-            self.stress_threshold = max(
-                0.01, self.stress_threshold - adjustment
-            )
+            self.stress_threshold = max(0.01, self.stress_threshold - adjustment)
         else:
             # Volatility decreasing: can relax threshold slightly
             adjustment = self._feedback_gain * abs(vol_error) * 0.5
-            self.stress_threshold = min(
-                0.2, self.stress_threshold + adjustment
-            )
+            self.stress_threshold = min(0.2, self.stress_threshold + adjustment)
 
     def _update_stress_mode(self) -> None:
         """Update the stress mode based on current stress level."""
@@ -719,14 +733,17 @@ class ECSInspiredRegulator:
 
             recovery_target = self._initial_action_threshold
             if self.research_mode:
-                recovery_target = min(self._initial_action_threshold, self.risk_threshold)
+                recovery_target = min(
+                    self._initial_action_threshold, self.risk_threshold
+                )
 
             # Gradually move threshold toward initial (recovery_target).
             # Higher recovery_rate slows recovery; RECOVERY_SMOOTHING_FACTOR
             # controls the base smoothing (higher = slower convergence).
             self.risk_threshold = max(
                 0.001,
-                self.risk_threshold + (recovery_target - self.risk_threshold)
+                self.risk_threshold
+                + (recovery_target - self.risk_threshold)
                 / (recovery_rate * RECOVERY_SMOOTHING_FACTOR),
             )
             self.compensatory_factor = max(1.0, self.compensatory_factor * 0.98)
@@ -889,7 +906,9 @@ class ECSInspiredRegulator:
         if not confidence_gate_pass:
             assert action == 0, "Action must be HOLD when confidence gate fails"
         if not conformal_ready and self.conformal_gate_enabled:
-            assert action == 0, "Action must be HOLD when conformal calibration is not ready"
+            assert (
+                action == 0
+            ), "Action must be HOLD when conformal calibration is not ready"
 
         self._last_conformal_q = float(q)
         self._last_prediction_interval = interval
@@ -919,7 +938,9 @@ class ECSInspiredRegulator:
         return action
 
     def _canonical_json(self, payload: dict) -> str:
-        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
 
     def _next_timestamp(self) -> str:
         timestamp = self._time_provider()
@@ -952,7 +973,9 @@ class ECSInspiredRegulator:
         }
 
         conformal_q = float(details.get("conformal_q", self._last_conformal_q))
-        prediction_interval = details.get("prediction_interval", self._last_prediction_interval)
+        prediction_interval = details.get(
+            "prediction_interval", self._last_prediction_interval
+        )
         prediction_interval_low = (
             float(prediction_interval[0]) if prediction_interval else float("nan")
         )
@@ -975,7 +998,9 @@ class ECSInspiredRegulator:
             "conformal_q": float(conformal_q),
             "prediction_interval_low": prediction_interval_low,
             "prediction_interval_high": prediction_interval_high,
-            "conformal_ready": bool(details.get("conformal_ready", self._last_conformal_ready)),
+            "conformal_ready": bool(
+                details.get("conformal_ready", self._last_conformal_ready)
+            ),
             "action": int(details.get("action", 0)),
             "confidence_gate_pass": bool(
                 details.get("confidence_gate_pass", self._last_confidence_gate_pass)
@@ -983,7 +1008,9 @@ class ECSInspiredRegulator:
             "reason_codes": list(details.get("reason_codes", [])) + [action_type],
             "params_snapshot": params_snapshot,
             "mode_context": details.get("mode", self.stress_mode.value),
-            "stress_level_context": float(details.get("stress_level", self.stress_level)),
+            "stress_level_context": float(
+                details.get("stress_level", self.stress_level)
+            ),
         }
 
         event_json = self._canonical_json(event_without_hash)

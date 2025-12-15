@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -34,7 +32,9 @@ def test_resolve_path_missing_allowed(tmp_path: Path) -> None:
     assert result == missing_path
 
 
-def test_path_default_uses_env_var(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_path_default_uses_env_var(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test _path_default uses environment variable."""
     env_path = tmp_path / "from_env"
     env_path.mkdir()
@@ -89,11 +89,16 @@ def test_parse_args_dry_run() -> None:
 
 def test_parse_args_config_overrides() -> None:
     """Test parse_args with config overrides."""
-    args = integrate_kuramoto_ricci.parse_args([
-        "--data", "test.csv",
-        "--config-override", "key1=value1",
-        "--config-override", "key2=value2",
-    ])
+    args = integrate_kuramoto_ricci.parse_args(
+        [
+            "--data",
+            "test.csv",
+            "--config-override",
+            "key1=value1",
+            "--config-override",
+            "key2=value2",
+        ]
+    )
 
     assert len(args.config_overrides) == 2
     assert "key1=value1" in args.config_overrides
@@ -185,12 +190,17 @@ def test_main_dry_run(tmp_path: Path, capsys) -> None:
     config_file = tmp_path / "config.yaml"
     config_file.write_text("key: value\n", encoding="utf-8")
 
-    exit_code = integrate_kuramoto_ricci.main([
-        "--data", str(data_file),
-        "--config", str(config_file),
-        "--output", str(tmp_path / "output"),
-        "--dry-run",
-    ])
+    exit_code = integrate_kuramoto_ricci.main(
+        [
+            "--data",
+            str(data_file),
+            "--config",
+            str(config_file),
+            "--output",
+            str(tmp_path / "output"),
+            "--dry-run",
+        ]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()
@@ -200,13 +210,18 @@ def test_main_dry_run(tmp_path: Path, capsys) -> None:
 def test_main_missing_data_file() -> None:
     """Test main exits when data file is missing."""
     with pytest.raises(SystemExit) as exc_info:
-        integrate_kuramoto_ricci.main([
-            "--data", "/nonexistent/data.csv",
-        ])
+        integrate_kuramoto_ricci.main(
+            [
+                "--data",
+                "/nonexistent/data.csv",
+            ]
+        )
 
     # SystemExit message contains "not found" for missing file
     exit_message = str(exc_info.value).lower()
-    assert "not found" in exit_message, f"Expected 'not found' in exit message: {exc_info.value}"
+    assert (
+        "not found" in exit_message
+    ), f"Expected 'not found' in exit message: {exc_info.value}"
 
 
 def test_main_missing_config_file(tmp_path: Path) -> None:
@@ -215,14 +230,20 @@ def test_main_missing_config_file(tmp_path: Path) -> None:
     data_file.write_text("close\n100\n", encoding="utf-8")
 
     with pytest.raises(SystemExit) as exc_info:
-        integrate_kuramoto_ricci.main([
-            "--data", str(data_file),
-            "--config", "/nonexistent/config.yaml",
-        ])
+        integrate_kuramoto_ricci.main(
+            [
+                "--data",
+                str(data_file),
+                "--config",
+                "/nonexistent/config.yaml",
+            ]
+        )
 
     # SystemExit message contains "not found" for missing config
     exit_message = str(exc_info.value).lower()
-    assert "not found" in exit_message, f"Expected 'not found' in exit message: {exc_info.value}"
+    assert (
+        "not found" in exit_message
+    ), f"Expected 'not found' in exit message: {exc_info.value}"
 
 
 def test_main_output_dir_not_empty_blocked(tmp_path: Path) -> None:
@@ -238,15 +259,22 @@ def test_main_output_dir_not_empty_blocked(tmp_path: Path) -> None:
     (output_dir / "existing.txt").write_text("existing", encoding="utf-8")
 
     with pytest.raises(SystemExit) as exc_info:
-        integrate_kuramoto_ricci.main([
-            "--data", str(data_file),
-            "--config", str(config_file),
-            "--output", str(output_dir),
-        ])
+        integrate_kuramoto_ricci.main(
+            [
+                "--data",
+                str(data_file),
+                "--config",
+                str(config_file),
+                "--output",
+                str(output_dir),
+            ]
+        )
 
     # SystemExit message contains "not empty" for non-empty directory
     exit_message = str(exc_info.value).lower()
-    assert "not empty" in exit_message, f"Expected 'not empty' in exit message: {exc_info.value}"
+    assert (
+        "not empty" in exit_message
+    ), f"Expected 'not empty' in exit message: {exc_info.value}"
 
 
 def test_constants_defined() -> None:

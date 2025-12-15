@@ -67,7 +67,10 @@ class ProductionGateValidator:
         self.mutation_report_paths = (
             [Path(p) for p in mutation_report_paths]
             if mutation_report_paths is not None
-            else [Path("reports/mutation/mutmut.json"), Path("reports/mutation/summary.json")]
+            else [
+                Path("reports/mutation/mutmut.json"),
+                Path("reports/mutation/summary.json"),
+            ]
         )
         self.docs_root = Path(docs_root) if docs_root is not None else Path("docs")
         self.performance_budget_path = (
@@ -84,7 +87,9 @@ class ProductionGateValidator:
                 Path("monitoring/dashboards"),
             ]
         )
-        self.gates: List[Gate] = list(gates) if gates is not None else self._define_gates()
+        self.gates: List[Gate] = (
+            list(gates) if gates is not None else self._define_gates()
+        )
 
     # --- Gate definitions -------------------------------------------------
     def _define_gates(self) -> List[Gate]:
@@ -327,7 +332,11 @@ class ProductionGateValidator:
                 f"- Pass Rate: {pass_rate:.1f}%",
                 "",
                 "## Production Ready?",
-                "✅ YES" if all_passed and total > 0 else "❌ NO - Address failures above",
+                (
+                    "✅ YES"
+                    if all_passed and total > 0
+                    else "❌ NO - Address failures above"
+                ),
             ]
         )
         return "\n".join(lines)
@@ -358,7 +367,9 @@ def main() -> None:
         args.report.write_text(report_text + "\n", encoding="utf-8")
     if args.json_output:
         payload = validator.as_report_payload()
-        args.json_output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        args.json_output.write_text(
+            json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI wrapper

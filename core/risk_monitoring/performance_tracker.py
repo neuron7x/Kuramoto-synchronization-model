@@ -17,7 +17,7 @@ import threading
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -133,11 +133,13 @@ class PerformanceMetrics:
         if self.calmar_ratio is not None:
             lines.append(f"Calmar Ratio: {self.calmar_ratio:.3f}")
 
-        lines.extend([
-            "",
-            "--- TRADE STATISTICS ---",
-            f"Win Rate: {self.win_rate:.2%}" if self.win_rate else "Win Rate: N/A",
-        ])
+        lines.extend(
+            [
+                "",
+                "--- TRADE STATISTICS ---",
+                f"Win Rate: {self.win_rate:.2%}" if self.win_rate else "Win Rate: N/A",
+            ]
+        )
 
         if self.profit_factor is not None:
             lines.append(f"Profit Factor: {self.profit_factor:.3f}")
@@ -170,7 +172,9 @@ class PerformanceReport:
         """Convert to dictionary representation."""
         return {
             "metrics": self.metrics.to_dict(),
-            "equity_curve_length": len(self.equity_curve) if self.equity_curve is not None else 0,
+            "equity_curve_length": (
+                len(self.equity_curve) if self.equity_curve is not None else 0
+            ),
             "returns_length": len(self.returns) if self.returns is not None else 0,
             "recommendations": list(self.recommendations),
         }
@@ -316,7 +320,9 @@ class PerformanceTracker:
             Current performance metrics.
         """
         with self._lock:
-            returns_array = np.array(list(self._returns)) if self._returns else np.array([])
+            returns_array = (
+                np.array(list(self._returns)) if self._returns else np.array([])
+            )
             equity_array = np.array(list(self._equity_history))
 
             # Total return
@@ -386,7 +392,9 @@ class PerformanceTracker:
 
             # Get arrays
             returns_array = np.array(list(self._returns)) if self._returns else None
-            equity_array = np.array(list(self._equity_history)) if self._equity_history else None
+            equity_array = (
+                np.array(list(self._equity_history)) if self._equity_history else None
+            )
 
             # Calculate drawdown series
             drawdown_series = None
@@ -396,7 +404,10 @@ class PerformanceTracker:
 
             # Calculate rolling Sharpe
             rolling_sharpe = None
-            if returns_array is not None and len(returns_array) >= self._config.rolling_window:
+            if (
+                returns_array is not None
+                and len(returns_array) >= self._config.rolling_window
+            ):
                 rolling_sharpe = self._calculate_rolling_sharpe(returns_array)
 
             # Generate recommendations
@@ -455,9 +466,7 @@ class PerformanceTracker:
                 "metrics": metrics.to_dict(),
             }
 
-    def _calculate_annualized_return(
-        self, returns: NDArray[np.float64]
-    ) -> float:
+    def _calculate_annualized_return(self, returns: NDArray[np.float64]) -> float:
         """Calculate annualized return from period returns."""
         if len(returns) == 0:
             return 0.0
@@ -469,7 +478,9 @@ class PerformanceTracker:
         n_periods = len(returns)
         if n_periods < self._config.periods_per_year:
             # If less than a year, project forward
-            annualized = (1 + cumulative) ** (self._config.periods_per_year / n_periods) - 1
+            annualized = (1 + cumulative) ** (
+                self._config.periods_per_year / n_periods
+            ) - 1
         else:
             # If more than a year, calculate actual annualized
             years = n_periods / self._config.periods_per_year
@@ -486,9 +497,7 @@ class PerformanceTracker:
         annualized = std * math.sqrt(self._config.periods_per_year)
         return annualized
 
-    def _calculate_sharpe_ratio(
-        self, returns: NDArray[np.float64]
-    ) -> float | None:
+    def _calculate_sharpe_ratio(self, returns: NDArray[np.float64]) -> float | None:
         """Calculate annualized Sharpe ratio."""
         if len(returns) < 2:
             return None
@@ -505,9 +514,7 @@ class PerformanceTracker:
         sharpe = (mean_excess / std) * math.sqrt(self._config.periods_per_year)
         return float(sharpe)
 
-    def _calculate_sortino_ratio(
-        self, returns: NDArray[np.float64]
-    ) -> float | None:
+    def _calculate_sortino_ratio(self, returns: NDArray[np.float64]) -> float | None:
         """Calculate annualized Sortino ratio."""
         if len(returns) < 2:
             return None
@@ -525,7 +532,9 @@ class PerformanceTracker:
         if downside_std < 1e-10:
             return None
 
-        sortino = (mean_excess / downside_std) * math.sqrt(self._config.periods_per_year)
+        sortino = (mean_excess / downside_std) * math.sqrt(
+            self._config.periods_per_year
+        )
         return float(sortino)
 
     def _calculate_max_drawdown(
@@ -593,7 +602,9 @@ class PerformanceTracker:
             mean = np.mean(window_returns)
             std = np.std(window_returns, ddof=1)
             if std > 1e-10:
-                rolling_sharpe[i] = (mean / std) * math.sqrt(self._config.periods_per_year)
+                rolling_sharpe[i] = (mean / std) * math.sqrt(
+                    self._config.periods_per_year
+                )
             else:
                 rolling_sharpe[i] = 0.0
 
@@ -626,7 +637,11 @@ class PerformanceTracker:
 
         # Win rate recommendations
         if metrics.win_rate is not None:
-            if metrics.win_rate < 0.4 and metrics.profit_factor and metrics.profit_factor < 1.0:
+            if (
+                metrics.win_rate < 0.4
+                and metrics.profit_factor
+                and metrics.profit_factor < 1.0
+            ):
                 recommendations.append(
                     "LOW WIN RATE: Strategy may need improved signal quality or risk management"
                 )

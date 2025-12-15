@@ -61,7 +61,7 @@ class TestParameterRanges:
         for threshold in [
             ranges.INVIGORATION_THRESHOLD_DEFAULT,
             ranges.NO_GO_THRESHOLD_DEFAULT,
-            ranges.HOLD_THRESHOLD_DEFAULT
+            ranges.HOLD_THRESHOLD_DEFAULT,
         ]:
             assert 0.0 <= threshold <= 1.0
 
@@ -72,15 +72,21 @@ class TestParameterRanges:
         # Beta ranges are [0, 1]
         assert ranges.BETA_RANGE == (0.0, 1.0)
         assert ranges.BETA_RANGE[0] <= ranges.TONIC_BETA_DEFAULT <= ranges.BETA_RANGE[1]
-        assert ranges.BETA_RANGE[0] <= ranges.PHASIC_BETA_DEFAULT <= ranges.BETA_RANGE[1]
+        assert (
+            ranges.BETA_RANGE[0] <= ranges.PHASIC_BETA_DEFAULT <= ranges.BETA_RANGE[1]
+        )
 
         # Stress thresholds maintain ordering
         assert ranges.RELEASE_THRESHOLD_DEFAULT <= ranges.STRESS_THRESHOLD_DEFAULT
 
         # Floor values maintain ordering
         assert ranges.FLOOR_MIN_DEFAULT <= ranges.FLOOR_MAX_DEFAULT
-        assert ranges.FLOOR_RANGE[0] <= ranges.FLOOR_MIN_DEFAULT <= ranges.FLOOR_RANGE[1]
-        assert ranges.FLOOR_RANGE[0] <= ranges.FLOOR_MAX_DEFAULT <= ranges.FLOOR_RANGE[1]
+        assert (
+            ranges.FLOOR_RANGE[0] <= ranges.FLOOR_MIN_DEFAULT <= ranges.FLOOR_RANGE[1]
+        )
+        assert (
+            ranges.FLOOR_RANGE[0] <= ranges.FLOOR_MAX_DEFAULT <= ranges.FLOOR_RANGE[1]
+        )
 
         # Desensitization is less than 1
         assert ranges.MAX_DESENSITIZATION_DEFAULT < 1.0
@@ -100,17 +106,27 @@ class TestParameterRanges:
 
         # Safe mode multiplier is in [0, 1]
         safe_mult = ranges.SAFE_MODE_POSITION_MULTIPLIER_DEFAULT
-        assert ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0] <= safe_mult <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]
+        assert (
+            ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0]
+            <= safe_mult
+            <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]
+        )
 
         # Kill switch streak is positive
-        assert ranges.KILL_SWITCH_LOSS_STREAK_DEFAULT >= ranges.KILL_SWITCH_LOSS_STREAK_MIN
+        assert (
+            ranges.KILL_SWITCH_LOSS_STREAK_DEFAULT >= ranges.KILL_SWITCH_LOSS_STREAK_MIN
+        )
 
     def test_regime_adaptive_ranges_are_consistent(self):
         """Verify Regime Adaptive parameter ranges are logically consistent."""
         ranges = RegimeAdaptiveParameterRanges()
 
         # Thresholds maintain ordering
-        assert ranges.CALM_THRESHOLD_DEFAULT < ranges.STRESSED_THRESHOLD_DEFAULT < ranges.CRITICAL_THRESHOLD_DEFAULT
+        assert (
+            ranges.CALM_THRESHOLD_DEFAULT
+            < ranges.STRESSED_THRESHOLD_DEFAULT
+            < ranges.CRITICAL_THRESHOLD_DEFAULT
+        )
 
         # Multipliers are positive
         assert ranges.CALM_MULTIPLIER_DEFAULT > 0
@@ -276,7 +292,9 @@ class TestDopamineInvariants:
 
         is_valid, errors = validate_parameter_invariants("dopamine", params)
         assert not is_valid
-        assert any("min_temperature" in err and "base_temperature" in err for err in errors)
+        assert any(
+            "min_temperature" in err and "base_temperature" in err for err in errors
+        )
 
     def test_dopamine_gate_thresholds_out_of_range_fail(self):
         """Dopamine validation fails when gate thresholds are out of [0, 1]."""
@@ -331,7 +349,9 @@ class TestSerotoninInvariants:
 
         is_valid, errors = validate_parameter_invariants("serotonin", params)
         assert not is_valid
-        assert any("release_threshold" in err and "stress_threshold" in err for err in errors)
+        assert any(
+            "release_threshold" in err and "stress_threshold" in err for err in errors
+        )
 
     def test_serotonin_floor_min_greater_than_max_fails(self):
         """Serotonin validation fails when floor_min > floor_max."""
@@ -400,7 +420,10 @@ class TestRiskEngineInvariants:
 
         is_valid, errors = validate_parameter_invariants("risk_engine", params)
         assert not is_valid
-        assert any("max_orders_per_minute" in err and "max_orders_per_hour" in err for err in errors)
+        assert any(
+            "max_orders_per_minute" in err and "max_orders_per_hour" in err
+            for err in errors
+        )
 
     def test_risk_engine_safe_mode_multiplier_out_of_range_fails(self):
         """Risk Engine validation fails when safe_mode_position_multiplier is out of [0, 1]."""
@@ -453,7 +476,9 @@ class TestRegimeAdaptiveInvariants:
         }
         is_valid, errors = validate_parameter_invariants("regime_adaptive", params)
         assert not is_valid
-        assert any("calm" in err and "stressed" in err and "critical" in err for err in errors)
+        assert any(
+            "calm" in err and "stressed" in err and "critical" in err for err in errors
+        )
 
         # stressed >= critical
         params = {

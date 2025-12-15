@@ -428,7 +428,9 @@ def ensure_output_dir(path: Path) -> None:
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Виділення вимог із product specification")
+    parser = argparse.ArgumentParser(
+        description="Виділення вимог із product specification"
+    )
     parser.add_argument(
         "--input",
         type=Path,

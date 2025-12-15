@@ -541,7 +541,9 @@ def ingest(
             )
         manager.render("ingest", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli ingest --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli ingest --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(
@@ -744,7 +746,9 @@ def backtest(
             )
         manager.render("backtest", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli backtest --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli backtest --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(
@@ -882,7 +886,9 @@ def optimize(
             )
         manager.render("optimize", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli optimize --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli optimize --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(
@@ -1020,7 +1026,9 @@ def exec(  # noqa: A001
             )
         manager.render("exec", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli exec --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli exec --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(
@@ -1180,7 +1188,9 @@ def report(
             )
         manager.render("report", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli report --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli report --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(
@@ -1275,7 +1285,9 @@ def deploy(
             )
         manager.render("deploy", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli deploy --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli deploy --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(
@@ -1436,7 +1448,9 @@ def parity(
             )
         manager.render("parity", template_output)
         click.echo(f"[{command}] ✓ Template written to {template_output}")
-        click.echo(f"[{command}] ℹ Edit the template and run: tradepulse_cli parity --config {template_output}")
+        click.echo(
+            f"[{command}] ℹ Edit the template and run: tradepulse_cli parity --config {template_output}"
+        )
         return
     if config is None:
         raise click.UsageError(

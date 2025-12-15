@@ -44,7 +44,9 @@ class TestKellyParams:
             KellyParams(win_probability=0.5, win_loss_ratio=1.0, max_fraction=0)
 
     def test_invalid_fractional_kelly(self) -> None:
-        with pytest.raises(ValueError, match="fractional_kelly must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="fractional_kelly must be between 0 and 1"
+        ):
             KellyParams(win_probability=0.5, win_loss_ratio=1.0, fractional_kelly=0)
 
 
@@ -202,11 +204,13 @@ class TestMultiAssetKelly:
     @pytest.fixture
     def simple_params(self) -> MultiAssetKellyParams:
         mu = np.array([0.10, 0.08, 0.12])
-        sigma = np.array([
-            [0.04, 0.01, 0.02],
-            [0.01, 0.03, 0.01],
-            [0.02, 0.01, 0.05],
-        ])
+        sigma = np.array(
+            [
+                [0.04, 0.01, 0.02],
+                [0.01, 0.03, 0.01],
+                [0.02, 0.01, 0.05],
+            ]
+        )
         return MultiAssetKellyParams(
             expected_returns=mu,
             covariance_matrix=sigma,
@@ -224,11 +228,13 @@ class TestMultiAssetKelly:
 
     def test_leverage_constraint_respected(self) -> None:
         mu = np.array([0.15, 0.15, 0.15])  # High returns
-        sigma = np.array([
-            [0.01, 0, 0],
-            [0, 0.01, 0],
-            [0, 0, 0.01],
-        ])  # Low variance = high kelly
+        sigma = np.array(
+            [
+                [0.01, 0, 0],
+                [0, 0.01, 0],
+                [0, 0, 0.01],
+            ]
+        )  # Low variance = high kelly
         params = MultiAssetKellyParams(
             expected_returns=mu,
             covariance_matrix=sigma,
@@ -261,11 +267,13 @@ class TestMultiAssetKelly:
     ) -> None:
         # Use moderate returns so constraints don't bind for both cases
         mu = np.array([0.05, 0.04, 0.06])
-        sigma = np.array([
-            [0.04, 0.01, 0.02],
-            [0.01, 0.03, 0.01],
-            [0.02, 0.01, 0.05],
-        ])
+        sigma = np.array(
+            [
+                [0.04, 0.01, 0.02],
+                [0.01, 0.03, 0.01],
+                [0.02, 0.01, 0.05],
+            ]
+        )
         full_params = MultiAssetKellyParams(
             expected_returns=mu,
             covariance_matrix=sigma,

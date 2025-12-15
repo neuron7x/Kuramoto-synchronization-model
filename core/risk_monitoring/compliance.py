@@ -370,9 +370,9 @@ class DoddFrankReporter:
         for artefact in self._storage_path.glob("dodd-frank-*.json"):
             try:
                 timestamp_str = artefact.stem.split("-", 2)[-1]
-                timestamp = datetime.strptime(
-                    timestamp_str, "%Y%m%dT%H%M%SZ"
-                ).replace(tzinfo=timezone.utc)
+                timestamp = datetime.strptime(timestamp_str, "%Y%m%dT%H%M%SZ").replace(
+                    tzinfo=timezone.utc
+                )
             except ValueError:
                 continue
             if timestamp < cutoff:
@@ -531,9 +531,7 @@ class ComplianceManager:
 
             return violation
 
-    def resolve_violation(
-        self, violation_id: str, resolution_notes: str
-    ) -> bool:
+    def resolve_violation(self, violation_id: str, resolution_notes: str) -> bool:
         """Mark a violation as resolved.
 
         Args:
@@ -583,7 +581,10 @@ class ComplianceManager:
                 for e in self._audit_trail
                 if (
                     period_start <= e.timestamp <= period_end
-                    and (e.regulation == regulation or e.regulation == RegulationType.INTERNAL)
+                    and (
+                        e.regulation == regulation
+                        or e.regulation == RegulationType.INTERNAL
+                    )
                 )
             ]
 
@@ -591,7 +592,8 @@ class ComplianceManager:
             violations = [
                 v
                 for v in self._violations
-                if period_start <= v.timestamp <= period_end and v.regulation == regulation
+                if period_start <= v.timestamp <= period_end
+                and v.regulation == regulation
             ]
 
             # Calculate risk metrics
@@ -721,10 +723,12 @@ class ComplianceManager:
         ]
 
         if critical:
-            summary_lines.extend([
-                "",
-                "CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:",
-                *[f"  - {v.rule}: {v.description}" for v in critical[:5]],
-            ])
+            summary_lines.extend(
+                [
+                    "",
+                    "CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:",
+                    *[f"  - {v.rule}: {v.description}" for v in critical[:5]],
+                ]
+            )
 
         return "\n".join(summary_lines)

@@ -12,7 +12,6 @@ The thresholds automatically tighten during unstable periods to minimize exposur
 from __future__ import annotations
 
 import logging
-import math
 import threading
 from collections import deque
 from dataclasses import dataclass, field
@@ -337,7 +336,9 @@ class AdaptiveThresholdCalibrator:
 
         # Apply scaling: higher volatility = lower thresholds (more conservative)
         # Inverse relationship: when vol_ratio > 1, we want factor < 1
-        target_factor = 1.0 / (1.0 + (vol_ratio - 1.0) * self._config.volatility_scale_factor)
+        target_factor = 1.0 / (
+            1.0 + (vol_ratio - 1.0) * self._config.volatility_scale_factor
+        )
 
         # Apply volume-based adjustment if we have volume data
         if len(self._volumes) >= 2:

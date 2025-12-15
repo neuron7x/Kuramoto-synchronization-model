@@ -95,7 +95,9 @@ def _resolve_level(level: int | str) -> int:
         # level leads to confusing behaviour (e.g. ``True`` maps to level 1).
         # Reject boolean inputs explicitly so callers provide an actual level
         # name/number.
-        raise ValueError("Invalid log level: True" if level else "Invalid log level: False")
+        raise ValueError(
+            "Invalid log level: True" if level else "Invalid log level: False"
+        )
 
     if isinstance(level, str):
         normalized = level.strip()

@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timezone
-import math
 from functools import lru_cache
 from typing import Dict, FrozenSet, Iterable, Sequence
 from zoneinfo import ZoneInfo
@@ -247,8 +247,13 @@ def normalize_timestamp(
             except ValueError:
                 try:
                     parsed = pd.Timestamp(candidate)
-                except (TypeError, ValueError) as exc:  # pragma: no cover - defensive guard
-                    raise ValueError(f"Unsupported timestamp string: {value!r}") from exc
+                except (
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover - defensive guard
+                    raise ValueError(
+                        f"Unsupported timestamp string: {value!r}"
+                    ) from exc
                 if pd.isna(parsed):
                     raise ValueError(f"Unsupported timestamp string: {value!r}")
                 value = parsed.to_pydatetime()

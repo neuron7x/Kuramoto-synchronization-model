@@ -91,8 +91,9 @@ def test_infinite_position_handled() -> None:
 
     # Verify error message is helpful
     error_msg = str(exc_info.value).lower()
-    assert "non-finite" in error_msg or "nan" in error_msg, \
-        f"Expected error message about non-finite values, got: {exc_info.value}"
+    assert (
+        "non-finite" in error_msg or "nan" in error_msg
+    ), f"Expected error message about non-finite values, got: {exc_info.value}"
 
 
 def test_strategy_returning_invalid_type() -> None:

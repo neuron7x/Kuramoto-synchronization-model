@@ -355,8 +355,7 @@ class DesensitizationParameterRanges:
 
 
 def validate_parameter_invariants(
-    controller_type: str,
-    params: Dict[str, Any]
+    controller_type: str, params: Dict[str, Any]
 ) -> Tuple[bool, list[str]]:
     """Validate parameter invariants for a specific controller type.
 
@@ -478,9 +477,7 @@ def _validate_dopamine_invariants(params: Dict[str, Any]) -> list[str]:
     if "burst_factor" in params:
         val = params["burst_factor"]
         if val < ranges.BURST_FACTOR_MIN:
-            errors.append(
-                f"burst_factor ({val}) must be >= {ranges.BURST_FACTOR_MIN}"
-            )
+            errors.append(f"burst_factor ({val}) must be >= {ranges.BURST_FACTOR_MIN}")
 
     # Temperature
     if "base_temperature" in params:
@@ -498,7 +495,11 @@ def _validate_dopamine_invariants(params: Dict[str, Any]) -> list[str]:
             )
 
     # Gate thresholds
-    for threshold_name in ["invigoration_threshold", "no_go_threshold", "hold_threshold"]:
+    for threshold_name in [
+        "invigoration_threshold",
+        "no_go_threshold",
+        "hold_threshold",
+    ]:
         if threshold_name in params:
             val = params[threshold_name]
             if not (ranges.THRESHOLD_RANGE[0] <= val <= ranges.THRESHOLD_RANGE[1]):
@@ -526,7 +527,9 @@ def _validate_serotonin_invariants(params: Dict[str, Any]) -> list[str]:
     # Stress thresholds
     if "stress_threshold" in params:
         val = params["stress_threshold"]
-        if not (ranges.STRESS_THRESHOLD_RANGE[0] <= val <= ranges.STRESS_THRESHOLD_RANGE[1]):
+        if not (
+            ranges.STRESS_THRESHOLD_RANGE[0] <= val <= ranges.STRESS_THRESHOLD_RANGE[1]
+        ):
             errors.append(
                 f"stress_threshold ({val}) must be in range {ranges.STRESS_THRESHOLD_RANGE}"
             )
@@ -541,7 +544,11 @@ def _validate_serotonin_invariants(params: Dict[str, Any]) -> list[str]:
     # Desensitization
     if "max_desensitization" in params:
         val = params["max_desensitization"]
-        if not (ranges.MAX_DESENSITIZATION_RANGE[0] <= val < ranges.MAX_DESENSITIZATION_RANGE[1]):
+        if not (
+            ranges.MAX_DESENSITIZATION_RANGE[0]
+            <= val
+            < ranges.MAX_DESENSITIZATION_RANGE[1]
+        ):
             errors.append(
                 f"max_desensitization ({val}) must be in range [0, 1) (less than 1)"
             )
@@ -564,18 +571,18 @@ def _validate_risk_engine_invariants(params: Dict[str, Any]) -> list[str]:
     # Loss percent
     if "max_daily_loss_percent" in params:
         val = params["max_daily_loss_percent"]
-        if not (ranges.MAX_DAILY_LOSS_PERCENT_RANGE[0] < val <= ranges.MAX_DAILY_LOSS_PERCENT_RANGE[1]):
-            errors.append(
-                f"max_daily_loss_percent ({val}) must be in range (0, 1]"
-            )
+        if not (
+            ranges.MAX_DAILY_LOSS_PERCENT_RANGE[0]
+            < val
+            <= ranges.MAX_DAILY_LOSS_PERCENT_RANGE[1]
+        ):
+            errors.append(f"max_daily_loss_percent ({val}) must be in range (0, 1]")
 
     # Leverage
     if "max_leverage" in params:
         val = params["max_leverage"]
         if val <= ranges.MAX_LEVERAGE_MIN:
-            errors.append(
-                f"max_leverage ({val}) must be > {ranges.MAX_LEVERAGE_MIN}"
-            )
+            errors.append(f"max_leverage ({val}) must be > {ranges.MAX_LEVERAGE_MIN}")
 
     # Order rates
     if "max_orders_per_minute" in params and "max_orders_per_hour" in params:
@@ -588,7 +595,11 @@ def _validate_risk_engine_invariants(params: Dict[str, Any]) -> list[str]:
     # Safe mode multiplier
     if "safe_mode_position_multiplier" in params:
         val = params["safe_mode_position_multiplier"]
-        if not (ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0] <= val <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]):
+        if not (
+            ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0]
+            <= val
+            <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]
+        ):
             errors.append(
                 f"safe_mode_position_multiplier ({val}) must be in range {ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE}"
             )
@@ -609,7 +620,10 @@ def _validate_regime_adaptive_invariants(params: Dict[str, Any]) -> list[str]:
     errors = []
 
     # Threshold ordering
-    if all(k in params for k in ["calm_threshold", "stressed_threshold", "critical_threshold"]):
+    if all(
+        k in params
+        for k in ["calm_threshold", "stressed_threshold", "critical_threshold"]
+    ):
         calm = params["calm_threshold"]
         stressed = params["stressed_threshold"]
         critical = params["critical_threshold"]
@@ -659,11 +673,15 @@ def _validate_gaba_invariants(params: Dict[str, Any]) -> list[str]:
     if "impulse_threshold" in params:
         val = params["impulse_threshold"]
         if val < ranges.IMPULSE_THRESHOLD_MIN:
-            errors.append(f"impulse_threshold ({val}) must be >= {ranges.IMPULSE_THRESHOLD_MIN}")
+            errors.append(
+                f"impulse_threshold ({val}) must be >= {ranges.IMPULSE_THRESHOLD_MIN}"
+            )
 
     if "inhibition_strength" in params:
         val = params["inhibition_strength"]
-        if not (ranges.INHIBITION_STRENGTH_MIN <= val <= ranges.INHIBITION_STRENGTH_MAX):
+        if not (
+            ranges.INHIBITION_STRENGTH_MIN <= val <= ranges.INHIBITION_STRENGTH_MAX
+        ):
             errors.append(
                 f"inhibition_strength ({val}) must be in range "
                 f"[{ranges.INHIBITION_STRENGTH_MIN}, {ranges.INHIBITION_STRENGTH_MAX}]"

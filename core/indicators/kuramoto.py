@@ -123,9 +123,7 @@ def _kuramoto_order_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> float:
 
 
 @njit(cache=True, fastmath=True)
-def _kuramoto_order_2d_jit(
-    cos_vals: np.ndarray, sin_vals: np.ndarray
-) -> np.ndarray:
+def _kuramoto_order_2d_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> np.ndarray:
     """JIT-compiled Kuramoto order for 2D phase matrices (N oscillators x T timesteps).
 
     This is an optional JIT-compiled implementation for large matrix operations.

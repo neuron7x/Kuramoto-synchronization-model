@@ -179,9 +179,7 @@ class TestModuleInteractionOrchestrator:
         orch = ModuleInteractionOrchestrator()
 
         # Register modules in different phases
-        orch.register_module(
-            ModuleDefinition(name="exec", phase=ModulePhase.EXECUTION)
-        )
+        orch.register_module(ModuleDefinition(name="exec", phase=ModulePhase.EXECUTION))
         orch.register_module(
             ModuleDefinition(name="signal", phase=ModulePhase.SIGNAL_GENERATION)
         )
@@ -398,9 +396,7 @@ class TestModuleInteractionOrchestrator:
         # Create a complex dependency graph:
         # A -> B -> D
         # A -> C -> D
-        orch.register_module(
-            ModuleDefinition(name="A", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="A", phase=ModulePhase.INGESTION))
         orch.register_module(
             ModuleDefinition(
                 name="B",

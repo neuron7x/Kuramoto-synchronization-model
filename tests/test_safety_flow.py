@@ -583,7 +583,9 @@ class TestCentralRiskEngine:
 
     def test_profit_does_not_trigger_loss_limits(self) -> None:
         """Ensure profitable days do not trigger loss-based protections."""
-        config = RiskEngineConfig(max_daily_loss=1000.0, kill_switch_loss_threshold=2000.0)
+        config = RiskEngineConfig(
+            max_daily_loss=1000.0, kill_switch_loss_threshold=2000.0
+        )
         safety = SafetyController()
         engine = self._create_engine(config, safety)
 

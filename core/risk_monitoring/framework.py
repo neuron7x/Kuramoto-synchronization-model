@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -31,10 +31,8 @@ from numpy.typing import NDArray
 from .adaptive_thresholds import (
     AdaptiveThresholdCalibrator,
     CalibratedThresholds,
-    ThresholdConfig,
 )
 from .compliance import (
-    AuditTrailEntry,
     ComplianceManager,
     RegulationType,
 )
@@ -146,10 +144,14 @@ class RiskAssessment:
         """Convert to dictionary representation."""
         return {
             "timestamp": self.timestamp.isoformat(),
-            "stress_assessment": self.stress_assessment.to_dict() if self.stress_assessment else None,
+            "stress_assessment": (
+                self.stress_assessment.to_dict() if self.stress_assessment else None
+            ),
             "thresholds": self.thresholds.to_dict() if self.thresholds else None,
             "performance": self.performance.to_dict() if self.performance else None,
-            "fail_safe_state": self.fail_safe_state.to_dict() if self.fail_safe_state else None,
+            "fail_safe_state": (
+                self.fail_safe_state.to_dict() if self.fail_safe_state else None
+            ),
             "requires_action": self.requires_action,
             "recommended_action": self.recommended_action.value,
             "risk_score": self.risk_score,
@@ -222,9 +224,7 @@ class RiskMonitoringFramework:
                 initial_capital=self._config.initial_capital,
                 periods_per_year=self._config.periods_per_year,
             )
-            self._performance = PerformanceTracker(
-                perf_config, time_source=self._time
-            )
+            self._performance = PerformanceTracker(perf_config, time_source=self._time)
 
         self._fail_safe: FailSafeController | None = None
         if self._config.enable_fail_safe:
@@ -324,9 +324,16 @@ class RiskMonitoringFramework:
                 # Check for performance-based risk triggers using configured thresholds
                 if self._fail_safe and self._config.auto_escalate:
                     if metrics.current_drawdown > self._config.high_drawdown_threshold:
-                        self._fail_safe.report_stress("high", source="performance_tracker")
-                    elif metrics.current_drawdown > self._config.elevated_drawdown_threshold:
-                        self._fail_safe.report_stress("elevated", source="performance_tracker")
+                        self._fail_safe.report_stress(
+                            "high", source="performance_tracker"
+                        )
+                    elif (
+                        metrics.current_drawdown
+                        > self._config.elevated_drawdown_threshold
+                    ):
+                        self._fail_safe.report_stress(
+                            "elevated", source="performance_tracker"
+                        )
 
                 return metrics
             return None
@@ -400,7 +407,11 @@ class RiskMonitoringFramework:
                     details={
                         "risk_score": risk_score,
                         "requires_action": requires_action,
-                        "stress_level": stress_assessment.stress_level.value if stress_assessment else None,
+                        "stress_level": (
+                            stress_assessment.stress_level.value
+                            if stress_assessment
+                            else None
+                        ),
                     },
                     risk_decision=recommended_action.value if requires_action else None,
                 )
@@ -468,7 +479,9 @@ class RiskMonitoringFramework:
                 return None
 
             now = self._time()
-            start = period_start or now.replace(hour=0, minute=0, second=0, microsecond=0)
+            start = period_start or now.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             end = period_end or now
 
             report = self._compliance.generate_report(

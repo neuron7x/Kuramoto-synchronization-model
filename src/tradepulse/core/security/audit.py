@@ -16,7 +16,8 @@ class AuditLogger:
         self.logger = logging.getLogger("security.audit")
         handler = self._build_handler(Path(log_path))
         if not self.logger.handlers or all(
-            isinstance(existing, logging.NullHandler) for existing in self.logger.handlers
+            isinstance(existing, logging.NullHandler)
+            for existing in self.logger.handlers
         ):
             self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)

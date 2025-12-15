@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import smtplib
-import logging
-from email.mime.text import MIMEText
 from datetime import datetime
+from email.mime.text import MIMEText
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)

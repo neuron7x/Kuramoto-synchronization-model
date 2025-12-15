@@ -5,7 +5,6 @@ from __future__ import annotations
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import json
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -159,9 +158,7 @@ class TestCheckClassInstantiation:
 
     def test_successful_class_access(self) -> None:
         """Test successful class access check."""
-        result = production_readiness_check.check_class_instantiation(
-            "pathlib", "Path"
-        )
+        result = production_readiness_check.check_class_instantiation("pathlib", "Path")
 
         assert result.passed is True
         assert "Path" in result.name
@@ -248,14 +245,14 @@ class TestCheckConfigFile:
 class TestCheckSecurityConstraints:
     """Tests for check_security_constraints function."""
 
-    def test_security_constraints_validation_with_file(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_security_constraints_validation_with_file(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         """Test security constraints check parses file and counts constraints."""
         constraints_file = tmp_path / "constraints" / "security.txt"
         constraints_file.parent.mkdir(parents=True)
         constraints_file.write_text(
-            "# Security constraints\n"
-            "package1==1.0.0\n"
-            "package2>=2.0.0\n",
+            "# Security constraints\n" "package1==1.0.0\n" "package2>=2.0.0\n",
             encoding="utf-8",
         )
         monkeypatch.chdir(tmp_path)
@@ -266,7 +263,9 @@ class TestCheckSecurityConstraints:
         assert "constraint_count" in result.details
         assert result.details["constraint_count"] == 2
 
-    def test_security_constraints_file_missing(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_security_constraints_file_missing(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         """Test security constraints check with missing file."""
         monkeypatch.chdir(tmp_path)
 
@@ -305,9 +304,7 @@ class TestMain:
     """Tests for main function."""
 
     @patch.object(production_readiness_check, "run_production_checks")
-    def test_main_all_passed(
-        self, mock_run: MagicMock, capsys, tmp_path: Path
-    ) -> None:
+    def test_main_all_passed(self, mock_run: MagicMock, capsys, tmp_path: Path) -> None:
         """Test main with all checks passed."""
         mock_report = production_readiness_check.ReadinessReport(
             timestamp="2024-01-01T00:00:00",

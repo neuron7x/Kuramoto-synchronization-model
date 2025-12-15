@@ -243,7 +243,9 @@ def create_backup(file_path: Path) -> Path:
         raise
 
 
-def save_config(config: dict[str, Any], config_path: Path, create_backup_file: bool = True) -> None:
+def save_config(
+    config: dict[str, Any], config_path: Path, create_backup_file: bool = True
+) -> None:
     """Save YAML configuration file with optional backup.
 
     Args:
@@ -284,12 +286,14 @@ def list_profiles() -> None:
     for profile_name, profile_data in CALIBRATION_PROFILES.items():
         print(f"{profile_name.upper()}")
         print(f"  Description: {profile_data['description']}")
-        controllers = [k for k in profile_data if k != 'description']
+        controllers = [k for k in profile_data if k != "description"]
         print(f"  Controllers: {', '.join(controllers)}")
         print()
 
 
-def validate_nak_config(nak: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
+def validate_nak_config(
+    nak: dict[str, Any], config_path: Path
+) -> tuple[bool, list[str]]:
     """Validate NAK controller configuration.
 
     Args:
@@ -301,8 +305,16 @@ def validate_nak_config(nak: dict[str, Any], config_path: Path) -> tuple[bool, l
     """
     # Check for required parameters
     required_params = [
-        "EI_low", "EI_high", "EI_crit", "vol_amber", "vol_red",
-        "dd_amber", "dd_red", "delta_r_limit", "r_min", "r_max"
+        "EI_low",
+        "EI_high",
+        "EI_crit",
+        "vol_amber",
+        "vol_red",
+        "dd_amber",
+        "dd_red",
+        "delta_r_limit",
+        "r_min",
+        "r_max",
     ]
     missing = [p for p in required_params if p not in nak]
     if missing:
@@ -322,7 +334,9 @@ def validate_nak_config(nak: dict[str, Any], config_path: Path) -> tuple[bool, l
     return is_valid, errors
 
 
-def validate_dopamine_config(config: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
+def validate_dopamine_config(
+    config: dict[str, Any], config_path: Path
+) -> tuple[bool, list[str]]:
     """Validate Dopamine controller configuration.
 
     Args:
@@ -333,7 +347,12 @@ def validate_dopamine_config(config: dict[str, Any], config_path: Path) -> tuple
         Tuple of (is_valid, list of error messages)
     """
     # Check for required dopamine parameters
-    required_params = ["discount_gamma", "learning_rate_v", "burst_factor", "base_temperature"]
+    required_params = [
+        "discount_gamma",
+        "learning_rate_v",
+        "burst_factor",
+        "base_temperature",
+    ]
     missing = [p for p in required_params if p not in config]
     if missing:
         errors = [f"Missing required parameters: {', '.join(missing)}"]
@@ -352,7 +371,9 @@ def validate_dopamine_config(config: dict[str, Any], config_path: Path) -> tuple
     return is_valid, errors
 
 
-def validate_serotonin_config(config: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
+def validate_serotonin_config(
+    config: dict[str, Any], config_path: Path
+) -> tuple[bool, list[str]]:
     """Validate Serotonin controller configuration.
 
     Args:
@@ -375,7 +396,9 @@ def validate_serotonin_config(config: dict[str, Any], config_path: Path) -> tupl
     return is_valid, errors
 
 
-def validate_risk_engine_config(config: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
+def validate_risk_engine_config(
+    config: dict[str, Any], config_path: Path
+) -> tuple[bool, list[str]]:
     """Validate Risk Engine configuration.
 
     Args:
@@ -398,7 +421,9 @@ def validate_risk_engine_config(config: dict[str, Any], config_path: Path) -> tu
     return is_valid, errors
 
 
-def validate_regime_adaptive_config(config: dict[str, Any], config_path: Path) -> tuple[bool, list[str]]:
+def validate_regime_adaptive_config(
+    config: dict[str, Any], config_path: Path
+) -> tuple[bool, list[str]]:
     """Validate Regime Adaptive Guard configuration.
 
     Args:
@@ -447,7 +472,11 @@ def validate_config(config_path: Path) -> bool:
     elif "discount_gamma" in config or "learning_rate_v" in config:
         print(f"\n=== Validating Dopamine Configuration: {config_path} ===\n")
         is_valid, errors = validate_dopamine_config(config, config_path)
-    elif "kill_switch_loss_streak" in config or "max_leverage" in config or "max_daily_loss_percent" in config:
+    elif (
+        "kill_switch_loss_streak" in config
+        or "max_leverage" in config
+        or "max_daily_loss_percent" in config
+    ):
         print(f"\n=== Validating Risk Engine Configuration: {config_path} ===\n")
         is_valid, errors = validate_risk_engine_config(config, config_path)
     elif "calm_threshold" in config and "critical_threshold" in config:
@@ -473,9 +502,7 @@ def validate_config(config_path: Path) -> bool:
 
 
 def apply_calibration_profile(
-    controller: str,
-    profile: str,
-    output_path: Path | None = None
+    controller: str, profile: str, output_path: Path | None = None
 ) -> None:
     """Apply a calibration profile to a controller configuration.
 
@@ -500,11 +527,13 @@ def apply_calibration_profile(
         error_msg = f"Profile '{profile}' does not contain settings for '{controller}'"
         logger.error(error_msg)
         print(f"Error: {error_msg}")
-        available = [k for k in profile_data if k != 'description']
+        available = [k for k in profile_data if k != "description"]
         print(f"Available controllers in '{profile}' profile: {', '.join(available)}")
         sys.exit(1)
 
-    print(f"\n=== Applying {profile.upper()} profile to {controller.upper()} controller ===\n")
+    print(
+        f"\n=== Applying {profile.upper()} profile to {controller.upper()} controller ===\n"
+    )
     print(f"Description: {profile_data['description']}\n")
     logger.info(f"Applying {profile} profile to {controller} controller")
 
@@ -603,7 +632,9 @@ def apply_calibration_profile(
         print(f"  Output: {output_path}")
         print("\nTo use this configuration:")
         print(f"  - Review the generated file: {output_path}")
-        print(f"  - Validate: python scripts/calibrate_controllers.py --validate {output_path}")
+        print(
+            f"  - Validate: python scripts/calibrate_controllers.py --validate {output_path}"
+        )
         print("  - Deploy by copying to the appropriate location")
 
         logger.info(f"Successfully applied {profile} profile to {output_path}")

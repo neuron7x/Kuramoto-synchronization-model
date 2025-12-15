@@ -15,6 +15,7 @@ sys.path.insert(0, str(src_path))
 # Check numpy availability
 try:
     import numpy as np
+
     print("✓ NumPy available")
 except ImportError:
     print("✗ NumPy not available - install with: pip install numpy")
@@ -23,31 +24,29 @@ except ImportError:
 # Import modules directly (bypassing package __init__.py)
 import importlib.util
 
+
 def load_module(name, path):
     """Load a module from path without triggering package imports."""
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     # Set __package__ to avoid AttributeError with dataclasses
-    module.__package__ = 'tradepulse.core.neuro'
+    module.__package__ = "tradepulse.core.neuro"
     # Register in sys.modules so dataclasses can find it
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
 
 # Load modules
 neuro_path = src_path / "tradepulse" / "core" / "neuro"
 
 print("\nLoading modules...")
 adaptive_calibrator = load_module(
-    "adaptive_calibrator",
-    neuro_path / "adaptive_calibrator.py"
+    "adaptive_calibrator", neuro_path / "adaptive_calibrator.py"
 )
 print("✓ Loaded adaptive_calibrator")
 
-neuro_optimizer = load_module(
-    "neuro_optimizer",
-    neuro_path / "neuro_optimizer.py"
-)
+neuro_optimizer = load_module("neuro_optimizer", neuro_path / "neuro_optimizer.py")
 print("✓ Loaded neuro_optimizer")
 
 # Extract classes
@@ -64,25 +63,25 @@ print("=" * 60)
 print("\n1. Testing AdaptiveCalibrator initialization...")
 try:
     initial_params = {
-        'dopamine': {
-            'discount_gamma': 0.99,
-            'learning_rate': 0.01,
-            'burst_factor': 1.5,
+        "dopamine": {
+            "discount_gamma": 0.99,
+            "learning_rate": 0.01,
+            "burst_factor": 1.5,
         },
-        'serotonin': {
-            'stress_threshold': 0.15,
-            'release_threshold': 0.10,
+        "serotonin": {
+            "stress_threshold": 0.15,
+            "release_threshold": 0.10,
         },
-        'gaba': {
-            'k_inhibit': 0.4,
-            'impulse_threshold': 0.5,
+        "gaba": {
+            "k_inhibit": 0.4,
+            "impulse_threshold": 0.5,
         },
-        'na_ach': {
-            'arousal_gain': 1.2,
-            'attention_gain': 1.0,
+        "na_ach": {
+            "arousal_gain": 1.2,
+            "attention_gain": 1.0,
         },
     }
-    
+
     calibrator = AdaptiveCalibrator(initial_params)
     assert calibrator.state.iteration == 0
     assert calibrator.state.temperature == 1.0
@@ -106,7 +105,7 @@ try:
         total_trades=100,
         timestamp=time.time(),
     )
-    
+
     score = metrics.composite_score()
     assert 0 <= score <= 1
     print(f"   ✓ Metrics created, composite score: {score:.3f}")
@@ -134,7 +133,7 @@ try:
         performance_weight=0.45,
         stability_weight=0.20,
     )
-    
+
     optimizer = NeuroOptimizer(config)
     assert optimizer._iteration == 0
     print("   ✓ Optimizer initialized successfully")
@@ -146,22 +145,24 @@ except Exception as e:
 print("\n5. Testing optimizer step...")
 try:
     sample_state = {
-        'dopamine_level': 0.6,
-        'serotonin_level': 0.3,
-        'gaba_inhibition': 0.4,
-        'na_arousal': 1.1,
-        'ach_attention': 0.7,
+        "dopamine_level": 0.6,
+        "serotonin_level": 0.3,
+        "gaba_inhibition": 0.4,
+        "na_arousal": 1.1,
+        "ach_attention": 0.7,
     }
-    
+
     updated_params, balance = optimizer.optimize(
         initial_params,
         sample_state,
         performance_score=1.5,
     )
-    
+
     assert isinstance(updated_params, dict)
     assert optimizer._iteration == 1
-    print(f"   ✓ Optimizer step executed, balance score: {balance.overall_balance_score:.3f}")
+    print(
+        f"   ✓ Optimizer step executed, balance score: {balance.overall_balance_score:.3f}"
+    )
 except Exception as e:
     print(f"   ✗ Failed: {e}")
     sys.exit(1)
@@ -170,11 +171,11 @@ except Exception as e:
 print("\n6. Testing mini optimization loop (10 iterations)...")
 try:
     current_params = initial_params.copy()
-    
+
     for i in range(10):
         # Simulate varying performance
         perf = 1.0 + i * 0.05 + np.random.randn() * 0.1
-        
+
         # Create metrics
         metrics = CalibrationMetrics(
             sharpe_ratio=max(0, perf),
@@ -188,32 +189,33 @@ try:
             total_trades=100 + i * 10,
             timestamp=time.time(),
         )
-        
+
         # Calibrate
         current_params = calibrator.step(metrics)
-        
+
         # Simulate neuromodulator state
         neuro_state = {
-            'dopamine_level': 0.5 + np.random.randn() * 0.1,
-            'serotonin_level': 0.3 + abs(np.random.randn() * 0.05),
-            'gaba_inhibition': 0.4 + abs(np.random.randn() * 0.05),
-            'na_arousal': 1.0 + np.random.randn() * 0.2,
-            'ach_attention': 0.7 + np.random.randn() * 0.1,
+            "dopamine_level": 0.5 + np.random.randn() * 0.1,
+            "serotonin_level": 0.3 + abs(np.random.randn() * 0.05),
+            "gaba_inhibition": 0.4 + abs(np.random.randn() * 0.05),
+            "na_arousal": 1.0 + np.random.randn() * 0.2,
+            "ach_attention": 0.7 + np.random.randn() * 0.1,
         }
-        
+
         # Optimize
         current_params, balance = optimizer.optimize(
             current_params,
             neuro_state,
             metrics.composite_score(),
         )
-    
-    print(f"   ✓ Completed 10 iterations")
+
+    print("   ✓ Completed 10 iterations")
     print(f"   Final best score: {calibrator.state.best_score:.3f}")
     print(f"   Final balance: {balance.overall_balance_score:.3f}")
 except Exception as e:
     print(f"   ✗ Failed: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 
@@ -221,14 +223,14 @@ except Exception as e:
 print("\n7. Testing report generation...")
 try:
     cal_report = calibrator.get_calibration_report()
-    assert cal_report['status'] == 'active'
-    assert 'best_score' in cal_report
-    assert 'recommendations' in cal_report
-    
+    assert cal_report["status"] == "active"
+    assert "best_score" in cal_report
+    assert "recommendations" in cal_report
+
     opt_report = optimizer.get_optimization_report()
-    assert opt_report['status'] == 'active'
-    assert 'health_status' in opt_report
-    
+    assert opt_report["status"] == "active"
+    assert "health_status" in opt_report
+
     print("   ✓ Reports generated successfully")
     print(f"   Calibration status: {cal_report['exploration_state']}")
     print(f"   Health status: {opt_report['health_status']['status']}")
@@ -249,7 +251,7 @@ print(f"  • DA/5-HT ratio: {balance.dopamine_serotonin_ratio:.2f}")
 print(f"  • E/I balance: {balance.gaba_excitation_balance:.2f}")
 
 print("\nRecommendations:")
-for rec in cal_report['recommendations']:
+for rec in cal_report["recommendations"]:
     print(f"  • {rec}")
 
 print("\n✓ Neuro-optimization modules are functional and ready for use!")

@@ -6,8 +6,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from scripts.sanity_cleanup import models, runner, utils
 
 
@@ -72,7 +70,9 @@ class TestModels:
         """Test TaskContext dataclass creation."""
         opts = models.CleanupOptions()
         # Using Path literal for test validation, not creating actual temp files
-        test_path = Path("/tmp/test")  # nosec B108 - test fixture path, not creating temp files
+        test_path = Path(
+            "/tmp/test"
+        )  # nosec B108 - test fixture path, not creating temp files
         context = models.TaskContext(
             root=test_path,
             options=opts,
@@ -230,9 +230,7 @@ class TestRunner:
                 summary="Completed",
             )
 
-        context = models.TaskContext(
-            root=tmp_path, options=models.CleanupOptions()
-        )
+        context = models.TaskContext(root=tmp_path, options=models.CleanupOptions())
 
         report = runner._execute_task(successful_task, context)
 
@@ -245,9 +243,7 @@ class TestRunner:
         def failing_task(ctx: models.TaskContext) -> models.TaskReport:
             raise ValueError("Something went wrong")
 
-        context = models.TaskContext(
-            root=tmp_path, options=models.CleanupOptions()
-        )
+        context = models.TaskContext(root=tmp_path, options=models.CleanupOptions())
 
         report = runner._execute_task(failing_task, context)
 

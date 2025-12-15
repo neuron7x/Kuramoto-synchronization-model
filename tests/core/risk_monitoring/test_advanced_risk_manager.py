@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -30,7 +29,6 @@ from core.risk_monitoring.advanced_risk_manager import (
     RiskState,
     StressResponseProtocol,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -885,7 +883,9 @@ class TestAdvancedRiskConfigValidation:
 
     def test_invalid_spread_stress_threshold(self):
         """Test validation of spread_stress_threshold_bps."""
-        with pytest.raises(ValueError, match="spread_stress_threshold_bps must be positive"):
+        with pytest.raises(
+            ValueError, match="spread_stress_threshold_bps must be positive"
+        ):
             AdvancedRiskConfig(spread_stress_threshold_bps=0)
 
     def test_invalid_imbalance_threshold(self):

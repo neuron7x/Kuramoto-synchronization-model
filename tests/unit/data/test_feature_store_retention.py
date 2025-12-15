@@ -96,8 +96,8 @@ def test_retention_casts_string_timestamps(base_frame: pd.DataFrame) -> None:
     )
 
     string_frame = base_frame.copy()
-    string_frame.loc[:, "ts"] = string_frame["ts"].dt.tz_convert("UTC").dt.strftime(
-        "%Y-%m-%dT%H:%M:%S%z"
+    string_frame.loc[:, "ts"] = (
+        string_frame["ts"].dt.tz_convert("UTC").dt.strftime("%Y-%m-%dT%H:%M:%S%z")
     )
 
     store.sync("demo.fv", string_frame, mode="overwrite", validate=False)

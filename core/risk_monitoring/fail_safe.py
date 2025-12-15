@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable
@@ -123,13 +123,17 @@ class FailSafeState:
             "level": self.level.value,
             "active": self.active,
             "reason": self.reason,
-            "activated_at": self.activated_at.isoformat() if self.activated_at else None,
+            "activated_at": (
+                self.activated_at.isoformat() if self.activated_at else None
+            ),
             "source": self.source,
             "position_multiplier": self.position_multiplier,
             "allow_new_orders": self.allow_new_orders,
             "force_paper_trading": self.force_paper_trading,
             "pending_actions": [a.value for a in self.pending_actions],
-            "auto_recover_at": self.auto_recover_at.isoformat() if self.auto_recover_at else None,
+            "auto_recover_at": (
+                self.auto_recover_at.isoformat() if self.auto_recover_at else None
+            ),
         }
 
 
@@ -163,7 +167,9 @@ class FailSafeConfig:
             "restricted_position_multiplier": self.restricted_position_multiplier,
             "auto_recover_delay_minutes": self.auto_recover_delay_minutes,
             "escalation_threshold_seconds": self.escalation_threshold_seconds,
-            "require_manual_recovery_levels": [l.value for l in self.require_manual_recovery_levels],
+            "require_manual_recovery_levels": [
+                level.value for level in self.require_manual_recovery_levels
+            ],
             "enable_emergency_liquidation": self.enable_emergency_liquidation,
         }
 
@@ -599,7 +605,9 @@ class FailSafeController:
         else:
             return 0.0  # No new positions for HALT and EMERGENCY
 
-    def _get_actions_for_level(self, level: FailSafeLevel) -> tuple[FailSafeAction, ...]:
+    def _get_actions_for_level(
+        self, level: FailSafeLevel
+    ) -> tuple[FailSafeAction, ...]:
         """Get required actions for a fail-safe level."""
         if level == FailSafeLevel.NORMAL:
             return ()

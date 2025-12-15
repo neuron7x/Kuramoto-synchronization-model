@@ -11,7 +11,9 @@ import pytest
 from core.utils.security import SecretDetector, check_for_hardcoded_secrets
 
 # Test fixture for private key content
-_TEST_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\nfake-key-data\n-----END PRIVATE KEY-----"
+_TEST_PRIVATE_KEY = (
+    "-----BEGIN PRIVATE KEY-----\nfake-key-data\n-----END PRIVATE KEY-----"
+)
 
 
 def test_secret_detector_ignores_dev_tls_certs(tmp_path: Path) -> None:

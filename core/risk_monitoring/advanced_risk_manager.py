@@ -712,9 +712,7 @@ class AdvancedRiskManager:
             # Precision (inverse variance of recent observations)
             if len(self._volatility_history) >= 3:
                 variance = float(np.var(list(self._volatility_history)))
-                precision = (
-                    self._config.fe_precision_base / (variance + 1e-6)
-                )
+                precision = self._config.fe_precision_base / (variance + 1e-6)
             else:
                 precision = self._config.fe_precision_base
 
@@ -724,8 +722,7 @@ class AdvancedRiskManager:
             # Compute entropy from drawdown and volatility
             # Higher uncertainty = higher entropy
             entropy = (
-                0.5 * math.log(max(1e-6, observed_volatility))
-                + 0.5 * observed_drawdown
+                0.5 * math.log(max(1e-6, observed_volatility)) + 0.5 * observed_drawdown
             )
 
             # Free energy: F = precision * prediction_error^2 / 2 + entropy
@@ -733,9 +730,7 @@ class AdvancedRiskManager:
 
             # Check monotonicity
             previous_fe = self._fe_state.current_free_energy
-            is_monotonic = (
-                new_fe <= previous_fe + self._config.fe_monotonicity_epsilon
-            )
+            is_monotonic = new_fe <= previous_fe + self._config.fe_monotonicity_epsilon
 
             # If violating monotonicity, apply correction
             if not is_monotonic and len(self._fe_history) > 0:
@@ -744,9 +739,9 @@ class AdvancedRiskManager:
 
             # Compute descent rate
             if len(self._fe_history) >= 2:
-                descent_rate = (
-                    self._fe_history[-1] - new_fe
-                ) / max(1, len(self._fe_history))
+                descent_rate = (self._fe_history[-1] - new_fe) / max(
+                    1, len(self._fe_history)
+                )
             else:
                 descent_rate = 0.0
 
@@ -828,7 +823,11 @@ class AdvancedRiskManager:
                         self._peak_equity = equity
 
                 # Calculate drawdown
-                if current_price is not None and peak_price is not None and peak_price > 0:
+                if (
+                    current_price is not None
+                    and peak_price is not None
+                    and peak_price > 0
+                ):
                     drawdown = max(0.0, (peak_price - current_price) / peak_price)
                 elif self._peak_equity > 0:
                     drawdown = max(
@@ -849,11 +848,7 @@ class AdvancedRiskManager:
                 dd_risk = self._assess_drawdown_risk(drawdown)
 
                 # Composite risk score (weighted average)
-                risk_score = (
-                    0.35 * vol_risk
-                    + 0.25 * liq_risk
-                    + 0.40 * dd_risk
-                )
+                risk_score = 0.35 * vol_risk + 0.25 * liq_risk + 0.40 * dd_risk
 
                 # Factor in free energy stability
                 if self._fe_state.stability_metric < 0.5:
@@ -1202,13 +1197,14 @@ class AdvancedRiskManager:
             )
             return 0.3 + 0.3 * normalized
         else:
-            return max(0.0, (vol_ratio - 1.0) / (
-                self._config.volatility_elevated_ratio - 1.0
-            ) * 0.3)
+            return max(
+                0.0,
+                (vol_ratio - 1.0)
+                / (self._config.volatility_elevated_ratio - 1.0)
+                * 0.3,
+            )
 
-    def _assess_liquidity_risk(
-        self, liquidity: LiquidityMetrics | None
-    ) -> float:
+    def _assess_liquidity_risk(self, liquidity: LiquidityMetrics | None) -> float:
         """Assess risk contribution from liquidity."""
         if liquidity is None:
             return 0.3  # Default moderate risk when no data
@@ -1225,9 +1221,9 @@ class AdvancedRiskManager:
         # Imbalance risk
         imbalance = abs(liquidity.imbalance_ratio)
         if imbalance > self._config.imbalance_stress_threshold:
-            imbalance_excess = (
-                imbalance - self._config.imbalance_stress_threshold
-            ) / (1.0 - self._config.imbalance_stress_threshold)
+            imbalance_excess = (imbalance - self._config.imbalance_stress_threshold) / (
+                1.0 - self._config.imbalance_stress_threshold
+            )
             risk = max(risk, min(1.0, imbalance_excess))
 
         # Low liquidity score risk
@@ -1296,9 +1292,7 @@ class AdvancedRiskManager:
 
         return new_protocol
 
-    def _calculate_position_multiplier(
-        self, protocol: StressResponseProtocol
-    ) -> float:
+    def _calculate_position_multiplier(self, protocol: StressResponseProtocol) -> float:
         """Calculate position size multiplier for protocol."""
         multipliers = {
             StressResponseProtocol.NORMAL: 1.0,
@@ -1350,9 +1344,7 @@ class AdvancedRiskManager:
                 "PROTECTIVE MODE: Only essential trades, prepare exit strategies"
             )
         elif protocol == StressResponseProtocol.HALT:
-            recommendations.append(
-                "TRADING HALTED: Monitor conditions for recovery"
-            )
+            recommendations.append("TRADING HALTED: Monitor conditions for recovery")
 
         return recommendations
 

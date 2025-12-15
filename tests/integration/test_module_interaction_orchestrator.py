@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from core.orchestrator.interaction_sequencer import (
-    ExecutionContext,
     ModuleDefinition,
     ModuleInteractionOrchestrator,
     ModulePhase,

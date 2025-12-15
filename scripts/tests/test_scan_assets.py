@@ -6,8 +6,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from scripts import scan_assets
 
 
@@ -35,9 +33,7 @@ def test_is_training_script_checks_extension() -> None:
 
 def test_derive_description_model() -> None:
     """Test _derive_description for model assets."""
-    asset = scan_assets.AssetRecord(
-        name="model", path="models/model.pkl", kind="model"
-    )
+    asset = scan_assets.AssetRecord(name="model", path="models/model.pkl", kind="model")
     desc = scan_assets._derive_description(asset)
     assert "Trained model" in desc
 
@@ -53,9 +49,7 @@ def test_derive_description_training_script() -> None:
 
 def test_derive_description_dataset() -> None:
     """Test _derive_description for dataset assets."""
-    asset = scan_assets.AssetRecord(
-        name="data", path="data/sample.csv", kind="dataset"
-    )
+    asset = scan_assets.AssetRecord(name="data", path="data/sample.csv", kind="dataset")
     desc = scan_assets._derive_description(asset)
     assert "Dataset" in desc or "feature" in desc.lower()
 
@@ -175,10 +169,15 @@ def test_build_parser() -> None:
 def test_build_parser_custom_args() -> None:
     """Test that _build_parser handles custom arguments."""
     parser = scan_assets._build_parser()
-    args = parser.parse_args([
-        "--roots", "dir1", "dir2",
-        "--output", "custom/output.json",
-    ])
+    args = parser.parse_args(
+        [
+            "--roots",
+            "dir1",
+            "dir2",
+            "--output",
+            "custom/output.json",
+        ]
+    )
 
     assert args.roots == ["dir1", "dir2"]
     assert args.output == Path("custom/output.json")
@@ -192,10 +191,14 @@ def test_main_creates_registry(tmp_path: Path) -> None:
 
     output = tmp_path / "registry.json"
 
-    scan_assets.main([
-        "--roots", str(models_dir),
-        "--output", str(output),
-    ])
+    scan_assets.main(
+        [
+            "--roots",
+            str(models_dir),
+            "--output",
+            str(output),
+        ]
+    )
 
     assert output.exists()
     content = json.loads(output.read_text(encoding="utf-8"))
@@ -208,10 +211,14 @@ def test_main_empty_roots(tmp_path: Path) -> None:
     empty_dir.mkdir()
     output = tmp_path / "registry.json"
 
-    scan_assets.main([
-        "--roots", str(empty_dir),
-        "--output", str(output),
-    ])
+    scan_assets.main(
+        [
+            "--roots",
+            str(empty_dir),
+            "--output",
+            str(output),
+        ]
+    )
 
     assert output.exists()
     content = json.loads(output.read_text(encoding="utf-8"))

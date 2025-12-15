@@ -29,7 +29,9 @@ class _DummyTransit:
 
     def decrypt_data(self, *, name: str, ciphertext: str) -> dict:
         prefix = f"{name}:"
-        value = ciphertext[len(prefix) :] if ciphertext.startswith(prefix) else ciphertext
+        value = (
+            ciphertext[len(prefix) :] if ciphertext.startswith(prefix) else ciphertext
+        )
         return {"data": {"plaintext": value}}
 
 

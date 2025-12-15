@@ -18,9 +18,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable
 
-import numpy as np
-from numpy.typing import NDArray
-
 __all__ = [
     "StressDetector",
     "StressLevel",
@@ -375,9 +372,7 @@ class StressDetector:
             self._last_assessment = None
             LOGGER.info("Stress detector reset")
 
-    def _assess_drawdown(
-        self, signals: MarketSignals
-    ) -> tuple[float, list[str]]:
+    def _assess_drawdown(self, signals: MarketSignals) -> tuple[float, list[str]]:
         """Assess drawdown stress component."""
         triggers: list[str] = []
         drawdown = signals.get_drawdown()
@@ -389,14 +384,20 @@ class StressDetector:
             # Scale from 0.6 to 1.0
             stress = 0.6 + 0.4 * (
                 (drawdown - self._config.drawdown_high_threshold)
-                / (self._config.drawdown_critical_threshold - self._config.drawdown_high_threshold)
+                / (
+                    self._config.drawdown_critical_threshold
+                    - self._config.drawdown_high_threshold
+                )
             )
             triggers.append(f"high_drawdown_{drawdown:.1%}")
         elif drawdown >= self._config.drawdown_elevated_threshold:
             # Scale from 0.3 to 0.6
             stress = 0.3 + 0.3 * (
                 (drawdown - self._config.drawdown_elevated_threshold)
-                / (self._config.drawdown_high_threshold - self._config.drawdown_elevated_threshold)
+                / (
+                    self._config.drawdown_high_threshold
+                    - self._config.drawdown_elevated_threshold
+                )
             )
             triggers.append(f"elevated_drawdown_{drawdown:.1%}")
         else:
@@ -404,9 +405,7 @@ class StressDetector:
 
         return min(1.0, stress), triggers
 
-    def _assess_volatility(
-        self, signals: MarketSignals
-    ) -> tuple[float, list[str]]:
+    def _assess_volatility(self, signals: MarketSignals) -> tuple[float, list[str]]:
         """Assess volatility stress component."""
         triggers: list[str] = []
         vol_ratio = signals.get_volatility_ratio()
@@ -421,30 +420,41 @@ class StressDetector:
         elif vol_ratio >= self._config.volatility_high_ratio:
             stress = 0.6 + 0.4 * (
                 (vol_ratio - self._config.volatility_high_ratio)
-                / (self._config.volatility_critical_ratio - self._config.volatility_high_ratio)
+                / (
+                    self._config.volatility_critical_ratio
+                    - self._config.volatility_high_ratio
+                )
             )
             triggers.append(f"high_volatility_{vol_ratio:.1f}x")
         elif vol_ratio >= self._config.volatility_elevated_ratio:
             stress = 0.3 + 0.3 * (
                 (vol_ratio - self._config.volatility_elevated_ratio)
-                / (self._config.volatility_high_ratio - self._config.volatility_elevated_ratio)
+                / (
+                    self._config.volatility_high_ratio
+                    - self._config.volatility_elevated_ratio
+                )
             )
             triggers.append(f"elevated_volatility_{vol_ratio:.1f}x")
         else:
-            stress = max(0, (vol_ratio - 1.0) / (self._config.volatility_elevated_ratio - 1.0) * 0.3)
+            stress = max(
+                0,
+                (vol_ratio - 1.0)
+                / (self._config.volatility_elevated_ratio - 1.0)
+                * 0.3,
+            )
 
         return min(1.0, max(0, stress)), triggers
 
-    def _assess_liquidity(
-        self, signals: MarketSignals
-    ) -> tuple[float, list[str]]:
+    def _assess_liquidity(self, signals: MarketSignals) -> tuple[float, list[str]]:
         """Assess liquidity stress component."""
         triggers: list[str] = []
         stress = 0.0
 
         # Check liquidity score
         if signals.liquidity_score < self._config.liquidity_threshold:
-            stress = (self._config.liquidity_threshold - signals.liquidity_score) / self._config.liquidity_threshold
+            stress = (
+                self._config.liquidity_threshold - signals.liquidity_score
+            ) / self._config.liquidity_threshold
             triggers.append(f"low_liquidity_{signals.liquidity_score:.2f}")
 
         # Check spread
@@ -459,15 +469,15 @@ class StressDetector:
 
         return min(1.0, stress), triggers
 
-    def _assess_imbalance(
-        self, signals: MarketSignals
-    ) -> tuple[float, list[str]]:
+    def _assess_imbalance(self, signals: MarketSignals) -> tuple[float, list[str]]:
         """Assess order book imbalance stress component."""
         triggers: list[str] = []
         imbalance = abs(signals.get_order_book_imbalance())
 
         if imbalance >= self._config.imbalance_threshold:
-            stress = (imbalance - self._config.imbalance_threshold) / (1.0 - self._config.imbalance_threshold)
+            stress = (imbalance - self._config.imbalance_threshold) / (
+                1.0 - self._config.imbalance_threshold
+            )
             direction = "bid" if signals.get_order_book_imbalance() > 0 else "ask"
             triggers.append(f"order_book_imbalance_{direction}_{imbalance:.1%}")
         else:

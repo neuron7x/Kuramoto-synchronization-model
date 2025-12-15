@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextvars import ContextVar
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
 
 class Permission(Enum):
@@ -57,7 +57,9 @@ def get_current_user() -> User:
     return User(role=role.strip())
 
 
-def require(permission: Permission) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def require(
+    permission: Permission,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to enforce RBAC permissions."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
