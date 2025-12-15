@@ -730,7 +730,7 @@ jobs:
         if: ${{ steps.codecov_method.outputs.use_token == 'true' }}
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ env.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: py311
           name: py311-coverage
