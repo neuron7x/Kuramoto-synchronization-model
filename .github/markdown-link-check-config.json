@@ -30,7 +30,21 @@
   ],
   "httpHeaders": [
     {
-      "urls": ["https://doi.org", "https://keepachangelog.com", "https://semver.org", "https://opensource.org", "https://www.conventionalcommits.org", "https://git-scm.com", "https://www.contributor-covenant.org", "https://martinfowler.com", "https://alembic.sqlalchemy.org", "https://www.postgresql.org", "https://cheatsheetseries.owasp.org", "https://docs.github.com", "https://github.com"],
+      "urls": [
+        "https://doi.org",
+        "https://keepachangelog.com",
+        "https://semver.org",
+        "https://opensource.org",
+        "https://www.conventionalcommits.org",
+        "https://git-scm.com",
+        "https://www.contributor-covenant.org",
+        "https://martinfowler.com",
+        "https://alembic.sqlalchemy.org",
+        "https://www.postgresql.org",
+        "https://cheatsheetseries.owasp.org",
+        "https://docs.github.com",
+        "https://github.com"
+      ],
       "headers": {
         "User-Agent": "Mozilla/5.0 (compatible; markdown-link-check/3.0)"
       }
