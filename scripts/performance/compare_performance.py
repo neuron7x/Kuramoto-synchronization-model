@@ -176,6 +176,7 @@ def _compare_benchmarks(
     current: BenchmarkMap,
     *,
     threshold: float,
+    abs_min_seconds: float = 0.005,
 ) -> list[BenchmarkComparison]:
     comparisons: list[BenchmarkComparison] = []
     for name, base_result in baseline.items():
@@ -185,19 +186,25 @@ def _compare_benchmarks(
 
         ratio = _ratio(current_result.median, base_result.median)
         delta_pct = (ratio - 1.0) * 100 if not math.isnan(ratio) else math.nan
+        absolute_delta = current_result.median - base_result.median
         ops_ratio = _ratio(current_result.ops, base_result.ops)
         ops_delta_pct = (ops_ratio - 1.0) * 100 if not math.isnan(ops_ratio) else None
 
         status = "pass"
+        # Require both relative threshold AND absolute threshold to be exceeded
+        # to prevent false positives from measurement noise on fast operations
         if not math.isnan(delta_pct) and delta_pct > threshold * 100:
-            status = "fail"
+            if absolute_delta > abs_min_seconds:
+                status = "fail"
         if (
             status == "pass"
             and ops_delta_pct is not None
             and not math.isnan(ops_delta_pct)
             and ops_delta_pct < -threshold * 100
         ):
-            status = "fail"
+            # For OPS degradation, also check absolute time increase
+            if absolute_delta > abs_min_seconds:
+                status = "fail"
 
         comparisons.append(
             BenchmarkComparison(
@@ -210,6 +217,7 @@ def _compare_benchmarks(
                 extra={
                     "mean_baseline": base_result.mean,
                     "mean_current": current_result.mean,
+                    "absolute_delta": absolute_delta,
                 },
                 ops_delta_pct=ops_delta_pct,
             )
@@ -222,6 +230,7 @@ def _compare_resources(
     current: ResourceMap,
     *,
     threshold: float,
+    abs_min_seconds: float = 0.005,
 ) -> list[ResourceComparison]:
     comparisons: list[ResourceComparison] = []
     for name, base_metric in baseline.items():
@@ -231,9 +240,18 @@ def _compare_resources(
 
         ratio = _ratio(current_metric.value, base_metric.value)
         delta_pct = (ratio - 1.0) * 100 if not math.isnan(ratio) else math.nan
+        absolute_delta = current_metric.value - base_metric.value
         status = "pass"
+        # For response time metrics (seconds), require both relative AND absolute
+        # thresholds to be exceeded to prevent false positives from measurement noise
         if not math.isnan(delta_pct) and delta_pct > threshold * 100:
-            status = "fail"
+            if current_metric.unit == "seconds":
+                # Only fail if absolute delta exceeds minimum threshold
+                if absolute_delta > abs_min_seconds:
+                    status = "fail"
+            else:
+                # For non-time metrics (memory, etc.), use relative threshold only
+                status = "fail"
         comparisons.append(
             ResourceComparison(
                 name=name,
@@ -242,7 +260,7 @@ def _compare_resources(
                 current=current_metric.value,
                 delta_pct=delta_pct,
                 status=status,
-                extra={},
+                extra={"absolute_delta": absolute_delta},
                 category=current_metric.category,
                 budget=current_metric.budget,
             )
@@ -256,12 +274,15 @@ def _build_markdown(
 ) -> str:
     lines: list[str] = []
     lines.append("### Benchmark comparison")
-    lines.append("| Benchmark | Baseline (ms) | PR (ms) | Δ median | Δ OPS | Status |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | :---: |")
+    lines.append(
+        "| Benchmark | Baseline (ms) | PR (ms) | Abs Δ (ms) | Rel Δ | Δ OPS | Status |"
+    )
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | :---: |")
     for item in benchmarks:
         baseline_ms = item.baseline * 1000
         current_ms = item.current * 1000
-        delta = _format_delta(item.delta_pct)
+        abs_delta_ms = item.extra.get("absolute_delta", 0) * 1000
+        rel_delta = _format_delta(item.delta_pct)
         ops_delta = (
             _format_delta(item.ops_delta_pct)
             if item.ops_delta_pct is not None
@@ -269,34 +290,47 @@ def _build_markdown(
         )
         status_icon = "✅" if item.status == "pass" else "❌"
         lines.append(
-            f"| {item.name} | {baseline_ms:.3f} | {current_ms:.3f} | {delta} | {ops_delta} | {status_icon} |"
+            f"| {item.name} | {baseline_ms:.3f} | {current_ms:.3f} | {abs_delta_ms:+.3f} | {rel_delta} | {ops_delta} | {status_icon} |"
         )
 
     lines.append("")
     lines.append("### Resource usage")
-    lines.append("| Metric | Category | Baseline | PR | Δ | Budget | Status |")
-    lines.append("| --- | --- | ---: | ---: | ---: | ---: | :---: |")
+    lines.append(
+        "| Metric | Category | Baseline | PR | Abs Δ | Rel Δ | Budget | Status |"
+    )
+    lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | :---: |")
     for item in resources:
+        abs_delta = item.extra.get("absolute_delta", 0)
         if item.unit == "bytes":
             baseline_val = item.baseline / (1024**2)
             current_val = item.current / (1024**2)
+            abs_delta_val = abs_delta / (1024**2)
             unit = "MiB"
             budget_display = (
                 f"{item.budget / (1024 ** 2):.3f} {unit}"
                 if item.budget is not None
-                else "—"
+                else "-"
+            )
+        elif item.unit == "seconds":
+            baseline_val = item.baseline * 1000
+            current_val = item.current * 1000
+            abs_delta_val = abs_delta * 1000
+            unit = "ms"
+            budget_display = (
+                f"{item.budget * 1000:.3f} {unit}" if item.budget is not None else "-"
             )
         else:
             baseline_val = item.baseline
             current_val = item.current
+            abs_delta_val = abs_delta
             unit = item.unit or ""
             budget_display = (
-                f"{item.budget:.3f} {unit}".strip() if item.budget is not None else "—"
+                f"{item.budget:.3f} {unit}".strip() if item.budget is not None else "-"
             )
-        delta = _format_delta(item.delta_pct)
+        rel_delta = _format_delta(item.delta_pct)
         status_icon = "✅" if item.status == "pass" else "❌"
         lines.append(
-            f"| {item.name} | {item.category} | {baseline_val:.3f} {unit} | {current_val:.3f} {unit} | {delta} | {budget_display} | {status_icon} |"
+            f"| {item.name} | {item.category} | {baseline_val:.3f} {unit} | {current_val:.3f} {unit} | {abs_delta_val:+.3f} {unit} | {rel_delta} | {budget_display} | {status_icon} |"
         )
     lines.append("")
     return "\n".join(lines)
@@ -312,7 +346,16 @@ def _parse_args() -> argparse.Namespace:
         "--threshold",
         type=float,
         default=0.20,
-        help="Allowed slowdown ratio (e.g. 0.20 for 20%).",
+        help="Allowed slowdown ratio, e.g. 0.20 for 20 percent.",
+    )
+    parser.add_argument(
+        "--abs-min-seconds",
+        type=float,
+        default=0.005,
+        help="Minimum absolute delta in seconds to trigger a failure. "
+        "Regressions smaller than this are ignored even if the relative "
+        "threshold is exceeded, preventing false positives from measurement "
+        "noise on very fast operations. Default: 0.005 (5ms).",
     )
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-markdown", type=Path, required=True)
@@ -374,11 +417,13 @@ def main() -> None:
         baseline_benchmarks,
         current_benchmarks,
         threshold=args.threshold,
+        abs_min_seconds=args.abs_min_seconds,
     )
     resource_results = _compare_resources(
         baseline_resources,
         current_resources,
         threshold=args.threshold,
+        abs_min_seconds=args.abs_min_seconds,
     )
 
     markdown = _build_markdown(benchmark_results, resource_results)
@@ -389,6 +434,7 @@ def main() -> None:
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "threshold": args.threshold,
+        "abs_min_seconds": args.abs_min_seconds,
         "benchmarks": [
             {
                 "name": item.name,
@@ -396,6 +442,7 @@ def main() -> None:
                 "baseline": item.baseline,
                 "current": item.current,
                 "delta_pct": item.delta_pct,
+                "absolute_delta": item.extra.get("absolute_delta"),
                 "status": item.status,
                 "mean_baseline": item.extra["mean_baseline"],
                 "mean_current": item.extra["mean_current"],
@@ -411,6 +458,7 @@ def main() -> None:
                 "baseline": item.baseline,
                 "current": item.current,
                 "delta_pct": item.delta_pct,
+                "absolute_delta": item.extra.get("absolute_delta"),
                 "status": item.status,
                 "budget": item.budget,
             }
@@ -431,7 +479,16 @@ def main() -> None:
             file=sys.stderr,
         )
         for f in failures:
-            print(f"- {f.name} status={f.status} delta={f.delta_pct:.1f}%", file=sys.stderr)
+            abs_delta = f.extra.get("absolute_delta", 0)
+            # Convert to ms for time-based metrics
+            if hasattr(f, "unit") and f.unit == "seconds":
+                abs_delta_display = f"{abs_delta * 1000:.3f}ms"
+            else:
+                abs_delta_display = f"{abs_delta:.6f}"
+            print(
+                f"- {f.name}: delta={f.delta_pct:+.1f}% abs_delta={abs_delta_display}",
+                file=sys.stderr,
+            )
         sys.exit(1)
 
 

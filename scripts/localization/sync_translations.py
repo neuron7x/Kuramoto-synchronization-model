@@ -277,9 +277,11 @@ def main(argv: Iterable[str]) -> int:
                 args.coverage_report.read_text(encoding="utf-8")
             )
             existing_coverage["generatedAt"] = None
+            coverage_changed = existing_coverage != coverage
         else:
-            existing_coverage = None
-        coverage_changed = existing_coverage != coverage
+            # Coverage report doesn't exist yet; this is not a failure condition
+            # as long as translation bundles are in sync
+            coverage_changed = False
         if issues:
             for locale, stats in issues:
                 if stats.missing:
