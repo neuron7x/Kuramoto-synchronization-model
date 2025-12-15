@@ -512,7 +512,7 @@ jobs:
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
           .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Activate virtual environment
-        run: echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
+        run: echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
       - name: Run static security analysis (Bandit)
         run: |
           python -m tools.security.sast \
@@ -654,7 +654,7 @@ jobs:
           retention-days: 30
           
       - name: Upload coverage to Codecov
-        if: ${{ !github.event.pull_request.head.repo.fork }}
+        # This job only runs on push/schedule/workflow_dispatch (not PRs), so no fork check needed
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
@@ -668,6 +668,8 @@ jobs:
     needs: fast-unit-tests
     timeout-minutes: 60
     name: Targeted Mutation Testing (Trading Engine)
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v5
       
@@ -710,8 +712,32 @@ jobs:
           path: reports/mutmut/trading_engine
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Compute Codecov upload method
+        id: codecov_method
+        shell: bash
+        run: |
+          # This job only runs on push/schedule/workflow_dispatch (not forks)
+          if [[ -n "${CODECOV_TOKEN}" ]]; then
+            echo "use_token=true" >> "$GITHUB_OUTPUT"
+            echo "use_oidc=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "use_token=false" >> "$GITHUB_OUTPUT"
+            echo "use_oidc=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload coverage to Codecov (token)
+        if: ${{ steps.codecov_method.outputs.use_token == 'true' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ env.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: py311
+          name: py311-coverage
+          fail_ci_if_error: false
+
       - name: Upload coverage to Codecov (OIDC)
-        if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
+        if: ${{ steps.codecov_method.outputs.use_oidc == 'true' }}
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
