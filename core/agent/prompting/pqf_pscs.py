@@ -47,6 +47,8 @@ _METRIC_WEIGHTS = {
     "entropy": 0.20,
 }
 _METRIC_WEIGHT_SUM = sum(_METRIC_WEIGHTS.values())
+if not 0.99 <= _METRIC_WEIGHT_SUM <= 1.01:
+    raise ValueError("PQF metric weights must sum to 1.0")
 _SAFETY_ESCALATION_THRESHOLD = 0.3
 _SAFETY_FLOOR_TOTAL = 0.8
 _BLOCK_SAFETY_THRESHOLD = 0.2
@@ -221,6 +223,8 @@ def _select_defensive_tools(allowed_tools: Sequence[Any]) -> list[str]:
     """
 
     tools = [str(tool) for tool in allowed_tools if tool]
+    if not tools:
+        return []
     if "safe_readonly" in tools:
         return ["safe_readonly"]
     return tools[:1]

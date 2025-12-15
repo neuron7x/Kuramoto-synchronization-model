@@ -5,7 +5,7 @@ import types
 
 
 def _install_lightweight_stubs() -> None:
-    """Provide minimal stubs for heavy ML deps to keep the test lightweight."""
+    """Provide minimal stubs for heavy ML deps (torch, scipy) to keep tests lightweight and avoid pulling full libraries."""
 
     torch_stub = types.ModuleType("torch")
     torch_stub.manual_seed = lambda *args, **kwargs: None
