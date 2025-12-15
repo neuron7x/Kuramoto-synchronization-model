@@ -1,0 +1,36 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://img\\.shields\\.io/"
+    },
+    {
+      "pattern": "^https://stackoverflow\\.com"
+    },
+    {
+      "pattern": "^https://www\\.python\\.org"
+    },
+    {
+      "pattern": "^https://github\\.com/neuron7x/TradePulse/discussions"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://doi.org", "https://keepachangelog.com", "https://semver.org", "https://opensource.org", "https://www.conventionalcommits.org", "https://git-scm.com", "https://www.contributor-covenant.org", "https://martinfowler.com", "https://alembic.sqlalchemy.org", "https://www.postgresql.org", "https://cheatsheetseries.owasp.org"],
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (compatible; markdown-link-check/3.0)"
+      }
+    }
+  ],
+  "replacementPatterns": [
+    {
+      "pattern": "^/",
+      "replacement": "https://github.com/neuron7x/TradePulse/blob/main/"
+    }
+  ],
+  "aliveStatusCodes": [200, 206, 301, 302, 403, 429],
+  "timeout": "15s",
+  "retryCount": 3
+}
