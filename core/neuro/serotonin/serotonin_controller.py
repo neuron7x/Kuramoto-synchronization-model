@@ -168,6 +168,8 @@ REASON_CODES_WHITELIST: tuple[str, ...] = (
     "INVALID_INPUT",
     "NUMERIC_UNSTABLE",
 )
+STRESS_BUDGET_MULTIPLIER = 0.7
+BUDGET_TOLERANCE = 1e-9
 
 
 @dataclass(slots=True)
@@ -227,7 +229,7 @@ class SafetyMonitor:
         if not (self._min_budget <= risk_budget <= self._max_budget):
             reasons.append("INVARIANT_BROKEN")
         if self._last_stress is not None and self._last_budget is not None:
-            if stress > self._last_stress and risk_budget > self._last_budget + 1e-9:
+            if stress > self._last_stress and risk_budget > self._last_budget + BUDGET_TOLERANCE:
                 reasons.append("INVARIANT_BROKEN")
         if hold:
             reasons.append("COOLDOWN_ACTIVE")
@@ -861,7 +863,7 @@ class SerotoninController:
         budget = self._max_risk_budget * (1.0 - serotonin_level)
         # Mild additional suppression when stress is high to maintain monotonicity
         if stress > self.config["cooldown_threshold"]:
-            budget *= 0.7
+            budget *= STRESS_BUDGET_MULTIPLIER
         return float(max(self._min_risk_budget, min(self._max_risk_budget, budget)))
 
     def _fail_safe_output(self, reason: str) -> ControllerOutput:

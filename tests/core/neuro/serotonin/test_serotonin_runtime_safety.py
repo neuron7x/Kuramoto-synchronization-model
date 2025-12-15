@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import pytest
+import yaml
 
 
 def _load_serotonin_module():
@@ -44,6 +45,9 @@ def serotonin_controller(tmp_path: Path, serotonin_module):
 
 def _obs(stress: float = 0.4, drawdown: float = -0.02, novelty: float = 0.3) -> dict:
     return {"stress": stress, "drawdown": drawdown, "novelty": novelty}
+
+
+MAX_COMPLEXITY_FACTOR = 5
 
 
 def test_serotonin_bounds_random(serotonin_controller):
@@ -157,7 +161,7 @@ def test_update_constant_time_complexity(serotonin_controller):
         ctrl.update(_obs(stress=0.61, drawdown=-0.05, novelty=0.2))
     long = time.perf_counter() - t1
 
-    assert long / 5000 < base / 50 * 5
+    assert long / 5000 < base / 50 * MAX_COMPLEXITY_FACTOR
 
 
 def test_micro_benchmark_latency(serotonin_controller):
@@ -240,7 +244,7 @@ def test_config_validation_error_message(tmp_path: Path):
         "temperature_floor_max": 0.4,
     }
     cfg_path = tmp_path / "serotonin.yaml"
-    cfg_path.write_text(json.dumps(bad_cfg), encoding="utf-8")
+    cfg_path.write_text(yaml.safe_dump(bad_cfg), encoding="utf-8")
     module, SerotoninController, _ = _load_serotonin_module()
     with pytest.raises(ValueError, match="temperature_floor_min"):
         SerotoninController(str(cfg_path))
