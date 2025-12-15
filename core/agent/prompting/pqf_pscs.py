@@ -8,18 +8,18 @@ prompt when repair is possible.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping, Sequence
 
 __all__ = ["run_pqf_pscs"]
 
 
 _INJECTION_PATTERNS: tuple[str, ...] = (
-    "ignore all previous instructions",
-    "ignore previous directions",
-    "ignore previous instructions",
-    "forget the rules",
-    "you are now",
-    "developer message says",
+    r"ignore\s+(?:all\s+)?previous\s+instructions",
+    r"ignore\s+previous\s+directions",
+    r"forget\s+the\s+rules",
+    r"you\s+are\s+now",
+    r"developer\s+message\s+says",
 )
 _EXFIL_PATTERNS: tuple[str, ...] = (
     "system prompt",
@@ -92,7 +92,7 @@ def _detect_threats(
     evidence: list[str] = []
 
     for pattern in _INJECTION_PATTERNS:
-        if pattern in text:
+        if re.search(pattern, text):
             types.append("injection")
             evidence.append(pattern)
             break
@@ -204,7 +204,12 @@ def _decide(
 
 
 def _select_defensive_tools(allowed_tools: Sequence[Any]) -> list[str]:
-    """Return a minimal allowlist when entering defensive mode."""
+    """Return a minimal allowlist when entering defensive mode.
+
+    The guardrail prefers ``safe_readonly`` to limit capability surface area.
+    When that is unavailable, only the first declared tool is retained to
+    preserve a controlled execution path without broadening access.
+    """
 
     tools = [str(tool) for tool in allowed_tools if tool]
     if "safe_readonly" in tools:
