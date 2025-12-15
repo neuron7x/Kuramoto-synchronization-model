@@ -34,6 +34,18 @@ _MEMORY_PATTERNS: tuple[str, ...] = (
     "change policies",
     "override policies",
 )
+_SEVERE_THREAT_TYPES = frozenset(
+    {"injection", "exfiltration", "tool_abuse", "memory_poisoning"}
+)
+
+_METRIC_WEIGHTS = {
+    # PQF-PSCS emphasises grounding and constraint preservation to keep the
+    # control-plane stable under noisy inputs.
+    "grounding": 0.35,
+    "constraint": 0.25,
+    "semantic": 0.20,
+    "entropy": 0.20,
+}
 
 
 def run_pqf_pscs(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -91,7 +103,7 @@ def _detect_threats(
             evidence.append(pattern)
             break
 
-    denied = [str(tool).lower() for tool in constraints.get("tools_denied", []) or []]
+    denied = [str(tool).lower() for tool in constraints.get("tools_denied", [])]
     for tool in denied:
         if tool and tool in text:
             types.append("tool_abuse")
@@ -149,10 +161,10 @@ def _compute_metrics(
             semantic_drift_risk = max(semantic_drift_risk, 0.25)
 
     total = (
-        0.35 * grounding_loss_risk
-        + 0.25 * constraint_erosion
-        + 0.20 * semantic_drift_risk
-        + 0.20 * entropy_growth_risk
+        _METRIC_WEIGHTS["grounding"] * grounding_loss_risk
+        + _METRIC_WEIGHTS["constraint"] * constraint_erosion
+        + _METRIC_WEIGHTS["semantic"] * semantic_drift_risk
+        + _METRIC_WEIGHTS["entropy"] * entropy_growth_risk
     )
     if safety_leak_risk > 0.3:
         total = max(total, 0.8)
@@ -176,9 +188,7 @@ def _decide(
     safety_leak_risk = metrics.get("safety_leak_risk", 0.0)
     budget_max = degradation_budget.get("max", 1.0)
     types = set(threat.get("types", ()))
-    severe_threat = bool(
-        types & {"injection", "exfiltration", "tool_abuse", "memory_poisoning"}
-    )
+    severe_threat = bool(types & _SEVERE_THREAT_TYPES)
 
     if threat.get("detected") and severe_threat and (
         safety_leak_risk > 0.2 or constraint_erosion > 0.5
@@ -191,6 +201,15 @@ def _decide(
         return "ALLOW"
 
     return "REPAIR"
+
+
+def _select_defensive_tools(allowed_tools: Sequence[Any]) -> list[str]:
+    """Return a minimal allowlist when entering defensive mode."""
+
+    tools = [str(tool) for tool in allowed_tools if tool]
+    if "safe_readonly" in tools:
+        return ["safe_readonly"]
+    return tools[:1]
 
 
 def _build_state_transition(
@@ -212,9 +231,7 @@ def _build_state_transition(
         after["entropy"]["target"] = max(entropy_target - 0.2, 0.0)
         after["memory_binding"] = "OFF"
         allowed_tools = constraints.get("tools_allowed") or []
-        after["tools_allowed"] = (
-            ["safe_readonly"] if "safe_readonly" in allowed_tools else list(allowed_tools[:1])
-        )
+        after["tools_allowed"] = _select_defensive_tools(allowed_tools)
 
     delta = {
         "risk_mode": (

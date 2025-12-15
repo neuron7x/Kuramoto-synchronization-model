@@ -3,29 +3,35 @@ from __future__ import annotations
 import sys
 import types
 
-# Tests only exercise the PQF-PSCS helper and avoid heavy ML dependencies used elsewhere.
-torch_stub = types.ModuleType("torch")
-torch_stub.manual_seed = lambda *args, **kwargs: None
-torch_stub.use_deterministic_algorithms = lambda *args, **kwargs: None
-torch_stub.cuda = types.SimpleNamespace(
-    is_available=lambda: False,
-    manual_seed_all=lambda *args, **kwargs: None,
-)
-torch_stub.nn = types.SimpleNamespace(
-    Module=object,
-    Linear=lambda *args, **kwargs: None,
-)
-torch_stub.optim = types.SimpleNamespace(Adam=lambda *args, **kwargs: None)
-sys.modules.setdefault("torch", torch_stub)
-sys.modules.setdefault("torch.nn", torch_stub.nn)
-sys.modules.setdefault("torch.optim", torch_stub.optim)
 
-scipy_stub = types.ModuleType("scipy")
-scipy_stats_stub = types.ModuleType("scipy.stats")
-scipy_stats_stub.ks_2samp = lambda *args, **kwargs: None
-scipy_stats_stub.zscore = lambda *args, **kwargs: None
-sys.modules.setdefault("scipy", scipy_stub)
-sys.modules.setdefault("scipy.stats", scipy_stats_stub)
+def _install_lightweight_stubs() -> None:
+    """Provide minimal stubs for heavy ML deps to keep the test lightweight."""
+
+    torch_stub = types.ModuleType("torch")
+    torch_stub.manual_seed = lambda *args, **kwargs: None
+    torch_stub.use_deterministic_algorithms = lambda *args, **kwargs: None
+    torch_stub.cuda = types.SimpleNamespace(
+        is_available=lambda: False,
+        manual_seed_all=lambda *args, **kwargs: None,
+    )
+    torch_stub.nn = types.SimpleNamespace(
+        Module=object,
+        Linear=lambda *args, **kwargs: None,
+    )
+    torch_stub.optim = types.SimpleNamespace(Adam=lambda *args, **kwargs: None)
+    sys.modules.setdefault("torch", torch_stub)
+    sys.modules.setdefault("torch.nn", torch_stub.nn)
+    sys.modules.setdefault("torch.optim", torch_stub.optim)
+
+    scipy_stub = types.ModuleType("scipy")
+    scipy_stats_stub = types.ModuleType("scipy.stats")
+    scipy_stats_stub.ks_2samp = lambda *args, **kwargs: None
+    scipy_stats_stub.zscore = lambda *args, **kwargs: None
+    sys.modules.setdefault("scipy", scipy_stub)
+    sys.modules.setdefault("scipy.stats", scipy_stats_stub)
+
+
+_install_lightweight_stubs()
 
 from core.agent.prompting import run_pqf_pscs
 
