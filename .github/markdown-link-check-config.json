@@ -13,7 +13,7 @@
       "pattern": "^https://www\\.python\\.org"
     },
     {
-      "pattern": "^https://github\\.com/neuron7x/TradePulse/discussions"
+      "pattern": "/discussions$"
     }
   ],
   "httpHeaders": [
@@ -22,12 +22,6 @@
       "headers": {
         "User-Agent": "Mozilla/5.0 (compatible; markdown-link-check/3.0)"
       }
-    }
-  ],
-  "replacementPatterns": [
-    {
-      "pattern": "^/",
-      "replacement": "https://github.com/neuron7x/TradePulse/blob/main/"
     }
   ],
   "aliveStatusCodes": [200, 206, 301, 302, 403, 429],
