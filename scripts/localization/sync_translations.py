@@ -9,7 +9,7 @@ import sys
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Mapping, Set
+from typing import Any, Dict, Mapping, Sequence, Set
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -40,7 +40,7 @@ class LocaleCoverage:
         return None
 
 
-def parse_args(argv: Iterable[str]) -> argparse.Namespace:
+def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--locales-config",
@@ -223,7 +223,7 @@ def write_translations(
     return wrote
 
 
-def main(argv: Iterable[str]) -> int:
+def main(argv: Sequence[str]) -> int:
     args = parse_args(argv)
     locales_config = load_yaml(args.locales_config)
     translations = load_translations(args.translations_dir)

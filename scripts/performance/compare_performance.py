@@ -21,7 +21,7 @@ import traceback
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Union
 
 BenchmarkMap = dict[str, "BenchmarkResult"]
 ResourceMap = dict[str, "ResourceMetric"]
@@ -299,38 +299,42 @@ def _build_markdown(
         "| Metric | Category | Baseline | PR | Abs Δ | Rel Δ | Budget | Status |"
     )
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | :---: |")
-    for item in resources:
-        abs_delta = item.extra.get("absolute_delta", 0)
-        if item.unit == "bytes":
-            baseline_val = item.baseline / (1024**2)
-            current_val = item.current / (1024**2)
+    for res_item in resources:
+        abs_delta = res_item.extra.get("absolute_delta", 0)
+        if res_item.unit == "bytes":
+            baseline_val = res_item.baseline / (1024**2)
+            current_val = res_item.current / (1024**2)
             abs_delta_val = abs_delta / (1024**2)
             unit = "MiB"
             budget_display = (
-                f"{item.budget / (1024 ** 2):.3f} {unit}"
-                if item.budget is not None
+                f"{res_item.budget / (1024 ** 2):.3f} {unit}"
+                if res_item.budget is not None
                 else "-"
             )
-        elif item.unit == "seconds":
-            baseline_val = item.baseline * 1000
-            current_val = item.current * 1000
+        elif res_item.unit == "seconds":
+            baseline_val = res_item.baseline * 1000
+            current_val = res_item.current * 1000
             abs_delta_val = abs_delta * 1000
             unit = "ms"
             budget_display = (
-                f"{item.budget * 1000:.3f} {unit}" if item.budget is not None else "-"
+                f"{res_item.budget * 1000:.3f} {unit}"
+                if res_item.budget is not None
+                else "-"
             )
         else:
-            baseline_val = item.baseline
-            current_val = item.current
+            baseline_val = res_item.baseline
+            current_val = res_item.current
             abs_delta_val = abs_delta
-            unit = item.unit or ""
+            unit = res_item.unit or ""
             budget_display = (
-                f"{item.budget:.3f} {unit}".strip() if item.budget is not None else "-"
+                f"{res_item.budget:.3f} {unit}".strip()
+                if res_item.budget is not None
+                else "-"
             )
-        rel_delta = _format_delta(item.delta_pct)
-        status_icon = "✅" if item.status == "pass" else "❌"
+        rel_delta = _format_delta(res_item.delta_pct)
+        status_icon = "✅" if res_item.status == "pass" else "❌"
         lines.append(
-            f"| {item.name} | {item.category} | {baseline_val:.3f} {unit} | {current_val:.3f} {unit} | {abs_delta_val:+.3f} {unit} | {rel_delta} | {budget_display} | {status_icon} |"
+            f"| {res_item.name} | {res_item.category} | {baseline_val:.3f} {unit} | {current_val:.3f} {unit} | {abs_delta_val:+.3f} {unit} | {rel_delta} | {budget_display} | {status_icon} |"
         )
     lines.append("")
     return "\n".join(lines)
@@ -471,7 +475,9 @@ def main() -> None:
         json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
     )
 
-    failures = [item for item in benchmark_results if item.status == "fail"]
+    failures: list[Union[BenchmarkComparison, ResourceComparison]] = [
+        item for item in benchmark_results if item.status == "fail"
+    ]
     failures.extend(item for item in resource_results if item.status == "fail")
     if failures:
         print(
