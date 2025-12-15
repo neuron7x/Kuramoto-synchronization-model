@@ -39,15 +39,18 @@ Example:
 
 from __future__ import annotations
 
+import datetime as _dt
 import fcntl
 import json
 import logging
 import math
 import os
+from collections import OrderedDict
+from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
-from time import time
-from typing import Callable, Mapping, Optional
+from time import perf_counter_ns, time
+from typing import Callable, Mapping, Optional, Sequence
 
 import numpy as np
 import yaml
@@ -155,6 +158,93 @@ class SerotoninConfig(BaseModel):
 SerotoninConfig.model_rebuild()
 
 
+REASON_CODES_WHITELIST: tuple[str, ...] = (
+    "STRESS_HIGH",
+    "DRAWDOWN_SPIKE",
+    "UNCERTAINTY_HIGH",
+    "COOLDOWN_ACTIVE",
+    "RECOVERY_INSUFFICIENT",
+    "INVARIANT_BROKEN",
+    "INVALID_INPUT",
+    "NUMERIC_UNSTABLE",
+)
+STRESS_BUDGET_MULTIPLIER = 0.7
+BUDGET_TOLERANCE = 1e-9
+
+
+@dataclass(slots=True)
+class ControllerOutput:
+    mode: str
+    risk_budget: float
+    action_gate: str
+    reason_codes: tuple[str, ...]
+    metrics_snapshot: Mapping[str, float | int | str]
+
+
+class SafetyMonitor:
+    """Lightweight runtime safety monitor for serotonin controller."""
+
+    __slots__ = (
+        "_min_budget",
+        "_max_budget",
+        "_last_stress",
+        "_last_budget",
+    )
+
+    def __init__(self, min_budget: float, max_budget: float = 1.0) -> None:
+        self._min_budget = float(min_budget)
+        self._max_budget = float(max_budget)
+        self._last_stress: Optional[float] = None
+        self._last_budget: Optional[float] = None
+
+    def validate_inputs(self, observation: Mapping[str, float]) -> tuple[bool, str | None]:
+        """Return (ok, reason) after validating inputs."""
+        required = ("stress", "drawdown", "novelty")
+        for key in required:
+            if key not in observation:
+                return False, "INVALID_INPUT"
+            value = observation[key]
+            if isinstance(value, bool):
+                value = float(value)
+            if value is None or isinstance(value, complex):
+                return False, "INVALID_INPUT"
+            try:
+                as_float = float(value)
+            except (TypeError, ValueError):
+                return False, "INVALID_INPUT"
+            if not math.isfinite(as_float):
+                return False, "INVALID_INPUT"
+        return True, None
+
+    def check_invariants(
+        self,
+        serotonin_level: float,
+        risk_budget: float,
+        hold: bool,
+        stress: float,
+    ) -> tuple[bool, Sequence[str]]:
+        reasons: list[str] = []
+        if not (0.0 <= serotonin_level <= 1.0):
+            reasons.append("INVARIANT_BROKEN")
+        if not (self._min_budget <= risk_budget <= self._max_budget):
+            reasons.append("INVARIANT_BROKEN")
+        if self._last_stress is not None and self._last_budget is not None:
+            if stress > self._last_stress and risk_budget > self._last_budget + BUDGET_TOLERANCE:
+                reasons.append("INVARIANT_BROKEN")
+        if hold:
+            reasons.append("COOLDOWN_ACTIVE")
+
+        # Update monotonic memory only if invariants hold so far
+        if not reasons:
+            self._last_stress = stress
+            self._last_budget = risk_budget
+        return (len(reasons) == 0), reasons
+
+    def reset(self) -> None:
+        self._last_stress = None
+        self._last_budget = None
+
+
 def _generate_config_table(schema: dict) -> str:
     """Render the configuration schema into a Markdown table."""
 
@@ -195,6 +285,8 @@ class SerotoninController:
         self,
         config_path: str = "configs/serotonin.yaml",
         logger: Optional[Callable[[str, float], None]] = None,
+        *,
+        min_risk_budget: float = 0.05,
     ):
         """Initialise the controller with a YAML configuration.
 
@@ -236,6 +328,13 @@ class SerotoninController:
         self._total_cooldown_time: float = 0.0
         self._veto_count: int = 0
         self._last_step_time: Optional[float] = None
+        self._min_risk_budget = float(min_risk_budget)
+        self._max_risk_budget = 1.0
+        self._safety_monitor = SafetyMonitor(self._min_risk_budget, self._max_risk_budget)
+        self._trace_events: list[str] = []
+        self._last_event: OrderedDict[str, object] | None = None
+        self._last_decision: ControllerOutput | None = None
+        self._time_provider = lambda: _dt.datetime.now(_dt.timezone.utc)
 
     @staticmethod
     def noop_logger(name: str, value: float) -> None:
@@ -757,6 +856,199 @@ class SerotoninController:
             if self._hold_state and self._cooldown_start_time is not None:
                 cooldown_s = time() - self._cooldown_start_time
             self._log("tacl.5ht.cooldown", cooldown_s)
+
+    # ------------------------------- Runtime safety + deterministic update API
+    def _derive_risk_budget(self, serotonin_level: float, stress: float) -> float:
+        # Simple monotone transform: higher serotonin → lower budget
+        budget = self._max_risk_budget * (1.0 - serotonin_level)
+        # Mild additional suppression when stress is high to maintain monotonicity
+        if stress > self.config["cooldown_threshold"]:
+            budget *= STRESS_BUDGET_MULTIPLIER
+        return float(max(self._min_risk_budget, min(self._max_risk_budget, budget)))
+
+    def _fail_safe_output(self, reason: str) -> ControllerOutput:
+        reasons = (reason,) if reason in REASON_CODES_WHITELIST else ("INVARIANT_BROKEN",)
+        metrics = {
+            "serotonin_level": float(self.serotonin_level),
+            "tonic_level": float(self.tonic_level),
+            "phasic_level": float(self.phasic_level),
+            "gate_level": float(self.gate_level),
+            "cooldown_s": 0.0,
+            "update_latency_us": 0,
+        }
+        return ControllerOutput(
+            mode="DEFENSIVE",
+            risk_budget=self._min_risk_budget,
+            action_gate="HOLD_OR_REDUCE_ONLY",
+            reason_codes=reasons,
+            metrics_snapshot=metrics,
+        )
+
+    def _record_event(
+        self,
+        output: ControllerOutput,
+        observation: Mapping[str, float],
+        serotonin_level: float,
+        update_latency_us: int,
+    ) -> None:
+        now = self._time_provider()
+        if now.tzinfo is not None:
+            now = now.astimezone(_dt.timezone.utc).replace(tzinfo=None)
+        event = OrderedDict(
+            [
+                ("timestamp_utc", now.isoformat() + "Z"),
+                ("schema_version", "1.0"),
+                ("mode", output.mode),
+                ("serotonin_level", float(serotonin_level)),
+                ("stress", float(observation.get("stress", 0.0))),
+                ("risk_budget", float(output.risk_budget)),
+                ("gate", output.action_gate),
+                ("reason_codes", list(output.reason_codes)),
+                ("update_latency_us", int(update_latency_us)),
+            ]
+        )
+        self._last_event = event
+        self._trace_events.append(json.dumps(event, separators=(",", ":")))
+
+    def update(self, observation: Mapping[str, float]) -> ControllerOutput:
+        """Deterministic O(1) update with runtime safety monitoring."""
+
+        start_ns = perf_counter_ns()
+        ok, reason = self._safety_monitor.validate_inputs(observation)
+        if not ok:
+            output = self._fail_safe_output(reason or "INVALID_INPUT")
+            self._last_decision = output
+            self._record_event(output, observation, self.serotonin_level, 0)
+            return output
+
+        stress = float(observation["stress"])
+        drawdown = float(observation["drawdown"])
+        novelty = float(observation["novelty"])
+        market_vol = float(observation.get("market_vol", stress))
+        free_energy = float(observation.get("free_energy", novelty))
+        cum_losses = float(observation.get("cum_losses", abs(drawdown)))
+        rho_loss = float(observation.get("rho_loss", 0.0))
+
+        try:
+            hold, veto, cooldown_s, serotonin_level = self.step(
+                stress=stress,
+                drawdown=drawdown,
+                novelty=novelty,
+                market_vol=market_vol,
+                free_energy=free_energy,
+                cum_losses=cum_losses,
+                rho_loss=rho_loss,
+            )
+        except Exception:  # pragma: no cover - defensive fallback
+            output = self._fail_safe_output("NUMERIC_UNSTABLE")
+            self._last_decision = output
+            self._record_event(output, observation, self.serotonin_level, 0)
+            return output
+        hold = bool(
+            hold
+            or stress >= self.config["cooldown_threshold"] * 1.5
+            or drawdown < -0.15
+        )
+        veto = bool(veto or hold)
+
+        update_latency_us = int((perf_counter_ns() - start_ns) / 1000)
+        risk_budget = self._derive_risk_budget(serotonin_level, stress)
+        inv_ok, inv_reasons = self._safety_monitor.check_invariants(
+            serotonin_level, risk_budget, bool(hold), stress
+        )
+        reasons: list[str] = []
+        if stress > self.config["cooldown_threshold"]:
+            reasons.append("STRESS_HIGH")
+        if drawdown < -0.05:
+            reasons.append("DRAWDOWN_SPIKE")
+        if novelty > 1.5:
+            reasons.append("UNCERTAINTY_HIGH")
+        reasons.extend(inv_reasons)
+
+        if not inv_ok:
+            output = self._fail_safe_output(inv_reasons[0] if inv_reasons else "INVARIANT_BROKEN")
+            self._record_event(output, observation, serotonin_level, update_latency_us)
+        else:
+            action_gate = "HOLD_OR_REDUCE_ONLY" if hold or veto else "ALLOW"
+            mode = "DEFENSIVE" if hold or veto else "NORMAL"
+            metrics = {
+                "serotonin_level": float(serotonin_level),
+                "tonic_level": float(self.tonic_level),
+                "phasic_level": float(self.phasic_level),
+                "gate_level": float(self.gate_level),
+                "cooldown_s": float(cooldown_s),
+                "update_latency_us": update_latency_us,
+            }
+            filtered_reasons = tuple(rc for rc in reasons if rc in REASON_CODES_WHITELIST)
+            output = ControllerOutput(
+                mode=mode,
+                risk_budget=risk_budget,
+                action_gate=action_gate,
+                reason_codes=filtered_reasons,
+                metrics_snapshot=metrics,
+            )
+            self._record_event(output, observation, serotonin_level, update_latency_us)
+
+        self._last_decision = output
+        return output
+
+    def explain_last_decision(self) -> str:
+        if self._last_event is None:
+            return "No decisions have been made."
+        event = self._last_event
+        return (
+            f"[{event['timestamp_utc']}] mode={event['mode']} "
+            f"risk_budget={event['risk_budget']:.3f} "
+            f"gate={event['gate']} reasons={','.join(event['reason_codes'])}"
+        )
+
+    def get_state(self) -> Mapping[str, float | bool]:
+        with self._lock:
+            return {
+                "tonic_level": float(self.tonic_level),
+                "phasic_level": float(self.phasic_level),
+                "serotonin_level": float(self.serotonin_level),
+                "sensitivity": float(self.sensitivity),
+                "gate_level": float(self.gate_level),
+                "hold_state": bool(self._hold_state),
+                "temperature_floor": float(self.temperature_floor),
+            }
+
+    def set_state(self, state: Mapping[str, float | bool]) -> None:
+        with self._lock:
+            for key in ("tonic_level", "phasic_level", "serotonin_level"):
+                value = float(state[key])
+                if not math.isfinite(value):
+                    raise ValueError("state values must be finite")
+            self.tonic_level = float(state["tonic_level"])
+            self.phasic_level = float(state["phasic_level"])
+            self.serotonin_level = float(state["serotonin_level"])
+            self.sensitivity = float(state.get("sensitivity", self.sensitivity))
+            self.gate_level = float(state.get("gate_level", self.gate_level))
+            self._hold_state = bool(state.get("hold_state", self._hold_state))
+            self.temperature_floor = float(
+                state.get("temperature_floor", self.temperature_floor)
+            )
+
+    def reset(self) -> None:
+        with self._lock:
+            self.tonic_level = 0.0
+            self.sensitivity = 1.0
+            self.desens_counter = 0
+            self.serotonin_level = 0.0
+            self.phasic_level = 0.0
+            self.gate_level = 0.0
+            self.temperature_floor = float(self.config["temperature_floor_min"])
+            self._cooldown_start_time = None
+            self._hold_state = False
+            self._safety_monitor.reset()
+            self._last_event = None
+            self._last_decision = None
+            self._trace_events.clear()
+
+    def export_trace_jsonl(self) -> str:
+        """Return deterministic JSONL trace for audit."""
+        return "\n".join(self._trace_events)
 
     def meta_adapt(self, performance_metrics: Mapping[str, float]) -> None:
         """Adapt release weights based on drawdown and Sharpe observations."""
