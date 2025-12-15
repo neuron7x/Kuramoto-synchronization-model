@@ -47,6 +47,10 @@ _METRIC_WEIGHTS = {
     "entropy": 0.20,
 }
 _METRIC_WEIGHT_SUM = sum(_METRIC_WEIGHTS.values())
+_SAFETY_ESCALATION_THRESHOLD = 0.3
+_SAFETY_FLOOR_TOTAL = 0.8
+_BLOCK_SAFETY_THRESHOLD = 0.2
+_BLOCK_CONSTRAINT_THRESHOLD = 0.5
 
 
 def run_pqf_pscs(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -163,15 +167,15 @@ def _compute_metrics(
         if not task_context.strip():
             semantic_drift_risk = max(semantic_drift_risk, 0.25)
 
-    weight_sum = _METRIC_WEIGHT_SUM or 1.0
+    weight_sum = _METRIC_WEIGHT_SUM
     total = (
         (_METRIC_WEIGHTS["grounding"] / weight_sum) * grounding_loss_risk
         + (_METRIC_WEIGHTS["constraint"] / weight_sum) * constraint_erosion
         + (_METRIC_WEIGHTS["semantic"] / weight_sum) * semantic_drift_risk
         + (_METRIC_WEIGHTS["entropy"] / weight_sum) * entropy_growth_risk
     )
-    if safety_leak_risk > 0.3:
-        total = max(total, 0.8)
+    if safety_leak_risk > _SAFETY_ESCALATION_THRESHOLD:
+        total = max(total, _SAFETY_FLOOR_TOTAL)
 
     return {
         "constraint_erosion": round(constraint_erosion, 3),
@@ -195,7 +199,8 @@ def _decide(
     severe_threat = bool(types & _SEVERE_THREAT_TYPES)
 
     if threat.get("detected") and severe_threat and (
-        safety_leak_risk > 0.2 or constraint_erosion > 0.5
+        safety_leak_risk > _BLOCK_SAFETY_THRESHOLD
+        or constraint_erosion > _BLOCK_CONSTRAINT_THRESHOLD
     ):
         return "BLOCK"
 
