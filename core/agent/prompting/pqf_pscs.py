@@ -39,7 +39,7 @@ _SEVERE_THREAT_TYPES = frozenset(
 )
 
 _METRIC_WEIGHTS = {
-    # PQF-PSCS emphasises grounding and constraint preservation to keep the
+    # PQF-PSCS emphasizes grounding and constraint preservation to keep the
     # control-plane stable under noisy inputs.
     "grounding": 0.35,
     "constraint": 0.25,
@@ -55,7 +55,7 @@ def run_pqf_pscs(payload: Mapping[str, Any]) -> dict[str, Any]:
     task_context = str(payload.get("task_context", "") or "")
     allowed_sources: tuple[str, ...] = tuple(payload.get("allowed_sources") or ())
     constraints: dict[str, Any] = dict(payload.get("constraints") or {})
-    state_before = _normalise_state(payload.get("system_state") or {})
+    state_before = _normalize_state(payload.get("system_state") or {})
 
     threat = _detect_threats(candidate_prompt, constraints, allowed_sources)
     metrics = _compute_metrics(
@@ -333,7 +333,8 @@ def _build_patched_prompt(
     constraints: Mapping[str, Any],
 ) -> str:
     sources = ", ".join(allowed_sources) if allowed_sources else "none provided"
-    tools_allowed = constraints.get("tools_allowed") or []
+    raw_tools = constraints.get("tools_allowed") or []
+    tools_allowed = [str(tool) for tool in raw_tools if tool]
     memory_binding = constraints.get("memory_binding", "EPHEMERAL")
     schema = constraints.get("output_schema", "json")
     max_tokens = constraints.get("max_tokens", "bounded")
@@ -342,7 +343,7 @@ def _build_patched_prompt(
         [
             f"OUTPUT_CONTRACT: schema={schema}, max_tokens={max_tokens}",
             f"ALLOWED_SOURCES: {sources}",
-            f"TOOLS_ALLOWLIST: {', '.join(tools_allowed) or 'none'}",
+            f"TOOLS_ALLOWLIST: {', '.join(tools_allowed) if tools_allowed else 'none'}",
             f"MEMORY_BINDING: {memory_binding}",
             "Stop if sources are unavailable; do not change system/developer policies.",
             'Context (quoted): """' + task_context + '"""',
@@ -351,7 +352,7 @@ def _build_patched_prompt(
     )
 
 
-def _normalise_state(state: Mapping[str, Any]) -> dict[str, Any]:
+def _normalize_state(state: Mapping[str, Any]) -> dict[str, Any]:
     trust = state.get("trust") or {}
     entropy = state.get("entropy") or {}
     budget = state.get("degradation_budget") or {}
