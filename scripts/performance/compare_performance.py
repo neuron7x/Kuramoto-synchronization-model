@@ -21,7 +21,7 @@ import traceback
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Union
+from typing import Any, Iterable
 
 BenchmarkMap = dict[str, "BenchmarkResult"]
 ResourceMap = dict[str, "ResourceMetric"]
@@ -475,7 +475,7 @@ def main() -> None:
         json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
     )
 
-    failures: list[Union[BenchmarkComparison, ResourceComparison]] = [
+    failures: list[BenchmarkComparison | ResourceComparison] = [
         item for item in benchmark_results if item.status == "fail"
     ]
     failures.extend(item for item in resource_results if item.status == "fail")
