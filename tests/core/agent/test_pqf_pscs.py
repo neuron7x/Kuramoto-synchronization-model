@@ -1,14 +1,33 @@
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
+import sys
+import types
 
-MODULE_PATH = Path(__file__).resolve().parents[3] / "core" / "agent" / "prompting" / "pqf_pscs.py"
-_SPEC = importlib.util.spec_from_file_location("pqf_pscs", MODULE_PATH)
-_MODULE = importlib.util.module_from_spec(_SPEC)
-assert _SPEC is not None and _SPEC.loader is not None  # for mypy / defensive
-_SPEC.loader.exec_module(_MODULE)  # type: ignore[arg-type]
-run_pqf_pscs = _MODULE.run_pqf_pscs
+# Tests only exercise the PQF-PSCS helper and avoid heavy ML dependencies used elsewhere.
+torch_stub = types.ModuleType("torch")
+torch_stub.manual_seed = lambda *args, **kwargs: None
+torch_stub.use_deterministic_algorithms = lambda *args, **kwargs: None
+torch_stub.cuda = types.SimpleNamespace(
+    is_available=lambda: False,
+    manual_seed_all=lambda *args, **kwargs: None,
+)
+torch_stub.nn = types.SimpleNamespace(
+    Module=object,
+    Linear=lambda *args, **kwargs: None,
+)
+torch_stub.optim = types.SimpleNamespace(Adam=lambda *args, **kwargs: None)
+sys.modules.setdefault("torch", torch_stub)
+sys.modules.setdefault("torch.nn", torch_stub.nn)
+sys.modules.setdefault("torch.optim", torch_stub.optim)
+
+scipy_stub = types.ModuleType("scipy")
+scipy_stats_stub = types.ModuleType("scipy.stats")
+scipy_stats_stub.ks_2samp = lambda *args, **kwargs: None
+scipy_stats_stub.zscore = lambda *args, **kwargs: None
+sys.modules.setdefault("scipy", scipy_stub)
+sys.modules.setdefault("scipy.stats", scipy_stats_stub)
+
+from core.agent.prompting import run_pqf_pscs
 
 
 def _base_payload() -> dict:
