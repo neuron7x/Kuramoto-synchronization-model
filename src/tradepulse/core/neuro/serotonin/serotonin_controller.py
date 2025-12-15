@@ -122,8 +122,17 @@ class SerotoninController:
         if not path.exists():
             raise FileNotFoundError(path)
         with path.open("r", encoding="utf-8") as handle:
-            raw_cfg = yaml.safe_load(handle)
-        self._config = self._validate_config(raw_cfg or {})
+            raw_cfg = yaml.safe_load(handle) or {}
+        profile_name = raw_cfg.get("active_profile", "legacy")
+        if "serotonin_legacy" in raw_cfg:
+            cfg_data = raw_cfg["serotonin_legacy"]
+        else:
+            cfg_data = raw_cfg
+        if profile_name not in ("legacy", "serotonin_legacy"):
+            raise ValueError(
+                f"Config profile '{profile_name}' is not supported by the legacy controller"
+            )
+        self._config = self._validate_config(cfg_data)
         self.config_path = str(path)
         self._logger = logger or (lambda name, value: None)
 
@@ -173,6 +182,9 @@ class SerotoninController:
         missing = required_keys - set(raw.keys())
         if missing:
             raise ValueError(f"Missing serotonin config keys: {sorted(missing)}")
+        unexpected = set(raw.keys()) - required_keys
+        if unexpected:
+            raise ValueError(f"Unknown serotonin config keys: {sorted(unexpected)}")
         tonic_beta = ensure_float(
             "tonic_beta", raw["tonic_beta"], min_value=0.0, max_value=1.0
         )

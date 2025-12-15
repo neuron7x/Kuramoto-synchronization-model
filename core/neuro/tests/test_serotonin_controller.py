@@ -70,7 +70,10 @@ def config_dict():
 def controller(tmp_path, config_dict):
     cfg_path = tmp_path / "serotonin.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump(
+            {"active_profile": "v24", "serotonin_v24": config_dict},
+            f,
+        )
 
     def stub_logger(name: str, value: float) -> None:
         logging.getLogger(__name__).info("%s: %s", name, value)
@@ -299,7 +302,7 @@ def test_phase_kappa_required(tmp_path, config_dict):
     cfg.pop("phase_kappa")
     cfg_path = tmp_path / "serotonin.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(cfg, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": cfg}, f)
     with pytest.raises(ValueError):
         SerotoninController(str(cfg_path))
 
@@ -309,7 +312,7 @@ def test_env_config_dir_fallback(tmp_path, config_dict, monkeypatch):
     env_dir.mkdir()
     cfg_path = env_dir / "serotonin.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
     monkeypatch.setenv("TRADEPULSE_CONFIG_DIR", str(env_dir))
     controller = SerotoninController("missing.yaml")
     assert controller.config_path == str(cfg_path)
@@ -324,7 +327,7 @@ def test_tick_hours_modulation_effect(tmp_path, config_dict):
     slow_path = tmp_path / "slow.yaml"
     for path, cfg in ((fast_path, fast_cfg), (slow_path, slow_cfg)):
         with open(path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(cfg, f)
+            yaml.safe_dump({"active_profile": "v24", "serotonin_v24": cfg}, f)
     fast = SerotoninController(str(fast_path))
     slow = SerotoninController(str(slow_path))
     fast.meta_adapt({"drawdown": -0.1, "sharpe": 1.5})
@@ -382,7 +385,7 @@ def test_missing_probability_raises(controller):
 def test_serialisation_after_guard_rejection(tmp_path, config_dict):
     cfg_path = tmp_path / "serotonin.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
     controller = SerotoninController(str(cfg_path))
     controller.set_tacl_guard(lambda name, payload: False)
     controller.meta_adapt({"drawdown": -0.2, "sharpe": 0.5})
@@ -402,7 +405,7 @@ def test_tau_to_decay_derivation(tmp_path, config_dict):
     config_dict["tau_5ht_ms"] = 150.0
     config_dict["step_ms"] = 1000.0
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
 
     controller = SerotoninController(str(cfg_path), logger=lambda *_: None)
     expected = 1.0 - math.exp(-1000.0 / 150.0)
@@ -412,7 +415,7 @@ def test_tau_to_decay_derivation(tmp_path, config_dict):
 def test_phase_gate_monotonic_around_threshold(tmp_path, config_dict):
     cfg_path = tmp_path / "s.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
     below = SerotoninController(str(cfg_path), logger=lambda *_: None)
     above = SerotoninController(str(cfg_path), logger=lambda *_: None)
     below.compute_serotonin_signal(config_dict["phase_threshold"] - 0.05)
@@ -431,9 +434,9 @@ def test_meta_adapt_tick_hours_scaling(tmp_path, config_dict):
     slow_path = tmp_path / "slow.yaml"
     fast_path = tmp_path / "fast.yaml"
     with open(slow_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(slow_cfg, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": slow_cfg}, f)
     with open(fast_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(fast_cfg, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": fast_cfg}, f)
 
     slow = SerotoninController(str(slow_path), logger=lambda *_: None)
     fast = SerotoninController(str(fast_path), logger=lambda *_: None)
@@ -737,6 +740,37 @@ def test_reset_state(controller):
     assert controller._step_count == 0
 
 
+def test_reset_is_total_reset(tmp_path, config_dict):
+    """Reset must clear trace, decisions, safety state and timers."""
+    cfg_path = tmp_path / "serotonin.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
+    controller = SerotoninController(str(cfg_path), logger=lambda *_: None)
+
+    controller.update({"stress": 1.2, "drawdown": -0.05, "novelty": 0.8})
+    controller.update({"stress": 1.5, "drawdown": -0.06, "novelty": 0.9})
+    assert controller._trace_events
+    assert controller._last_decision is not None
+
+    controller.reset()
+
+    assert controller._trace_events == []
+    assert controller._last_decision is None
+    assert controller._last_event is None
+    assert controller._safety_monitor._last_stress is None
+    assert controller._safety_monitor._last_budget is None
+    assert controller._cooldown_start_time is None
+    assert controller._hold_state is False
+    assert controller._total_cooldown_time == 0.0
+    assert controller._veto_count == 0
+    assert controller._step_count == 0
+    assert controller.temperature_floor == controller.config["temperature_floor_min"]
+
+    controller.update({"stress": 0.4, "drawdown": -0.02, "novelty": 0.3})
+    assert controller._trace_events  # trace restarted cleanly
+    assert controller._last_decision is not None
+
+
 def test_health_check_normal(controller):
     """Test health_check returns healthy status under normal conditions."""
     # Run a few normal steps
@@ -934,7 +968,7 @@ def test_configurable_hysteresis_margin(tmp_path):
 
     cfg_path = tmp_path / "serotonin_hysteresis.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
 
     controller = SerotoninController(str(cfg_path))
 
@@ -982,7 +1016,7 @@ def test_hysteresis_margin_default_value(tmp_path):
 
     cfg_path = tmp_path / "serotonin_no_hysteresis.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config_dict, f)
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
 
     controller = SerotoninController(str(cfg_path))
 

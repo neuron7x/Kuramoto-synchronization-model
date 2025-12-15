@@ -1,73 +1,74 @@
-# Serotonin Controller Configuration
-# Compatible with both legacy and v2.4.0 implementations
+active_profile: legacy
 
-# === Legacy Controller Fields (src/tradepulse/) ===
-tonic_beta: 0.35
-phasic_beta: 0.55
-stress_gain: 1.0
-drawdown_gain: 1.2
-novelty_gain: 0.6
-stress_threshold: 0.7
-release_threshold: 0.4
-hysteresis: 0.1
-cooldown_ticks: 3
-chronic_window: 6
-desensitization_rate: 0.05
-desensitization_decay: 0.05
-max_desensitization: 0.6
-floor_min: 0.1
-floor_max: 0.6
-floor_gain: 0.8
-cooldown_extension: 2
+serotonin_legacy:
+  # === Legacy Controller Fields (src/tradepulse/) ===
+  tonic_beta: 0.35
+  phasic_beta: 0.55
+  stress_gain: 1.0
+  drawdown_gain: 1.2
+  novelty_gain: 0.6
+  stress_threshold: 0.7
+  release_threshold: 0.4
+  hysteresis: 0.1
+  cooldown_ticks: 3
+  chronic_window: 6
+  desensitization_rate: 0.05
+  desensitization_decay: 0.05
+  max_desensitization: 0.6
+  floor_min: 0.1
+  floor_max: 0.6
+  floor_gain: 0.8
+  cooldown_extension: 2
 
-# === v2.4.0 Controller Fields (core/neuro/) ===
-# Aversive state estimation weights
-alpha: 0.5              # Weight for market volatility (sqrt transform)
-beta: 0.3               # Weight for free energy term  
-gamma: 0.4              # Weight for cumulative losses (with quadratic component)
-delta_rho: 0.2          # Weight for rho-loss complement
+serotonin_v24:
+  # === v2.4.0 Controller Fields (core/neuro/) ===
+  # Aversive state estimation weights
+  alpha: 0.5              # Weight for market volatility (sqrt transform)
+  beta: 0.3               # Weight for free energy term
+  gamma: 0.4              # Weight for cumulative losses (with quadratic component)
+  delta_rho: 0.2          # Weight for rho-loss complement
 
-# Tonic level dynamics (logistic function)
-k: 1.5                  # Logistic steepness parameter
-theta: 0.0              # Logistic mid-point for tonic level
+  # Tonic level dynamics (logistic function)
+  k: 1.5                  # Logistic steepness parameter
+  theta: 0.0              # Logistic mid-point for tonic level
 
-# Inhibition and biasing
-delta: 0.5              # Inhibition multiplier
-za_bias: 0.0            # Zero-action bias applied post inhibition
-decay_rate: 0.01        # Tonic decay rate per decision step
+  # Inhibition and biasing
+  delta: 0.5              # Inhibition multiplier
+  za_bias: 0.0            # Zero-action bias applied post inhibition
+  decay_rate: 0.01        # Tonic decay rate per decision step
 
-# Cooldown and desensitization
-cooldown_threshold: 0.7        # Serotonin signal threshold for veto
-desens_threshold_ticks: 3      # Ticks above threshold before desensitisation
-desens_rate: 0.05              # Recovery rate when below threshold
+  # Cooldown and desensitization
+  cooldown_threshold: 0.7        # Serotonin signal threshold for veto
+  desens_threshold_ticks: 3      # Ticks above threshold before desensitisation
+  desens_rate: 0.05              # Recovery rate when below threshold
 
-# Meta-adaptation targets
-target_dd: 0.15         # Target drawdown for meta-adapt
-target_sharpe: 1.5      # Target Sharpe for meta-adapt
-beta_temper: 0.5        # Gradient tempering coefficient
+  # Meta-adaptation targets
+  target_dd: 0.15         # Target drawdown for meta-adapt
+  target_sharpe: 1.5      # Target Sharpe for meta-adapt
+  beta_temper: 0.5        # Gradient tempering coefficient
 
-# Phasic burst dynamics
-phase_threshold: 0.7    # Threshold for triggering phasic bursts
-phase_kappa: 2.0        # Smoothing factor for phasic gate sigmoid  
-burst_factor: 0.35      # Scaling factor for phasic component
+  # Phasic burst dynamics
+  phase_threshold: 0.7    # Threshold for triggering phasic bursts
+  phase_kappa: 2.0        # Smoothing factor for phasic gate sigmoid
+  burst_factor: 0.35      # Scaling factor for phasic component
 
-# Modulation dynamics
-mod_t_max: 10.0         # Time constant for modulation saturation
-mod_t_half: 5.0         # Half-life for modulation decay
-mod_k: 0.5              # Modulation gain
+  # Modulation dynamics
+  mod_t_max: 10.0         # Time constant for modulation saturation
+  mod_t_half: 5.0         # Half-life for modulation decay
+  mod_k: 0.5              # Modulation gain
 
-# Desensitization parameters
-max_desens_counter: 10  # Maximum desensitisation counter
-desens_gain: 0.8        # Gain applied during desensitisation
+  # Desensitization parameters
+  max_desens_counter: 10  # Maximum desensitisation counter
+  desens_gain: 0.8        # Gain applied during desensitisation
 
-# Veto thresholds
-gate_veto: 0.9          # Gate level above which cooldown veto triggers
-phasic_veto: 1.0        # Phasic level above which cooldown veto triggers
-hysteresis_margin: 0.05 # Hysteresis margin for veto threshold transitions (v2.5.0)
+  # Veto thresholds
+  gate_veto: 0.9          # Gate level above which cooldown veto triggers
+  phasic_veto: 1.0        # Phasic level above which cooldown veto triggers
+  hysteresis_margin: 0.05 # Hysteresis margin for veto threshold transitions (v2.5.0)
 
-# Temperature floor bounds
-temperature_floor_min: 0.1   # Lower bound for serotonin-governed temperature floor
-temperature_floor_max: 0.6   # Upper bound for serotonin-governed temperature floor
+  # Temperature floor bounds
+  temperature_floor_min: 0.1   # Lower bound for serotonin-governed temperature floor
+  temperature_floor_max: 0.6   # Upper bound for serotonin-governed temperature floor
 
-# Time constants
-tick_hours: 1.0          # Wall-clock hours represented by a controller tick
+  # Time constants
+  tick_hours: 1.0          # Wall-clock hours represented by a controller tick

@@ -152,7 +152,7 @@ class SerotoninConfig(BaseModel):
         description="Hysteresis margin for veto threshold transitions (v2.5.0)",
     )
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="forbid")
 
 
 SerotoninConfig.model_rebuild()
@@ -298,9 +298,23 @@ class SerotoninController:
         resolved_path = self._resolve_config_path(config_path)
         self.config_path = str(resolved_path)
         with open(resolved_path, "r", encoding="utf-8") as f:
-            raw_cfg = yaml.safe_load(f)
+            raw_cfg = yaml.safe_load(f) or {}
+        profile = raw_cfg.get("active_profile")
+        if "serotonin_v24" in raw_cfg:
+            cfg_body = raw_cfg["serotonin_v24"] or {}
+            profile = profile or "v24"
+        else:
+            cfg_body = raw_cfg
+            profile = profile or "v24"
+        if profile not in ("v24", "serotonin_v24"):
+            raise ValueError(
+                f"Config profile '{profile}' is not supported by the v2.4.0 controller"
+            )
+        unexpected = set(cfg_body.keys()) - set(SerotoninConfig.model_fields.keys())
+        if unexpected:
+            raise ValueError(f"Unknown serotonin config keys: {sorted(unexpected)}")
         try:
-            config_model = SerotoninConfig.model_validate(raw_cfg)
+            config_model = SerotoninConfig.model_validate(cfg_body)
         except ValidationError as exc:
             raise ValueError(f"Invalid serotonin configuration: {exc}") from exc
         self._config_model = config_model
@@ -1030,22 +1044,6 @@ class SerotoninController:
                 state.get("temperature_floor", self.temperature_floor)
             )
 
-    def reset(self) -> None:
-        with self._lock:
-            self.tonic_level = 0.0
-            self.sensitivity = 1.0
-            self.desens_counter = 0
-            self.serotonin_level = 0.0
-            self.phasic_level = 0.0
-            self.gate_level = 0.0
-            self.temperature_floor = float(self.config["temperature_floor_min"])
-            self._cooldown_start_time = None
-            self._hold_state = False
-            self._safety_monitor.reset()
-            self._last_event = None
-            self._last_decision = None
-            self._trace_events.clear()
-
     def export_trace_jsonl(self) -> str:
         """Return deterministic JSONL trace for audit."""
         return "\n".join(self._trace_events)
@@ -1255,6 +1253,10 @@ class SerotoninController:
             self._total_cooldown_time = 0.0
             self._veto_count = 0
             self._last_step_time = None
+            self._last_event = None
+            self._last_decision = None
+            self._trace_events.clear()
+            self._safety_monitor.reset()
             logging.getLogger(__name__).info("Controller state reset")
 
     def health_check(self) -> dict:
