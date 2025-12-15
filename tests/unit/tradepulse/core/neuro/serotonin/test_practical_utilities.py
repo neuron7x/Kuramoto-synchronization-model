@@ -52,7 +52,10 @@ def create_controller(enable_perf=False):
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump(config, f)
+        yaml.dump(
+            {"active_profile": "legacy", "serotonin_legacy": config},
+            f,
+        )
         config_path = f.name
 
     Controller = load_controller()

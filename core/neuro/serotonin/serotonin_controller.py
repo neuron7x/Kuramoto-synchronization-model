@@ -50,7 +50,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
 from time import perf_counter_ns, time
-from typing import Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Literal, Mapping, Optional, Sequence
 
 import numpy as np
 import yaml
@@ -152,7 +152,7 @@ class SerotoninConfig(BaseModel):
         description="Hysteresis margin for veto threshold transitions (v2.5.0)",
     )
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="forbid")
 
 
 SerotoninConfig.model_rebuild()
@@ -244,6 +244,14 @@ class SafetyMonitor:
         self._last_stress = None
         self._last_budget = None
 
+    def state(self) -> Mapping[str, float | None]:
+        return {
+            "last_stress": self._last_stress,
+            "last_budget": self._last_budget,
+            "min_budget": self._min_budget,
+            "max_budget": self._max_budget,
+        }
+
 
 def _generate_config_table(schema: dict) -> str:
     """Render the configuration schema into a Markdown table."""
@@ -266,6 +274,20 @@ def _generate_config_table(schema: dict) -> str:
         )
     return "\n".join(rows)
 
+def _load_single_yaml_document(path: Path) -> dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        docs = list(yaml.safe_load_all(f))
+    if len(docs) == 0:
+        return {}
+    if len(docs) > 1:
+        raise ValueError(
+            f"Multi-document configs are not supported for serotonin: found {len(docs)} documents in {path}"
+        )
+    doc = docs[0] or {}
+    if not isinstance(doc, dict):
+        raise ValueError("Serotonin configuration must be a mapping at the root")
+    return doc
+
 
 class SerotoninController:
     """SerotoninController v2.4.0 tonic–phasic stabiliser with TACL guardrails.
@@ -280,6 +302,42 @@ class SerotoninController:
     - Progressive inhibition curves for realistic neuromodulation
     - Cubic temperature floor interpolation for smoother adaptation
     """
+
+    @staticmethod
+    def _load_config(path: Path) -> tuple[dict[str, Any], Literal["v24"]]:
+        raw_cfg = _load_single_yaml_document(path)
+        allowed_root = {"active_profile", "serotonin_legacy", "serotonin_v24"}
+        unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
+        if unknown_root:
+            raise ValueError(
+                f"Unknown root keys in serotonin config: {unknown_root}. Allowed: {sorted(allowed_root)}"
+            )
+        active_profile = raw_cfg.get("active_profile")
+        if active_profile is None:
+            raise ValueError("Serotonin config must declare active_profile (legacy|v24)")
+        if active_profile not in ("v24", "legacy", "serotonin_v24", "serotonin_legacy"):
+            raise ValueError(
+                f"Config profile '{active_profile}' is not supported by the v2.4.0 controller"
+            )
+        if active_profile not in ("v24", "serotonin_v24"):
+            raise ValueError(
+                "Config profile 'legacy' is not supported by the v2.4.0 controller; set active_profile to 'v24' and provide serotonin_v24"
+            )
+        if "serotonin_v24" not in raw_cfg or not isinstance(
+            raw_cfg.get("serotonin_v24"), dict
+        ):
+            raise ValueError(
+                "serotonin_v24 section is required when active_profile='v24'"
+            )
+        cfg_body = raw_cfg["serotonin_v24"] or {}
+        unknown_body = sorted(
+            set(cfg_body.keys()) - set(SerotoninConfig.model_fields.keys())
+        )
+        if unknown_body:
+            raise ValueError(
+                f"Unknown serotonin_v24 keys: {unknown_body}. Allowed: {sorted(SerotoninConfig.model_fields.keys())}"
+            )
+        return cfg_body, "v24"
 
     def __init__(
         self,
@@ -297,16 +355,16 @@ class SerotoninController:
         """
         resolved_path = self._resolve_config_path(config_path)
         self.config_path = str(resolved_path)
-        with open(resolved_path, "r", encoding="utf-8") as f:
-            raw_cfg = yaml.safe_load(f)
+        cfg_body, active_profile = self._load_config(resolved_path)
         try:
-            config_model = SerotoninConfig.model_validate(raw_cfg)
+            config_model = SerotoninConfig.model_validate(cfg_body)
         except ValidationError as exc:
             raise ValueError(f"Invalid serotonin configuration: {exc}") from exc
         self._config_model = config_model
         self.config = config_model.model_dump()
         self._config_schema = SerotoninConfig.model_json_schema()
         self._validate_and_derive()
+        self._active_profile = active_profile
         self.tonic_level: float = 0.0
         self.sensitivity: float = 1.0
         self.desens_counter: int = 0
@@ -370,7 +428,10 @@ class SerotoninController:
         step_ms = cfg.get("step_ms")
         logger = logging.getLogger(__name__)
         if tau_ms and step_ms:
-            cfg["decay_rate"] = 1.0 - math.exp(-step_ms / tau_ms)
+            if tau_ms <= 0 or step_ms <= 0:
+                raise ValueError("tau_5ht_ms and step_ms must be positive")
+            ratio = -step_ms / tau_ms
+            cfg["decay_rate"] = -math.expm1(ratio)
             logger.info(
                 "SerotoninController τ-calibration: tau_ms=%.3f, step_ms=%.3f, decay_rate=%.6f",
                 tau_ms,
@@ -381,6 +442,8 @@ class SerotoninController:
             raise KeyError(
                 "decay_rate must be provided when tau_5ht_ms/step_ms are absent"
             )
+        if not (0.0 < cfg["decay_rate"] <= 1.0):
+            raise ValueError("decay_rate must be within (0, 1]")
         floor_min = cfg["temperature_floor_min"]
         floor_max = cfg["temperature_floor_max"]
         if floor_min > floor_max:
@@ -898,6 +961,7 @@ class SerotoninController:
             [
                 ("timestamp_utc", now.isoformat() + "Z"),
                 ("schema_version", "1.0"),
+                ("active_profile", self._active_profile),
                 ("mode", output.mode),
                 ("serotonin_level", float(serotonin_level)),
                 ("stress", float(observation.get("stress", 0.0))),
@@ -1029,22 +1093,6 @@ class SerotoninController:
             self.temperature_floor = float(
                 state.get("temperature_floor", self.temperature_floor)
             )
-
-    def reset(self) -> None:
-        with self._lock:
-            self.tonic_level = 0.0
-            self.sensitivity = 1.0
-            self.desens_counter = 0
-            self.serotonin_level = 0.0
-            self.phasic_level = 0.0
-            self.gate_level = 0.0
-            self.temperature_floor = float(self.config["temperature_floor_min"])
-            self._cooldown_start_time = None
-            self._hold_state = False
-            self._safety_monitor.reset()
-            self._last_event = None
-            self._last_decision = None
-            self._trace_events.clear()
 
     def export_trace_jsonl(self) -> str:
         """Return deterministic JSONL trace for audit."""
@@ -1255,6 +1303,10 @@ class SerotoninController:
             self._total_cooldown_time = 0.0
             self._veto_count = 0
             self._last_step_time = None
+            self._last_event = None
+            self._last_decision = None
+            self._trace_events.clear()
+            self._safety_monitor.reset()
             logging.getLogger(__name__).info("Controller state reset")
 
     def health_check(self) -> dict:
@@ -1304,12 +1356,14 @@ class SerotoninController:
                 "healthy": len(issues) == 0,
                 "issues": issues,
                 "warnings": warnings,
+                "active_profile": self._active_profile,
                 "state": {
                     "serotonin_level": self.serotonin_level,
                     "sensitivity": self.sensitivity,
                     "hold_state": self._hold_state,
                     "desens_counter": self.desens_counter,
                 },
+                "safety_monitor": self._safety_monitor.state(),
                 "metrics": self.get_performance_metrics(),
             }
 

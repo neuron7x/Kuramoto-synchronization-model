@@ -29,7 +29,10 @@ def _build_config(tmp_path: Path) -> Path:
         "cooldown_extension": 2,
     }
     path = tmp_path / "serotonin.yaml"
-    path.write_text(yaml.dump(config), encoding="utf-8")
+    path.write_text(
+        yaml.dump({"active_profile": "legacy", "serotonin_legacy": config}),
+        encoding="utf-8",
+    )
     return path
 
 

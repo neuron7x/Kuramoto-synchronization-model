@@ -48,7 +48,9 @@ def serotonin_controller(serotonin_config):
 
     # Create temporary config file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump(serotonin_config, f)
+        yaml.dump(
+            {"active_profile": "legacy", "serotonin_legacy": serotonin_config}, f
+        )
         config_path = f.name
 
     controller = SerotoninController(config_path)
@@ -57,6 +59,67 @@ def serotonin_controller(serotonin_config):
 
     # Cleanup
     Path(config_path).unlink()
+
+
+def test_config_requires_legacy_profile(tmp_path: Path):
+    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController,
+    )
+
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text(
+        yaml.safe_dump({"active_profile": "v24", "serotonin_v24": {"alpha": 0.5}}),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError):
+        SerotoninController(str(cfg_path))
+
+
+def test_config_unknown_root_rejected(tmp_path: Path):
+    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController,
+    )
+
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text(
+        yaml.safe_dump(
+            {
+                "active_profile": "legacy",
+                "serotonin_legacy": {},
+                "unexpected": 1,
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError):
+        SerotoninController(str(cfg_path))
+
+
+def test_multi_document_config_rejected(tmp_path: Path):
+    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController,
+    )
+
+    cfg_path = tmp_path / "serotonin.yaml"
+    cfg_path.write_text("---\nactive_profile: legacy\n---\n{}", encoding="utf-8")
+    with pytest.raises(ValueError):
+        SerotoninController(str(cfg_path))
+
+
+def test_reset_is_total_reset(serotonin_controller):
+    ctrl = serotonin_controller
+    for _ in range(5):
+        ctrl.step(stress=1.0, drawdown=0.1, novelty=0.2, dt=1.0)
+    ctrl.reset()
+    assert ctrl.tonic_level == 0.0
+    assert ctrl.phasic_level == 0.0
+    assert ctrl.level == 0.0
+    assert ctrl._cooldown == 0
+    assert ctrl._chronic_ticks == 0
+    assert ctrl._desensitization == 0.0
+    assert ctrl.temperature_floor == ctrl._config.floor_min
+    stats = ctrl.get_performance_stats()
+    assert stats.get("total_steps", 0) == 0
 
 
 class TestHysteresisApplication:
@@ -502,10 +565,16 @@ class TestConfigValidation:
         del incomplete_config["tonic_beta"]
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(incomplete_config, f)
+            yaml.dump(
+                {
+                    "active_profile": "legacy",
+                    "serotonin_legacy": incomplete_config,
+                },
+                f,
+            )
             config_path = f.name
 
-        with pytest.raises(ValueError, match="Missing serotonin config keys"):
+        with pytest.raises(ValueError, match="Missing serotonin_legacy keys"):
             SerotoninController(config_path)
 
         Path(config_path).unlink()

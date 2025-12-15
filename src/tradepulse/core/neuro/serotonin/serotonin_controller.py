@@ -18,12 +18,26 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Mapping, Optional
+from typing import Any, Callable, Dict, Literal, Mapping, Optional
 
 import yaml
 
 from .._validation import ensure_float, ensure_int
 
+
+def _load_single_yaml_document(path: Path) -> dict[str, Any]:
+    with path.open("r", encoding="utf-8") as handle:
+        docs = list(yaml.safe_load_all(handle))
+    if len(docs) == 0:
+        return {}
+    if len(docs) > 1:
+        raise ValueError(
+            f"Multi-document configs are not supported for serotonin: found {len(docs)} documents in {path}"
+        )
+    doc = docs[0] or {}
+    if not isinstance(doc, dict):
+        raise ValueError("Serotonin configuration must be a mapping at the root")
+    return doc
 
 @dataclass(frozen=True)
 class SerotoninConfig:
@@ -111,6 +125,59 @@ class SerotoninConfig:
 class SerotoninController:
     """Model chronic serotonin dynamics with hysteretic hold decisions."""
 
+    def _load_and_validate_wrapped_config(
+        self, raw_cfg: Mapping[str, Any]
+    ) -> SerotoninConfig:
+        allowed_root = {"active_profile", "serotonin_legacy", "serotonin_v24"}
+        unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
+        if unknown_root:
+            raise ValueError(
+                f"Unknown root keys in serotonin config: {unknown_root}. Allowed: {sorted(allowed_root)}"
+            )
+        profile_name = raw_cfg.get("active_profile")
+        if profile_name is None:
+            raise ValueError("Serotonin config must declare active_profile (legacy|v24)")
+        if profile_name not in ("legacy", "serotonin_legacy"):
+            raise ValueError(
+                f"Config profile '{profile_name}' is not supported by the legacy controller"
+            )
+        if "serotonin_legacy" not in raw_cfg or not isinstance(
+            raw_cfg.get("serotonin_legacy"), dict
+        ):
+            raise ValueError(
+                "serotonin_legacy section is required when active_profile='legacy'"
+            )
+        cfg_data = raw_cfg["serotonin_legacy"] or {}
+        required_keys = {
+            "tonic_beta",
+            "phasic_beta",
+            "stress_gain",
+            "drawdown_gain",
+            "novelty_gain",
+            "stress_threshold",
+            "release_threshold",
+            "hysteresis",
+            "cooldown_ticks",
+            "chronic_window",
+            "desensitization_rate",
+            "desensitization_decay",
+            "max_desensitization",
+            "floor_min",
+            "floor_max",
+            "floor_gain",
+            "cooldown_extension",
+        }
+        unknown_body = sorted(set(cfg_data.keys()) - required_keys)
+        if unknown_body:
+            raise ValueError(
+                f"Unknown serotonin_legacy keys: {unknown_body}. Allowed: {sorted(required_keys)}"
+            )
+        missing = sorted(required_keys - set(cfg_data.keys()))
+        if missing:
+            raise ValueError(f"Missing serotonin_legacy keys: {missing}")
+        self._active_profile: Literal["legacy"] = "legacy"
+        return self._validate_config(cfg_data)
+
     def __init__(
         self,
         config_path: str = "configs/serotonin.yaml",
@@ -121,9 +188,8 @@ class SerotoninController:
         path = Path(config_path)
         if not path.exists():
             raise FileNotFoundError(path)
-        with path.open("r", encoding="utf-8") as handle:
-            raw_cfg = yaml.safe_load(handle)
-        self._config = self._validate_config(raw_cfg or {})
+        raw_cfg = _load_single_yaml_document(path)
+        self._config = self._load_and_validate_wrapped_config(raw_cfg)
         self.config_path = str(path)
         self._logger = logger or (lambda name, value: None)
 
@@ -173,6 +239,9 @@ class SerotoninController:
         missing = required_keys - set(raw.keys())
         if missing:
             raise ValueError(f"Missing serotonin config keys: {sorted(missing)}")
+        unexpected = set(raw.keys()) - required_keys
+        if unexpected:
+            raise ValueError(f"Unknown serotonin config keys: {sorted(unexpected)}")
         tonic_beta = ensure_float(
             "tonic_beta", raw["tonic_beta"], min_value=0.0, max_value=1.0
         )
@@ -260,6 +329,7 @@ class SerotoninController:
         self._chronic_ticks = 0
         self._desensitization = 0.0
         self.temperature_floor = self._config.floor_min
+        self.reset_performance_stats()
 
     def step_batch(
         self,
