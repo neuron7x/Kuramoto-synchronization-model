@@ -30,18 +30,53 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check links in modified markdown files (PR/push)
+      - name: Determine changed markdown files
+        id: changed_markdown
         if: github.event_name != 'schedule'
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        run: |
+          set -eo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            range="${{ github.event.before }}..${{ github.sha }}"
+          fi
+
+          mapfile -t files < <(git diff --name-only "$range" -- '*.md' '*.markdown' '*.mdx')
+
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "has_md_changes=false" >> "$GITHUB_OUTPUT"
+            echo "md_files_csv=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf 'Changed markdown files:\n%s\n' "${files[@]}"
+
+          md_files_csv=$(IFS=,; echo "${files[*]}")
+
+          {
+            echo "has_md_changes=true"
+            echo "md_files_csv=${md_files_csv}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip markdown link check when no markdown changes
+        if: github.event_name != 'schedule' && steps.changed_markdown.outputs.has_md_changes == 'false'
+        run: |
+          msg="Skipped markdown link check: no markdown files changed in this event."
+          echo "$msg"
+          echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check links in modified markdown files (PR/push)
+        if: github.event_name != 'schedule' && steps.changed_markdown.outputs.has_md_changes == 'true'
+        uses: tcort/github-action-markdown-link-check@v1.1.2
         with:
           use-quiet-mode: 'yes'
           config-file: '.github/markdown-link-check-config.json'
-          check-modified-files-only: 'yes'
-          base-branch: 'main'
+          file-path: "${{ steps.changed_markdown.outputs.md_files_csv }}"
 
       - name: Full documentation link check (scheduled)
         if: github.event_name == 'schedule'
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        uses: tcort/github-action-markdown-link-check@v1.1.2
         continue-on-error: true
         with:
           use-quiet-mode: 'yes'
