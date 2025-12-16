@@ -24,7 +24,7 @@
 - **Tolerance/precision**: none documented; float64 ops.
 
 ### Multi-Asset Kelly
-- **Definition**: Unconstrained `Sigma^{-1}(mu - r_f)`, then fractional scaling; constrained SLSQP on bounded positions with soft leverage penalty; utility ≈ `E[r] - 0.5 Var[r]`.
+- **Definition**: Unconstrained `Σ^{-1}(μ - r_f)`, then fractional scaling; constrained SLSQP on bounded positions with soft leverage penalty; utility ≈ `E[r] - 0.5 Var[r]`.
 - **Domain**: square covariance; shape-consistent `mu`; `0<f_k<=1`; leverage >0, max_position>0.
 - **Invariants**: leverage <= max_leverage (soft), |position|<=max_position (hard); covariance invertible or pinv fallback.
 - **NaN/Inf policy**: none; sigma inversion may propagate NaN; no PSD check.
@@ -66,7 +66,7 @@
 - **NaN policy**: none; exp overflow possible for large |score|.
 
 ### Ricci Flow Rebalancer
-- **Definition**: curvature weights = exp(-β(1-corr)); curvature mean; gradient = (curvature - mean) - λ·(2 Σ w_prev); candidate = prev + step·gradient; blended with turnover penalty; projected onto simplex with lower bound.
+- **Definition**: curvature weights = exp(-β(1-corr)); curvature mean; gradient = (curvature - mean) - λ·(2 Σ_cov · w_prev) where Σ_cov is the covariance matrix; candidate = prev + step·gradient; blended with turnover penalty; projected onto simplex with lower bound.
 - **Domain**: covariance square; correlation provided or derived; lower_bound feasible (n*lb<=1).
 - **Invariants**: weights on simplex; curvature array size = assets; ricci_mean scalar.
 - **NaN policy**: corr computed with `errstate`; clipped [-1,1]; no NaN drop if std=0 leads to NaN but later clipped.
@@ -123,4 +123,3 @@
 ## Outstanding Evidence
 
 - Pytest unavailable in current environment (`pytest: command not found`); no tests executed yet. Need environment with project deps to validate PRs.
-
