@@ -178,7 +178,7 @@ class TestCacheKeyFields:
             config_hash="abcd1234",
         )
 
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises((AttributeError, TypeError)):  # FrozenInstanceError/AttributeError
             fields.user_text = "modified"  # type: ignore[misc]
 
 

@@ -281,8 +281,9 @@ class ReplayPipeline:
             strict_mode=self.strict_mode,
         )
 
-        # Determine trace ID (deterministic for replay)
-        trace_id = create_trace_id(seed=self.seed + hash(case.case_id) % 10000)
+        # Determine trace ID (deterministic for replay using SHA-256)
+        case_hash = int(hashlib.sha256(case.case_id.encode()).hexdigest()[:8], 16)
+        trace_id = create_trace_id(seed=self.seed + case_hash % 10000)
 
         # Apply policy checks
         decision, reasons, rule_hits = self._apply_policy(case.input_text)
@@ -331,8 +332,10 @@ class ReplayPipeline:
         injection_patterns = [
             r"ignore\s+(all\s+)?(previous\s+)?instructions?",
             r"system\s*prompt",
-            r"you\s+are\s+(now|a)",
-            r"act\s+as\s+if",
+            r"you\s+are\s+now\s+a",  # More specific to avoid false positives
+            r"act\s+as\s+if\s+you",  # More specific
+            r"pretend\s+(you\s+are|to\s+be)",  # Role-playing injection
+            r"override\s+(safety|security|rules)",  # Override attempts
         ]
         for pattern in injection_patterns:
             if re.search(pattern, text_lower):
