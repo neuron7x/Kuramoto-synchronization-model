@@ -39,6 +39,9 @@ def _load_module_directly(module_name: str, file_path: str) -> Any:
     return module
 
 
+# Constants
+TRACE_SEED_RANGE = 10000  # Range for trace ID seed variation
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -283,7 +286,7 @@ class ReplayPipeline:
 
         # Determine trace ID (deterministic for replay using SHA-256)
         case_hash = int(hashlib.sha256(case.case_id.encode()).hexdigest()[:8], 16)
-        trace_id = create_trace_id(seed=self.seed + case_hash % 10000)
+        trace_id = create_trace_id(seed=self.seed + case_hash % TRACE_SEED_RANGE)
 
         # Apply policy checks
         decision, reasons, rule_hits = self._apply_policy(case.input_text)
@@ -330,12 +333,12 @@ class ReplayPipeline:
 
         # Check for injection patterns
         injection_patterns = [
-            r"ignore\s+(all\s+)?(previous\s+)?instructions?",
-            r"system\s*prompt",
-            r"you\s+are\s+now\s+a",  # More specific to avoid false positives
-            r"act\s+as\s+if\s+you",  # More specific
-            r"pretend\s+(you\s+are|to\s+be)",  # Role-playing injection
-            r"override\s+(safety|security|rules)",  # Override attempts
+            r"\bignore\s+(all\s+)?(previous\s+)?instructions?\b",
+            r"\bsystem\s*prompt\b",
+            r"\byou\s+are\s+now\s+a\b",  # More specific to avoid false positives
+            r"\bact\s+as\s+if\s+you\b",  # More specific
+            r"\bpretend\s+(you\s+are|to\s+be)\b",  # Role-playing injection
+            r"\boverride\s+(safety|security|rules)\b",  # Override attempts
         ]
         for pattern in injection_patterns:
             if re.search(pattern, text_lower):
@@ -344,10 +347,9 @@ class ReplayPipeline:
 
         # Check for exfiltration patterns
         exfil_patterns = [
-            r"repeat\s+(all|the)\s+(text|instructions?|input)",
-            r"repeat\s+all\s+.*(text|instructions?)",
-            r"output\s+(your|the)\s+prompt",
-            r"reveal\s+.*(secret|password|key)",
+            r"\brepeat\s+(all\s+)?(the\s+)?(text|instructions?|input)\b",
+            r"\boutput\s+(your|the)\s+prompt\b",
+            r"\breveal\s+.*(secret|password|key)\b",
         ]
         for pattern in exfil_patterns:
             if re.search(pattern, text_lower):
