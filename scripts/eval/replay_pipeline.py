@@ -330,7 +330,6 @@ class ReplayPipeline:
         # Check for injection patterns
         injection_patterns = [
             r"ignore\s+(all\s+)?(previous\s+)?instructions?",
-            r"ignore\s+previous\s+(all\s+)?instructions?",
             r"system\s*prompt",
             r"you\s+are\s+(now|a)",
             r"act\s+as\s+if",
@@ -417,15 +416,14 @@ def load_fixtures(fixtures_dir: Path) -> list[ReplayCase]:
 
     # Load JSON files
     for filepath in fixtures_dir.glob("*.json"):
-        if filepath.suffix == ".json":
-            logger.info(f"Loading fixtures from {filepath}")
-            with open(filepath, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    for item in data:
-                        cases.append(ReplayCase.from_dict(item))
-                else:
-                    cases.append(ReplayCase.from_dict(data))
+        logger.info(f"Loading fixtures from {filepath}")
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                for item in data:
+                    cases.append(ReplayCase.from_dict(item))
+            else:
+                cases.append(ReplayCase.from_dict(data))
 
     return cases
 
