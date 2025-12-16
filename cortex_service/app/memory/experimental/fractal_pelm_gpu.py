@@ -10,6 +10,12 @@ Key characteristics:
 - Fractal-weighted scoring for multi-scale retrieval patterns
 - Batch operations for efficient processing
 
+Memory Hardening Features:
+- State validation with invariant checking
+- Deterministic serialization with checksum
+- Strict vs recovery modes for corruption handling
+- NaN/Inf rejection on all numeric values
+
 EXPERIMENTAL WARNING:
 This module is research-grade and may change without notice.
 It requires PyTorch for operation.
@@ -17,13 +23,29 @@ It requires PyTorch for operation.
 
 from __future__ import annotations
 
+import logging
+import warnings
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy as np
 
+from core.utils.memory_validation import (
+    STATE_VERSION,
+    CorruptedStateError,
+    InvariantError,
+    assert_finite_array,
+    assert_finite_float,
+    compute_state_checksum,
+    recover_pelm_state,
+    validate_pelm_state,
+    verify_state_checksum,
+)
+
 if TYPE_CHECKING:
     import torch
+
+logger = logging.getLogger(__name__)
 
 
 # Lazy import for torch to make it truly optional
@@ -92,11 +114,42 @@ _DEFAULT_FRACTAL_DECAY = 2.0  # Exponential decay factor for fractal rank weight
 
 @dataclass
 class _MemoryEntry:
-    """Internal storage for a single memory entry."""
+    """Internal storage for a single memory entry.
+
+    Attributes:
+        vector: Feature vector (must be finite)
+        phase: Phase angle in radians (must be finite)
+        metadata: Optional metadata dictionary
+    """
 
     vector: np.ndarray
     phase: float
     metadata: dict | None = None
+
+    def __post_init__(self) -> None:
+        """Validate that vector and phase are finite."""
+        if self.vector.size > 0 and not np.all(np.isfinite(self.vector)):
+            raise InvariantError("_MemoryEntry vector contains NaN/Inf values")
+        if not np.isfinite(self.phase):
+            raise InvariantError(f"_MemoryEntry phase must be finite, got {self.phase}")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize entry to dictionary."""
+        return {
+            "vector": self.vector.tolist(),
+            "phase": self.phase,
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "_MemoryEntry":
+        """Deserialize entry from dictionary."""
+        vector = np.array(data["vector"], dtype=np.float32)
+        return cls(
+            vector=vector,
+            phase=float(data["phase"]),
+            metadata=data.get("metadata"),
+        )
 
 
 @dataclass
@@ -568,6 +621,142 @@ class FractalPELMGPU:
     def current_size(self) -> int:
         """Return the current number of stored entries."""
         return len(self._entries)
+
+    def validate(self, *, strict: bool = True) -> None:
+        """Validate current memory state against invariants.
+
+        Invariants checked:
+        - dimension > 0
+        - capacity > 0
+        - fractal_weight in [0, 1]
+        - len(entries) <= capacity
+        - All vectors are finite and have correct dimension
+        - All phases are finite
+
+        Args:
+            strict: If True, raise on any violation.
+
+        Raises:
+            InvariantError: If strict=True and validation fails.
+        """
+        state = self._to_state_dict()
+        validate_pelm_state(state, strict=strict)
+
+    def _to_state_dict(self) -> Dict[str, Any]:
+        """Convert internal state to dictionary (without checksum)."""
+        return {
+            "dimension": self.dimension,
+            "capacity": self.capacity,
+            "fractal_weight": self.fractal_weight,
+            "device": self._device_resolved,
+            "use_amp": self.use_amp,
+            "entries": [entry.to_dict() for entry in self._entries],
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize memory to dictionary with checksum.
+
+        The returned dictionary includes:
+            - state_version: Format version for compatibility
+            - dimension: Vector dimensionality
+            - capacity: Maximum entry count
+            - fractal_weight: Fractal scoring weight
+            - device: PyTorch device
+            - use_amp: Mixed precision flag
+            - entries: List of serialized entries
+            - _checksum: SHA-256 checksum for integrity
+
+        Returns:
+            Serialized state dictionary.
+        """
+        state = self._to_state_dict()
+        state["state_version"] = STATE_VERSION
+        state["_checksum"] = compute_state_checksum(state)
+        return state
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: Dict[str, Any],
+        *,
+        strict: bool = True,
+        device: str | None = None,
+    ) -> "FractalPELMGPU":
+        """Deserialize memory from dictionary.
+
+        Args:
+            data: Serialized state dictionary.
+            strict: If True, raise on checksum mismatch or validation failure.
+                   If False, attempt recovery by quarantining corrupted entries.
+            device: Override device setting (None uses value from state).
+
+        Returns:
+            Restored FractalPELMGPU instance.
+
+        Raises:
+            CorruptedStateError: If strict=True and checksum doesn't match.
+            InvariantError: If strict=True and validation fails.
+        """
+        # Verify checksum if present
+        if "_checksum" in data:
+            verify_state_checksum(data, data["_checksum"], strict=strict)
+
+        # Validate state
+        result = validate_pelm_state(data, strict=strict)
+
+        # Recover if needed - this modifies data in place
+        if not result.is_valid and not strict:
+            data = recover_pelm_state(data, result)
+            # After recovery, indices are shifted so clear quarantine set
+            quarantined: set[int] = set()
+        else:
+            quarantined = set(result.quarantined_indices)
+
+        # Build memory instance
+        memory = cls(
+            dimension=data.get("dimension", 384),
+            capacity=data.get("capacity", 100_000),
+            device=device or data.get("device", "cpu"),
+            use_amp=data.get("use_amp", True),
+            fractal_weight=data.get("fractal_weight", 0.3),
+        )
+
+        # Restore entries
+        entries_data = data.get("entries", [])
+
+        for i, entry_data in enumerate(entries_data):
+            if i in quarantined:
+                continue  # Skip quarantined entries (only in non-recovered case)
+            try:
+                entry = _MemoryEntry.from_dict(entry_data)
+                # Validate dimension
+                if len(entry.vector) != memory.dimension:
+                    if strict:
+                        raise InvariantError(
+                            f"Entry {i} dimension {len(entry.vector)} != {memory.dimension}"
+                        )
+                    logger.warning(
+                        "Skipping entry %d: dimension mismatch (%d != %d)",
+                        i,
+                        len(entry.vector),
+                        memory.dimension,
+                    )
+                    continue
+                memory._entries.append(entry)
+            except (KeyError, TypeError, InvariantError) as e:
+                if strict:
+                    raise
+                logger.warning("Skipping corrupted entry %d: %s", i, e)
+                # Skip corrupted entry in recovery mode
+
+        return memory
+
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return (
+            f"FractalPELMGPU(dimension={self.dimension}, capacity={self.capacity}, "
+            f"device={self._device_resolved!r}, current_size={len(self._entries)})"
+        )
 
 
 __all__ = ["FractalPELMGPU", "is_torch_available"]
