@@ -40,8 +40,15 @@ def serotonin_controller(tmp_path: Path, serotonin_module):
     cfg_source = Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
     cfg_path = tmp_path / "serotonin.yaml"
     loaded = yaml.safe_load(cfg_source.read_text(encoding="utf-8")) or {}
-    loaded["active_profile"] = "v24"
-    cfg_path.write_text(yaml.safe_dump(loaded), encoding="utf-8")
+    cfg_path.write_text(
+        yaml.safe_dump(
+            {
+                "active_profile": "v24",
+                "serotonin_v24": loaded.get("serotonin_v24", {}),
+            }
+        ),
+        encoding="utf-8",
+    )
     return SerotoninController(str(cfg_path))
 
 
@@ -130,15 +137,24 @@ def test_trace_schema_stable_keys(serotonin_controller):
         "timestamp_utc",
         "schema_version",
         "active_profile",
-        "mode",
-        "serotonin_level",
-        "stress",
-        "risk_budget",
-        "gate",
+        "inputs",
+        "outputs",
         "reason_codes",
+        "invariants_checked",
         "update_latency_us",
     ]
     assert list(event.keys()) == expected_keys
+    assert set(event["inputs"].keys()) == {
+        "stress",
+        "drawdown",
+        "novelty",
+        "market_vol",
+        "free_energy",
+        "cum_losses",
+        "rho_loss",
+    }
+    assert set(event["outputs"].keys()) >= {"mode", "risk_budget", "gate", "serotonin_level"}
+    assert isinstance(event["invariants_checked"], dict)
 
 
 def test_update_not_using_pandas(monkeypatch, serotonin_controller):
@@ -175,6 +191,20 @@ def test_micro_benchmark_latency(serotonin_controller):
         samples.append(out.metrics_snapshot["update_latency_us"])
     median = sorted(samples)[len(samples) // 2]
     assert median < 2000
+
+
+def test_invariants_flags_and_clamp_recorded(serotonin_controller):
+    ctrl = serotonin_controller
+    ctrl.update(_obs(stress=2.5, drawdown=-0.2, novelty=0.5))
+    event = json.loads(ctrl.export_trace_jsonl().splitlines()[-1])
+    invariants = event["invariants_checked"]
+    assert invariants["finite_inputs"] is True
+    assert invariants["serotonin_in_bounds"] is True
+    assert "risk_budget_clamped" in invariants
+    if invariants["risk_budget_clamped"]:
+        assert "RISK_BUDGET_CLAMPED" in event["reason_codes"]
+    else:
+        assert "RISK_BUDGET_CLAMPED" not in event["reason_codes"]
 
 
 def test_regression_cooldown_reentry(serotonin_controller):
@@ -266,7 +296,17 @@ def test_jsonl_export_stable_order(serotonin_controller):
     ctrl = serotonin_controller
     ctrl.update(_obs(stress=0.8, drawdown=-0.1, novelty=0.2))
     lines = ctrl.export_trace_jsonl().splitlines()
-    assert all(line.count("{") == 1 for line in lines)
-    # order must be stable and deterministic
-    parsed = json.loads(lines[-1])
-    assert list(parsed.keys())[0] == "timestamp_utc"
+    parsed_lines = [json.loads(line) for line in lines]
+    assert all(isinstance(evt, dict) for evt in parsed_lines)
+    parsed = parsed_lines[-1]
+    expected_keys = [
+        "timestamp_utc",
+        "schema_version",
+        "active_profile",
+        "inputs",
+        "outputs",
+        "reason_codes",
+        "invariants_checked",
+        "update_latency_us",
+    ]
+    assert list(parsed.keys()) == expected_keys

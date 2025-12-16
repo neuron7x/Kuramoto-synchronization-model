@@ -128,7 +128,7 @@ class SerotoninController:
     def _load_and_validate_wrapped_config(
         self, raw_cfg: Mapping[str, Any]
     ) -> SerotoninConfig:
-        allowed_root = {"active_profile", "serotonin_legacy", "serotonin_v24"}
+        allowed_root = {"active_profile", "serotonin_legacy"}
         unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
         if unknown_root:
             raise ValueError(
@@ -136,7 +136,7 @@ class SerotoninController:
             )
         profile_name = raw_cfg.get("active_profile")
         if profile_name is None:
-            raise ValueError("Serotonin config must declare active_profile (legacy|v24)")
+            raise ValueError("Serotonin config must declare active_profile (legacy)")
         if profile_name not in ("legacy", "serotonin_legacy"):
             raise ValueError(
                 f"Config profile '{profile_name}' is not supported by the legacy controller"
