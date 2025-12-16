@@ -96,7 +96,9 @@ class TestVolatilityCalculationAccuracy:
         assessment = manager.assess_risk(returns=returns)
 
         # The internal calculation should use ddof=1
-        # Expected std with ddof=1: sqrt(0.0002 / 2) = 0.01
+        # Expected: sum of squared deviations = 0.0001 + 0 + 0.0001 = 0.0002
+        # Sample variance (ddof=1) = 0.0002 / 2 = 0.0001
+        # Sample std (ddof=1) = sqrt(0.0001) = 0.01
         expected_std = np.std(returns, ddof=1)
         assert expected_std == pytest.approx(0.01, rel=1e-10)
 
