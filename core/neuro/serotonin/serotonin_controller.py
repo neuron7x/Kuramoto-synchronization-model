@@ -624,7 +624,11 @@ class SerotoninController:
             ("cum_losses", cum_losses),
             ("rho_loss", rho_loss),
         ):
-            if not math.isfinite(float(value)):
+            try:
+                as_float = float(value)
+            except (TypeError, ValueError):
+                raise ValueError(f"{name} must be a finite number") from None
+            if not math.isfinite(as_float):
                 raise ValueError(f"{name} must be finite")
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
             raise ValueError(
@@ -1049,7 +1053,7 @@ class SerotoninController:
                 cum_losses=cum_losses,
                 rho_loss=rho_loss,
             )
-        except Exception:  # pragma: no cover - defensive fallback
+        except (ValueError, OverflowError, ArithmeticError, TypeError):  # pragma: no cover - defensive fallback
             output = self._fail_safe_output("NUMERIC_UNSTABLE")
             self._last_decision = output
             self._record_event(output, observation, self.serotonin_level, 0, {})

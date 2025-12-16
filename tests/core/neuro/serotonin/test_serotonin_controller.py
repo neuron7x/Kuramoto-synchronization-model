@@ -518,12 +518,12 @@ def test_config_constraints_are_enforced(serotonin_cls, tmp_path: Path):
 
 
 def test_risk_budget_monotone_in_stress(serotonin_controller):
-    budgets = [
-        serotonin_controller._derive_risk_budget(
+    budgets: list[float] = []
+    for stress in (0.0, 0.5, 1.0, 2.0):
+        budget, _ = serotonin_controller._derive_risk_budget(
             serotonin_controller.serotonin_level, stress
-        )[0]
-        for stress in (0.0, 0.5, 1.0, 2.0)
-    ]
+        )
+        budgets.append(budget)
     assert budgets == sorted(budgets, reverse=True)
 
 
