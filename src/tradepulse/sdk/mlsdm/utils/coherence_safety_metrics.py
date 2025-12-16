@@ -317,7 +317,7 @@ def safety_score(
         >>> safety_score(np.zeros(3))  # Zero vector = max safety
         1.0
         >>> safety_score(np.array([10.0, 0.0, 0.0]), max_deviation=10.0)
-        0.5
+        0.0
     """
     current = np.asarray(current, dtype=np.float64)
     current = validate_finite_array(current, "current", strict_mode=strict_mode)

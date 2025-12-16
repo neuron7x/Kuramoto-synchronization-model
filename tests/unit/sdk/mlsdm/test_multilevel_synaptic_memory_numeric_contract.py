@@ -48,7 +48,7 @@ class TestMultiLevelSynapticMemoryInit:
                 dim=64,
                 lambda_l1=0.95,
                 lambda_l2=0.90,
-                lambda_l3=0.98,  # Violates: λ3 > λ1
+                lambda_l3=0.98,  # Violates: λ3 > λ1 (0.98 > 0.95)
             )
         assert "λ hierarchy violation" in str(exc_info.value)
 

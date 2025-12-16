@@ -233,10 +233,16 @@ class MultiLevelSynapticMemory:
 
         Args:
             weights: Tuple of (w1, w2, w3) weights for each level.
+                Must have exactly 3 elements.
 
         Returns:
             Combined memory vector: w1*L1 + w2*L2 + w3*L3
+
+        Raises:
+            ValueError: If weights does not have exactly 3 elements.
         """
+        if len(weights) != 3:
+            raise ValueError(f"weights must have exactly 3 elements, got {len(weights)}")
         w1, w2, w3 = weights
         return w1 * self._l1 + w2 * self._l2 + w3 * self._l3
 
