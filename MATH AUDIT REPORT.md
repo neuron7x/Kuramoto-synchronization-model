@@ -19,7 +19,7 @@
 ### Kelly Criterion (single-asset)
 - **Definition**: Full Kelly `f* = (b*p - (1-p))/b`; fractional scaling and clamp to `[0, max_fraction]`.
 - **Domain**: `0<p<1`, `b>0`, `max_fraction>0`, `0<f_k<=1`.
-- **Outputs**: `optimal_fraction`, `full_kelly`, `edge = p*b - (1-p)`, `growth_rate = p * ln(1+f b) + (1-p) * ln(1-f)` where `ln` is the natural log (base *e*) if `0<f<1`, else `0`; max drawdown ≈ `2f/(1+f)`.
+- **Outputs**: `optimal_fraction`, `full_kelly`, `edge = p*b - (1-p)`, `growth_rate = p * ln(1+f*b) + (1-p) * ln(1-f)` where `ln` is the natural log (base *e*) if `0<f<1`, else `0`; max drawdown ≈ `2f/(1+f)`.
 - **NaN/Inf policy**: no explicit sanitization; invalid params raise; log undefined if `f>=1` guarded by branch.
 - **Tolerance/precision**: none documented; float64 ops.
 
@@ -66,7 +66,7 @@
 - **NaN policy**: none; exp overflow possible for large |score|.
 
 ### Ricci Flow Rebalancer
-- **Definition**: curvature weights = exp(-β(1-corr)); curvature mean; gradient = (curvature - mean) - λ·(2 Σ_cov @ w_prev) where Σ_cov is the covariance matrix. Derivation note: ∇(w^T Σ_cov w) = 2 Σ_cov w. Candidate = prev + step·gradient; blended with turnover penalty; projected onto simplex with lower bound.
+- **Definition**: curvature weights = exp(-β(1-corr)); curvature mean; gradient = (curvature - mean) - λ·(2 Σ_cov · w_prev) where Σ_cov is the covariance matrix. Derivation note: ∇(w^T Σ_cov · w) = 2 Σ_cov · w. Candidate = prev + step·gradient; blended with turnover penalty; projected onto simplex with lower bound.
 - **Domain**: covariance square; correlation provided or derived; lower_bound feasible (n*lb<=1).
 - **Invariants**: weights on simplex; curvature array size = assets; ricci_mean scalar.
 - **NaN policy**: corr computed with `errstate`; clipped [-1,1]; no NaN drop if std=0 leads to NaN but later clipped.
