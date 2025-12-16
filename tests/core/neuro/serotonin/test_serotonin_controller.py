@@ -51,8 +51,15 @@ def serotonin_config_path(tmp_path: Path) -> Path:
     cfg_source = Path(__file__).resolve().parents[4] / "configs" / "serotonin.yaml"
     target = tmp_path / "serotonin.yaml"
     loaded = yaml.safe_load(cfg_source.read_text(encoding="utf-8")) or {}
-    loaded["active_profile"] = "v24"
-    target.write_text(yaml.safe_dump(loaded), encoding="utf-8")
+    target.write_text(
+        yaml.safe_dump(
+            {
+                "active_profile": "v24",
+                "serotonin_v24": loaded.get("serotonin_v24", {}),
+            }
+        ),
+        encoding="utf-8",
+    )
     return target
 
 
@@ -391,15 +398,14 @@ beta: 0.3
     )
 
     # Should raise ValueError due to missing required fields
-    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+    with pytest.raises(ValueError, match="Invalid serotonin root configuration"):
         serotonin_cls(str(incomplete_config))
 
 
 def test_dual_compatibility_config_loads_successfully(
     serotonin_cls, serotonin_config_path
 ):
-    """Test that the dual-compatibility config (with both legacy and v2.4.0 fields) loads correctly."""
-    # The fixture provides the actual serotonin.yaml with both field sets
+    """Test that the strict v2.4.0 config loads correctly."""
     ctrl = serotonin_cls(str(serotonin_config_path))
 
     # Verify all required v2.4.0 fields are present and loaded
@@ -465,7 +471,7 @@ def test_config_field_types_are_validated(serotonin_cls, tmp_path: Path):
     )
 
     # Should raise ValueError due to type validation error
-    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+    with pytest.raises(ValueError, match="Invalid serotonin root configuration"):
         serotonin_cls(str(invalid_config))
 
 
@@ -507,7 +513,7 @@ def test_config_constraints_are_enforced(serotonin_cls, tmp_path: Path):
     )
 
     # Should raise ValueError due to constraint violation
-    with pytest.raises(ValueError, match="Invalid serotonin configuration"):
+    with pytest.raises(ValueError, match="Invalid serotonin root configuration"):
         serotonin_cls(str(invalid_config))
 
 
@@ -515,7 +521,7 @@ def test_risk_budget_monotone_in_stress(serotonin_controller):
     budgets = [
         serotonin_controller._derive_risk_budget(
             serotonin_controller.serotonin_level, stress
-        )
+        )[0]
         for stress in (0.0, 0.5, 1.0, 2.0)
     ]
     assert budgets == sorted(budgets, reverse=True)

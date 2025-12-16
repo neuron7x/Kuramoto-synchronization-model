@@ -158,6 +158,15 @@ class SerotoninConfig(BaseModel):
 SerotoninConfig.model_rebuild()
 
 
+class SerotoninConfigEnvelope(BaseModel):
+    """Strict root-level serotonin configuration wrapper."""
+
+    active_profile: Literal["v24"]
+    serotonin_v24: SerotoninConfig
+
+    model_config = ConfigDict(extra="forbid")
+
+
 REASON_CODES_WHITELIST: tuple[str, ...] = (
     "STRESS_HIGH",
     "DRAWDOWN_SPIKE",
@@ -167,6 +176,10 @@ REASON_CODES_WHITELIST: tuple[str, ...] = (
     "INVARIANT_BROKEN",
     "INVALID_INPUT",
     "NUMERIC_UNSTABLE",
+    "LEVEL_OOB",
+    "BUDGET_OOB",
+    "STRESS_MONOTONICITY",
+    "RISK_BUDGET_CLAMPED",
 )
 STRESS_BUDGET_MULTIPLIER = 0.7
 BUDGET_TOLERANCE = 1e-9
@@ -222,23 +235,42 @@ class SafetyMonitor:
         risk_budget: float,
         hold: bool,
         stress: float,
-    ) -> tuple[bool, Sequence[str]]:
+        *,
+        clamped_budget: bool = False,
+    ) -> tuple[bool, Sequence[str], "OrderedDict[str, bool]"]:
         reasons: list[str] = []
-        if not (0.0 <= serotonin_level <= 1.0):
-            reasons.append("INVARIANT_BROKEN")
-        if not (self._min_budget <= risk_budget <= self._max_budget):
-            reasons.append("INVARIANT_BROKEN")
+        checks: "OrderedDict[str, bool]" = OrderedDict()
+        finite_ok = math.isfinite(serotonin_level) and math.isfinite(risk_budget) and math.isfinite(stress)
+        checks["finite_inputs"] = finite_ok
+        in_bounds = finite_ok and (0.0 <= serotonin_level <= 1.0)
+        checks["serotonin_in_bounds"] = in_bounds
+        budget_bounds = finite_ok and (self._min_budget <= risk_budget <= self._max_budget)
+        checks["risk_budget_in_bounds"] = budget_bounds
+        monotonic_ok = True
         if self._last_stress is not None and self._last_budget is not None:
-            if stress > self._last_stress and risk_budget > self._last_budget + BUDGET_TOLERANCE:
-                reasons.append("INVARIANT_BROKEN")
+            monotonic_ok = not (
+                stress > self._last_stress and risk_budget > self._last_budget + BUDGET_TOLERANCE
+            )
+        checks["stress_monotonic"] = monotonic_ok
+        checks["risk_budget_clamped"] = bool(clamped_budget)
+        checks["hold_state"] = bool(hold)
+
+        if not finite_ok:
+            reasons.append("INVALID_INPUT")
+        if not in_bounds:
+            reasons.append("LEVEL_OOB")
+        if not budget_bounds:
+            reasons.append("BUDGET_OOB")
+        if not monotonic_ok:
+            reasons.append("STRESS_MONOTONICITY")
         if hold:
             reasons.append("COOLDOWN_ACTIVE")
 
-        # Update monotonic memory only if invariants hold so far
-        if not reasons:
+        inv_ok = finite_ok and in_bounds and budget_bounds and monotonic_ok
+        if inv_ok:
             self._last_stress = stress
             self._last_budget = risk_budget
-        return (len(reasons) == 0), reasons
+        return inv_ok, reasons, checks
 
     def reset(self) -> None:
         self._last_stress = None
@@ -304,40 +336,19 @@ class SerotoninController:
     """
 
     @staticmethod
-    def _load_config(path: Path) -> tuple[dict[str, Any], Literal["v24"]]:
+    def _load_config(path: Path) -> tuple[SerotoninConfig, Literal["v24"]]:
         raw_cfg = _load_single_yaml_document(path)
-        allowed_root = {"active_profile", "serotonin_legacy", "serotonin_v24"}
+        allowed_root = {"active_profile", "serotonin_v24"}
         unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
         if unknown_root:
             raise ValueError(
                 f"Unknown root keys in serotonin config: {unknown_root}. Allowed: {sorted(allowed_root)}"
             )
-        active_profile = raw_cfg.get("active_profile")
-        if active_profile is None:
-            raise ValueError("Serotonin config must declare active_profile (legacy|v24)")
-        if active_profile not in ("v24", "legacy", "serotonin_v24", "serotonin_legacy"):
-            raise ValueError(
-                f"Config profile '{active_profile}' is not supported by the v2.4.0 controller"
-            )
-        if active_profile not in ("v24", "serotonin_v24"):
-            raise ValueError(
-                "Config profile 'legacy' is not supported by the v2.4.0 controller; set active_profile to 'v24' and provide serotonin_v24"
-            )
-        if "serotonin_v24" not in raw_cfg or not isinstance(
-            raw_cfg.get("serotonin_v24"), dict
-        ):
-            raise ValueError(
-                "serotonin_v24 section is required when active_profile='v24'"
-            )
-        cfg_body = raw_cfg["serotonin_v24"] or {}
-        unknown_body = sorted(
-            set(cfg_body.keys()) - set(SerotoninConfig.model_fields.keys())
-        )
-        if unknown_body:
-            raise ValueError(
-                f"Unknown serotonin_v24 keys: {unknown_body}. Allowed: {sorted(SerotoninConfig.model_fields.keys())}"
-            )
-        return cfg_body, "v24"
+        try:
+            envelope = SerotoninConfigEnvelope.model_validate(raw_cfg)
+        except ValidationError as exc:
+            raise ValueError(f"Invalid serotonin root configuration: {exc}") from exc
+        return envelope.serotonin_v24, "v24"
 
     def __init__(
         self,
@@ -355,11 +366,7 @@ class SerotoninController:
         """
         resolved_path = self._resolve_config_path(config_path)
         self.config_path = str(resolved_path)
-        cfg_body, active_profile = self._load_config(resolved_path)
-        try:
-            config_model = SerotoninConfig.model_validate(cfg_body)
-        except ValidationError as exc:
-            raise ValueError(f"Invalid serotonin configuration: {exc}") from exc
+        config_model, active_profile = self._load_config(resolved_path)
         self._config_model = config_model
         self.config = config_model.model_dump()
         self._config_schema = SerotoninConfig.model_json_schema()
@@ -611,6 +618,14 @@ class SerotoninController:
 
         Enhanced with non-linear transformations for biological plausibility.
         """
+        for name, value in (
+            ("market_vol", market_vol),
+            ("free_energy", free_energy),
+            ("cum_losses", cum_losses),
+            ("rho_loss", rho_loss),
+        ):
+            if not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
         if market_vol < 0 or free_energy < 0 or cum_losses < 0:
             raise ValueError(
                 "market_vol, free_energy and cum_losses must be non-negative"
@@ -657,6 +672,8 @@ class SerotoninController:
         return float(max(0.0, saturated))
 
     def compute_serotonin_signal(self, aversive_state: float) -> float:
+        if not math.isfinite(aversive_state):
+            raise ValueError("aversive_state must be finite")
         if aversive_state < 0:
             raise ValueError("aversive_state must be non-negative")
 
@@ -921,13 +938,16 @@ class SerotoninController:
             self._log("tacl.5ht.cooldown", cooldown_s)
 
     # ------------------------------- Runtime safety + deterministic update API
-    def _derive_risk_budget(self, serotonin_level: float, stress: float) -> float:
+    def _derive_risk_budget(self, serotonin_level: float, stress: float) -> tuple[float, bool]:
         # Simple monotone transform: higher serotonin → lower budget
-        budget = self._max_risk_budget * (1.0 - serotonin_level)
+        raw_budget = self._max_risk_budget * (1.0 - serotonin_level)
         # Mild additional suppression when stress is high to maintain monotonicity
         if stress > self.config["cooldown_threshold"]:
-            budget *= STRESS_BUDGET_MULTIPLIER
-        return float(max(self._min_risk_budget, min(self._max_risk_budget, budget)))
+            raw_budget *= STRESS_BUDGET_MULTIPLIER
+        clamped_budget = float(
+            max(self._min_risk_budget, min(self._max_risk_budget, raw_budget))
+        )
+        return clamped_budget, bool(abs(clamped_budget - raw_budget) > BUDGET_TOLERANCE)
 
     def _fail_safe_output(self, reason: str) -> ControllerOutput:
         reasons = (reason,) if reason in REASON_CODES_WHITELIST else ("INVARIANT_BROKEN",)
@@ -953,21 +973,47 @@ class SerotoninController:
         observation: Mapping[str, float],
         serotonin_level: float,
         update_latency_us: int,
+        invariants_checked: Mapping[str, bool] | None = None,
     ) -> None:
         now = self._time_provider()
         if now.tzinfo is not None:
             now = now.astimezone(_dt.timezone.utc).replace(tzinfo=None)
+        invariants_checked = OrderedDict(invariants_checked or {})
+
+        def _safe_float(key: str, default: float = 0.0) -> float:
+            try:
+                return float(observation.get(key, default))
+            except Exception:
+                return float(default)
+
+        inputs_snapshot = OrderedDict(
+            [
+                ("stress", _safe_float("stress")),
+                ("drawdown", _safe_float("drawdown")),
+                ("novelty", _safe_float("novelty")),
+                ("market_vol", _safe_float("market_vol")),
+                ("free_energy", _safe_float("free_energy")),
+                ("cum_losses", _safe_float("cum_losses")),
+                ("rho_loss", _safe_float("rho_loss")),
+            ]
+        )
+        outputs_snapshot = OrderedDict(
+            [
+                ("mode", output.mode),
+                ("risk_budget", float(output.risk_budget)),
+                ("gate", output.action_gate),
+                ("serotonin_level", float(serotonin_level)),
+            ]
+        )
         event = OrderedDict(
             [
                 ("timestamp_utc", now.isoformat() + "Z"),
                 ("schema_version", "1.0"),
                 ("active_profile", self._active_profile),
-                ("mode", output.mode),
-                ("serotonin_level", float(serotonin_level)),
-                ("stress", float(observation.get("stress", 0.0))),
-                ("risk_budget", float(output.risk_budget)),
-                ("gate", output.action_gate),
+                ("inputs", inputs_snapshot),
+                ("outputs", outputs_snapshot),
                 ("reason_codes", list(output.reason_codes)),
+                ("invariants_checked", invariants_checked),
                 ("update_latency_us", int(update_latency_us)),
             ]
         )
@@ -982,7 +1028,7 @@ class SerotoninController:
         if not ok:
             output = self._fail_safe_output(reason or "INVALID_INPUT")
             self._last_decision = output
-            self._record_event(output, observation, self.serotonin_level, 0)
+            self._record_event(output, observation, self.serotonin_level, 0, {})
             return output
 
         stress = float(observation["stress"])
@@ -1006,7 +1052,7 @@ class SerotoninController:
         except Exception:  # pragma: no cover - defensive fallback
             output = self._fail_safe_output("NUMERIC_UNSTABLE")
             self._last_decision = output
-            self._record_event(output, observation, self.serotonin_level, 0)
+            self._record_event(output, observation, self.serotonin_level, 0, {})
             return output
         hold = bool(
             hold
@@ -1016,9 +1062,9 @@ class SerotoninController:
         veto = bool(veto or hold)
 
         update_latency_us = int((perf_counter_ns() - start_ns) / 1000)
-        risk_budget = self._derive_risk_budget(serotonin_level, stress)
-        inv_ok, inv_reasons = self._safety_monitor.check_invariants(
-            serotonin_level, risk_budget, bool(hold), stress
+        risk_budget, clamped_budget = self._derive_risk_budget(serotonin_level, stress)
+        inv_ok, inv_reasons, invariant_flags = self._safety_monitor.check_invariants(
+            serotonin_level, risk_budget, bool(hold), stress, clamped_budget=clamped_budget
         )
         reasons: list[str] = []
         if stress > self.config["cooldown_threshold"]:
@@ -1027,11 +1073,15 @@ class SerotoninController:
             reasons.append("DRAWDOWN_SPIKE")
         if novelty > 1.5:
             reasons.append("UNCERTAINTY_HIGH")
+        if clamped_budget:
+            reasons.append("RISK_BUDGET_CLAMPED")
         reasons.extend(inv_reasons)
 
         if not inv_ok:
             output = self._fail_safe_output(inv_reasons[0] if inv_reasons else "INVARIANT_BROKEN")
-            self._record_event(output, observation, serotonin_level, update_latency_us)
+            self._record_event(
+                output, observation, serotonin_level, update_latency_us, invariant_flags
+            )
         else:
             action_gate = "HOLD_OR_REDUCE_ONLY" if hold or veto else "ALLOW"
             mode = "DEFENSIVE" if hold or veto else "NORMAL"
@@ -1051,7 +1101,9 @@ class SerotoninController:
                 reason_codes=filtered_reasons,
                 metrics_snapshot=metrics,
             )
-            self._record_event(output, observation, serotonin_level, update_latency_us)
+            self._record_event(
+                output, observation, serotonin_level, update_latency_us, invariant_flags
+            )
 
         self._last_decision = output
         return output
@@ -1060,10 +1112,15 @@ class SerotoninController:
         if self._last_event is None:
             return "No decisions have been made."
         event = self._last_event
+        outputs = event.get("outputs", {})
+        mode = outputs.get("mode", event.get("mode", "UNKNOWN"))
+        risk_budget = float(outputs.get("risk_budget", event.get("risk_budget", 0.0)))
+        gate = outputs.get("gate", event.get("gate", "UNKNOWN"))
+        reasons = event.get("reason_codes", [])
         return (
-            f"[{event['timestamp_utc']}] mode={event['mode']} "
-            f"risk_budget={event['risk_budget']:.3f} "
-            f"gate={event['gate']} reasons={','.join(event['reason_codes'])}"
+            f"[{event['timestamp_utc']}] mode={mode} "
+            f"risk_budget={risk_budget:.3f} "
+            f"gate={gate} reasons={','.join(reasons)}"
         )
 
     def get_state(self) -> Mapping[str, float | bool]:
