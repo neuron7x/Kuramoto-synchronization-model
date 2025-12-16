@@ -75,7 +75,8 @@ def resolve_decisions(
         else:
             effective_decisions.append(d)
 
-    # Lower IntEnum value = higher priority
+    # Lower IntEnum value = higher priority (BLOCK=1 wins over ALLOW=5).
+    # min() returns the decision with the highest priority.
     return min(effective_decisions)
 
 

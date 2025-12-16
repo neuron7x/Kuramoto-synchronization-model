@@ -190,6 +190,8 @@ def compute_input_hash(text: str) -> str:
     normalized = text.lower().strip()
     normalized = " ".join(normalized.split())  # Normalize whitespace
     hash_bytes = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+    # Truncate to 16 hex chars (64 bits) for brevity in traces.
+    # This is sufficient for deduplication/correlation; full hash used rarely.
     return f"sha256:{hash_bytes[:16]}"
 
 

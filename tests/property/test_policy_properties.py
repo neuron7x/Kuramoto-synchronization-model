@@ -27,9 +27,13 @@ try:
 except ImportError:
     HAS_HYPOTHESIS = False
     # Define no-op decorators for when hypothesis is not available
-    given = lambda *args, **kwargs: lambda f: pytest.mark.skip(
-        reason="hypothesis not installed"
-    )(f)
+    # These preserve basic function metadata by returning the skipped function
+    def _skip_decorator(*args, **kwargs):
+        def decorator(f):
+            return pytest.mark.skip(reason="hypothesis not installed")(f)
+        return decorator
+
+    given = _skip_decorator
     settings = lambda *args, **kwargs: lambda f: f
     st = None
 
