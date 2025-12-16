@@ -543,7 +543,8 @@ def scrub_report(report: dict[str, Any]) -> dict[str, Any]:
     secret_patterns = [
         r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",  # Email
         r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",  # Phone
-        r"(sk|pk|api|key|token|secret|password)[-_]?[a-zA-Z0-9]{16,}",  # API keys
+        r"(sk|pk|api)[-_][a-zA-Z0-9_]{8,}",  # API keys with prefix (e.g., sk_live_...)
+        r"(key|token|secret|password)[-_]?[a-zA-Z0-9]{12,}",  # Other secrets
         r"Bearer\s+[A-Za-z0-9\-._~+/]+=*",  # Bearer tokens
     ]
 
