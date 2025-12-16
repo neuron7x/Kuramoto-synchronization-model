@@ -39,45 +39,51 @@ BehavioralProfile = profiler_module.BehavioralProfile
 pytestmark = pytest.mark.L1
 
 
+V24_CONFIG = {
+    "alpha": 0.42,
+    "beta": 0.28,
+    "gamma": 0.32,
+    "delta_rho": 0.18,
+    "k": 1.0,
+    "theta": 0.5,
+    "delta": 0.8,
+    "za_bias": -0.33,
+    "decay_rate": 0.05,
+    "cooldown_threshold": 0.7,
+    "desens_threshold_ticks": 100,
+    "desens_rate": 0.01,
+    "target_dd": -0.05,
+    "target_sharpe": 1.0,
+    "beta_temper": 0.12,
+    "max_desens_counter": 1000,
+    "phase_threshold": 0.4,
+    "burst_factor": 2.5,
+    "mod_t_max": 4.0,
+    "mod_t_half": 24.0,
+    "mod_k": 0.7,
+    "tick_hours": 1.0,
+    "phase_kappa": 0.08,
+    "desens_gain": 0.12,
+    "gate_veto": 0.9,
+    "phasic_veto": 1.0,
+    "temperature_floor_min": 0.05,
+    "temperature_floor_max": 0.4,
+}
+
+ACTIVE_PROFILE_V24 = "v24"
+
+WRAPPED_V24_CONFIG = {"active_profile": ACTIVE_PROFILE_V24, "serotonin_v24": V24_CONFIG}
+
+
 @pytest.fixture
 def controller(tmp_path):
     """Create a controller for testing."""
     import yaml
 
-    config = {
-        "alpha": 0.42,
-        "beta": 0.28,
-        "gamma": 0.32,
-        "delta_rho": 0.18,
-        "k": 1.0,
-        "theta": 0.5,
-        "delta": 0.8,
-        "za_bias": -0.33,
-        "decay_rate": 0.05,
-        "cooldown_threshold": 0.7,
-        "desens_threshold_ticks": 100,
-        "desens_rate": 0.01,
-        "target_dd": -0.05,
-        "target_sharpe": 1.0,
-        "beta_temper": 0.12,
-        "max_desens_counter": 1000,
-        "phase_threshold": 0.4,
-        "burst_factor": 2.5,
-        "mod_t_max": 4.0,
-        "mod_t_half": 24.0,
-        "mod_k": 0.7,
-        "tick_hours": 1.0,
-        "phase_kappa": 0.08,
-        "desens_gain": 0.12,
-        "gate_veto": 0.9,
-        "phasic_veto": 1.0,
-        "temperature_floor_min": 0.05,
-        "temperature_floor_max": 0.4,
-    }
-
+    config = WRAPPED_V24_CONFIG
     cfg_path = tmp_path / "serotonin.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config, f)
+        yaml.safe_dump(config, f, sort_keys=True)
 
     return SerotoninController(str(cfg_path))
 
@@ -94,6 +100,26 @@ def test_profiler_initialization(profiler):
     assert profiler._history == []
     assert profiler._veto_events == []
     assert profiler._cooldown_events == []
+
+
+def test_serotonin_config_schema_validation(tmp_path):
+    """Ensure wrapped serotonin config schema is enforced."""
+    import yaml
+
+    cfg_path = tmp_path / "serotonin_valid.yaml"
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(WRAPPED_V24_CONFIG, f, sort_keys=True)
+
+    controller = SerotoninController(str(cfg_path))
+    assert controller._active_profile == "v24"
+
+    bad_cfg = {**WRAPPED_V24_CONFIG, "invalid_root_key": 1}
+    bad_path = tmp_path / "serotonin_invalid.yaml"
+    with open(bad_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(bad_cfg, f, sort_keys=True)
+
+    with pytest.raises(ValueError, match="Unknown root keys"):
+        SerotoninController(str(bad_path))
 
 
 def test_profiler_reset_history(profiler):
