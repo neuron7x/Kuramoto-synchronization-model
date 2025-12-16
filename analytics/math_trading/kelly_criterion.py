@@ -4,6 +4,16 @@
 This module implements the Kelly Criterion for optimal position sizing,
 extended to handle multiple correlated assets and risk constraints.
 
+Mathematical contract
+=====================
+* Inputs are expressed in *decimal* returns (e.g., 0.05 = 5%).
+* Covariance matrices must be symmetric positive semi-definite (PSD) to
+  ensure ``f^T Σ f ≥ 0`` for any position vector ``f``. Singular matrices
+  are allowed but will be handled with a pseudo-inverse when needed.
+* Position limits are enforced through ``max_position`` (per-asset cap) and
+  ``max_leverage`` (L1 norm of positions); infeasible or non-finite inputs
+  are rejected before optimization.
+
 The Kelly Criterion maximizes expected log utility:
     max E[log(1 + r_p)]
 
@@ -32,8 +42,12 @@ from dataclasses import dataclass
 from typing import Mapping, Sequence
 
 import numpy as np
+import numpy.typing as npt
+import logging
 from scipy.optimize import Bounds, minimize
 
+
+logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True, slots=True)
 class KellyParams:
@@ -128,9 +142,12 @@ class KellyCriterion:
         optimal = max(0.0, min(optimal, params.max_fraction))
 
         # Expected log growth rate: g = p * log(1 + f*b) + q * log(1 - f)
+        eps = 1e-12
         if optimal > 0 and optimal < 1:
+            log_gain = np.log(np.clip(1 + optimal * b, eps, None))
+            log_loss = np.log(np.clip(1 - optimal, eps, None))
             growth_rate = (
-                p * np.log(1 + optimal * b) + q * np.log(1 - optimal)
+                p * log_gain + q * log_loss
             )
         else:
             growth_rate = 0.0
@@ -175,10 +192,18 @@ class MultiAssetKellyParams:
 
     def __post_init__(self) -> None:
         n = len(self.asset_names)
+        if not np.isfinite(self.max_position) or not np.isfinite(self.max_leverage):
+            raise ValueError("max_position and max_leverage must be finite")
         if self.expected_returns.shape != (n,):
             raise ValueError("expected_returns dimension mismatch")
         if self.covariance_matrix.shape != (n, n):
             raise ValueError("covariance_matrix dimension mismatch")
+        if not np.all(np.isfinite(self.expected_returns)):
+            raise ValueError("expected_returns must be finite")
+        if not np.all(np.isfinite(self.covariance_matrix)):
+            raise ValueError("covariance_matrix must be finite")
+        if not np.isfinite(self.risk_free_rate):
+            raise ValueError("risk_free_rate must be finite")
         if self.max_position <= 0:
             raise ValueError("max_position must be positive")
         if self.max_leverage <= 0:
@@ -252,6 +277,38 @@ class MultiAssetKelly:
         >>> result = kelly.optimize(params)
     """
 
+    _EIGEN_ATOL = 1e-12
+
+    @staticmethod
+    def _validate_covariance(matrix: npt.NDArray[np.float64]) -> None:
+        if not np.allclose(matrix, matrix.T, atol=MultiAssetKelly._EIGEN_ATOL):
+            raise ValueError("covariance_matrix must be symmetric")
+
+        eigenvalues = np.linalg.eigvalsh(matrix)
+        if np.any(eigenvalues < -MultiAssetKelly._EIGEN_ATOL):
+            raise ValueError("covariance_matrix must be positive semi-definite")
+
+    @staticmethod
+    def _solve_covariance(
+        covariance: npt.NDArray[np.float64],
+        expected_excess: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        MultiAssetKelly._validate_covariance(covariance)
+
+        condition_number = np.linalg.cond(covariance)
+        try:
+            if condition_number < 1e8:
+                return np.linalg.solve(covariance, expected_excess)
+        except np.linalg.LinAlgError:
+            condition_number = np.inf
+
+        logger.warning(
+            "Covariance matrix ill-conditioned (cond=%.2e); using pseudo-inverse",
+            condition_number,
+        )
+        pseudo_inverse = np.linalg.pinv(covariance)
+        return pseudo_inverse @ expected_excess
+
     def optimize(self, params: MultiAssetKellyParams) -> MultiAssetKellyResult:
         """Compute optimal multi-asset Kelly allocation.
 
@@ -266,13 +323,9 @@ class MultiAssetKelly:
         sigma = params.covariance_matrix
 
         # Compute unconstrained full Kelly
-        try:
-            sigma_inv = np.linalg.inv(sigma)
-            full_kelly = sigma_inv @ mu
-        except np.linalg.LinAlgError:
-            # Singular covariance - use pseudo-inverse
-            sigma_inv = np.linalg.pinv(sigma)
-            full_kelly = sigma_inv @ mu
+        full_kelly = self._solve_covariance(sigma, mu)
+        if not np.all(np.isfinite(full_kelly)):
+            raise ValueError("Computed Kelly solution contains non-finite values")
 
         # Store full Kelly positions
         full_kelly_dict = {
@@ -288,8 +341,10 @@ class MultiAssetKelly:
             port_return = f @ mu
             port_var = f @ sigma @ f
 
-            if port_var <= 0:
+            if port_var < -self._EIGEN_ATOL:
                 return 1e10
+
+            port_var = max(float(port_var), 0.0)
 
             # Log utility approximation: log(1 + r) ≈ r - r^2/2
             # E[log(1 + r_p)] ≈ E[r_p] - Var[r_p]/2
@@ -317,6 +372,9 @@ class MultiAssetKelly:
         if np.sum(np.abs(x0)) > params.max_leverage:
             x0 = x0 * params.max_leverage / np.sum(np.abs(x0))
 
+        if not np.all(np.isfinite(x0)):
+            raise ValueError("Initial guess contains non-finite values")
+
         result = minimize(
             neg_log_utility,
             x0,
@@ -329,9 +387,17 @@ class MultiAssetKelly:
 
         f_optimal = result.x
 
+        leverage = float(np.sum(np.abs(f_optimal)))
+        if leverage > params.max_leverage + 1e-9:
+            f_optimal = f_optimal * params.max_leverage / leverage
+            leverage = float(np.sum(np.abs(f_optimal)))
+
         # Compute metrics
         port_return = float(f_optimal @ mu) + params.risk_free_rate
         port_var = float(f_optimal @ sigma @ f_optimal)
+        if port_var < 0 and port_var > -self._EIGEN_ATOL:
+            port_var = 0.0
+        port_var = max(port_var, 0.0)
         port_std = np.sqrt(port_var) if port_var > 0 else 0.0
 
         sharpe = (
@@ -339,8 +405,6 @@ class MultiAssetKelly:
             if port_std > 0
             else 0.0
         )
-
-        leverage = float(np.sum(np.abs(f_optimal)))
 
         # Growth rate approximation
         if port_var > 0:
@@ -386,6 +450,9 @@ class MultiAssetKelly:
         """
         if lookback is not None:
             returns = returns[-lookback:]
+
+        if not np.all(np.isfinite(returns)):
+            raise ValueError("returns must be finite for Kelly computation")
 
         mu = np.mean(returns, axis=0)
         sigma = np.cov(returns, rowvar=False)
