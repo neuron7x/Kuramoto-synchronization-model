@@ -11,7 +11,7 @@
 [![License: TPLA](https://img.shields.io/badge/License-TPLA-0066CC?style=flat)](LICENSE)
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 
-**TradePulse** — production-ready платформа алгоритмічної торгівлі, яка поєднує передові геометричні індикатори ринку з enterprise-надійністю для кількісних дослідників, алготрейдерів та фінансових інституцій.
+**TradePulse** — production-ready платформа алгоритмічної торгівлі, що поєднує передові геометричні індикатори ринку з enterprise-рівнем надійності для кількісних дослідників, алготрейдерів та фінансових інституцій.
 
 [Quick Start](#-quick-start) • [Features](#-feature-highlights) • [Documentation](#-documentation) • [Contributing](#-contributing) • [Українською](СТАН_РОЗВИТКУ_ПРОЄКТУ.md)
 
@@ -416,10 +416,10 @@ mutmut run --use-coverage
 > 📊 **Верифіковані метрики**: Усі показники покриття задокументовані з доказами в [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md).
 
 **Target Goal**: 98% coverage gate for all PRs (currently ~71%, actively expanding)  
-**Current Coverage** (вимірено 2025-12-10):
-- backtest: 73.85% ✅ (engine.py 95%, performance.py 96%)  
-- execution: 43.61% 🔄 (paper_trading.py 98%, connectors.py 68%)  
-- core: 32.05% 🔄 (orchestrator 96%, engine/core.py 95%)
+**Current Coverage** (see [METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for verification dates):
+- backtest: ~74% ✅
+- execution: ~44% 🔄
+- core: ~32% 🔄
 
 **Module Goals**: backtest (100%), execution (100%), core modules (90-95%)
 

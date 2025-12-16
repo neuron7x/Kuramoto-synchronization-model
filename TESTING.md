@@ -60,14 +60,14 @@ scripts/
 
 ## Coverage Requirements
 
-> 📊 **Верифіковані метрики**: Актуальний статус покриття див. в [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) з командами вимірювання.
+> 📊 **Верифіковані метрики**: Актуальний статус покриття та дати вимірювання див. в [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md).
 
 **CI Gate**: 98% coverage enforced on all PRs (via `--cov-fail-under=98` in `.github/workflows/tests.yml`)
 
-**Current Coverage** (verified 2025-12-12):
-- `backtest/`: 73.85% ✅ (engine.py 95%, performance.py 96%, dopamine_td.py 92%)
-- `execution/`: 43.61% 🔄 (paper_trading.py 98%, connectors.py 68%, order_lifecycle.py 74%)
-- `core/`: 32.05% 🔄 (orchestrator 96%, engine/core.py 95%, maintenance/backups 95%)
+**Current Coverage** (see [METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for exact values and verification commands):
+- `backtest/`: ~74% ✅
+- `execution/`: ~44% 🔄
+- `core/`: ~32% 🔄
 
 Module coverage goals (not enforced, verify with `make test-coverage`):
 - `backtest/`: 100% (goal)
