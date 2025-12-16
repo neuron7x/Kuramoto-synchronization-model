@@ -710,8 +710,11 @@ class AdvancedRiskManager:
             prediction_error = abs(observed_volatility - expected)
 
             # Precision (inverse variance of recent observations)
+            # Use ddof=1 for unbiased sample variance estimation
             if len(self._volatility_history) >= 3:
-                variance = float(np.var(list(self._volatility_history)))
+                variance = float(np.var(list(self._volatility_history), ddof=1))
+                # Guard against negative variance from numerical instability
+                variance = max(0.0, variance)
                 precision = (
                     self._config.fe_precision_base / (variance + 1e-6)
                 )
@@ -751,9 +754,12 @@ class AdvancedRiskManager:
                 descent_rate = 0.0
 
             # Compute stability metric (Lyapunov-like)
+            # Use ddof=1 for unbiased sample variance estimation
             if len(self._fe_history) >= 5:
                 recent_fe = list(self._fe_history)[-5:]
-                fe_variance = float(np.var(recent_fe))
+                fe_variance = float(np.var(recent_fe, ddof=1))
+                # Guard against negative variance from numerical instability
+                fe_variance = max(0.0, fe_variance)
                 stability = 1.0 / (1.0 + fe_variance)
             else:
                 stability = 1.0
@@ -812,10 +818,15 @@ class AdvancedRiskManager:
                             self._returns_history.append(float(r))
 
                 # Calculate volatility
+                # Use ddof=1 for unbiased sample standard deviation estimation
                 if volatility is not None:
                     current_vol = volatility
                 elif len(self._returns_history) >= 2:
-                    current_vol = float(np.std(list(self._returns_history)[-20:]))
+                    returns_sample = list(self._returns_history)[-20:]
+                    current_vol = float(np.std(returns_sample, ddof=1))
+                    # Guard against NaN from constant series (std=0 with ddof=1)
+                    if not np.isfinite(current_vol):
+                        current_vol = 0.0
                 else:
                     current_vol = 0.0
 
@@ -1131,11 +1142,16 @@ class AdvancedRiskManager:
             }
 
             # Volatility statistics
+            # Use ddof=1 for unbiased sample standard deviation estimation
             if self._volatility_history:
                 vol_list = list(self._volatility_history)
+                vol_std = float(np.std(vol_list, ddof=1)) if len(vol_list) > 1 else 0.0
+                # Guard against NaN from constant series
+                if not np.isfinite(vol_std):
+                    vol_std = 0.0
                 stats["volatility_stats"] = {
                     "mean": float(np.mean(vol_list)),
-                    "std": float(np.std(vol_list)) if len(vol_list) > 1 else 0.0,
+                    "std": vol_std,
                     "min": float(min(vol_list)),
                     "max": float(max(vol_list)),
                     "current": vol_list[-1] if vol_list else None,
@@ -1151,11 +1167,16 @@ class AdvancedRiskManager:
                 }
 
             # Free energy statistics
+            # Use ddof=1 for unbiased sample standard deviation estimation
             if self._fe_history:
                 fe_list = list(self._fe_history)
+                fe_std = float(np.std(fe_list, ddof=1)) if len(fe_list) > 1 else 0.0
+                # Guard against NaN from constant series
+                if not np.isfinite(fe_std):
+                    fe_std = 0.0
                 stats["free_energy_stats"] = {
                     "mean": float(np.mean(fe_list)),
-                    "std": float(np.std(fe_list)) if len(fe_list) > 1 else 0.0,
+                    "std": fe_std,
                     "min": float(min(fe_list)),
                     "max": float(max(fe_list)),
                     "current": fe_list[-1] if fe_list else None,
@@ -1181,11 +1202,29 @@ class AdvancedRiskManager:
     # =========================================================================
 
     def _assess_volatility_risk(self, volatility: float) -> float:
-        """Assess risk contribution from volatility."""
+        """Assess risk contribution from volatility.
+
+        Math Contract:
+            Input: volatility (float >= 0), uses self._baseline_volatility (float > 0)
+            Output: risk score in [0.0, 1.0]
+            Invariants:
+                - Result is always finite
+                - Result is monotonic with respect to volatility/baseline ratio
+            NaN/Inf Policy: Return conservative default (0.3) if inputs invalid
+            Tolerance: rtol=1e-7 for float64 computations
+        """
+        # Guard against non-finite volatility input
+        if not np.isfinite(volatility) or volatility < 0:
+            return 0.3  # Conservative default for invalid input
+
         if self._baseline_volatility is None or self._baseline_volatility <= 0:
             return 0.3  # Default moderate risk when no baseline
 
         vol_ratio = volatility / self._baseline_volatility
+
+        # Guard against non-finite ratio (shouldn't happen but defensive)
+        if not np.isfinite(vol_ratio):
+            return 0.3
 
         if vol_ratio >= self._config.volatility_critical_ratio:
             return 1.0
