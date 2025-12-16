@@ -75,22 +75,14 @@ class PipelineResult:
         cache_key: Deterministic cache key for replay.
         trace_id: Optional trace ID for debugging.
         reasons: List of reasons for the decision.
-        output_hash: SHA-256 hash of the output text.
     """
 
     output_text: str
     decision: str
     cache_key: str
+    output_hash: str
     trace_id: str | None = None
     reasons: list[str] = field(default_factory=list)
-    output_hash: str = ""
-
-    def __post_init__(self) -> None:
-        """Compute output hash if not provided."""
-        if not self.output_hash:
-            computed_hash = sha256_hex(self.output_text.encode("utf-8"))
-            # Use object.__setattr__ because dataclass is frozen
-            object.__setattr__(self, "output_hash", computed_hash)
 
 
 # Stage version constants
@@ -227,11 +219,15 @@ class LLMPipeline:
             decision = "ALLOW"
             reasons = ["passed_all_checks"]
 
+        # Compute output hash
+        output_hash = sha256_hex(response.text.encode("utf-8"))
+
         # Build result
         return PipelineResult(
             output_text=response.text,
             decision=decision,
             cache_key=cache_key,
+            output_hash=output_hash,
             trace_id=trace_id,
             reasons=reasons,
         )

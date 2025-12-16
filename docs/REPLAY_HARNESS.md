@@ -152,7 +152,7 @@ Add to your CI workflow:
 - name: Run Pipeline Replay
   run: |
     python scripts/eval/replay_pipeline.py
-  timeout-minutes: 1
+  timeout-minutes: 3
 ```
 
 The harness:
