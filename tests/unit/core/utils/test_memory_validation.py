@@ -7,7 +7,6 @@ covering invariant checking, checksum verification, and recovery modes.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import time
 import warnings
@@ -32,6 +31,9 @@ from core.utils.memory_validation import (
     validate_strategy_memory_state,
     verify_state_checksum,
 )
+
+# SHA-256 produces 256 bits = 32 bytes = 64 hex characters
+SHA256_HEX_LENGTH = 64
 
 
 # =============================================================================
@@ -208,7 +210,7 @@ class TestChecksum:
         """Numpy arrays should be checksummed correctly."""
         data = {"arr": np.array([1.0, 2.0, 3.0])}
         checksum = compute_state_checksum(data)
-        assert len(checksum) == 64  # SHA-256 produces 64 hex chars
+        assert len(checksum) == SHA256_HEX_LENGTH
 
     def test_checksum_excludes_specified_keys(self) -> None:
         """Excluded keys should not affect checksum."""

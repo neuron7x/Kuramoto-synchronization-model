@@ -14,7 +14,11 @@ import numpy as np
 import pytest
 
 from core.agent.memory import StrategyMemory, StrategyRecord, StrategySignature
-from core.utils.memory_validation import CorruptedStateError, InvariantError
+from core.utils.memory_validation import (
+    CorruptedStateError,
+    InvariantError,
+    compute_state_checksum,
+)
 
 
 # =============================================================================
@@ -375,6 +379,5 @@ class TestFuzz:
         # Mutate the score
         state["records"][0]["score"] = 0.99
 
-        from core.utils.memory_validation import compute_state_checksum
         new_checksum = compute_state_checksum(state)
         assert new_checksum != original_checksum
