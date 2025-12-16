@@ -329,7 +329,8 @@ class ReplayPipeline:
 
         # Check for injection patterns
         injection_patterns = [
-            r"ignore\s+(previous|all)\s+instructions?",
+            r"ignore\s+(all\s+)?(previous\s+)?instructions?",
+            r"ignore\s+previous\s+(all\s+)?instructions?",
             r"system\s*prompt",
             r"you\s+are\s+(now|a)",
             r"act\s+as\s+if",

@@ -6,15 +6,51 @@ and cache key computation for the MLSDM pipeline.
 
 from __future__ import annotations
 
+import importlib.util
+import sys
+from pathlib import Path
+
 import pytest
 
-from tradepulse.sdk.mlsdm.core.canonical import (
-    CacheKeyFields,
-    CanonicalRequest,
-    canonical_request,
-    compute_cache_key,
-    normalize_text,
-)
+
+def _load_module_directly(module_name: str, file_path: str):
+    """Load a module directly from file path without triggering package __init__.py."""
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+# Try to import normally first, fall back to direct load
+try:
+    from tradepulse.sdk.mlsdm.core.canonical import (
+        CacheKeyFields,
+        CanonicalRequest,
+        canonical_request,
+        compute_cache_key,
+        normalize_text,
+    )
+except ImportError:
+    # Load module directly to avoid SDK dependency chain
+    test_dir = Path(__file__).parent
+    canonical_path = (
+        test_dir.parent.parent.parent
+        / "src"
+        / "tradepulse"
+        / "sdk"
+        / "mlsdm"
+        / "core"
+        / "canonical.py"
+    )
+    canonical_mod = _load_module_directly("test_canonical_mod", str(canonical_path))
+    CacheKeyFields = canonical_mod.CacheKeyFields
+    CanonicalRequest = canonical_mod.CanonicalRequest
+    canonical_request = canonical_mod.canonical_request
+    compute_cache_key = canonical_mod.compute_cache_key
+    normalize_text = canonical_mod.normalize_text
 
 
 class TestNormalizeText:

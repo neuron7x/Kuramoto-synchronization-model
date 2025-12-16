@@ -7,13 +7,39 @@ for offline regression testing of the MLSDM pipeline.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import re
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
+
+def _load_module_directly(module_name: str, file_path: str):
+    """Load a module directly from file path without triggering package __init__.py."""
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+# Load the canonical and pipeline_result modules first (they're needed by replay_pipeline)
+test_dir = Path(__file__).parent
+scripts_dir = test_dir.parent.parent.parent / "scripts" / "eval"
+src_dir = test_dir.parent.parent.parent / "src" / "tradepulse" / "sdk" / "mlsdm" / "core"
+
+# Preload core modules
+if "mlsdm_core_canonical" not in sys.modules:
+    _load_module_directly("mlsdm_core_canonical", str(src_dir / "canonical.py"))
+if "mlsdm_core_pipeline_result" not in sys.modules:
+    _load_module_directly("mlsdm_core_pipeline_result", str(src_dir / "pipeline_result.py"))
+
+# Now import from scripts.eval.replay_pipeline
 from scripts.eval.replay_pipeline import (
     ReplayCase,
     ReplayPipeline,
