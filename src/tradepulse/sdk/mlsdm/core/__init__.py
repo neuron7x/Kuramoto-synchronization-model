@@ -2,4 +2,4 @@
 
 from __future__ import annotations
 
-__all__ = ["memory_manager"]
+__all__ = ["memory_manager", "canonical", "pipeline_result"]
