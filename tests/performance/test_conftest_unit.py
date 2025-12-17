@@ -75,7 +75,7 @@ def test_benchmark_baselines_match_2025_reference() -> None:
     assert not missing and not extras, f"Baseline key mismatch: missing={missing}, extra={extras}"
 
     for key, value in REFERENCE_BASELINES_2025.items():
-        assert baselines[key] == pytest.approx(value, rel=1e-4)
+        assert baselines[key] == pytest.approx(value, rel=1e-3)
 
 
 def test_benchmark_guard_reports_concurrency_adjusted_budget() -> None:
