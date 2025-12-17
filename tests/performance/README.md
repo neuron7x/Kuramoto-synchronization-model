@@ -18,6 +18,7 @@ This directory contains performance benchmarks and their baseline measurements.
 ### hierarchical.features[3x2048]
 
 - **Current baseline**: 0.0090s
+- **Reference**: Pinned to the 2025 benchmark etalon (see `tests/performance/test_conftest_unit.py`)
 
 ## Updating Baselines
 

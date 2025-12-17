@@ -58,6 +58,21 @@ def _clear_monitor() -> None:
     perf_conftest._monitor.records.clear()
 
 
+def test_benchmark_baselines_match_2025_reference() -> None:
+    """Ensure baseline medians stay anchored to the 2025 reference etalon."""
+
+    baselines = perf_conftest._load_baselines()
+    reference = {
+        "kuramoto.compute_phase[128k]": 0.009304,
+        "kuramoto.order[4096x12]": 0.00235,
+        "hierarchical.features[3x2048]": 0.0090,
+    }
+
+    assert set(baselines) == set(reference)
+    for key, value in reference.items():
+        assert baselines[key] == pytest.approx(value, rel=1e-4)
+
+
 def test_benchmark_guard_reports_concurrency_adjusted_budget() -> None:
     baseline_key = "dummy.benchmark"
     baselines = {baseline_key: 1.0}
