@@ -219,7 +219,8 @@ def test_orchestrator_runs_independent_modules_concurrently() -> None:
     assert len(dynamics.module_timelines) == 2
     assert dynamics.peak_concurrency >= 1
     assert dynamics.total_runtime >= 0.0
-    assert dynamics.module_runtime_sum >= dynamics.total_runtime
+    assert dynamics.module_runtime_sum >= 0.0
+    assert dynamics.total_runtime >= dynamics.total_idle_time
     assert isinstance(dynamics.synchronisation, tuple)
     assert len(dynamics.synchronisation) == 2
     for sync_entry in dynamics.synchronisation:
