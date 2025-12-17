@@ -161,6 +161,46 @@ def test_build_dynamics_reports_overlap_and_queue_metrics() -> None:
     assert dynamics.concurrency_profile[1] == pytest.approx(0.5)
 
 
+def test_build_dynamics_accounts_for_idle_time_before_first_start() -> None:
+    summary = ModuleRunSummary(
+        order=("alpha", "beta"),
+        context={},
+        results={
+            "alpha": ModuleRunResult(
+                name="alpha",
+                success=True,
+                duration=0.2,
+                output={"alpha": 1},
+                error=None,
+                ready_at=0.0,
+                scheduled_at=0.1,
+                started_at=0.2,
+                completed_at=0.4,
+            ),
+            "beta": ModuleRunResult(
+                name="beta",
+                success=True,
+                duration=0.4,
+                output={"beta": 2},
+                error=None,
+                ready_at=0.0,
+                scheduled_at=0.4,
+                started_at=0.5,
+                completed_at=0.9,
+            ),
+        },
+    )
+
+    dynamics = summary.build_dynamics()
+
+    assert dynamics.total_runtime == pytest.approx(0.9)
+    assert dynamics.total_idle_time == pytest.approx(0.3)
+    assert dynamics.concurrency_profile[0] == pytest.approx(0.3)
+    assert dynamics.average_concurrency == pytest.approx(2 / 3, rel=1e-3)
+    assert dynamics.utilisation == pytest.approx(2 / 3, rel=1e-3)
+    assert dynamics.total_queue_delay == pytest.approx(0.5)
+    assert dynamics.max_queue_delay == pytest.approx(0.4)
+
 class _StubRiskManager:
     def __init__(self) -> None:
         self.calls: list[dict[str, Any]] = []

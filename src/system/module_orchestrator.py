@@ -154,6 +154,9 @@ class ModuleRunSummary:
         timelines: list[ModuleTimelineEntry] = []
         synchronisation_entries: list[ModuleSynchronisationEntry] = []
         queue_delays: list[float] = []
+        ready_times: list[float] = []
+        start_times: list[float] = []
+        completion_times: list[float] = []
 
         for name in self.order:
             result = self.results.get(name)
@@ -173,6 +176,13 @@ class ModuleRunSummary:
                 queue_delay = result.queue_delay
                 launch_delay = result.launch_delay
                 total_wait = result.total_wait_time
+
+                if ready_at is not None:
+                    ready_times.append(ready_at)
+                if started_at is not None:
+                    start_times.append(started_at)
+                if completed_at is not None:
+                    completion_times.append(completed_at)
 
                 if result.started_at is not None and result.completed_at is not None:
                     timelines.append(
@@ -200,9 +210,14 @@ class ModuleRunSummary:
                 )
             )
 
+        run_start = 0.0
         if timelines:
             timelines.sort(key=lambda entry: entry.started_at)
-            total_runtime = timelines[-1].completed_at - timelines[0].started_at
+            run_start_candidates = ready_times or start_times
+            run_start = (
+                min(run_start_candidates) if run_start_candidates else timelines[0].started_at
+            )
+            total_runtime = max(timelines[-1].completed_at - run_start, 0.0)
             module_runtime_sum = sum(entry.duration for entry in timelines)
         else:
             total_runtime = 0.0
@@ -215,7 +230,7 @@ class ModuleRunSummary:
         events.sort(key=lambda item: (item[0], -item[1]))
 
         active = 0
-        previous_time: float | None = None
+        previous_time: float | None = run_start if events else None
         concurrency_durations: dict[int, float] = {}
         peak_concurrency = 0
 
