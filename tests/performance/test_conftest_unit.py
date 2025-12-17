@@ -63,10 +63,11 @@ REFERENCE_BASELINES_2025 = {
     "kuramoto.order[4096x12]": 0.00235,
     "hierarchical.features[3x2048]": 0.0090,
 }
+REFERENCE_BASELINE_TOLERANCE = 1e-3
 
 
 def test_benchmark_baselines_match_2025_reference() -> None:
-    """Ensure baseline medians stay anchored to the 2025 reference etalon."""
+    """Ensure baseline medians stay anchored to the 2025 reference standard."""
 
     baselines = perf_conftest._load_baselines()
 
@@ -75,7 +76,9 @@ def test_benchmark_baselines_match_2025_reference() -> None:
     assert not missing and not extras, f"Baseline key mismatch: missing={missing}, extra={extras}"
 
     for key, value in REFERENCE_BASELINES_2025.items():
-        assert baselines[key] == pytest.approx(value, rel=1e-3)
+        assert baselines[key] == pytest.approx(
+            value, rel=REFERENCE_BASELINE_TOLERANCE
+        )
 
 
 def test_benchmark_guard_reports_concurrency_adjusted_budget() -> None:
