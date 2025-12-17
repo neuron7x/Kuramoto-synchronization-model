@@ -119,7 +119,7 @@ jobs:
       - name: Build container image
         run: |
           set -euxo pipefail
-          docker build -t ${{ github.repository }}:${{ github.event.inputs.image_tag || github.sha }} .
+          docker build -t ${{ toLower(github.repository) }}:${{ github.event.inputs.image_tag || github.sha }} .
 
   check-environment-configuration:
     name: Check Environment Configuration

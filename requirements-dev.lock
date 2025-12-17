@@ -47,7 +47,7 @@ exchange-calendars==4.11.1
 execnet==2.1.1
 extra-streamlit-components==0.1.81
 fastapi==0.124.2
-filelock==3.20.0
+filelock==3.20.1
 flake8==7.1.1
 frozenlist==1.8.0
 fsspec==2025.12.0
