@@ -357,23 +357,94 @@ python -m interfaces.cli generate \
 
 ## 🌡️ TACL: Thermodynamic Autonomic Control Layer
 
-TACL is a self-regulating control system that manages the TradePulse topology as a thermodynamic system.
+**TACL is the governing brain of system stability**, not a feature. It manages the TradePulse topology as a thermodynamic system where autonomous changes must respect **Monotonic Free Energy Descent**: no self-degrading change without explicit human approval.
 
-### Key Features
+### Global Invariants
 
-- **Free Energy Measurement**: Tracks system latency, coherency, and resource costs
-- **Evolutionary Reconfiguration**: Uses GA/RL to optimize service connections
-- **Protocol Hot-Swap**: Dynamic switching between RDMA, CRDT, gRPC, shared memory
-- **Safety Guarantee**: Monotonic free energy descent — no change increases F without human override
+TACL enforces five non-negotiable invariants across all autonomous operations:
 
-### Technical Details
+| Invariant | Description | Failure Consequence |
+|-----------|-------------|---------------------|
+| **Safety** | No uncontrolled degradation; explicit human approval for non-monotonic moves | Automated rollback triggered |
+| **Auditability** | 7-year retention for decisions, config, model/policy versions, regime switches | Compliance violation, incident response blocked |
+| **Resource Governance** | Latency, coherency, and resource cost are first-class (Free Energy F) | SLO breach, capacity exhaustion |
+| **Reproducibility** | Deterministic replay; versioned configs; testable interfaces | Debug/audit impossible |
+| **Event-based Sparsity** | Compute is sparse and triggered; avoid always-on overhead | Resource waste, latency degradation |
 
-- **Classification**: TRL7 (internal assessment, post-staging design)
-- **Adaptation**: GA/RL with runtime monotonic gates
-- **Audit**: Decision logging designed for 7-year retention (configuration present, production validation pending)
-- **Crisis Handling**: Adaptive recovery with multiple severity modes
+### Core Mechanisms
+
+#### Free Energy Measurement
+
+Free Energy `F = U - T·S` where:
+- **U** (Internal Energy): Weighted penalties from latency, coherency, and resource metrics
+- **T** (Temperature): Control temperature (0.60) representing discount on available slack
+- **S** (Entropy): Stability term proportional to headroom relative to thresholds
+
+| Metric | Threshold | Weight | Unit |
+|--------|-----------|--------|------|
+| `latency_p95` | 85.0 | 1.6 | ms |
+| `latency_p99` | 120.0 | 1.9 | ms |
+| `coherency_drift` | 0.08 | 1.2 | ratio |
+| `cpu_burn` | 0.75 | 0.9 | ratio |
+| `mem_cost` | 6.5 | 0.8 | GiB |
+| `queue_depth` | 32.0 | 0.7 | messages |
+| `packet_loss` | 0.005 | 1.4 | ratio |
+
+**Energy Envelope**: Free energy ≤ 1.35 (12% safety margin from hot-path load tests)
+
+#### Safety Model: Monotonic Free Energy Descent
+
+```
+IF F(t+1) > F(t) + tolerance THEN
+  IF has_dual_approval(operations, safety) THEN
+    log_override_with_approvals()
+    proceed()
+  ELSE
+    trigger_automated_rollback()
+    engage_kill_switch_authority()
+  END
+END
+```
+
+- **Rest Potential**: 1.0 (stabilised baseline)
+- **Action Potential**: 1.35 (maximum tolerable stress before kill-switch)
+- **Monotonic Tolerance**: 5×10⁻³
+
+#### Protocol Hot-Swap
+
+Dynamic switching between communication protocols with admissibility guards:
+
+- **RDMA**: Low-latency, high-throughput (requires compatible hardware)
+- **CRDT**: Conflict-free replicated data types for eventual consistency
+- **gRPC**: Standard RPC with protobuf serialization
+- **Shared Memory**: Ultra-low latency for co-located services
+- **Gossip**: Epidemic protocol for distributed state synchronization
+
+**Rollback Policy**: Any hot-swap that increases F beyond tolerance triggers automatic reversion within 30s.
+
+### Technical Classification
+
+| Aspect | Status | Verification |
+|--------|--------|--------------|
+| **TRL** | 7 (internal assessment, post-staging) | Staging load tests |
+| **Adaptation** | GA/RL with runtime monotonic gates | CI safety gates |
+| **Audit Trail** | 7-year retention (config present, production validation pending) | `.ci_artifacts/energy_validation.json` |
+| **Crisis Modes** | Adaptive recovery with severity escalation | `runtime/thermo_controller.py` |
+
+### Authorization for Exceptions
+
+Temporary exceptions to the energy budget require **dual approval**:
+
+1. **Thermodynamic Duty Officer** (rotating weekly)
+2. **Platform Staff Engineer** (responsible for affected cluster)
+
+Both approvals must be recorded in the release ticket with telemetry snapshots.
 
 📖 **TACL Documentation**: [docs/TACL.md](docs/TACL.md), [`tacl/`](tacl/), [`runtime/thermo_controller.py`](runtime/thermo_controller.py)
+
+📊 **Metrics Formalization**: [docs/thermodynamics/METRICS_FORMALIZATION.md](docs/thermodynamics/METRICS_FORMALIZATION.md)
+
+⚙️ **Operational Runbook**: [docs/thermodynamics/OPERATIONAL_RUNBOOK.md](docs/thermodynamics/OPERATIONAL_RUNBOOK.md)
 
 ---
 
