@@ -45,9 +45,21 @@ jobs:
     - name: Run custom secret scanner
       run: |
         python -c "
-        from core.utils.security import check_for_hardcoded_secrets
+        import importlib.util
+        import os
         import sys
-        if check_for_hardcoded_secrets('.'):
+
+        # Load the security module directly without triggering package imports
+        security_path = 'core/utils/security.py'
+        if not os.path.exists(security_path):
+            print(f'ERROR: Security scanner module not found at {security_path}')
+            sys.exit(1)
+
+        spec = importlib.util.spec_from_file_location('security', security_path)
+        security = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(security)
+
+        if security.check_for_hardcoded_secrets('.'):
             sys.exit(1)
         "
 
