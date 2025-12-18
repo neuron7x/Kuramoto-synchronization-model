@@ -42,7 +42,8 @@ IGNORE_PATTERNS = [
     r"\.env\.example$",
     r"\.md$",  # Documentation
     r"\.rst$",  # Documentation
-    r"(^|[\\/])test_",  # Test files often have mock secrets
+    r"(^|[\\/])test_[^/\\]*\.py$",  # Test files often have mock secrets
+    r"[\\/]tests[\\/]",  # Tests directory
     r"conftest\.py$",
     r"(^|/)configs/tls/dev/",  # Dev TLS certificates for local testing
     r"(^|/)audit/artifacts/",  # Security scan artifacts/reports
