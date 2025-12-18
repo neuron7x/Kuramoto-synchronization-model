@@ -113,7 +113,7 @@ msgpack==1.1.2
 mutmut==3.3.1
 mypy==1.18.2
 nh3==0.3.1
-nvidia-ml-py==13.580.82
+nvidia-ml-py==13.590.44
 packageurl-python==0.17.5
 patchelf==0.17.2.4
 pathspec==0.12.1
