@@ -160,8 +160,6 @@ include = [
     "interfaces.*",
     "libs",
     "libs.*",
-    "src",
-    "src.*",
     "tradepulse",
     "tradepulse.*",
     "tradepulse_agent",
@@ -177,7 +175,11 @@ include = [
     "tools",
     "tools.*",
 ]
-exclude = ["tests", "tests.*", "docs", "docs.*"]
+# Note: 'src' is excluded from installation packages.
+# The 'src/' directory is a source layout container for internal modules,
+# NOT a runtime importable package. Use canonical imports like 'tradepulse.*'.
+# See docs/architecture/packaging.md for details.
+exclude = ["tests", "tests.*", "docs", "docs.*", "src", "src.*"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
