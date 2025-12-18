@@ -231,6 +231,39 @@ class TestSerotoninConfigContract:
         assert "alpha" in controller.config
         assert "cooldown_threshold" in controller.config
 
+    def test_legacy_max_desens_counter_bounded(self, tmp_path):
+        """Test that legacy config conversion bounds max_desens_counter."""
+        config = {
+            "active_profile": "legacy",
+            "serotonin_legacy": {
+                "tonic_beta": 0.35,
+                "phasic_beta": 0.55,
+                "stress_gain": 1.0,
+                "drawdown_gain": 1.2,
+                "novelty_gain": 0.6,
+                "stress_threshold": 0.7,
+                "release_threshold": 0.4,
+                "hysteresis": 0.1,
+                "cooldown_ticks": 3,
+                "chronic_window": 6,
+                "desensitization_rate": 0.001,  # Very small rate
+                "desensitization_decay": 0.05,
+                "max_desensitization": 0.99,  # Near max
+                "floor_min": 0.1,
+                "floor_max": 0.6,
+                "floor_gain": 0.8,
+                "cooldown_extension": 2,
+            },
+        }
+        config_path = tmp_path / "serotonin.yaml"
+        config_path.write_text(yaml.safe_dump(config))
+
+        controller = SerotoninController(str(config_path))
+        # Without bounds, this would be 990/0.01 = 99000
+        # With bounds, it should be capped at 10000
+        assert controller.config["max_desens_counter"] <= 10000
+        assert controller.config["max_desens_counter"] >= 1
+
     def test_config_file_not_found(self, tmp_path):
         """Test error handling for missing config file."""
         with pytest.raises(FileNotFoundError):

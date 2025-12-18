@@ -222,12 +222,20 @@ class SerotoninConfigEnvelope(BaseModel):
                 raise ValueError(
                     "active_profile is 'legacy' but serotonin_legacy section is missing"
                 )
-            # Convert legacy config to v24 format for runtime compatibility
-            logging.getLogger(__name__).warning(
-                "Using deprecated 'legacy' serotonin profile. "
-                "Migrate to 'v24' profile for improved functionality."
-            )
+            # Log deprecation warning only once per class (module-level dedup)
+            if not getattr(SerotoninConfigEnvelope, "_legacy_warned", False):
+                logging.getLogger(__name__).warning(
+                    "Using deprecated 'legacy' serotonin profile. "
+                    "Migrate to 'v24' profile for improved functionality."
+                )
+                SerotoninConfigEnvelope._legacy_warned = True
             # Map legacy fields to v24 equivalents
+            # Compute max_desens_counter with bounds to prevent overflow
+            raw_max_desens = (
+                self.serotonin_legacy.max_desensitization
+                / max(self.serotonin_legacy.desensitization_rate, 0.01)
+            )
+            bounded_max_desens = min(max(int(raw_max_desens), 1), 10000)
             v24_config = SerotoninConfig(
                 alpha=self.serotonin_legacy.stress_gain * 0.5,
                 beta=self.serotonin_legacy.tonic_beta,
@@ -250,10 +258,7 @@ class SerotoninConfigEnvelope(BaseModel):
                 mod_t_max=10.0,
                 mod_t_half=5.0,
                 mod_k=0.5,
-                max_desens_counter=int(
-                    self.serotonin_legacy.max_desensitization
-                    / max(self.serotonin_legacy.desensitization_rate, 0.01)
-                ),
+                max_desens_counter=bounded_max_desens,
                 desens_gain=0.8,
                 gate_veto=0.9,
                 phasic_veto=1.0,
