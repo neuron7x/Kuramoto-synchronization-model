@@ -21,10 +21,10 @@ jobs:
     env:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
 
@@ -95,7 +95,7 @@ jobs:
 
       - name: Upload smoke artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: smoke-e2e-artifacts
           path: |
@@ -131,7 +131,7 @@ jobs:
 
       - name: Notify Slack on failure
         if: failure() && steps.alert-config.outputs.slack == 'true'
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@fcfb566f8b0aab22203f066d80ca1d7e4b5d05b3 # v1.27.0
         with:
           payload: |
               {
@@ -152,7 +152,7 @@ jobs:
 
       - name: Send failure email alert
         if: failure() && steps.alert-config.outputs.email == 'true'
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@2cea9617b09d79a095af21254fbcb7ae95903dde # v3
         with:
           server_address: ${{ secrets.SMOKE_ALERT_EMAIL_SERVER }}
           server_port: ${{ secrets.SMOKE_ALERT_EMAIL_PORT }}

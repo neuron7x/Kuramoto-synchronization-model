@@ -53,13 +53,13 @@ jobs:
       TF_IN_AUTOMATION: "true"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Prepare Terraform plugin cache directory
         run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       - name: Cache Terraform providers
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/terraform/eks/**/*.tf') }}
@@ -67,7 +67,7 @@ jobs:
             ${{ runner.os }}-terraform-
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: 1.6.6
 
@@ -83,7 +83,7 @@ jobs:
         run: terraform -chdir=infra/terraform/eks validate -no-color
 
       - name: Install kustomize
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
         with:
           kustomize-version: '5.4.3'
 
@@ -104,9 +104,9 @@ jobs:
       - validate-infrastructure
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -166,13 +166,13 @@ jobs:
       AWS_STAGING_CLUSTER_NAME: ${{ secrets.AWS_STAGING_CLUSTER_NAME }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Configure AWS credentials
         id: configure_aws
         if: env.AWS_STAGING_ROLE_ARN != ''
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ env.AWS_STAGING_ROLE_ARN }}
           role-session-name: GitHubActions-Deploy-Staging-${{ github.run_id }}
@@ -201,13 +201,13 @@ jobs:
 
       - name: Install kubectl
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:
           version: v1.29.2
 
       - name: Install kustomize
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
         with:
           kustomize-version: '5.4.3'
 
@@ -378,22 +378,22 @@ jobs:
       AWS_PRODUCTION_CLUSTER_NAME: ${{ secrets.AWS_PRODUCTION_CLUSTER_NAME }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ env.AWS_PRODUCTION_ROLE_ARN }}
           role-session-name: GitHubActions-Deploy-Production-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:
           version: v1.29.2
 
       - name: Install kustomize
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
         with:
           kustomize-version: '5.4.3'
 
@@ -609,14 +609,14 @@ jobs:
           esac
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ steps.select_env.outputs.role }}
           role-session-name: GitHubActions-Rollback-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:
           version: v1.29.2
 
@@ -640,13 +640,13 @@ jobs:
 
       - name: Checkout repository at target revision
         if: steps.rollback_strategy.outputs.mode == 'redeploy'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.inputs.target_revision }}
 
       - name: Install kustomize
         if: steps.rollback_strategy.outputs.mode == 'redeploy'
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
         with:
           kustomize-version: '5.4.3'
 

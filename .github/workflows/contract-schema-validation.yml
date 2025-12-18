@@ -28,12 +28,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -151,7 +151,7 @@ jobs:
 
       - name: Post contract test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && steps.contract_summary.outputs.summary != '' }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.contract_summary.outputs.summary }}
@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload contract test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: contract-test-results
           path: |

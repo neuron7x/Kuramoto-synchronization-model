@@ -51,24 +51,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v3
 
       - name: Cache uv packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ env.UV_CACHE_DIR }}
           key: uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'pyproject.toml') }}
 
       - name: Cache pre-commit environments
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/pre-commit
           key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -123,18 +123,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality-gate
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v3
 
       - name: Cache uv packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ env.UV_CACHE_DIR }}
           key: uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'pyproject.toml') }}
@@ -159,7 +159,7 @@ jobs:
             --cov-report=xml --cov-report=term-missing --cov-branch
 
       - name: Upload unit test reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: unit-tests
           path: |
@@ -173,18 +173,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: unit-tests
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v3
 
       - name: Cache uv packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ env.UV_CACHE_DIR }}
           key: uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'pyproject.toml') }}
@@ -216,7 +216,7 @@ jobs:
             --html=reports/property-security-report.html --self-contained-html
 
       - name: Upload integration artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: integration-tests
           path: |
@@ -230,17 +230,17 @@ jobs:
     needs: integration-tests
     if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Run k6 load test
-        uses: grafana/k6-action@v0.2.0
+        uses: grafana/k6-action@55845c6c2e400af4356c84e5b514aeabb1bfdbd4 # v0.2.0
         with:
           filename: deploy/loadtests/hpa-k6.js
           flags: --vus 50 --duration 5m
 
       - name: Upload k6 summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: k6-summary
           path: ./k6-summary.json
@@ -259,18 +259,18 @@ jobs:
       image_ref: ${{ steps.image-metadata.outputs.image_ref }}
       image_digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           registry: ${{ env.IMAGE_REGISTRY }}
           username: ${{ github.actor }}
@@ -278,7 +278,7 @@ jobs:
 
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -287,7 +287,7 @@ jobs:
 
       - name: Build and push image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d # v5
         with:
           context: .
           push: true
@@ -303,7 +303,7 @@ jobs:
           echo "image_ref=$image_ref" >>"$GITHUB_OUTPUT"
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.5.0
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.5.0
 
       - name: Sign container image (keyless)
         env:
@@ -318,7 +318,7 @@ jobs:
     if: needs.build-container.result == 'success'
     steps:
       - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.20.0
         with:
           image-ref: ${{ needs.build-container.outputs.image_ref }}
           format: 'table'
@@ -328,7 +328,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Generate Trivy SARIF report
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.20.0
         with:
           image-ref: ${{ needs.build-container.outputs.image_ref }}
           format: 'sarif'
@@ -337,7 +337,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: trivy-report
           path: trivy-results.sarif
@@ -353,7 +353,7 @@ jobs:
       environment: ${{ steps.resolve-env.outputs.environment }}
       plan_path: ${{ steps.plan.outputs.plan_path }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Resolve target environment
         id: resolve-env
@@ -366,7 +366,7 @@ jobs:
           echo "environment=$env_name" >>"$GITHUB_OUTPUT"
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: 1.6.6
 
@@ -391,7 +391,7 @@ jobs:
           echo "plan_path=infra/terraform/eks/tfplan-${env_name}.json" >>"$GITHUB_OUTPUT"
 
       - name: Upload terraform plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: terraform-plan
           path: infra/terraform/eks/tfplan-${{ steps.resolve-env.outputs.environment }}.json
@@ -461,7 +461,7 @@ jobs:
       cluster_name: ${{ steps.resolve.outputs.cluster_name }}
       role: ${{ steps.resolve.outputs.role }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Resolve deployment credentials
         id: resolve
@@ -474,7 +474,7 @@ jobs:
 
       - name: Configure AWS credentials
         if: steps.resolve.outputs.deploy_enabled == 'true'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ steps.resolve.outputs.role }}
           role-session-name: TradePulseCanary${{ github.run_id }}
@@ -490,13 +490,13 @@ jobs:
 
       - name: Install kubectl
         if: steps.resolve.outputs.deploy_enabled == 'true'
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:
           version: v1.29.2
 
       - name: Install kustomize
         if: steps.resolve.outputs.deploy_enabled == 'true'
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f # v2
         with:
           kustomize-version: '5.4.3'
 
@@ -608,11 +608,11 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       DEPLOY_ENVIRONMENT: ${{ needs.infrastructure-plan.outputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Configure AWS credentials
         if: ${{ needs.deploy-canary.outputs.role != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ needs.deploy-canary.outputs.role }}
           role-session-name: TradePulseRollout${{ github.run_id }}
@@ -633,7 +633,7 @@ jobs:
 
       - name: Install kubectl
         if: ${{ needs.deploy-canary.outputs.role != '' }}
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         with:
           version: v1.29.2
 
@@ -669,11 +669,11 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       DEPLOY_ENVIRONMENT: ${{ needs.infrastructure-plan.outputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Configure AWS credentials
         if: ${{ needs.deploy-canary.outputs.role != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ needs.deploy-canary.outputs.role }}
           role-session-name: TradePulseRollback${{ github.run_id }}
@@ -735,7 +735,7 @@ jobs:
           REPORT
 
       - name: Upload audit summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: audit-summary
           path: audit/summary.md
@@ -751,7 +751,7 @@ jobs:
     steps:
       - name: Send Slack notification
         if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@fcfb566f8b0aab22203f066d80ca1d7e4b5d05b3 # v1.27.0
         with:
           payload: |
             {

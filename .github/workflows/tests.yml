@@ -37,9 +37,9 @@ jobs:
       ui: ${{ steps.filter.outputs.ui }}
       web: ${{ steps.filter.outputs.web }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - id: filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
           filters: |
             ui:
@@ -61,10 +61,10 @@ jobs:
         python-version: ['3.11', '3.12']
     name: Lint & Type Check (Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -73,14 +73,14 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
       - name: Cache pre-commit environments
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/pre-commit
           key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
             lint-pre-commit-${{ runner.os }}-
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-lint
         with:
           path: .venv
@@ -144,9 +144,9 @@ jobs:
     needs: detect_ui_changes
     name: Web Frontend Lint & Type Check
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -177,13 +177,13 @@ jobs:
         python-version: ['3.11', '3.12']
     name: Fast Unit Tests (Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: go.mod
       - name: Cache Go modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.cache/go-build
@@ -199,7 +199,7 @@ jobs:
           go test ./... -short -covermode=atomic -coverprofile=reports/go/services.coverage.out
           
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -208,7 +208,7 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache
         with:
           path: .venv
@@ -292,7 +292,7 @@ jobs:
           PY
       - name: Upload localization coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: localization-coverage
           path: reports/localization/coverage.json
@@ -396,7 +396,7 @@ jobs:
       - name: Summarize fast test results
         if: always()
         id: test_summary
-        uses: test-summary/action@v2
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2
         with:
           paths: |
             reports/fast-unit-tests.xml
@@ -405,14 +405,14 @@ jobs:
       - name: Find existing test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && matrix.python-version == '3.11' && !github.event.pull_request.head.repo.fork }}
         id: find_test_comment
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: '### Test & Coverage Summary'
       - name: Post fast test summary comment
         if: ${{ always() && github.event_name == 'pull_request' && matrix.python-version == '3.11' && !github.event.pull_request.head.repo.fork }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find_test_comment.outputs.comment-id }}
@@ -437,7 +437,7 @@ jobs:
             [View workflow run →](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
       - name: Upload fast test JUnit reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: fast-junit-results-py${{ matrix.python-version }}
           path: |
@@ -448,7 +448,7 @@ jobs:
           
       - name: Upload fast test HTML reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: fast-html-reports-py${{ matrix.python-version }}
           path: |
@@ -457,7 +457,7 @@ jobs:
           retention-days: 7
       - name: Upload fast test metrics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: fast-test-metrics-py${{ matrix.python-version }}
           path: |
@@ -468,7 +468,7 @@ jobs:
           
       - name: Upload fast coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: fast-coverage-py${{ matrix.python-version }}
           path: coverage.xml
@@ -484,9 +484,9 @@ jobs:
         python-version: ['3.11']
     name: Security Scans (Fast - Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -495,7 +495,7 @@ jobs:
             requirements-dev.lock
             constraints/security.txt
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-security
         with:
           path: .venv
@@ -523,7 +523,7 @@ jobs:
         run: python -m tools.security.dast_probe --report reports/security/dast_report.json
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: security-reports
           path: |
@@ -549,10 +549,10 @@ jobs:
         python-version: ['3.11', '3.12']
     name: Full Test Suite with 98% Coverage (Python ${{ matrix.python-version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -562,7 +562,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-full
         with:
           path: .venv
@@ -641,7 +641,7 @@ jobs:
           
       - name: Upload full test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: full-test-suite-py${{ matrix.python-version }}
           path: |
@@ -655,7 +655,7 @@ jobs:
           
       - name: Upload coverage to Codecov
         if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
           files: ./coverage.xml
           flags: full-suite-py${{ matrix.python-version }}
@@ -669,10 +669,10 @@ jobs:
     timeout-minutes: 60
     name: Targeted Mutation Testing (Trading Engine)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -682,7 +682,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-mutation
         with:
           path: .venv
@@ -704,7 +704,7 @@ jobs:
         run: .venv/bin/python -m tools.mutation.trading_engine_suite --reports-dir reports/mutmut/trading_engine --threshold 0.9
       - name: Upload trading engine mutation artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: trading-engine-mutation
           path: reports/mutmut/trading_engine
@@ -712,7 +712,7 @@ jobs:
           retention-days: 30
       - name: Upload coverage to Codecov (OIDC)
         if: ${{ !github.event.pull_request.head.repo.fork && secrets.CODECOV_TOKEN == '' }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
           files: ./coverage.xml
           flags: py311
@@ -726,9 +726,9 @@ jobs:
     needs: detect_ui_changes
     if: needs.detect_ui_changes.outputs.ui == 'true'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -746,7 +746,7 @@ jobs:
         run: npx playwright test
       - name: Upload Playwright artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dashboard-playwright-artifacts
           path: |
@@ -764,10 +764,10 @@ jobs:
     env:
       TP_BENCHMARK_ARTIFACT_DIR: reports/benchmarks
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -777,7 +777,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-bench
         with:
           path: .venv
@@ -899,7 +899,7 @@ jobs:
           PY
       - name: Upload benchmark artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: benchmark-reports
           path: |
@@ -910,14 +910,14 @@ jobs:
       - name: Find existing benchmark comment
         if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork }}
         id: find_benchmark_comment
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: '### Performance Benchmark Summary'
       - name: Post benchmark summary comment
         if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && steps.benchmark_summary.outputs.comment_body != '' }}
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find_benchmark_comment.outputs.comment-id }}
@@ -932,10 +932,10 @@ jobs:
     timeout-minutes: 30
     name: Pytest Parallel Profiling (xdist)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -945,7 +945,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-xdist
         with:
           path: .venv
@@ -973,7 +973,7 @@ jobs:
           if [ -d prof ]; then cp -r prof/. reports/profiling/; fi
       - name: Upload profiling artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pytest-profiling
           path: reports/profiling
@@ -988,9 +988,9 @@ jobs:
     timeout-minutes: 20
     name: Playwright UI Smoke Tests
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -1011,7 +1011,7 @@ jobs:
         run: npx playwright test --config=playwright.config.ts --reporter=list --project="Desktop Chrome"
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: playwright-report
           path: apps/web/playwright-report
@@ -1027,10 +1027,10 @@ jobs:
     continue-on-error: true
     name: Quarantined Flaky Tests (Monitoring)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -1040,7 +1040,7 @@ jobs:
             constraints/security.txt
             
       - name: Cache Python virtual environment
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: venv-cache-flaky
         with:
           path: .venv
@@ -1080,7 +1080,7 @@ jobs:
           exit "$status"
       - name: Upload flaky test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: flaky-tests-artifacts
           path: |
