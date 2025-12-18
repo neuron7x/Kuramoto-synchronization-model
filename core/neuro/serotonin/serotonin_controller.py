@@ -158,13 +158,117 @@ class SerotoninConfig(BaseModel):
 SerotoninConfig.model_rebuild()
 
 
-class SerotoninConfigEnvelope(BaseModel):
-    """Strict root-level serotonin configuration wrapper."""
+class SerotoninLegacyConfig(BaseModel):
+    """Legacy serotonin configuration model (deprecated).
 
-    active_profile: Literal["v24"]
-    serotonin_v24: SerotoninConfig
+    This profile is maintained for backwards compatibility only.
+    New deployments should use the v24 profile.
+    """
+
+    tonic_beta: float = Field(..., ge=0.0, le=1.0, description="Tonic beta coefficient")
+    phasic_beta: float = Field(..., ge=0.0, le=1.0, description="Phasic beta coefficient")
+    stress_gain: float = Field(..., ge=0.0, description="Stress gain multiplier")
+    drawdown_gain: float = Field(..., ge=0.0, description="Drawdown gain multiplier")
+    novelty_gain: float = Field(..., ge=0.0, description="Novelty gain multiplier")
+    stress_threshold: float = Field(..., ge=0.0, le=1.0, description="Stress threshold")
+    release_threshold: float = Field(..., ge=0.0, le=1.0, description="Release threshold")
+    hysteresis: float = Field(..., ge=0.0, le=1.0, description="Hysteresis margin")
+    cooldown_ticks: int = Field(..., ge=0, description="Cooldown ticks")
+    chronic_window: int = Field(..., ge=1, description="Chronic window size")
+    desensitization_rate: float = Field(..., ge=0.0, le=1.0, description="Desensitization rate")
+    desensitization_decay: float = Field(..., ge=0.0, le=1.0, description="Desensitization decay")
+    max_desensitization: float = Field(..., ge=0.0, le=1.0, description="Max desensitization")
+    floor_min: float = Field(..., ge=0.0, le=1.0, description="Floor minimum")
+    floor_max: float = Field(..., ge=0.0, le=1.0, description="Floor maximum")
+    floor_gain: float = Field(..., ge=0.0, description="Floor gain")
+    cooldown_extension: int = Field(..., ge=0, description="Cooldown extension ticks")
 
     model_config = ConfigDict(extra="forbid")
+
+
+class SerotoninConfigEnvelope(BaseModel):
+    """Strict root-level serotonin configuration wrapper.
+
+    Supports multi-profile configurations:
+    - v24: Current production profile (recommended)
+    - legacy: Deprecated profile for backwards compatibility
+
+    The active_profile field selects which profile to use at runtime.
+    """
+
+    active_profile: Literal["v24", "legacy"]
+    serotonin_v24: Optional[SerotoninConfig] = None
+    serotonin_legacy: Optional[SerotoninLegacyConfig] = None
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_active_config(self) -> tuple[SerotoninConfig, Literal["v24", "legacy"]]:
+        """Return the active configuration based on active_profile.
+
+        Returns:
+            Tuple of (config, profile_name)
+
+        Raises:
+            ValueError: If the active profile's configuration is missing.
+        """
+        if self.active_profile == "v24":
+            if self.serotonin_v24 is None:
+                raise ValueError(
+                    "active_profile is 'v24' but serotonin_v24 section is missing"
+                )
+            return self.serotonin_v24, "v24"
+        elif self.active_profile == "legacy":
+            if self.serotonin_legacy is None:
+                raise ValueError(
+                    "active_profile is 'legacy' but serotonin_legacy section is missing"
+                )
+            # Log deprecation warning only once per class (module-level dedup)
+            if not getattr(SerotoninConfigEnvelope, "_legacy_warned", False):
+                logging.getLogger(__name__).warning(
+                    "Using deprecated 'legacy' serotonin profile. "
+                    "Migrate to 'v24' profile for improved functionality."
+                )
+                SerotoninConfigEnvelope._legacy_warned = True
+            # Map legacy fields to v24 equivalents
+            # Compute max_desens_counter with bounds to prevent overflow
+            raw_max_desens = (
+                self.serotonin_legacy.max_desensitization
+                / max(self.serotonin_legacy.desensitization_rate, 0.01)
+            )
+            bounded_max_desens = min(max(int(raw_max_desens), 1), 10000)
+            v24_config = SerotoninConfig(
+                alpha=self.serotonin_legacy.stress_gain * 0.5,
+                beta=self.serotonin_legacy.tonic_beta,
+                gamma=self.serotonin_legacy.drawdown_gain * 0.33,
+                delta_rho=self.serotonin_legacy.novelty_gain * 0.3,
+                k=1.5,
+                theta=0.0,
+                delta=0.5,
+                za_bias=0.0,
+                decay_rate=self.serotonin_legacy.desensitization_decay,
+                cooldown_threshold=self.serotonin_legacy.stress_threshold,
+                desens_threshold_ticks=self.serotonin_legacy.cooldown_ticks,
+                desens_rate=self.serotonin_legacy.desensitization_rate,
+                target_dd=0.15,
+                target_sharpe=1.5,
+                beta_temper=0.5,
+                phase_threshold=self.serotonin_legacy.release_threshold,
+                phase_kappa=2.0,
+                burst_factor=self.serotonin_legacy.phasic_beta,
+                mod_t_max=10.0,
+                mod_t_half=5.0,
+                mod_k=0.5,
+                max_desens_counter=bounded_max_desens,
+                desens_gain=0.8,
+                gate_veto=0.9,
+                phasic_veto=1.0,
+                temperature_floor_min=self.serotonin_legacy.floor_min,
+                temperature_floor_max=self.serotonin_legacy.floor_max,
+                hysteresis_margin=self.serotonin_legacy.hysteresis,
+            )
+            return v24_config, "legacy"
+        else:
+            raise ValueError(f"Unknown active_profile: {self.active_profile}")
 
 
 REASON_CODES_WHITELIST: tuple[str, ...] = (
@@ -336,19 +440,24 @@ class SerotoninController:
     """
 
     @staticmethod
-    def _load_config(path: Path) -> tuple[SerotoninConfig, Literal["v24"]]:
+    def _load_config(path: Path) -> tuple[SerotoninConfig, Literal["v24", "legacy"]]:
+        """Load and validate serotonin configuration from YAML.
+
+        Supports multi-profile configs with active_profile selector.
+        """
         raw_cfg = _load_single_yaml_document(path)
-        allowed_root = {"active_profile", "serotonin_v24"}
+        allowed_root = {"active_profile", "serotonin_v24", "serotonin_legacy"}
         unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
         if unknown_root:
             raise ValueError(
-                f"Unknown root keys in serotonin config: {unknown_root}. Allowed: {sorted(allowed_root)}"
+                f"Unknown root keys in serotonin config: {unknown_root}. "
+                f"Allowed: {sorted(allowed_root)}"
             )
         try:
             envelope = SerotoninConfigEnvelope.model_validate(raw_cfg)
         except ValidationError as exc:
             raise ValueError(f"Invalid serotonin root configuration: {exc}") from exc
-        return envelope.serotonin_v24, "v24"
+        return envelope.get_active_config()
 
     def __init__(
         self,
