@@ -128,7 +128,9 @@ class SerotoninController:
     def _load_and_validate_wrapped_config(
         self, raw_cfg: Mapping[str, Any]
     ) -> SerotoninConfig:
-        allowed_root = {"active_profile", "serotonin_legacy"}
+        # Allow serotonin_v24 key for config file compatibility with v24 controller,
+        # but only use serotonin_legacy section for this legacy controller.
+        allowed_root = {"active_profile", "serotonin_legacy", "serotonin_v24"}
         unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
         if unknown_root:
             raise ValueError(

@@ -17,23 +17,26 @@ from tradepulse.core.neuro.dopamine.ddm_adapter import DDMThresholds, ddm_thresh
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 SEROTONIN_TEST_CONFIG = {
-    "tonic_beta": 0.15,
-    "phasic_beta": 0.35,
-    "stress_gain": 1.0,
-    "drawdown_gain": 1.2,
-    "novelty_gain": 0.6,
-    "stress_threshold": 0.7,
-    "release_threshold": 0.4,
-    "hysteresis": 0.1,
-    "cooldown_ticks": 3,
-    "chronic_window": 6,
-    "desensitization_rate": 0.05,
-    "desensitization_decay": 0.05,
-    "max_desensitization": 0.6,
-    "floor_min": 0.1,
-    "floor_max": 0.6,
-    "floor_gain": 0.8,
-    "cooldown_extension": 2,
+    "active_profile": "legacy",
+    "serotonin_legacy": {
+        "tonic_beta": 0.15,
+        "phasic_beta": 0.35,
+        "stress_gain": 1.0,
+        "drawdown_gain": 1.2,
+        "novelty_gain": 0.6,
+        "stress_threshold": 0.7,
+        "release_threshold": 0.4,
+        "hysteresis": 0.1,
+        "cooldown_ticks": 3,
+        "chronic_window": 6,
+        "desensitization_rate": 0.05,
+        "desensitization_decay": 0.05,
+        "max_desensitization": 0.6,
+        "floor_min": 0.1,
+        "floor_max": 0.6,
+        "floor_gain": 0.8,
+        "cooldown_extension": 2,
+    },
 }
 
 
