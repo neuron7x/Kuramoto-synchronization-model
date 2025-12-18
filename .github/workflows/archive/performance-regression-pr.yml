@@ -1,20 +1,23 @@
-name: Performance Regression Detection
+# ARCHIVED: Workflow disabled and moved to archive/
+# DISABLED: This workflow is redundant with performance-regression.yml
+# The general performance-regression.yml workflow runs on ALL PRs (all branches)
+# and already covers the paths that this workflow was targeting.
+# Having both workflows causes duplicate CI runs and wasted resources.
+# Alternative: Use performance-regression.yml for all performance regression detection
+name: Performance Regression Detection - PR Specific (DISABLED)
 
 permissions:
   contents: read
   pull-requests: write
   issues: write
 
+# on: (triggers disabled)
 on:
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - 'core/engine/**'
-      - 'core/execution/**'
-      - 'backtest/engine/**'
-      - 'execution/order_manager.py'
-      - 'rust/**'
-  workflow_dispatch:
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - use performance-regression.yml instead'
+        required: false
 
 concurrency:
   group: perf-regression-${{ github.workflow }}-${{ github.event.pull_request.number }}
