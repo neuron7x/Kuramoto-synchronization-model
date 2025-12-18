@@ -124,7 +124,7 @@ pip-tools==7.5.1
 pkginfo==1.10.0
 platformdirs==4.5.0
 pluggy==1.6.0
-protobuf==5.29.5
+protobuf==6.33.2
 psutil==7.1.0
 py-serializable==2.1.0
 py-spy==0.4.1
