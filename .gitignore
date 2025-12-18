@@ -155,3 +155,8 @@ reports/benchmarks/*.csv
 reports/*.json
 reports/*.csv
 reports/complexity.*
+
+# Local reports
+reports/incidents/
+reports/report.html
+reports/report.pdf
