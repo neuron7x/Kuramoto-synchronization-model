@@ -13,11 +13,11 @@ TODO: Refactor tests to match async adapter interface.
 """
 from __future__ import annotations
 
-from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
-import pytest
-import pandas as pd
+from unittest.mock import Mock, patch
+
 import numpy as np
+import pandas as pd
+import pytest
 
 from core.data.adapters.polygon import PolygonIngestionAdapter as PolygonAdapter
 
@@ -28,7 +28,7 @@ pytestmark = pytest.mark.skip(reason="Tests need refactoring to match async adap
 def mock_polygon_client():
     """Create a mock Polygon API client."""
     client = Mock()
-    
+
     # Mock successful response
     client.get_aggs.return_value = {
         'results': [
@@ -53,7 +53,7 @@ def mock_polygon_client():
         'queryCount': 2,
         'resultsCount': 2,
     }
-    
+
     return client
 
 
@@ -92,7 +92,7 @@ class TestDataFetching:
             end='2024-01-02',
             timeframe='1h'
         )
-        
+
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 2
         assert 'open' in result.columns
@@ -127,13 +127,13 @@ class TestDataFetching:
             'queryCount': 0,
             'resultsCount': 0,
         }
-        
+
         result = polygon_adapter.fetch_bars(
             symbol='INVALID',
             start='2024-01-01',
             end='2024-01-02'
         )
-        
+
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 0
 
@@ -144,7 +144,7 @@ class TestErrorHandling:
     def test_fetch_bars_handles_api_error(self, polygon_adapter, mock_polygon_client):
         """Test fetch_bars handles API errors gracefully."""
         mock_polygon_client.get_aggs.side_effect = ConnectionError("API unavailable")
-        
+
         with pytest.raises(ConnectionError, match="API unavailable"):
             polygon_adapter.fetch_bars(
                 symbol='AAPL',
@@ -164,14 +164,14 @@ class TestErrorHandling:
                 'resultsCount': 1,
             }
         ]
-        
+
         with patch('time.sleep'):  # Mock sleep to speed up test
             result = polygon_adapter.fetch_bars(
                 symbol='AAPL',
                 start='2024-01-01',
                 end='2024-01-02'
             )
-        
+
         assert len(result) == 1
         assert mock_polygon_client.get_aggs.call_count == 2
 
@@ -183,7 +183,7 @@ class TestErrorHandling:
             ],
             'status': 'OK'
         }
-        
+
         # Should either handle gracefully or raise appropriate error
         try:
             result = polygon_adapter.fetch_bars(
@@ -210,9 +210,9 @@ class TestDataTransformation:
             ],
             'status': 'OK'
         }
-        
+
         df = polygon_adapter._transform_response(api_response)
-        
+
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 2
         assert df['open'].iloc[0] == 100.0
@@ -227,9 +227,9 @@ class TestDataTransformation:
             ],
             'status': 'OK'
         }
-        
+
         df = polygon_adapter._transform_response(api_response)
-        
+
         assert 'timestamp' in df.columns or df.index.name == 'timestamp'
         # Verify timestamp is properly converted
         if 'timestamp' in df.columns:
@@ -249,10 +249,10 @@ class TestDataQuality:
             'close': [105.0, 110.0],
             'volume': [1000, 1500],
         })
-        
+
         # Should not raise error
         polygon_adapter._validate_ohlc_data(valid_data)
-        
+
         # Invalid OHLC data (high < low)
         invalid_data = pd.DataFrame({
             'open': [100.0],
@@ -261,7 +261,7 @@ class TestDataQuality:
             'close': [105.0],
             'volume': [1000],
         })
-        
+
         with pytest.raises(ValueError, match="OHLC validation failed"):
             polygon_adapter._validate_ohlc_data(invalid_data)
 
@@ -274,7 +274,7 @@ class TestDataQuality:
             'close': [105.0, 110.0, 115.0],
             'volume': [1000, 1500, 2000],
         })
-        
+
         with pytest.raises(ValueError, match="Missing values detected"):
             polygon_adapter._validate_data_quality(data_with_nan)
 
@@ -287,7 +287,7 @@ class TestDataQuality:
             'close': [105.0, 110.0, 115.0],
             'volume': [1000, 1500, 2000],
         })
-        
+
         with pytest.raises(ValueError, match="Negative prices detected"):
             polygon_adapter._validate_data_quality(data_with_negative)
 
@@ -299,7 +299,7 @@ class TestRateLimiting:
         """Test rate limiter prevents exceeding API limits."""
         # Polygon free tier: 5 requests per minute
         max_requests = 5
-        
+
         with patch('time.sleep') as mock_sleep:
             for i in range(max_requests + 2):
                 try:
@@ -307,7 +307,7 @@ class TestRateLimiting:
                 except Exception:
                     # Rate limit exceeded
                     pass
-        
+
         # Verify sleep was called to enforce rate limit
         if mock_sleep.call_count > 0:
             assert mock_sleep.called
@@ -324,7 +324,7 @@ class TestRateLimiting:
                 'resultsCount': 1,
             }
         ]
-        
+
         with patch('time.sleep') as mock_sleep:
             result = polygon_adapter.fetch_bars(
                 symbol='AAPL',
@@ -332,7 +332,7 @@ class TestRateLimiting:
                 end='2024-01-02',
                 max_retries=3
             )
-        
+
         # Verify exponential backoff was used
         assert len(result) == 1
         assert mock_sleep.call_count >= 2
@@ -344,21 +344,21 @@ class TestCaching:
     def test_cache_stores_fetched_data(self, polygon_adapter, mock_polygon_client):
         """Test adapter caches fetched data."""
         # First call fetches from API
-        result1 = polygon_adapter.fetch_bars(
+        polygon_adapter.fetch_bars(
             symbol='AAPL',
             start='2024-01-01',
             end='2024-01-02',
             use_cache=True
         )
-        
+
         # Second call should use cache
-        result2 = polygon_adapter.fetch_bars(
+        polygon_adapter.fetch_bars(
             symbol='AAPL',
             start='2024-01-01',
             end='2024-01-02',
             use_cache=True
         )
-        
+
         # API should only be called once if caching works
         assert mock_polygon_client.get_aggs.call_count <= 2
 
@@ -371,7 +371,7 @@ class TestCaching:
             end='2024-01-02',
             use_cache=True
         )
-        
+
         # Fetch without cache
         polygon_adapter.fetch_bars(
             symbol='AAPL',
@@ -379,7 +379,7 @@ class TestCaching:
             end='2024-01-02',
             use_cache=False
         )
-        
+
         # API should be called both times
         assert mock_polygon_client.get_aggs.call_count >= 2
 
@@ -396,12 +396,12 @@ class TestIntegration:
             timeframe='1h',
             validate=True
         )
-        
+
         # Verify complete pipeline execution
         assert isinstance(result, pd.DataFrame)
         assert len(result) > 0
         assert all(col in result.columns for col in ['open', 'high', 'low', 'close', 'volume'])
-        
+
         # Verify data quality
         assert (result['high'] >= result['low']).all()
         assert (result['open'] > 0).all()

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable
@@ -163,7 +163,7 @@ class FailSafeConfig:
             "restricted_position_multiplier": self.restricted_position_multiplier,
             "auto_recover_delay_minutes": self.auto_recover_delay_minutes,
             "escalation_threshold_seconds": self.escalation_threshold_seconds,
-            "require_manual_recovery_levels": [l.value for l in self.require_manual_recovery_levels],
+            "require_manual_recovery_levels": [level.value for level in self.require_manual_recovery_levels],
             "enable_emergency_liquidation": self.enable_emergency_liquidation,
         }
 

@@ -18,9 +18,7 @@ Tests follow the TradePulse math accuracy guidelines:
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
-from typing import Generator
 
 import numpy as np
 import pytest
@@ -28,10 +26,7 @@ import pytest
 from core.risk_monitoring.advanced_risk_manager import (
     AdvancedRiskConfig,
     AdvancedRiskManager,
-    FreeEnergyState,
-    LiquidityMetrics,
 )
-
 
 # =============================================================================
 # Fixtures

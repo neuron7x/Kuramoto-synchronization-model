@@ -10,22 +10,18 @@ These tests verify the correctness of:
 
 from __future__ import annotations
 
-import re
 import uuid
 
 import pytest
 
 from tradepulse.policy.decision_trace import (
-    DecisionTrace,
     Redaction,
     TraceScrubber,
     compute_input_hash,
     create_trace,
 )
 from tradepulse.policy.decision_types import (
-    DECISION_PRIORITY,
     DecisionType,
-    LEGACY_DECISION_MAP,
     resolve_decisions,
     to_legacy_decision,
 )

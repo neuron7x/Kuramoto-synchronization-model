@@ -5,7 +5,6 @@ from __future__ import annotations
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import json
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest

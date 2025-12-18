@@ -48,10 +48,10 @@ except ImportError as e:
 
 class MarketSimulator:
     """Simple market simulator for demonstration purposes."""
-    
+
     def __init__(self, volatility: float = 0.02, trend: float = 0.0001):
         """Initialize market simulator.
-        
+
         Parameters
         ----------
         volatility : float
@@ -63,10 +63,10 @@ class MarketSimulator:
         self.trend = trend
         self.price = 100.0
         self.step_count = 0
-        
+
     def step(self) -> Dict[str, float]:
         """Simulate one market step.
-        
+
         Returns
         -------
         Dict[str, float]
@@ -75,13 +75,13 @@ class MarketSimulator:
         # Generate price movement
         returns = np.random.normal(self.trend, self.volatility)
         self.price *= (1 + returns)
-        
+
         # Simulate volatility regime changes
         if self.step_count % 100 == 0:
             self.volatility = np.random.uniform(0.01, 0.04)
-            
+
         self.step_count += 1
-        
+
         return {
             'price': self.price,
             'returns': returns,
@@ -92,10 +92,10 @@ class MarketSimulator:
 
 class TradingSimulator:
     """Simulated trading system with neuromodulator control."""
-    
+
     def __init__(self, params: Dict[str, Any]):
         """Initialize trading simulator.
-        
+
         Parameters
         ----------
         params : Dict[str, Any]
@@ -106,19 +106,19 @@ class TradingSimulator:
         self.position = 0.0
         self.trades = []
         self.pnl_history = []
-        
+
     def execute_trade(
         self, market_data: Dict[str, float], neuro_state: Dict[str, float]
     ) -> Dict[str, Any]:
         """Execute trade based on neuromodulator state.
-        
+
         Parameters
         ----------
         market_data : Dict[str, float]
             Current market data
         neuro_state : Dict[str, float]
             Current neuromodulator state
-            
+
         Returns
         -------
         Dict[str, Any]
@@ -128,7 +128,7 @@ class TradingSimulator:
         dopamine = neuro_state.get('dopamine_level', 0.5)
         serotonin = neuro_state.get('serotonin_level', 0.3)
         gaba = neuro_state.get('gaba_inhibition', 0.4)
-        
+
         # Decision logic
         if dopamine > 0.6 and gaba < 0.5 and serotonin < 0.4:
             # High dopamine, low inhibition, low stress -> Go signal
@@ -138,7 +138,7 @@ class TradingSimulator:
             action = 'sell' if self.position > 0 else 'hold'
         else:
             action = 'hold'
-            
+
         # Execute trade
         price = market_data['price']
         if action == 'buy' and self.position == 0:
@@ -159,16 +159,16 @@ class TradingSimulator:
                 'pnl': pnl,
             })
             self.position = 0
-            
+
         return {
             'action': action,
             'capital': self.capital,
             'position': self.position,
         }
-        
+
     def get_performance_metrics(self) -> CalibrationMetrics:
         """Calculate performance metrics.
-        
+
         Returns
         -------
         CalibrationMetrics
@@ -188,21 +188,21 @@ class TradingSimulator:
                 total_trades=0,
                 timestamp=time.time(),
             )
-            
+
         # Calculate metrics
         returns = np.array(self.pnl_history) / self.capital
         sharpe = np.mean(returns) / (np.std(returns) + 1e-6) * np.sqrt(252)
-        
+
         # Drawdown calculation
         cumulative = np.cumsum(returns)
         running_max = np.maximum.accumulate(cumulative)
         drawdown = running_max - cumulative
         max_dd = np.max(drawdown) if len(drawdown) > 0 else 0.0
-        
+
         # Win rate
         wins = sum(1 for pnl in self.pnl_history if pnl > 0)
         win_rate = wins / len(self.pnl_history) if self.pnl_history else 0.5
-        
+
         return CalibrationMetrics(
             sharpe_ratio=sharpe,
             max_drawdown=max_dd,
@@ -221,7 +221,7 @@ def simulate_neuromodulator_state(
     params: Dict[str, Any], market_data: Dict[str, float], iteration: int
 ) -> Dict[str, float]:
     """Simulate neuromodulator state based on parameters and market.
-    
+
     Parameters
     ----------
     params : Dict[str, Any]
@@ -230,7 +230,7 @@ def simulate_neuromodulator_state(
         Current market data
     iteration : int
         Current iteration number
-        
+
     Returns
     -------
     Dict[str, float]
@@ -241,31 +241,31 @@ def simulate_neuromodulator_state(
     sero_params = params.get('serotonin', {})
     gaba_params = params.get('gaba', {})
     na_ach_params = params.get('na_ach', {})
-    
+
     # Simulate dopamine (reward prediction)
     base_da = 0.5
     volatility_factor = market_data['volatility'] / 0.02  # Normalize
     dopamine_level = base_da * (1 + 0.2 * np.random.randn()) * da_params.get('burst_factor', 1.5) / 2.0
     dopamine_level = np.clip(dopamine_level, 0.1, 1.0)
-    
+
     # Simulate serotonin (stress response)
     stress_base = sero_params.get('stress_threshold', 0.15)
     serotonin_level = stress_base * (1 + volatility_factor * 0.5)
     serotonin_level = np.clip(serotonin_level, 0.0, 0.8)
-    
+
     # Simulate GABA (inhibition)
     gaba_base = gaba_params.get('k_inhibit', 0.4)
     gaba_inhibition = gaba_base * (1 + 0.1 * np.sin(iteration / 10))
     gaba_inhibition = np.clip(gaba_inhibition, 0.0, 0.9)
-    
+
     # Simulate NA/ACh (arousal/attention)
     arousal_gain = na_ach_params.get('arousal_gain', 1.2)
     na_arousal = 1.0 + arousal_gain * volatility_factor * 0.2
     na_arousal = np.clip(na_arousal, 0.5, 2.0)
-    
+
     ach_attention = 0.7 + 0.2 * np.random.randn()
     ach_attention = np.clip(ach_attention, 0.3, 1.0)
-    
+
     return {
         'dopamine_level': dopamine_level,
         'serotonin_level': serotonin_level,
@@ -305,12 +305,12 @@ def main():
     print("║" + "Complete Iteration & Optimization for Neuroscience AI".center(78) + "║")
     print("║" + " " * 78 + "║")
     print("╚" + "=" * 78 + "╝")
-    
+
     # -------------------------------------------------------------------------
     # Phase 1: Initialize System
     # -------------------------------------------------------------------------
     print_section_header("Phase 1: System Initialization")
-    
+
     # Define initial neuromodulator parameters
     initial_params = {
         'dopamine': {
@@ -339,10 +339,10 @@ def main():
             'risk_max': 1.5,
         },
     }
-    
+
     print("Initial Parameters:")
     print_metrics(initial_params)
-    
+
     # Initialize calibrator and optimizer
     calibrator = AdaptiveCalibrator(
         initial_params,
@@ -350,7 +350,7 @@ def main():
         temperature_decay=0.98,
         patience=20,
     )
-    
+
     opt_config = OptimizationConfig(
         balance_weight=0.35,
         performance_weight=0.45,
@@ -358,69 +358,69 @@ def main():
         learning_rate=0.01,
         enable_plasticity=True,
     )
-    
+
     optimizer = NeuroOptimizer(opt_config)
-    
+
     print("\nCalibrator initialized:")
     print(f"  Temperature: {calibrator.state.temperature:.2f}")
     print(f"  Patience: {calibrator.patience}")
-    
+
     print("\nOptimizer initialized:")
     print(f"  Balance weight: {opt_config.balance_weight:.2f}")
     print(f"  Performance weight: {opt_config.performance_weight:.2f}")
     print(f"  Learning rate: {opt_config.learning_rate:.3f}")
-    
+
     # Initialize market and trading simulators
     market = MarketSimulator(volatility=0.02, trend=0.0001)
     trader = TradingSimulator(initial_params)
-    
+
     print("\nMarket simulator initialized")
     print("Trading simulator initialized")
-    
+
     # -------------------------------------------------------------------------
     # Phase 2: Iteration Cycle
     # -------------------------------------------------------------------------
     print_section_header("Phase 2: Optimization Iteration Cycle")
-    
+
     n_iterations = 100
     current_params = initial_params.copy()
-    
+
     print(f"Running {n_iterations} optimization iterations...")
     print("(Progress will be shown every 20 iterations)\n")
-    
+
     for i in range(n_iterations):
         # 1. Simulate market step
         market_data = market.step()
-        
+
         # 2. Simulate neuromodulator state
         neuro_state = simulate_neuromodulator_state(
             current_params, market_data, i
         )
-        
+
         # 3. Execute trade
-        trade_result = trader.execute_trade(market_data, neuro_state)
-        
+        trader.execute_trade(market_data, neuro_state)
+
         # 4. Every 20 steps, run optimization
         if i > 0 and i % 20 == 0:
             print(f"\n--- Iteration {i} ---")
-            
+
             # Get performance metrics
             perf_metrics = trader.get_performance_metrics()
-            
-            print(f"Performance Metrics:")
+
+            print("Performance Metrics:")
             print(f"  Sharpe Ratio: {perf_metrics.sharpe_ratio:.2f}")
             print(f"  Max Drawdown: {perf_metrics.max_drawdown:.2%}")
             print(f"  Win Rate: {perf_metrics.win_rate:.2%}")
             print(f"  Total Trades: {perf_metrics.total_trades}")
-            
+
             # Run adaptive calibration
             current_params = calibrator.step(perf_metrics)
-            
-            print(f"\nCalibration Update:")
+
+            print("\nCalibration Update:")
             print(f"  Temperature: {calibrator.state.temperature:.3f}")
             print(f"  Best Score: {calibrator.state.best_score:.3f}")
             print(f"  Iterations since improvement: {i - calibrator.state.last_improvement}")
-            
+
             # Run cross-neuromodulator optimization
             performance_score = perf_metrics.composite_score()
             updated_params, balance = optimizer.optimize(
@@ -428,37 +428,37 @@ def main():
                 neuro_state,
                 performance_score,
             )
-            
-            print(f"\nBalance Metrics:")
+
+            print("\nBalance Metrics:")
             print(f"  DA/5-HT Ratio: {balance.dopamine_serotonin_ratio:.2f}")
             print(f"  E/I Balance: {balance.gaba_excitation_balance:.2f}")
             print(f"  Balance Score: {balance.overall_balance_score:.2f}")
             print(f"  Homeostatic Deviation: {balance.homeostatic_deviation:.2f}")
-            
+
             # Merge optimized parameters
             current_params = updated_params
             trader.params = current_params
-    
+
     # -------------------------------------------------------------------------
     # Phase 3: Final Report
     # -------------------------------------------------------------------------
     print_section_header("Phase 3: Final Optimization Report")
-    
+
     # Get calibration report
     cal_report = calibrator.get_calibration_report()
     print("Calibration Report:")
     print_metrics(cal_report)
-    
+
     # Get optimization report
     opt_report = optimizer.get_optimization_report()
     print("\nOptimization Report:")
     print_metrics(opt_report)
-    
+
     # Get final parameters
     best_params = calibrator.get_best_params()
     print("\n\nBest Parameters Found:")
     print_metrics(best_params)
-    
+
     # Save results
     results = {
         'calibration_report': cal_report,
@@ -467,7 +467,7 @@ def main():
         'final_capital': trader.capital,
         'total_trades': len(trader.trades),
     }
-    
+
     output_path = Path(__file__).parent / "neuro_optimization_results.json"
     with open(output_path, 'w') as f:
         # Convert numpy types for JSON serialization
@@ -479,39 +479,39 @@ def main():
             elif isinstance(obj, np.ndarray):
                 return obj.tolist()
             return obj
-            
+
         json.dump(results, f, indent=2, default=convert)
-    
+
     print(f"\n\nResults saved to: {output_path}")
-    
+
     # -------------------------------------------------------------------------
     # Summary
     # -------------------------------------------------------------------------
     print_section_header("Summary")
-    
+
     print("Key Achievements:")
     print(f"  ✓ Completed {n_iterations} optimization iterations")
     print(f"  ✓ Executed {len(trader.trades)} trades")
     print(f"  ✓ Final capital: ${trader.capital:,.2f}")
     print(f"  ✓ Best calibration score: {calibrator.state.best_score:.3f}")
     print(f"  ✓ Final balance score: {opt_report.get('avg_balance_score', 0):.3f}")
-    
+
     print("\nNeuromodulator System Status:")
     health = opt_report.get('health_status', {})
     status = health.get('status', 'unknown')
     message = health.get('message', 'No status available')
     print(f"  Status: {status.upper()}")
     print(f"  {message}")
-    
+
     if health.get('issues'):
         print("\n  Issues:")
         for issue in health['issues']:
             print(f"    • {issue}")
-    
+
     print("\nRecommendations:")
     for rec in cal_report.get('recommendations', []):
         print(f"  • {rec}")
-    
+
     print("\n" + "=" * 80)
     print("Optimization cycle completed successfully!")
     print("=" * 80 + "\n")

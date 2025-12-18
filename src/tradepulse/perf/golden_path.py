@@ -55,14 +55,14 @@ def get_env_info() -> Dict[str, str]:
 
 def generate_benchmark_data(n_bars: int = 252, seed: int = 42) -> np.ndarray:
     """Generate deterministic synthetic price data for benchmarking.
-    
+
     Parameters
     ----------
     n_bars : int
         Number of bars to generate (default: 252 for 1 year of daily data)
     seed : int
         Random seed for reproducibility
-        
+
     Returns
     -------
     np.ndarray
@@ -72,27 +72,27 @@ def generate_benchmark_data(n_bars: int = 252, seed: int = 42) -> np.ndarray:
     initial_price = 100.0
     drift = 0.0002  # 0.02% daily drift
     volatility = 0.01  # 1% daily volatility
-    
+
     returns = np.random.normal(drift, volatility, n_bars)
     prices = initial_price * np.cumprod(1 + returns)
-    
+
     # Ensure all prices are positive
     prices = np.maximum(prices, 1.0)
-    
+
     return prices
 
 
 def momentum_signal(prices: np.ndarray, lookback: int = 10) -> np.ndarray:
     """Simple momentum strategy for benchmarking."""
     signal = np.zeros_like(prices)
-    
+
     for i in range(lookback, len(prices)):
         ma = np.mean(prices[i-lookback:i])
         if prices[i] > ma:
             signal[i] = 1.0
         elif prices[i] < ma:
             signal[i] = -1.0
-    
+
     return signal
 
 
@@ -102,10 +102,10 @@ def run_golden_path_bench(
     seed: int = 42,
 ) -> Dict[str, Any]:
     """Run the canonical golden path performance benchmark.
-    
+
     This function measures the performance of the core backtest workflow
     over multiple iterations to calculate latency percentiles and throughput.
-    
+
     Parameters
     ----------
     n_bars : int
@@ -114,7 +114,7 @@ def run_golden_path_bench(
         Number of benchmark iterations to run
     seed : int
         Random seed for reproducibility
-        
+
     Returns
     -------
     Dict[str, Any]
@@ -124,7 +124,7 @@ def run_golden_path_bench(
         - throughput: Events/bars processed per second
         - memory_peak_mb: Estimated peak memory usage (if available)
         - config: Benchmark configuration (n_bars, n_iterations, seed)
-        
+
     Raises
     ------
     ValueError
@@ -137,10 +137,10 @@ def run_golden_path_bench(
             "backtest.engine.walk_forward is not available. "
             "Ensure backtest module is installed."
         )
-    
+
     # Generate benchmark data once
     prices = generate_benchmark_data(n_bars=n_bars, seed=seed)
-    
+
     # Warm-up run
     _ = walk_forward(
         prices,
@@ -148,7 +148,7 @@ def run_golden_path_bench(
         fee=0.001,
         strategy_name="warmup",
     )
-    
+
     # Benchmark runs
     latencies = []
     for _ in range(n_iterations):
@@ -161,32 +161,32 @@ def run_golden_path_bench(
         )
         end = time.perf_counter()
         latencies.append((end - start) * 1000)  # Convert to milliseconds
-    
+
     # Calculate statistics
     latencies_array = np.array(latencies)
-    
+
     # Validate latencies
     if not np.all(np.isfinite(latencies_array)):
         raise ValueError(
             f"Latency measurements contain non-finite values: {latencies_array}"
         )
-    
+
     if not np.all(latencies_array > 0):
         raise ValueError(
             f"Latency measurements contain non-positive values: {latencies_array}"
         )
-    
+
     p50 = float(np.percentile(latencies_array, 50))
     p95 = float(np.percentile(latencies_array, 95))
     p99 = float(np.percentile(latencies_array, 99))
     mean_latency = float(np.mean(latencies_array))
     min_latency = float(np.min(latencies_array))
     max_latency = float(np.max(latencies_array))
-    
+
     # Calculate throughput (bars per second)
     # Use p50 latency for throughput calculation
     throughput = (n_bars / (p50 / 1000.0)) if p50 > 0 else 0.0
-    
+
     # Try to get memory usage (basic estimation)
     try:
         import psutil
@@ -194,7 +194,7 @@ def run_golden_path_bench(
         memory_mb = process.memory_info().rss / 1024 / 1024
     except ImportError:
         memory_mb = None
-    
+
     # Build results dictionary
     results = {
         "env": get_env_info(),
@@ -216,8 +216,8 @@ def run_golden_path_bench(
             "seed": seed,
         },
     }
-    
+
     if memory_mb is not None:
         results["memory_peak_mb"] = memory_mb
-    
+
     return results

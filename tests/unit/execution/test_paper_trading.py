@@ -29,10 +29,10 @@ from execution.paper_trading import (
     TelemetryEvent,
 )
 
-
 # ============================================================================
 # LatencySample Tests
 # ============================================================================
+
 
 class TestLatencySample:
     """Test suite for LatencySample dataclass."""
@@ -93,9 +93,9 @@ class TestDeterministicLatencyModel:
         """Test sample() returns correct LatencySample."""
         model = DeterministicLatencyModel(ack_delay=0.05, fill_delay=0.1)
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         sample = model.sample(order)
-        
+
         assert isinstance(sample, LatencySample)
         assert sample.ack_delay == 0.05
         assert sample.fill_delay == 0.1
@@ -105,10 +105,10 @@ class TestDeterministicLatencyModel:
         model = DeterministicLatencyModel(ack_delay=0.1, fill_delay=0.2)
         order1 = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
         order2 = Order(symbol="ETHUSD", side=OrderSide.SELL, quantity=10.0)
-        
+
         sample1 = model.sample(order1)
         sample2 = model.sample(order2)
-        
+
         assert sample1.total_delay == sample2.total_delay
 
     def test_negative_ack_delay_raises(self) -> None:
@@ -297,9 +297,9 @@ class TestPaperTradingEngine:
     def test_execute_order_basic(self, engine: PaperTradingEngine) -> None:
         """Test basic order execution."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(order, execution_price=50000.0)
-        
+
         assert isinstance(report, PaperOrderReport)
         assert report.order.status == OrderStatus.FILLED
         assert report.order.filled_quantity == 1.0
@@ -307,22 +307,22 @@ class TestPaperTradingEngine:
     def test_execute_order_sell_side(self, engine: PaperTradingEngine) -> None:
         """Test sell order execution."""
         order = Order(symbol="BTCUSD", side=OrderSide.SELL, quantity=2.0)
-        
+
         report = engine.execute_order(order, execution_price=50000.0)
-        
+
         assert report.order.side == OrderSide.SELL
         assert report.order.filled_quantity == 2.0
 
     def test_execute_order_with_ideal_price(self, engine: PaperTradingEngine) -> None:
         """Test order execution with ideal price for slippage calculation."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(
             order,
             execution_price=50100.0,
             ideal_price=50000.0,
         )
-        
+
         # PnL should reflect slippage
         assert report.pnl.ideal_value != report.pnl.realized_value
 
@@ -331,9 +331,9 @@ class TestPaperTradingEngine:
     ) -> None:
         """Test order execution with latency model."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine_with_latency.execute_order(order, execution_price=50000.0)
-        
+
         # Latency should be recorded
         assert report.latency.ack_delay == 0.01
         assert report.latency.fill_delay == 0.02
@@ -341,9 +341,9 @@ class TestPaperTradingEngine:
     def test_execute_order_records_telemetry(self, engine: PaperTradingEngine) -> None:
         """Test that telemetry events are recorded."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(order, execution_price=50000.0)
-        
+
         # Should have submit, ack, and fill events
         event_types = [e.event for e in report.telemetry]
         assert "order.submit" in event_types
@@ -355,7 +355,7 @@ class TestPaperTradingEngine:
     ) -> None:
         """Test that zero execution price raises ValueError."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         with pytest.raises(ValueError, match="execution_price must be positive"):
             engine.execute_order(order, execution_price=0.0)
 
@@ -364,7 +364,7 @@ class TestPaperTradingEngine:
     ) -> None:
         """Test that negative execution price raises ValueError."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         with pytest.raises(ValueError, match="execution_price must be positive"):
             engine.execute_order(order, execution_price=-100.0)
 
@@ -373,20 +373,20 @@ class TestPaperTradingEngine:
     ) -> None:
         """Test that zero ideal price raises ValueError."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         with pytest.raises(ValueError, match="ideal_price must be positive"):
             engine.execute_order(order, execution_price=50000.0, ideal_price=0.0)
 
     def test_execute_order_with_metadata(self, engine: PaperTradingEngine) -> None:
         """Test order execution with metadata."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(
             order,
             execution_price=50000.0,
             metadata={"strategy": "momentum", "signal_strength": 0.8},
         )
-        
+
         # Check that metadata is recorded in telemetry
         submit_event = next(
             e for e in report.telemetry if e.event == "order.submit"
@@ -398,25 +398,25 @@ class TestPaperTradingEngine:
     ) -> None:
         """Test order execution with idempotency key."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(
             order,
             execution_price=50000.0,
             idempotency_key="unique-order-123",
         )
-        
+
         assert report.order_id is not None
 
     def test_execute_order_partial_quantity(self, engine: PaperTradingEngine) -> None:
         """Test order execution with partial quantity."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=10.0)
-        
+
         report = engine.execute_order(
             order,
             execution_price=50000.0,
             executed_quantity=5.0,  # Only fill 5 of 10
         )
-        
+
         # Should fill only the specified quantity
         assert report.order.filled_quantity == 5.0
         assert report.order.status == OrderStatus.PARTIALLY_FILLED
@@ -426,28 +426,28 @@ class TestPaperTradingEngine:
     ) -> None:
         """Test that telemetry listeners are called."""
         events_received: list[TelemetryEvent] = []
-        
+
         def listener(event: TelemetryEvent) -> None:
             events_received.append(event)
-        
+
         engine = PaperTradingEngine(connector, telemetry_listeners=[listener])
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         engine.execute_order(order, execution_price=50000.0)
-        
+
         # Listener should have received events
         assert len(events_received) >= 3  # submit, ack, fill
 
     def test_pnl_calculation_buy_order(self, engine: PaperTradingEngine) -> None:
         """Test PnL calculation for buy order."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(
             order,
             execution_price=50000.0,
             ideal_price=49000.0,  # Paid more than ideal
         )
-        
+
         # For buy: side_factor = 1.0
         # realized_value = 1.0 * 1.0 * 50000.0 = 50000.0
         # ideal_value = 1.0 * 1.0 * 49000.0 = 49000.0
@@ -459,13 +459,13 @@ class TestPaperTradingEngine:
     def test_pnl_calculation_sell_order(self, engine: PaperTradingEngine) -> None:
         """Test PnL calculation for sell order."""
         order = Order(symbol="BTCUSD", side=OrderSide.SELL, quantity=1.0)
-        
+
         report = engine.execute_order(
             order,
             execution_price=50000.0,
             ideal_price=51000.0,  # Sold for less than ideal
         )
-        
+
         # For sell: side_factor = -1.0
         # realized_value = -1.0 * 1.0 * 50000.0 = -50000.0
         # ideal_value = -1.0 * 1.0 * 51000.0 = -51000.0
@@ -510,7 +510,7 @@ class TestPaperTradingEdgeCases:
     ) -> None:
         """Test that executing more than remaining quantity raises."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         with pytest.raises(ValueError):
             engine.execute_order(
                 order,
@@ -521,17 +521,17 @@ class TestPaperTradingEdgeCases:
     def test_very_small_quantity(self, engine: PaperTradingEngine) -> None:
         """Test execution with very small quantity."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=0.0001)
-        
+
         report = engine.execute_order(order, execution_price=50000.0)
-        
+
         assert report.order.filled_quantity == 0.0001
 
     def test_very_large_price(self, engine: PaperTradingEngine) -> None:
         """Test execution with very large price."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
-        
+
         report = engine.execute_order(order, execution_price=1_000_000.0)
-        
+
         assert report.pnl.realized_value == pytest.approx(1_000_000.0)
 
 
@@ -545,13 +545,13 @@ class TestPaperTradingWithCustomClock:
     def test_clock_affects_timestamps(self) -> None:
         """Test that custom clock affects event timestamps."""
         connector = SimulatedExchangeConnector(sandbox=True)
-        
+
         clock_time = 1000.0
         engine = PaperTradingEngine(connector, clock=lambda: clock_time)
-        
+
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
         report = engine.execute_order(order, execution_price=50000.0)
-        
+
         # Submit event should have the clock time
         submit_event = next(e for e in report.telemetry if e.event == "order.submit")
         assert submit_event.timestamp == clock_time

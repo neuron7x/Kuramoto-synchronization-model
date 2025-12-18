@@ -8,17 +8,16 @@ ECS-inspired regulator module.
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import numpy as np
 import pytest
 
 from core.neuro.ecs_regulator import (
+    TRACE_SCHEMA_FIELDS,
     ECSInspiredRegulator,
     ECSMetrics,
     StabilityMetrics,
     StressMode,
-    TRACE_SCHEMA_FIELDS,
 )
 
 
@@ -52,7 +51,7 @@ class TestECSMetricsDataclass:
             chronic_counter=5,
             is_chronic=False,
         )
-        
+
         assert metrics.timestamp == 1234567890
         assert metrics.stress_level == 0.5
         assert metrics.free_energy_proxy == 0.3
@@ -75,7 +74,7 @@ class TestStabilityMetricsDataclass:
             volatility_regime="normal",
             risk_aversion_active=False,
         )
-        
+
         assert metrics.monotonicity_violations == 0
         assert metrics.gradient_clipping_events == 2
         assert metrics.lyapunov_value == 0.05
@@ -90,7 +89,7 @@ class TestECSRegulatorEdgeCases:
     def test_regulator_initialization_default(self) -> None:
         """Test regulator initializes with default parameters."""
         regulator = ECSInspiredRegulator()
-        
+
         # Verify initial state
         assert regulator.is_stable()
         metrics = regulator.get_stability_metrics()
@@ -99,7 +98,7 @@ class TestECSRegulatorEdgeCases:
     def test_regulator_with_empty_returns_raises(self) -> None:
         """Regression: Empty returns array should raise ValueError."""
         regulator = ECSInspiredRegulator()
-        
+
         with pytest.raises(ValueError, match="market_returns must not be empty"):
             regulator.update_stress(
                 market_returns=np.array([]),
@@ -109,7 +108,7 @@ class TestECSRegulatorEdgeCases:
     def test_regulator_with_negative_drawdown_raises(self) -> None:
         """Regression: Negative drawdown should raise ValueError."""
         regulator = ECSInspiredRegulator()
-        
+
         with pytest.raises(ValueError, match="drawdown must be non-negative"):
             regulator.update_stress(
                 market_returns=np.array([0.01, 0.02, -0.01]),
@@ -119,28 +118,28 @@ class TestECSRegulatorEdgeCases:
     def test_regulator_with_zero_drawdown(self) -> None:
         """Test regulator handles zero drawdown."""
         regulator = ECSInspiredRegulator()
-        
+
         # Should not raise
         regulator.update_stress(
             market_returns=np.array([0.01, 0.02, -0.01]),
             drawdown=0.0,
         )
-        
+
         metrics = regulator.get_metrics()
         assert metrics is not None
 
     def test_regulator_with_extreme_volatility(self) -> None:
         """Test regulator handles extreme volatility in returns."""
         regulator = ECSInspiredRegulator()
-        
+
         # High volatility returns
         high_vol_returns = np.array([0.1, -0.15, 0.2, -0.18, 0.12])
-        
+
         regulator.update_stress(
             market_returns=high_vol_returns,
             drawdown=0.1,
         )
-        
+
         metrics = regulator.get_stability_metrics()
         assert math.isfinite(metrics.lyapunov_value)
 
@@ -148,7 +147,7 @@ class TestECSRegulatorEdgeCases:
         """Test regulator transitions through stress modes correctly."""
         regulator = ECSInspiredRegulator()
         rng = np.random.default_rng(42)
-        
+
         # Normal conditions
         normal_returns = rng.normal(0.001, 0.01, 20)
         for _ in range(5):
@@ -156,7 +155,7 @@ class TestECSRegulatorEdgeCases:
                 market_returns=normal_returns,
                 drawdown=0.01,
             )
-        
+
         # Stress conditions
         stress_returns = rng.normal(-0.02, 0.05, 20)
         for _ in range(10):
@@ -164,7 +163,7 @@ class TestECSRegulatorEdgeCases:
                 market_returns=stress_returns,
                 drawdown=0.15,
             )
-        
+
         # Check that metrics are still valid
         metrics = regulator.get_stability_metrics()
         assert math.isfinite(metrics.lyapunov_value)
@@ -172,19 +171,19 @@ class TestECSRegulatorEdgeCases:
     def test_decide_action_with_valid_signal(self) -> None:
         """Test decide_action with valid signal."""
         regulator = ECSInspiredRegulator()
-        
+
         # First update stress to establish state
         regulator.update_stress(
             market_returns=np.array([0.01, 0.02, -0.01]),
             drawdown=0.01,
         )
-        
+
         # Decide action
         action = regulator.decide_action(
             signal_strength=0.5,
             context_phase="stable",
         )
-        
+
         assert isinstance(action, int)
         assert action in (-1, 0, 1)  # sell, hold, buy
 
@@ -195,9 +194,9 @@ class TestECSRegulatorEdgeCases:
             market_returns=np.array([0.01, 0.02, -0.01]),
             drawdown=0.01,
         )
-        
+
         metrics = regulator.get_metrics()
-        
+
         assert isinstance(metrics, ECSMetrics)
         assert metrics.timestamp > 0
         assert math.isfinite(metrics.stress_level)
@@ -207,7 +206,7 @@ class TestECSRegulatorEdgeCases:
         """Test reset clears regulator state."""
         regulator = ECSInspiredRegulator()
         rng = np.random.default_rng(42)
-        
+
         # Add some stress
         stress_returns = rng.normal(-0.01, 0.03, 20)
         for _ in range(10):
@@ -215,10 +214,10 @@ class TestECSRegulatorEdgeCases:
                 market_returns=stress_returns,
                 drawdown=0.1,
             )
-        
+
         # Reset
         regulator.reset()
-        
+
         # Verify reset
         metrics = regulator.get_stability_metrics()
         assert metrics.monotonicity_violations == 0
@@ -245,7 +244,7 @@ class TestTraceSchemaFields:
             "action",
             "event_hash",
         }
-        
+
         assert required_fields.issubset(TRACE_SCHEMA_FIELDS)
 
     def test_trace_schema_has_conformal_fields(self) -> None:
@@ -256,5 +255,5 @@ class TestTraceSchemaFields:
             "prediction_interval_high",
             "conformal_ready",
         }
-        
+
         assert conformal_fields.issubset(TRACE_SCHEMA_FIELDS)

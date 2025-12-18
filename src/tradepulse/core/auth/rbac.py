@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextvars import ContextVar
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
 
 class Permission(Enum):

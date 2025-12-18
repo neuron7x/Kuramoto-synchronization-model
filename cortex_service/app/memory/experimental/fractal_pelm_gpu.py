@@ -24,18 +24,14 @@ It requires PyTorch for operation.
 from __future__ import annotations
 
 import logging
-import warnings
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict
 
 import numpy as np
 
 from core.utils.memory_validation import (
     STATE_VERSION,
-    CorruptedStateError,
     InvariantError,
-    assert_finite_array,
-    assert_finite_float,
     compute_state_checksum,
     recover_pelm_state,
     validate_pelm_state,

@@ -6,8 +6,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
-
 from scripts import list_policies
 
 
@@ -133,7 +131,7 @@ def test_discover_policies_extracts_docstring(tmp_path: Path) -> None:
         '''
 class DocumentedPolicy:
     """This is the first line.
-    
+
     More details here.
     """
     pass
@@ -240,7 +238,7 @@ def test_normalise_docstring_none() -> None:
 def test_normalise_docstring_multiline() -> None:
     """Test _normalise_docstring extracts first line."""
     doc = """First line.
-    
+
     More content.
     """
     result = list_policies._normalise_docstring(doc)

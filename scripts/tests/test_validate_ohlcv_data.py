@@ -5,8 +5,6 @@ from __future__ import annotations
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from pathlib import Path
 
-import pytest
-
 from scripts import validate_ohlcv_data
 
 

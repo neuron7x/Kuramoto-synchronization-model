@@ -8,7 +8,6 @@ covering serialization, validation, and invariant checking.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict
 
 import numpy as np
 import pytest
@@ -19,7 +18,6 @@ from core.utils.memory_validation import (
     InvariantError,
     compute_state_checksum,
 )
-
 
 # =============================================================================
 # Test StrategySignature
@@ -270,12 +268,12 @@ class TestStrategyMemory:
     def test_records_setter_validates_capacity(self) -> None:
         """Setting records should validate capacity constraint."""
         memory = StrategyMemory(max_records=2)
-        
+
         records = [
             StrategyRecord(name=f"test{i}", signature=(i * 0.1, 0.05, 0.3, 2.1, 0.1), score=0.5)
             for i in range(5)
         ]
-        
+
         with pytest.raises(InvariantError, match="Cannot set"):
             memory.records = records
 

@@ -118,7 +118,7 @@ class CircuitBreaker:
 
     def reset(self) -> None:
         """Reset the circuit breaker to CLOSED state.
-        
+
         This method is intended for administrative purposes such as manual
         intervention or testing. It should not be called automatically in
         response to failures.

@@ -688,11 +688,11 @@ def filter_signals(
         arr = np.asarray(signals, dtype=np.float64)
 
     original_count = arr.size
-    
+
     # Track which indices from the original array are removed
     # Use a boolean mask for accurate tracking
     removed_mask = np.zeros(original_count, dtype=bool)
-    
+
     # For non-REMOVE strategies, we modify in place
     working = arr.copy()
 

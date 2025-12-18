@@ -23,17 +23,16 @@ and TACL thermodynamic control system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from enum import Enum
 import hashlib
 import json
 from collections import deque
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Enum
 from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
-
 
 # Mathematical constants for stability and safety bounds
 GRADIENT_BOUND_MAX: float = 0.5  # Maximum allowed gradient magnitude
@@ -60,6 +59,7 @@ TRACE_SCHEMA_FIELDS = frozenset({
     "conformal_ready", "action", "confidence_gate_pass", "reason_codes",
     "params_snapshot", "mode_context", "stress_level_context", "event_hash",
 })
+
 
 class StressMode(str, Enum):
     """Stress operating modes for conservative behavior."""

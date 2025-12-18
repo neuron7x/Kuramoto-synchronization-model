@@ -6,11 +6,10 @@ import numpy as np
 import pytest
 
 from core.neuro.ecs_regulator import (
+    FE_STABILITY_EPSILON,
+    TRACE_SCHEMA_FIELDS,
     ECSInspiredRegulator,
     ECSMetrics,
-    FE_STABILITY_EPSILON,
-    StabilityMetrics,
-    TRACE_SCHEMA_FIELDS,
 )
 
 
@@ -309,7 +308,7 @@ class TestAdaptParameters:
 
     def test_adapt_recovery(self) -> None:
         """Test parameter recovery during low stress.
-        
+
         When stress is below threshold and volatility is low, the threshold
         should gradually recover (decrease) toward the initial value.
         """
@@ -319,7 +318,7 @@ class TestAdaptParameters:
 
         # Force threshold to be higher than initial (simulating post-stress state)
         regulator.risk_threshold = 0.08
-        
+
         # Low stress, low volatility for recovery
         regulator.update_stress(np.array([0.001, -0.001]), 0.01)
         regulator.adapt_parameters()
@@ -778,7 +777,7 @@ class TestStrictMonotonicDescent:
         regulator.update_stress(np.array([0.001]), 0.001)
         prev_fe = regulator.free_energy_proxy
 
-        initial_violations = regulator._monotonicity_violations
+        _ = regulator._monotonicity_violations  # Track initial violations state
 
         # Force a scenario where FE would increase
         for _ in range(10):
@@ -855,7 +854,7 @@ class TestRiskAversionHighVolatility:
             initial_risk_threshold=0.05, volatility_adaptive=True, seed=42
         )
 
-        base_threshold = regulator.risk_threshold
+        _ = regulator.risk_threshold  # Record base threshold
 
         # High volatility update
         regulator.update_stress(np.array([0.3, -0.3, 0.25, -0.2]), 0.2)
@@ -909,7 +908,7 @@ class TestGradientBounding:
         regulator = ECSInspiredRegulator(seed=42)
         rng = np.random.default_rng(42)
 
-        initial_clipping = regulator._gradient_clipping_events
+        _ = regulator._gradient_clipping_events  # Track initial state
 
         # Run many updates with varying volatility
         for i in range(50):
@@ -931,7 +930,7 @@ class TestDynamicAdaptation:
             stress_threshold=0.1, volatility_adaptive=True, seed=42
         )
 
-        initial_threshold = regulator.stress_threshold
+        _ = regulator.stress_threshold  # Record initial threshold
 
         # Generate increasing volatility trend
         for i in range(20):
@@ -947,7 +946,7 @@ class TestDynamicAdaptation:
         """Test that feedback gain adapts based on volatility regime."""
         regulator = ECSInspiredRegulator(seed=42)
 
-        initial_gain = regulator._feedback_gain
+        _ = regulator._feedback_gain  # Record initial gain
 
         # High volatility should increase gain
         for _ in range(15):
@@ -989,7 +988,7 @@ class TestChronicStressEdgeCases:
         # Normal compensation
         regulator.update_stress(np.array([0.1, -0.1]), 0.1)
         regulator.adapt_parameters()
-        normal_comp = regulator.compensatory_factor
+        _ = regulator.compensatory_factor  # Record normal compensation
 
         # Continue high stress for chronic
         for _ in range(10):
@@ -1134,7 +1133,7 @@ class TestStressSimulations:
         )
         rng = np.random.default_rng(42)
 
-        regimes = ["low", "high", "low", "extreme", "low", "moderate"]
+        # Regimes: low -> high -> low -> extreme -> low -> moderate
         volatilities = [0.01, 0.2, 0.01, 0.4, 0.01, 0.1]
 
         prev_fe = None
@@ -1214,7 +1213,7 @@ class TestECSInvariants:
 
     def test_parameter_bounds_are_clamped(self) -> None:
         """Risk thresholds remain within safe bounds during adaptations.
-        
+
         Under high stress, the threshold should increase (more conservative).
         The threshold has a minimum bound of 0.001 and increases from initial.
         """
@@ -1490,8 +1489,8 @@ class TestConformalCalibration:
 
     def test_trace_hash_chain_tamper_detection(self) -> None:
         """6. Trace hash-chain: any change to old event breaks event_hash."""
-        import json
         import hashlib
+        import json
         from datetime import datetime, timezone
 
         fixed_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)

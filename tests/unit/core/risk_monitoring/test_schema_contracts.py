@@ -9,17 +9,9 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any
-
-import pytest
 
 from core.risk_monitoring.advanced_risk_manager import (
-    AdvancedRiskAssessment,
-    AdvancedRiskConfig,
-    FreeEnergyState,
     LiquidityMetrics,
-    MarketDepthData,
 )
 from core.risk_monitoring.compliance import (
     AuditTrailEntry,
@@ -33,7 +25,6 @@ from core.risk_monitoring.fail_safe import (
     FailSafeLevel,
     FailSafeState,
 )
-from core.risk_monitoring.stress_detection import StressAssessment, StressLevel
 
 
 class TestFailSafeStateSchema:
@@ -67,16 +58,16 @@ class TestFailSafeStateSchema:
             pending_actions=(FailSafeAction.REDUCE_POSITIONS,),
             auto_recover_at=datetime.now(timezone.utc),
         )
-        
+
         d = state.to_dict()
-        
+
         assert set(d.keys()) == self.REQUIRED_FIELDS
 
     def test_schema_level_is_string(self) -> None:
         """Contract: level field is serialized as string value."""
         state = FailSafeState(level=FailSafeLevel.HALT)
         d = state.to_dict()
-        
+
         assert isinstance(d["level"], str)
         assert d["level"] == "halt"
 
@@ -88,7 +79,7 @@ class TestFailSafeStateSchema:
             auto_recover_at=now,
         )
         d = state.to_dict()
-        
+
         assert d["activated_at"] == "2024-01-15T12:30:45+00:00"
         assert d["auto_recover_at"] == "2024-01-15T12:30:45+00:00"
 
@@ -101,7 +92,7 @@ class TestFailSafeStateSchema:
             ),
         )
         d = state.to_dict()
-        
+
         assert isinstance(d["pending_actions"], list)
         assert all(isinstance(a, str) for a in d["pending_actions"])
         assert "reduce_positions" in d["pending_actions"]
@@ -115,11 +106,11 @@ class TestFailSafeStateSchema:
             activated_at=datetime.now(timezone.utc),
         )
         d = state.to_dict()
-        
+
         # Should not raise
         json_str = json.dumps(d)
         assert isinstance(json_str, str)
-        
+
         # Should be deserializable
         parsed = json.loads(json_str)
         assert parsed == d
@@ -141,16 +132,16 @@ class TestFailSafeConfigSchema:
         """Contract: FailSafeConfig.to_dict includes all required fields."""
         config = FailSafeConfig()
         d = config.to_dict()
-        
+
         assert set(d.keys()) == self.REQUIRED_FIELDS
 
     def test_schema_require_manual_recovery_levels_is_string_list(self) -> None:
         """Contract: require_manual_recovery_levels is a list of strings."""
         config = FailSafeConfig()
         d = config.to_dict()
-        
+
         assert isinstance(d["require_manual_recovery_levels"], list)
-        assert all(isinstance(l, str) for l in d["require_manual_recovery_levels"])
+        assert all(isinstance(level, str) for level in d["require_manual_recovery_levels"])
 
 
 class TestAuditTrailEntrySchema:
@@ -181,9 +172,9 @@ class TestAuditTrailEntrySchema:
             regulation=RegulationType.MIFID_II,
             hash_chain="prev:123",
         )
-        
+
         d = entry.to_dict()
-        
+
         assert set(d.keys()) == self.REQUIRED_FIELDS
 
     def test_schema_regulation_is_string(self) -> None:
@@ -197,7 +188,7 @@ class TestAuditTrailEntrySchema:
             regulation=RegulationType.DODD_FRANK,
         )
         d = entry.to_dict()
-        
+
         assert isinstance(d["regulation"], str)
         assert d["regulation"] == "dodd_frank"
 
@@ -228,9 +219,9 @@ class TestComplianceViolationSchema:
             remediation="Reduced position",
             resolved=True,
         )
-        
+
         d = violation.to_dict()
-        
+
         assert set(d.keys()) == self.REQUIRED_FIELDS
 
     def test_schema_resolved_is_boolean(self) -> None:
@@ -245,7 +236,7 @@ class TestComplianceViolationSchema:
             resolved=True,
         )
         d = violation.to_dict()
-        
+
         assert isinstance(d["resolved"], bool)
 
 
@@ -278,9 +269,9 @@ class TestRegulatoryReportSchema:
             risk_metrics={"total": 100},
             executive_summary="All clear",
         )
-        
+
         d = report.to_dict()
-        
+
         assert set(d.keys()) == self.REQUIRED_FIELDS
 
     def test_schema_counts_are_integers(self) -> None:
@@ -293,7 +284,7 @@ class TestRegulatoryReportSchema:
             period_end=datetime(2024, 1, 31, tzinfo=timezone.utc),
         )
         d = report.to_dict()
-        
+
         assert isinstance(d["audit_entries_count"], int)
         assert isinstance(d["violations_count"], int)
         assert isinstance(d["unresolved_violations"], int)
@@ -325,16 +316,16 @@ class TestLiquidityMetricsSchema:
             depth_levels_analyzed=5,
             timestamp=datetime.now(timezone.utc),
         )
-        
+
         d = metrics.to_dict()
-        
+
         assert set(d.keys()) == self.REQUIRED_FIELDS
 
     def test_schema_numeric_fields_are_numbers(self) -> None:
         """Contract: Numeric fields are floats or ints."""
         metrics = LiquidityMetrics()
         d = metrics.to_dict()
-        
+
         assert isinstance(d["bid_depth_value"], (int, float))
         assert isinstance(d["ask_depth_value"], (int, float))
         assert isinstance(d["imbalance_ratio"], (int, float))
@@ -359,11 +350,11 @@ class TestSchemaJSONRoundtrip:
             pending_actions=(FailSafeAction.REDUCE_POSITIONS, FailSafeAction.CANCEL_PENDING),
             auto_recover_at=datetime(2024, 1, 15, 13, 0, 0, tzinfo=timezone.utc),
         )
-        
+
         original = state.to_dict()
         json_str = json.dumps(original)
         parsed = json.loads(json_str)
-        
+
         assert parsed == original
 
     def test_compliance_violation_json_roundtrip(self) -> None:
@@ -378,11 +369,11 @@ class TestSchemaJSONRoundtrip:
             remediation="Improved routing logic",
             resolved=True,
         )
-        
+
         original = violation.to_dict()
         json_str = json.dumps(original)
         parsed = json.loads(json_str)
-        
+
         assert parsed == original
 
     def test_liquidity_metrics_json_roundtrip(self) -> None:
@@ -397,9 +388,9 @@ class TestSchemaJSONRoundtrip:
             depth_levels_analyzed=10,
             timestamp=datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc),
         )
-        
+
         original = metrics.to_dict()
         json_str = json.dumps(original)
         parsed = json.loads(json_str)
-        
+
         assert parsed == original

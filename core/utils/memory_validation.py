@@ -30,7 +30,7 @@ import json
 import logging
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Sequence
 
 import numpy as np
 
@@ -307,9 +307,9 @@ def validate_strategy_record(
 
     # Check required fields
     required = ("name", "signature", "score", "ts")
-    for field in required:
-        if field not in record:
-            ctx.add_violation(f"Record {index}: missing required field '{field}'")
+    for field_name in required:
+        if field_name not in record:
+            ctx.add_violation(f"Record {index}: missing required field '{field_name}'")
             valid = False
 
     if not valid:

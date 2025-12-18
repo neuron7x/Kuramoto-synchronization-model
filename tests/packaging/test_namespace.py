@@ -49,7 +49,7 @@ class TestSrcLayoutExclusion:
     )
     def test_src_not_importable_after_install(self):
         """After `pip install`, `src` should not be importable.
-        
+
         Note: This test is skipped in development mode where src/ is in PYTHONPATH.
         It validates installed package behavior.
         """
@@ -91,7 +91,7 @@ class TestPackagingIntegrity:
             if (current / "pyproject.toml").exists():
                 break
             current = current.parent
-        
+
         pyproject_path = current / "pyproject.toml"
         assert pyproject_path.exists(), "pyproject.toml not found"
 
@@ -102,10 +102,10 @@ class TestPackagingIntegrity:
             if (current / "pyproject.toml").exists():
                 break
             current = current.parent
-        
+
         pyproject_path = current / "pyproject.toml"
         content = pyproject_path.read_text()
-        
+
         # Check that src is in exclude list
         assert '"src"' in content or "'src'" in content, (
             "pyproject.toml should exclude 'src' from packages"
