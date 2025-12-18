@@ -11,8 +11,8 @@ from .decision_trace import (
 )
 from .decision_types import (
     DECISION_PRIORITY,
-    DecisionType,
     LEGACY_DECISION_MAP,
+    DecisionType,
     resolve_decisions,
     to_legacy_decision,
 )

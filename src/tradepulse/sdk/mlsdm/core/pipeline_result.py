@@ -6,10 +6,10 @@ pipeline execution outcomes with decision traces and cache keys.
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-import uuid
 
 __all__ = [
     "Decision",

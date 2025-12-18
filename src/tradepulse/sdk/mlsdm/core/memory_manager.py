@@ -11,8 +11,8 @@ from typing import Any, Dict
 
 import numpy as np
 
-from ..facade import MLSDM
 from ..config import MLSDMConfig
+from ..facade import MLSDM
 
 logger = logging.getLogger(__name__)
 

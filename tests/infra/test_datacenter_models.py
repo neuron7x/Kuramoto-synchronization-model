@@ -92,7 +92,7 @@ class TestDataCenterHealth:
 
     def test_health_score_high_cpu_low_others(self) -> None:
         """Test health score with high CPU but low memory and disk.
-        
+
         This test verifies the new max utilization logic:
         - With max utilization (90% CPU), penalty is applied
         - Score = 100 - (90-70)/1.0 = 80.0
@@ -109,7 +109,7 @@ class TestDataCenterHealth:
 
     def test_health_score_high_memory_low_others(self) -> None:
         """Test health score with high memory but low CPU and disk.
-        
+
         This verifies max utilization catches memory constraint:
         - Max utilization = 85% (memory)
         - Score = 100 - (85-70)/1.0 = 85.0
@@ -126,7 +126,7 @@ class TestDataCenterHealth:
 
     def test_health_score_high_disk_low_others(self) -> None:
         """Test health score with high disk but low CPU and memory.
-        
+
         This verifies max utilization catches disk constraint:
         - Max utilization = 95% (disk)
         - Penalty capped at 20.0 since (95-70)/1.0 = 25.0 > 20.0
@@ -143,7 +143,7 @@ class TestDataCenterHealth:
 
     def test_health_score_balanced_high_load(self) -> None:
         """Test health score with balanced high load across all resources.
-        
+
         This verifies behavior when all resources are equally high:
         - Max utilization = 85% (all equal)
         - Score = 100 - (85-70)/1.0 = 85.0
@@ -160,7 +160,7 @@ class TestDataCenterHealth:
 
     def test_health_score_low_load_everywhere(self) -> None:
         """Test health score with low load across all resources.
-        
+
         This verifies no penalty when all resources are below threshold:
         - Max utilization = 50% (all below 70% threshold)
         - No penalty applied
@@ -177,7 +177,7 @@ class TestDataCenterHealth:
 
     def test_health_score_threshold_boundary(self) -> None:
         """Test health score at exactly the 70% threshold.
-        
+
         This verifies that exactly 70% doesn't trigger penalty:
         - Max utilization = 70%
         - No penalty should be applied
@@ -194,7 +194,7 @@ class TestDataCenterHealth:
 
     def test_health_score_just_above_threshold(self) -> None:
         """Test health score just above the 70% threshold.
-        
+
         This verifies penalty calculation for minimal overage:
         - Max utilization = 71%
         - Small penalty of (71-70)/1.0 = 1.0

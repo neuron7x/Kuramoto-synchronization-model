@@ -8,7 +8,6 @@ manage the sequence of module interactions in a trading pipeline.
 from __future__ import annotations
 
 from core.orchestrator.interaction_sequencer import (
-    ExecutionContext,
     ModuleDefinition,
     ModuleInteractionOrchestrator,
     ModulePhase,
@@ -117,7 +116,7 @@ def demo_parallel_modules():
     def generate_signal(context_data):
         """Generate trading signal from indicators."""
         print("  → Generating trading signal...")
-        sma = context_data.get("sma", 0)
+        context_data.get("sma", 0)
         rsi = context_data.get("rsi", 50)
         signal = "BUY" if rsi < 30 else "SELL" if rsi > 70 else "HOLD"
         return {"signal": signal, "confidence": 0.75}
@@ -393,7 +392,7 @@ def demo_error_handling():
 
     context = orchestrator.execute()
 
-    print(f"\n✓ Execution stopped on error")
+    print("\n✓ Execution stopped on error")
     print(f"Errors: {context.errors}")
     print(f"Modules executed: {context.metadata.get('modules_executed', [])}")
     print(f"Data collected: {list(context.data.keys())}")

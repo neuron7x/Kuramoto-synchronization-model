@@ -55,6 +55,7 @@ def _clamp_q_values(q_values: np.ndarray) -> np.ndarray:
     )
     return adjusted
 
+
 # Minimum absolute coefficient value to include in structure function
 # Values below this are considered numerical noise and excluded
 _COEFF_MIN_THRESHOLD = 1e-12

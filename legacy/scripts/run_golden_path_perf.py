@@ -14,7 +14,7 @@ sys.path.insert(0, str(repo_root / "src"))
 
 try:
     from tradepulse.perf.golden_path import run_golden_path_bench
-    from tradepulse.perf.io import write_perf_report, format_summary
+    from tradepulse.perf.io import format_summary, write_perf_report
 except ImportError as e:
     print(f"Error: Unable to import performance modules: {e}")
     print("\nMake sure you have installed TradePulse:")
@@ -28,7 +28,7 @@ def main():
     print("Golden Path Performance Benchmark")
     print("=" * 60)
     print()
-    
+
     # Run benchmark
     print("Running benchmark...")
     try:
@@ -40,9 +40,9 @@ def main():
     except Exception as e:
         print(f"\n❌ Benchmark failed: {e}")
         sys.exit(1)
-    
+
     print("✅ Benchmark complete\n")
-    
+
     # Save to JSON
     output_path = repo_root / "reports" / "perf" / "golden_path_backtest.json"
     try:
@@ -51,11 +51,11 @@ def main():
     except Exception as e:
         print(f"\n❌ Failed to save results: {e}")
         sys.exit(1)
-    
+
     # Print summary
     summary = format_summary(results)
     print(summary)
-    
+
     # Summary for CI
     latency = results["latency_ms"]
     throughput = results["throughput"]

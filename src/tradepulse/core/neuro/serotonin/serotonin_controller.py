@@ -39,6 +39,7 @@ def _load_single_yaml_document(path: Path) -> dict[str, Any]:
         raise ValueError("Serotonin configuration must be a mapping at the root")
     return doc
 
+
 @dataclass(frozen=True)
 class SerotoninConfig:
     """Configuration container for :class:`SerotoninController`.

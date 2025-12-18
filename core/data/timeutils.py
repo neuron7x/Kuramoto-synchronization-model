@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timezone
-import math
 from functools import lru_cache
 from typing import Dict, FrozenSet, Iterable, Sequence
 from zoneinfo import ZoneInfo

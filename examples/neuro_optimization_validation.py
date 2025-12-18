@@ -23,6 +23,7 @@ except ImportError:
 # Import modules directly (bypassing package __init__.py)
 import importlib.util
 
+
 def load_module(name, path):
     """Load a module from path without triggering package imports."""
     spec = importlib.util.spec_from_file_location(name, path)
@@ -82,7 +83,7 @@ try:
             'attention_gain': 1.0,
         },
     }
-    
+
     calibrator = AdaptiveCalibrator(initial_params)
     assert calibrator.state.iteration == 0
     assert calibrator.state.temperature == 1.0
@@ -106,7 +107,7 @@ try:
         total_trades=100,
         timestamp=time.time(),
     )
-    
+
     score = metrics.composite_score()
     assert 0 <= score <= 1
     print(f"   ✓ Metrics created, composite score: {score:.3f}")
@@ -134,7 +135,7 @@ try:
         performance_weight=0.45,
         stability_weight=0.20,
     )
-    
+
     optimizer = NeuroOptimizer(config)
     assert optimizer._iteration == 0
     print("   ✓ Optimizer initialized successfully")
@@ -152,13 +153,13 @@ try:
         'na_arousal': 1.1,
         'ach_attention': 0.7,
     }
-    
+
     updated_params, balance = optimizer.optimize(
         initial_params,
         sample_state,
         performance_score=1.5,
     )
-    
+
     assert isinstance(updated_params, dict)
     assert optimizer._iteration == 1
     print(f"   ✓ Optimizer step executed, balance score: {balance.overall_balance_score:.3f}")
@@ -170,11 +171,11 @@ except Exception as e:
 print("\n6. Testing mini optimization loop (10 iterations)...")
 try:
     current_params = initial_params.copy()
-    
+
     for i in range(10):
         # Simulate varying performance
         perf = 1.0 + i * 0.05 + np.random.randn() * 0.1
-        
+
         # Create metrics
         metrics = CalibrationMetrics(
             sharpe_ratio=max(0, perf),
@@ -188,10 +189,10 @@ try:
             total_trades=100 + i * 10,
             timestamp=time.time(),
         )
-        
+
         # Calibrate
         current_params = calibrator.step(metrics)
-        
+
         # Simulate neuromodulator state
         neuro_state = {
             'dopamine_level': 0.5 + np.random.randn() * 0.1,
@@ -200,15 +201,15 @@ try:
             'na_arousal': 1.0 + np.random.randn() * 0.2,
             'ach_attention': 0.7 + np.random.randn() * 0.1,
         }
-        
+
         # Optimize
         current_params, balance = optimizer.optimize(
             current_params,
             neuro_state,
             metrics.composite_score(),
         )
-    
-    print(f"   ✓ Completed 10 iterations")
+
+    print("   ✓ Completed 10 iterations")
     print(f"   Final best score: {calibrator.state.best_score:.3f}")
     print(f"   Final balance: {balance.overall_balance_score:.3f}")
 except Exception as e:
@@ -224,11 +225,11 @@ try:
     assert cal_report['status'] == 'active'
     assert 'best_score' in cal_report
     assert 'recommendations' in cal_report
-    
+
     opt_report = optimizer.get_optimization_report()
     assert opt_report['status'] == 'active'
     assert 'health_status' in opt_report
-    
+
     print("   ✓ Reports generated successfully")
     print(f"   Calibration status: {cal_report['exploration_state']}")
     print(f"   Health status: {opt_report['health_status']['status']}")

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -30,7 +29,6 @@ from core.risk_monitoring.advanced_risk_manager import (
     RiskState,
     StressResponseProtocol,
 )
-
 
 # =============================================================================
 # Fixtures

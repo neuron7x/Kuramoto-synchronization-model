@@ -410,6 +410,7 @@ def _generate_config_table(schema: dict) -> str:
         )
     return "\n".join(rows)
 
+
 def _load_single_yaml_document(path: Path) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         docs = list(yaml.safe_load_all(f))

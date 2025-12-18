@@ -3,10 +3,21 @@ max-line-length = 120
 extend-ignore =
     E203,
     W503,
-    E704
+    E704,
+    E226,
+    W391,
+    W504
 per-file-ignores =
     */__init__.py:F401
     core/neuro/tests/test_ecs_regulator.py:E402
+    benchmarks/*.py:E402
+    cortex_service/tests/*.py:E402
+    tests/core/agent/test_pqf_pscs.py:E402
+    tests/scripts/test_calibrate_controllers.py:E402
+    tests/sdk/mlsdm/test_replay_harness.py:E402
+    docs/archive/*.py:E402
+    scripts/eval/*.py:E402
+    examples/*.py:E402
 exclude =
     .git,
     __pycache__,

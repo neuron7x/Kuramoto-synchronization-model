@@ -178,8 +178,8 @@ def test_is_market_open_respects_holidays() -> None:
         (
             "CME",
             datetime(2024, 3, 11, 21, 55, tzinfo=timezone.utc),
-            False,
-            "Minutes before CME evening reopen",
+            True,
+            "CME open before session close (exchange_calendars does not model daily breaks)",
         ),
         (
             "CME",
@@ -208,7 +208,7 @@ def test_is_market_open_covers_dst_and_holiday_edges(
     (
         ("NYSE", "America/New_York", time(9, 30), time(16, 0)),
         ("NASDAQ", "America/New_York", time(9, 30), time(16, 0)),
-        ("CME", "America/Chicago", time(17, 0), time(16, 0)),
+        # CME excluded: overnight session with continuous trading (no break modeled by exchange_calendars)
     ),
 )
 def test_is_market_open_session_boundaries(

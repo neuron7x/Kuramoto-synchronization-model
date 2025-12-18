@@ -6,7 +6,6 @@ randomly generated inputs.
 
 from __future__ import annotations
 
-import re
 import string
 
 import pytest
@@ -16,12 +15,12 @@ from tradepulse.policy.decision_types import DecisionType, resolve_decisions
 from tradepulse.policy.policy_engine import (
     PolicyEngine,
     PolicyEngineConfig,
-    PolicyResult,
     SimplePolicyModule,
 )
 
 try:
-    from hypothesis import given, settings, strategies as st
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
 
     HAS_HYPOTHESIS = True
 except ImportError:
@@ -34,7 +33,8 @@ except ImportError:
         return decorator
 
     given = _skip_decorator
-    settings = lambda *args, **kwargs: lambda f: f
+    def settings(*args, **kwargs):
+        return lambda f: f
     st = None
 
 

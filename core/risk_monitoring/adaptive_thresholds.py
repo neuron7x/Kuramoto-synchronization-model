@@ -12,7 +12,6 @@ The thresholds automatically tighten during unstable periods to minimize exposur
 from __future__ import annotations
 
 import logging
-import math
 import threading
 from collections import deque
 from dataclasses import dataclass, field

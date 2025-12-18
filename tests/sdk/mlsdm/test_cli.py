@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import logging
-from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -112,7 +109,7 @@ class TestConfigureLogging:
         root = logging.getLogger()
         root.handlers.clear()
 
-        logger = configure_logging(level=logging.DEBUG)
+        configure_logging(level=logging.DEBUG)
 
         assert root.level == logging.DEBUG
 
@@ -247,20 +244,21 @@ class TestMainFunction:
     def test_main_api_mode(self) -> None:
         """Test main function in API mode."""
         import sys
+
         from tradepulse.sdk.mlsdm.__main__ import main
 
         # Create a mock uvicorn module and inject it
         mock_uvicorn = MagicMock()
         sys.modules["uvicorn"] = mock_uvicorn
-        
+
         # Also need to mock the app import
         mock_app = MagicMock()
-        
+
         try:
             with patch("sys.argv", ["mlsdm", "--api", "--host", "localhost", "--port", "9000"]):
                 with patch("tradepulse.sdk.mlsdm.api.app.app", mock_app):
                     main()
-                
+
             # Verify uvicorn.run was called with correct parameters
             mock_uvicorn.run.assert_called_once()
             call_args = mock_uvicorn.run.call_args

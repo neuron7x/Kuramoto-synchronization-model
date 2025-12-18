@@ -18,9 +18,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable
 
-import numpy as np
-from numpy.typing import NDArray
-
 __all__ = [
     "StressDetector",
     "StressLevel",

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from pathlib import Path
-from typing import Sequence
 
 import pandas as pd
 import pytest

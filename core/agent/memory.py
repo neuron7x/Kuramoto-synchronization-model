@@ -41,7 +41,6 @@ import numpy as np
 
 from core.utils.memory_validation import (
     STATE_VERSION,
-    CorruptedStateError,
     InvariantError,
     compute_state_checksum,
     recover_strategy_memory_state,

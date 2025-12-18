@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -31,10 +31,8 @@ from numpy.typing import NDArray
 from .adaptive_thresholds import (
     AdaptiveThresholdCalibrator,
     CalibratedThresholds,
-    ThresholdConfig,
 )
 from .compliance import (
-    AuditTrailEntry,
     ComplianceManager,
     RegulationType,
 )

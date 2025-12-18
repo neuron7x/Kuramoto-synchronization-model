@@ -201,6 +201,7 @@ def test_build_dynamics_accounts_for_idle_time_before_first_start() -> None:
     assert dynamics.total_queue_delay == pytest.approx(0.5)
     assert dynamics.max_queue_delay == pytest.approx(0.4)
 
+
 class _StubRiskManager:
     def __init__(self) -> None:
         self.calls: list[dict[str, Any]] = []

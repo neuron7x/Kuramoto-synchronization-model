@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import smtplib
-import logging
+from datetime import UTC, datetime
 from email.mime.text import MIMEText
-from datetime import datetime
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class IncidentResponse:
             raise ValueError(f"Unknown severity '{severity}'")
         incident = {
             "id": self._next_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "severity": severity,
             "event": event,
             "details": details,

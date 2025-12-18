@@ -6,15 +6,11 @@ for offline regression testing of the MLSDM pipeline.
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
-import re
 import sys
 import tempfile
 from pathlib import Path
-
-import pytest
 
 
 def _load_module_directly(module_name: str, file_path: str):
@@ -44,7 +40,6 @@ from scripts.eval.replay_pipeline import (
     ReplayCase,
     ReplayPipeline,
     ReplayReport,
-    ReplayResult,
     StubLLM,
     load_fixtures,
     run_replay,
@@ -307,7 +302,7 @@ class TestRunReplay:
             ReplayCase(case_id="test", input_text="test input"),
         ]
         report1 = run_replay(cases1, seed=42)
-        actual_hash = report1.results[0].actual_output_hash
+        report1.results[0].actual_output_hash
 
         # Create case with wrong expected hash
         cases2 = [

@@ -38,16 +38,16 @@ References:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
 import numpy as np
 import numpy.typing as npt
-import logging
 from scipy.optimize import Bounds, minimize
 
-
 logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True, slots=True)
 class KellyParams:

@@ -7,7 +7,6 @@ covering invariant checking, checksum verification, and recovery modes.
 
 from __future__ import annotations
 
-import json
 import time
 import warnings
 from typing import Any, Dict
