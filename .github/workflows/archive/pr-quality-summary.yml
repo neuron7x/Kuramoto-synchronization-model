@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
@@ -83,7 +83,7 @@ jobs:
 
       - name: Get PR number
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           result-encoding: string
           script: |
@@ -100,7 +100,7 @@ jobs:
 
       - name: Post quality summary comment
         if: steps.pr.outputs.result != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const prNumber = parseInt('${{ steps.pr.outputs.result }}');
