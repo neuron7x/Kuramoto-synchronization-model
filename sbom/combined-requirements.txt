@@ -110,7 +110,7 @@ mdit-py-plugins==0.5.0
 mdurl==0.1.2
 more-itertools==10.8.0
 msgpack==1.1.2
-mutmut==3.3.1
+mutmut==3.4.0
 mypy==1.18.2
 nh3==0.3.1
 nvidia-ml-py==13.580.82

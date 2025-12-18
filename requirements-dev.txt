@@ -22,7 +22,7 @@ pytest-xdist==3.8.0
 pytest-split==0.10.0
 pytest-rerunfailures==16.1
 pytest-profiling==1.8.1; python_version < "3.13"
-mutmut==3.3.1
+mutmut==3.4.0
 pactman==2.31.0
 click>=8.3.0
 redis>=5.0.1
