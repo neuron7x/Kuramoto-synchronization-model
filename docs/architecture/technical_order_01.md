@@ -93,6 +93,17 @@ compliance.
 
 ## 6. Next Steps
 
+An automated regression guard now lives in
+`tests/tools/test_architecture_repo_regression.py`, invoking the scanner across
+the full repository to assert zero dependency cycles and to verify that the
+authoritative package roots remain visible (`core`, `execution`, `backtest`,
+`analytics`, `application`, `tradepulse`, `tradepulse_agent`). Run it locally
+with:
+
+```bash
+pytest tests/tools/test_architecture_repo_regression.py -q
+```
+
 1. Embed the scanner in CI, failing builds if dependency cycles emerge or if
    orphan counts spike unexpectedly.
 2. Host quarterly architecture reviews using the generated metrics to retire
@@ -107,4 +118,3 @@ inspection, passing unit tests that validate its correctness, and documented
 findings captured in this report. Together they satisfy the control objectives
 of Technical Order № 01: the system’s architectural map is documented, cycles
 are absent, and governance hooks exist to prevent regressions.【F:tools/architecture/scanner.py†L1-L254】【F:tests/tools/test_architecture_scanner.py†L1-L88】
-
