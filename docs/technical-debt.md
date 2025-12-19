@@ -5,6 +5,8 @@ sacrificing platform stability. This playbook formalises how we identify,
 prioritise, and retire debt across services, data pipelines, and research
 artifacts.
 
+> **Live registry:** See `reports/TECH_DEBT_REGISTRY.md` for the current, prioritised debt ledger with owners and closure criteria.
+
 ## Guiding Principles
 
 - **Visibility first.** Debt must be explicitly logged, tagged, and visible in
