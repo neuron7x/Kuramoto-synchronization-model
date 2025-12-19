@@ -248,7 +248,7 @@ jobs:
       contents: read
       packages: write
     env:
-      GHCR_IMAGE: ghcr.io/${{ github.repository }}
+      GHCR_REPOSITORY: ${{ github.repository }}
       DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_REPOSITORY }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -268,7 +268,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          targets=("${GHCR_IMAGE,,}")
+          ghcr_image="ghcr.io/${GHCR_REPOSITORY,,}"
+          targets=("${ghcr_image}")
           if [[ -n "${DOCKERHUB_IMAGE}" ]]; then
             targets+=("docker.io/${DOCKERHUB_IMAGE,,}")
           fi

@@ -668,8 +668,6 @@ jobs:
     needs: fast-unit-tests
     timeout-minutes: 60
     name: Targeted Mutation Testing (Trading Engine)
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
@@ -713,7 +711,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Upload coverage to Codecov (OIDC)
-        if: ${{ !github.event.pull_request.head.repo.fork && env.CODECOV_TOKEN == '' }}
+        if: ${{ !github.event.pull_request.head.repo.fork }}
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
           files: ./coverage.xml
