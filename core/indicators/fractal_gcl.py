@@ -12,7 +12,7 @@ try:
     import torch.nn.functional as F
 
     _TORCH_AVAILABLE = True
-except ImportError:  # pragma: no cover - optional dependency
+except (ImportError, OSError):  # pragma: no cover - optional dependency
     _TORCH_AVAILABLE = False
     torch = None  # type: ignore[assignment]
     F = None  # type: ignore[assignment]
