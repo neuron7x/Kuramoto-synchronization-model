@@ -45,21 +45,25 @@ Example:
     >>> controller = SerotoninController()
 """
 
-from core.config import (
-    ConfigRegistry,
-    ConfigValidationError,
-    TradePulseSettings,
-)
-from core.neuro.serotonin import (
-    SerotoninConfig,
-    SerotoninConfigEnvelope,
-    SerotoninController,
-)
-from core.utils.logging import (
-    StructuredLogger,
-    configure_logging,
-    get_logger,
-)
+from importlib import import_module
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - for static analysis only
+    from core.config import (
+        ConfigRegistry,
+        ConfigValidationError,
+        TradePulseSettings,
+    )
+    from core.neuro.serotonin import (
+        SerotoninConfig,
+        SerotoninConfigEnvelope,
+        SerotoninController,
+    )
+    from core.utils.logging import (
+        StructuredLogger,
+        configure_logging,
+        get_logger,
+    )
 
 __all__ = [
     # Configuration
@@ -79,3 +83,33 @@ __all__ = [
 # Version information
 __version__ = "2.5.0"
 
+
+def _missing_attr(name: str) -> AttributeError:
+    """Construct a consistent AttributeError message for missing exports."""
+    return AttributeError(f"module 'core' has no attribute {name!r}")
+
+
+def _lazy_load(module_name: str, name: str) -> object:
+    """Load ``name`` from ``module_name`` on demand and cache the export."""
+    try:
+        module = import_module(module_name)
+        value = getattr(module, name)
+    except (ImportError, AttributeError) as exc:  # pragma: no cover - propagate as AttributeError
+        raise _missing_attr(name) from exc
+    globals()[name] = value
+    return value
+
+
+def __getattr__(name: str) -> object:
+    """Lazily resolve exported symbols; raises AttributeError for unknown names."""
+
+    if name in {"ConfigRegistry", "ConfigValidationError", "TradePulseSettings"}:
+        return _lazy_load("core.config", name)
+
+    if name in {"StructuredLogger", "configure_logging", "get_logger"}:
+        return _lazy_load("core.utils.logging", name)
+
+    if name in {"SerotoninConfig", "SerotoninConfigEnvelope", "SerotoninController"}:
+        return _lazy_load("core.neuro.serotonin", name)
+
+    raise _missing_attr(name)
