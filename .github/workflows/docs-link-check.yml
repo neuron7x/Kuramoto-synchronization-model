@@ -51,13 +51,13 @@ jobs:
 
           echo "Checking git diff range: $range"
           
-          # Find all changed markdown files
-          mapfile -t files < <(git diff --name-only "$range" -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
+          # Find all changed markdown files (use -c core.quotePath=false to handle Unicode filenames)
+          mapfile -t files < <(git -c core.quotePath=false diff --name-only "$range" -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
           
           # Fallback: if no files found, check HEAD commit only
           if [[ ${#files[@]} -eq 0 ]]; then
             echo "No files in range diff, checking HEAD commit..."
-            mapfile -t files < <(git diff-tree --no-commit-id --name-only -r HEAD -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
+            mapfile -t files < <(git -c core.quotePath=false diff-tree --no-commit-id --name-only -r HEAD -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
           fi
 
           if [[ ${#files[@]} -eq 0 ]]; then
