@@ -9,6 +9,17 @@ __all__ = [
     "MarketRegimeAnalyzer",
     "DynamicPositionSizer",
     "AgentCoordinator",
+    # New engineering modules
+    "SignalStrategyRegistry",
+    "PortfolioOptimizer",
+    "AlertManager",
+    "BacktestReportGenerator",
+    "OrderValidator",
+    "DataQualityMonitor",
+    "PerformanceTracker",
+    "StrategyScheduler",
+    "ExecutionAnalyzer",
+    "SystemHealthDashboard",
 ]
 
 # Optional GABA gate (requires torch)
@@ -22,8 +33,20 @@ if importlib.util.find_spec("torch") is not None:
 
     __all__.extend(["GABAInhibitionGate", "GateParams", "GateState", "GateMetrics"])
 
-# Import new modules (no torch dependency)
+# Import core modules (no torch dependency)
 from modules.adaptive_risk_manager import AdaptiveRiskManager
 from modules.agent_coordinator import AgentCoordinator
 from modules.dynamic_position_sizer import DynamicPositionSizer
 from modules.market_regime_analyzer import MarketRegimeAnalyzer
+
+# Import new engineering modules
+from modules.signal_strategy_registry import SignalStrategyRegistry
+from modules.portfolio_optimizer import PortfolioOptimizer
+from modules.alert_manager import AlertManager
+from modules.backtest_report_generator import BacktestReportGenerator
+from modules.order_validator import OrderValidator
+from modules.data_quality_monitor import DataQualityMonitor
+from modules.performance_tracker import PerformanceTracker
+from modules.strategy_scheduler import StrategyScheduler
+from modules.execution_analyzer import ExecutionAnalyzer
+from modules.system_health_dashboard import SystemHealthDashboard
