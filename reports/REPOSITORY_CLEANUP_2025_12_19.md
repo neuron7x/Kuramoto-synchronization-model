@@ -6,7 +6,7 @@
 
 ## Rationale and safety
 - Eliminates redundant artifacts that provided no additional value while preserving canonical data and tooling.
-- Both removed files were exact duplicates; functionality remains unchanged.
+- Both removed files were exact duplicates; functionality remains unchanged. Canonical comparator `scripts/compare_states.py` (checksum-matched) remains in place.
 - Items are tracked in git history and can be restored if future needs arise.
 
 ## Follow-up
