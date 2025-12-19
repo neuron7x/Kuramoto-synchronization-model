@@ -532,6 +532,8 @@ pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable
 
 TradePulse uses **Hydra** for flexible, composable configuration management.
 
+📜 **Environment Charter**: Deterministic dependency/config/data rules live in [docs/ENVIRONMENT_CHARTER.md](docs/ENVIRONMENT_CHARTER.md).
+
 ### Configuration Structure
 
 TradePulse uses three configuration directories, each with a specific purpose:

@@ -402,8 +402,8 @@ schema-catalog:
 
 .PHONY: scripts-lint scripts-test scripts-gen-proto scripts-dev-up scripts-dev-down
 scripts-lint:
-	TRADEPULSE_TWO_FACTOR_SECRET=MFRGGZDFMZTWQ2LK \
-	TRADEPULSE_BOOTSTRAP_STRATEGY=lazy \
+	@ : "$${TRADEPULSE_TWO_FACTOR_SECRET:?export TRADEPULSE_TWO_FACTOR_SECRET before running scripts-lint}"
+	@ : "$${TRADEPULSE_BOOTSTRAP_STRATEGY:?export TRADEPULSE_BOOTSTRAP_STRATEGY before running scripts-lint}"
 	python -m scripts lint
 
 scripts-test:
