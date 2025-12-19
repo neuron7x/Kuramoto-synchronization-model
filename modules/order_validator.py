@@ -13,7 +13,7 @@ Features:
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 
 class OrderType(str, Enum):
@@ -346,7 +346,7 @@ class OrderValidator:
 
     def _validate_quantity(
         self, order: Order, current_price: Optional[float]
-    ) -> tuple[List[ValidationError], List[ValidationWarning]]:
+    ) -> Tuple[List[ValidationError], List[ValidationWarning]]:
         """Валідація кількості"""
         errors = []
         warnings = []
@@ -430,7 +430,7 @@ class OrderValidator:
 
     def _validate_risk(
         self, order: Order, current_price: Optional[float]
-    ) -> tuple[List[ValidationError], List[ValidationWarning], float]:
+    ) -> Tuple[List[ValidationError], List[ValidationWarning], float]:
         """Валідація ризиків"""
         errors = []
         warnings = []
@@ -521,7 +521,7 @@ class OrderValidator:
 
     def _validate_position(
         self, order: Order, current_price: Optional[float]
-    ) -> tuple[List[ValidationError], List[ValidationWarning]]:
+    ) -> Tuple[List[ValidationError], List[ValidationWarning]]:
         """Валідація позиції"""
         errors = []
         warnings = []
