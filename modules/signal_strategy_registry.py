@@ -331,7 +331,6 @@ class SignalStrategyRegistry:
             )
 
         metadata = self._metadata[strategy_name]
-        _parameters = self._parameters[strategy_name]  # noqa: F841
 
         # Перевірка мінімальної кількості даних
         if len(data) < metadata.min_data_points:

@@ -239,7 +239,6 @@ class PortfolioOptimizer:
 
     def _maximum_sharpe(self) -> np.ndarray:
         """Максимальний коефіцієнт Шарпа"""
-        _n = len(self._expected_returns)  # noqa: F841
         excess_returns = self._expected_returns - self.risk_free_rate
 
         # Проста реалізація через аналітичне рішення
@@ -278,7 +277,6 @@ class PortfolioOptimizer:
                 break
 
             marginal_risk = np.dot(self._covariance_matrix, weights) / portfolio_vol
-            _risk_contributions = weights * marginal_risk  # noqa: F841
 
             # Цільовий внесок (рівний для всіх)
             target_contribution = portfolio_vol / n
