@@ -11,12 +11,11 @@ Features:
 - Історія алертів
 """
 
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
-import hashlib
-import json
 
 
 class AlertSeverity(str, Enum):
