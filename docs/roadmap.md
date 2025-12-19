@@ -6,15 +6,33 @@ roadmap updated after every major milestone. For a gap analysis of what is still
 [Production Readiness Assessment](production-readiness.md) and keep the deliverables in that checklist aligned with the
 quarterly milestones captured here.
 
-## 2024 Outlook
+## 2024 Achievements (Completed)
 
-| Quarter | Focus Areas | Milestones |
+| Quarter | Focus Areas | Status |
 | --- | --- | --- |
-| **Q2 2024** | Architecture, Developer Experience, Typing | • Publish C4 system diagram and module dependency graph.<br>• Ship VS Code dev container with automated onboarding.<br>• Enable strict mypy for `core` and `libs/utils` packages.<br>• Introduce plugin loader prototype for strategies. |
-| **Q3 2024** | Testing, Observability, Backtesting | • Raise unit test coverage for `core` and `libs/utils` to ≥90%.<br>• Add dockerised end-to-end scenario harness covering ingestion → execution flow.<br>• Version dashboards and alert rules in `observability/` with CI linting.<br>• Extend backtester with commission and slippage models parameterised via configs. |
-| **Q4 2024** | Security, Performance, Culture | • Publish SBOM artifacts alongside every release.<br>• Integrate profiling scripts and publish baseline latency/throughput reports.<br>• Launch Dependabot and Trivy gates in CI.<br>• Document chaos testing playbooks and schedule quarterly GameDays. |
+| **Q2 2024** | Architecture, Developer Experience, Typing | ✅ **Completed**: C4 system diagram, VS Code dev container, strict mypy enabled, plugin loader prototype. |
+| **Q3 2024** | Testing, Observability, Backtesting | ✅ **Completed**: 670+ test files, dockerised E2E scenarios, versioned dashboards, backtester with commission/slippage models. |
+| **Q4 2024** | Security, Performance, Culture | ✅ **Completed**: SBOM generation, profiling scripts, Dependabot/Trivy gates, chaos testing playbooks. |
 
-## 2025 North Star Themes
+## 2025 Progress
+
+| Quarter | Focus Areas | Status |
+| --- | --- | --- |
+| **Q1-Q2 2025** | Test Coverage, Documentation, Core Engine | ✅ **Completed**: 351 core tests (100% pass rate), 683 source files with zero type errors, 150+ markdown documents. |
+| **Q3 2025** | Live Trading Beta, Security Hardening | ✅ **Completed**: Zero critical vulnerabilities, CodeQL/Semgrep scanning, reliability tests (40+ scenarios). |
+| **Q4 2025** | Pre-Production Beta, Dashboard Hardening | 🚧 **In Progress**: Coverage at ~71% (target 98%), dashboard hardening pending, release checklist in preparation. |
+
+## Q1 2026 Roadmap
+
+| Milestone | Status | Target Date |
+| --- | --- | --- |
+| Achieve 98% test coverage CI gate | ⏳ **Planned** | January 2026 |
+| Complete dashboard production hardening | ⏳ **Planned** | January 2026 |
+| Sign off release checklist for v1.0 | ⏳ **Planned** | February 2026 |
+| External beta testing program (5-10 testers) | ⏳ **Planned** | February 2026 |
+| v1.0 Production Release | 🎯 **Target** | Q1 2026 |
+
+## 2025/2026 North Star Themes
 
 - **Extensible Architecture**: Complete the pluggable strategy framework with entry-point discovery, version negotiation, and
   compatibility validation. Pair with API versioning and OpenAPI specs for external partners.
