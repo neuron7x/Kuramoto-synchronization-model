@@ -150,14 +150,14 @@ for t in timeline:
 
 ---
 
-## 12) Література (dobro‑надійні джерела)
+## 12) Література (APA 7; рецензовані джерела з DOI/ідентифікаторами для BibTeX)
 
-* Ang, A., Bekaert, G. (2004). *How Regimes Affect Asset Allocation*. Financial Analysts Journal.
-* Guidolin, M., Timmermann, A. (2008). *International Asset Allocation under Regime Switching, Skew and Kurtosis Preferences*. Review of Financial Studies.
-* Nystrup, P., Madsen, H., Lindström, E. (2017). *Dynamic Portfolio Optimization Across Hidden Market Regimes*. Quantitative Finance (to appear; accepted version).
-* Bulla, J., et al. (2010/2011). *Markov‑switching Asset Allocation: Do Profitable Strategies Exist?* Journal of Asset Management / MPRA.
-* Kritzman, M., Li, Y. (2010). *Skulls, Financial Turbulence, and Risk Management*. Financial Analysts Journal.
-* Kinlaw, W., Turkington, D., et al. (2013). *Correlation Surprise / Absorption Ratio* (J. Asset Management / JPM insights).
-* Wu, M.C., et al. (2006). *Phase distribution and phase correlation of financial time series*. Physical Review E.
-* Leung, T., Zhao, T. (2021). *Financial Time Series Analysis with HHT/CEEMD* (arXiv).
-* Sultornsanee, S., et al. (2011). *Phase Synchronization in Stock Networks* (Procedia Computer Science).
+1. Ang, A., & Bekaert, G. (2004). How regimes affect asset allocation. *Financial Analysts Journal, 60*(2), 86–99. https://doi.org/10.2469/faj.v60.n2.2616  
+2. Guidolin, M., & Timmermann, A. (2008). International asset allocation under regime switching, skew, and kurtosis preferences. *Review of Financial Studies, 21*(2), 889–935. https://doi.org/10.1093/rfs/hhm074  
+3. Nystrup, P., Madsen, H., & Lindström, E. (2017). Dynamic portfolio optimization across hidden market regimes. *Quantitative Finance, 18*(1), 83–95. https://doi.org/10.1080/14697688.2017.1342857  
+4. Bulla, J., & Bulla, I. (2011). Markov-switching asset allocation: Do profitable strategies exist? *Journal of Asset Management, 12*(5), 310–321. https://doi.org/10.1057/jam.2010.27  
+5. Kritzman, M., & Li, Y. (2010). Skulls, financial turbulence, and risk management. *Financial Analysts Journal, 66*(5), 30–41. https://doi.org/10.2469/faj.v66.n5.4  
+6. Kinlaw, W., Kritzman, M., & Turkington, D. (2015). Correlation surprises. *Financial Analysts Journal, 71*(1), 42–50. https://doi.org/10.2469/faj.v71.n1.7  
+7. Wu, M.-C., Huang, M.-C., Yu, H.-C., & Chiang, T. C. (2006). Phase distribution and phase correlation of financial time series. *Physical Review E, 73*(1), 016118. https://doi.org/10.1103/PhysRevE.73.016118  
+8. Huang, N. E., Shen, Z., Long, S. R., Wu, M. C., Shih, H. H., Zheng, Q., Yen, N.-C., Tung, C. C., & Liu, H. H. (1998). The empirical mode decomposition and the Hilbert spectrum for nonlinear and non-stationary time series analysis. *Proceedings of the Royal Society A, 454*(1971), 903–995. https://doi.org/10.1098/rspa.1998.0193  
+9. Sultornsanee, S., Radhakrishnan, S., Falco, D., Zeid, A., & Kamarthi, S. V. (2011). Phase synchronization approach to construction and analysis of stock correlation network. *Procedia Computer Science, 6*, 52–56. https://doi.org/10.1016/j.procs.2011.08.011
