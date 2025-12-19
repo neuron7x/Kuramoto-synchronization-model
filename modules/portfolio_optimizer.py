@@ -14,7 +14,7 @@ Features:
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -239,7 +239,6 @@ class PortfolioOptimizer:
 
     def _maximum_sharpe(self) -> np.ndarray:
         """Максимальний коефіцієнт Шарпа"""
-        n = len(self._expected_returns)
         excess_returns = self._expected_returns - self.risk_free_rate
 
         # Проста реалізація через аналітичне рішення
@@ -278,7 +277,6 @@ class PortfolioOptimizer:
                 break
 
             marginal_risk = np.dot(self._covariance_matrix, weights) / portfolio_vol
-            risk_contributions = weights * marginal_risk
 
             # Цільовий внесок (рівний для всіх)
             target_contribution = portfolio_vol / n

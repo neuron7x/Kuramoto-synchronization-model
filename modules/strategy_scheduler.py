@@ -10,12 +10,12 @@ Features:
 - Моніторинг виконання
 """
 
+import heapq
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
-import threading
-import heapq
 
 
 class ScheduleType(str, Enum):

@@ -464,7 +464,10 @@ class OrderValidator:
                 errors.append(
                     ValidationError(
                         code="CONCENTRATION_LIMIT",
-                        message=f"Order would result in {concentration:.1%} concentration (max: {limits.max_concentration:.1%})",
+                        message=(
+                            f"Order would result in {concentration:.1%} concentration "
+                            f"(max: {limits.max_concentration:.1%})"
+                        ),
                     )
                 )
 
@@ -543,7 +546,10 @@ class OrderValidator:
                 errors.append(
                     ValidationError(
                         code="POSITION_SIZE_LIMIT",
-                        message=f"Projected position ${projected_value:,.2f} exceeds limit ${limits.max_position_size:,.2f}",
+                        message=(
+                            f"Projected position ${projected_value:,.2f} exceeds "
+                            f"limit ${limits.max_position_size:,.2f}"
+                        ),
                     )
                 )
 
