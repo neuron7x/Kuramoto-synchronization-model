@@ -82,6 +82,8 @@ jobs:
     timeout-minutes: 20
     needs: test-coverage
     name: Aggregate coverage & enforce guardrail
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -147,10 +149,10 @@ jobs:
 
           retention-days: 14
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: py311
           name: coverage-py311
@@ -202,10 +204,10 @@ jobs:
         id: check_mutations
         run: |
           if [ -f .mutmut-cache ] && [ -s .mutmut-cache ]; then
-            echo "mutations_exist=true" >> $GITHUB_OUTPUT
+            echo "mutations_exist=true" >> "$GITHUB_OUTPUT"
             echo "Mutations were generated, proceeding with enforcement"
           else
-            echo "mutations_exist=false" >> $GITHUB_OUTPUT
+            echo "mutations_exist=false" >> "$GITHUB_OUTPUT"
             echo "No mutations were generated, skipping enforcement"
           fi
 
@@ -246,8 +248,10 @@ jobs:
       contents: read
       packages: write
     env:
-      GHCR_IMAGE: ghcr.io/${{ toLower(github.repository) }}
+      GHCR_IMAGE: ghcr.io/${{ github.repository }}
       DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_REPOSITORY }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -264,9 +268,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          targets=("${GHCR_IMAGE}")
+          targets=("${GHCR_IMAGE,,}")
           if [[ -n "${DOCKERHUB_IMAGE}" ]]; then
-            targets+=("docker.io/${DOCKERHUB_IMAGE}")
+            targets+=("docker.io/${DOCKERHUB_IMAGE,,}")
           fi
           {
             echo "list<<EOF"
@@ -282,11 +286,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
       - name: Extract Docker metadata
         id: meta
