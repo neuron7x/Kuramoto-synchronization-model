@@ -23,7 +23,7 @@ def pi_control(
     center, half_width = band_center_width(params, band_expand)
     error = (state.EI - center) / half_width
     tanh_error = math.tanh(error)
-    state.I = clip(state.I + tanh_error, -params.I_max, params.I_max)
+    state.I = clip(state.I + tanh_error, -params.I_max, params.I_max)  # noqa: E741
     integrator_term = math.tanh(state.I / max(1e-6, params.I_max / 2.0))
     control = params.Kp * tanh_error + params.Ki * integrator_term
     rate_target = clip(1.0 + control, params.r_min, params.r_max)
