@@ -45,21 +45,25 @@ Example:
     >>> controller = SerotoninController()
 """
 
-from core.config import (
-    ConfigRegistry,
-    ConfigValidationError,
-    TradePulseSettings,
-)
-from core.neuro.serotonin import (
-    SerotoninConfig,
-    SerotoninConfigEnvelope,
-    SerotoninController,
-)
-from core.utils.logging import (
-    StructuredLogger,
-    configure_logging,
-    get_logger,
-)
+from importlib import import_module
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - for static analysis only
+    from core.config import (
+        ConfigRegistry,
+        ConfigValidationError,
+        TradePulseSettings,
+    )
+    from core.neuro.serotonin import (
+        SerotoninConfig,
+        SerotoninConfigEnvelope,
+        SerotoninController,
+    )
+    from core.utils.logging import (
+        StructuredLogger,
+        configure_logging,
+        get_logger,
+    )
 
 __all__ = [
     # Configuration
@@ -79,3 +83,41 @@ __all__ = [
 # Version information
 __version__ = "2.5.0"
 
+
+def __getattr__(name: str):
+    """Lazily import heavy optional dependencies to keep ``import core`` lightweight."""
+
+    if name in {"ConfigRegistry", "ConfigValidationError", "TradePulseSettings"}:
+        module = import_module("core.config")
+        globals().update(
+            {
+                "ConfigRegistry": module.ConfigRegistry,
+                "ConfigValidationError": module.ConfigValidationError,
+                "TradePulseSettings": module.TradePulseSettings,
+            }
+        )
+        return globals()[name]
+
+    if name in {"StructuredLogger", "configure_logging", "get_logger"}:
+        module = import_module("core.utils.logging")
+        globals().update(
+            {
+                "StructuredLogger": module.StructuredLogger,
+                "configure_logging": module.configure_logging,
+                "get_logger": module.get_logger,
+            }
+        )
+        return globals()[name]
+
+    if name in {"SerotoninConfig", "SerotoninConfigEnvelope", "SerotoninController"}:
+        module = import_module("core.neuro.serotonin")
+        globals().update(
+            {
+                "SerotoninConfig": module.SerotoninConfig,
+                "SerotoninConfigEnvelope": module.SerotoninConfigEnvelope,
+                "SerotoninController": module.SerotoninController,
+            }
+        )
+        return globals()[name]
+
+    raise AttributeError(f"module 'core' has no attribute {name!r}")

@@ -27,7 +27,23 @@ from typing import Iterable
 
 import pytest
 
-from core.utils.determinism import apply_thread_determinism
+try:
+    from core.utils.determinism import apply_thread_determinism
+except Exception:  # pragma: no cover - fallback when optional deps missing
+    THREAD_BOUND_ENV_VARS: dict[str, str] = {
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "BLIS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1",
+        "ACCELERATE_MAX_THREADS": "1",
+    }
+
+    def apply_thread_determinism(env=None):
+        target = env if env is not None else os.environ
+        for key, value in THREAD_BOUND_ENV_VARS.items():
+            target.setdefault(key, value)
 
 
 class _FlakyTracker:
@@ -214,7 +230,7 @@ if (
             holidays=(date(2024, 7, 4),),
         ),
         "CMES": _BaseCalendar(
-            "America/Chicago", time(17, 0), time(16, 0), (5,), holidays=()
+            "America/Chicago", time(0, 0), time(23, 59, 59), (5,), holidays=()
         ),
     }
 
