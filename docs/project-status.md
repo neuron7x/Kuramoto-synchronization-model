@@ -1,6 +1,6 @@
 # TradePulse Release Readiness
 
-## Snapshot - December 19, 2025
+## Snapshot - 2025-12-19
 
 The table below captures the current readiness of the major workstreams that
 block the v1.0 release. Values are updated whenever a milestone changes state.
@@ -64,5 +64,5 @@ For historical context and detailed documentation guidelines, refer to
 
 ---
 
-**Last Updated**: December 19, 2025  
-**Next Review**: January 2026 (Release Candidate preparation)
+**Last Updated**: 2025-12-19  
+**Next Review**: 2026-01 (Release Candidate preparation)
