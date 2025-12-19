@@ -37,34 +37,53 @@ jobs:
           set -eo pipefail
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+            
+            # Ensure we have both commits available
+            git fetch origin "$base_sha" "$head_sha" --depth=200 || true
+            
+            range="${base_sha}...${head_sha}"
           else
-            range="${{ github.event.before }}..${{ github.sha }}"
+            # For push events
+            range="${{ github.event.before }}...${{ github.sha }}"
           fi
 
-          mapfile -t files < <(git diff --name-only "$range" -- '*.md' '*.markdown' '*.mdx')
+          echo "Checking git diff range: $range"
+          
+          # Find all changed markdown files (use -c core.quotePath=false to handle Unicode filenames)
+          mapfile -t files < <(git -c core.quotePath=false diff --name-only "$range" -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
+          
+          # Fallback: if no files found, check HEAD commit only
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No files in range diff, checking HEAD commit..."
+            mapfile -t files < <(git -c core.quotePath=false diff-tree --no-commit-id --name-only -r HEAD -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
+          fi
 
           if [[ ${#files[@]} -eq 0 ]]; then
+            echo "✅ No markdown files changed - skipping link check"
             echo "has_md_changes=false" >> "$GITHUB_OUTPUT"
             echo "md_files_csv=" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "## 📝 Markdown Link Check: Skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "No markdown files were modified in this change." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "📄 Found ${#files[@]} changed markdown file(s):"
+            for file in "${files[@]}"; do
+              echo "  - $file"
+            done
+            
+            # Create CSV list
+            md_files_csv=$(IFS=,; echo "${files[*]}")
+            
+            echo "has_md_changes=true" >> "$GITHUB_OUTPUT"
+            echo "md_files_csv=${md_files_csv}" >> "$GITHUB_OUTPUT"
+            
+            echo "## 📝 Markdown Link Check: Active" >> "$GITHUB_STEP_SUMMARY"
+            echo "Checking ${#files[@]} file(s):" >> "$GITHUB_STEP_SUMMARY"
+            for file in "${files[@]}"; do
+              echo "- $file" >> "$GITHUB_STEP_SUMMARY"
+            done
           fi
-
-          printf 'Changed markdown files:\n%s\n' "${files[@]}"
-
-          md_files_csv=$(IFS=,; echo "${files[*]}")
-
-          {
-            echo "has_md_changes=true"
-            echo "md_files_csv=${md_files_csv}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Skip markdown link check when no markdown changes
-        if: github.event_name != 'schedule' && steps.changed_markdown.outputs.has_md_changes == 'false'
-        run: |
-          msg="Skipped markdown link check: no markdown files changed in this event."
-          echo "$msg"
-          echo "$msg" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check links in modified markdown files (PR/push)
         if: github.event_name != 'schedule' && steps.changed_markdown.outputs.has_md_changes == 'true'
@@ -73,6 +92,15 @@ jobs:
           use-quiet-mode: 'yes'
           config-file: '.github/markdown-link-check-config.json'
           file-path: "${{ steps.changed_markdown.outputs.md_files_csv }}"
+
+      - name: Link check results
+        if: github.event_name != 'schedule'
+        run: |
+          if [[ "${{ steps.changed_markdown.outputs.has_md_changes }}" == "true" ]]; then
+            echo "✅ All links validated successfully"
+          else
+            echo "✅ No markdown changes detected - check skipped"
+          fi
 
       - name: Full documentation link check (scheduled)
         if: github.event_name == 'schedule'
