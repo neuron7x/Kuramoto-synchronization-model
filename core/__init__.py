@@ -84,40 +84,32 @@ __all__ = [
 __version__ = "2.5.0"
 
 
-def __getattr__(name: str):
-    """Lazily import heavy optional dependencies to keep ``import core`` lightweight."""
+def _missing_attr(name: str) -> AttributeError:
+    """Construct a consistent AttributeError message for missing exports."""
+    return AttributeError(f"module 'core' has no attribute {name!r}")
+
+
+def _lazy_load(module_name: str, name: str) -> object:
+    """Load ``name`` from ``module_name`` on demand and cache the export."""
+    try:
+        module = import_module(module_name)
+        value = getattr(module, name)
+    except (ImportError, AttributeError) as exc:  # pragma: no cover - propagate as AttributeError
+        raise _missing_attr(name) from exc
+    globals()[name] = value
+    return value
+
+
+def __getattr__(name: str) -> object:
+    """Lazily resolve exported symbols; raises AttributeError for unknown names."""
 
     if name in {"ConfigRegistry", "ConfigValidationError", "TradePulseSettings"}:
-        module = import_module("core.config")
-        globals().update(
-            {
-                "ConfigRegistry": module.ConfigRegistry,
-                "ConfigValidationError": module.ConfigValidationError,
-                "TradePulseSettings": module.TradePulseSettings,
-            }
-        )
-        return globals()[name]
+        return _lazy_load("core.config", name)
 
     if name in {"StructuredLogger", "configure_logging", "get_logger"}:
-        module = import_module("core.utils.logging")
-        globals().update(
-            {
-                "StructuredLogger": module.StructuredLogger,
-                "configure_logging": module.configure_logging,
-                "get_logger": module.get_logger,
-            }
-        )
-        return globals()[name]
+        return _lazy_load("core.utils.logging", name)
 
     if name in {"SerotoninConfig", "SerotoninConfigEnvelope", "SerotoninController"}:
-        module = import_module("core.neuro.serotonin")
-        globals().update(
-            {
-                "SerotoninConfig": module.SerotoninConfig,
-                "SerotoninConfigEnvelope": module.SerotoninConfigEnvelope,
-                "SerotoninController": module.SerotoninController,
-            }
-        )
-        return globals()[name]
+        return _lazy_load("core.neuro.serotonin", name)
 
-    raise AttributeError(f"module 'core' has no attribute {name!r}")
+    raise _missing_attr(name)

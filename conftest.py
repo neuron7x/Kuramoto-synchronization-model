@@ -16,6 +16,7 @@ This module performs two responsibilities:
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import json
 import os
 import pathlib
@@ -28,22 +29,24 @@ from typing import Iterable
 import pytest
 
 try:
-    from core.utils.determinism import apply_thread_determinism
-except Exception:  # pragma: no cover - fallback when optional deps missing
-    THREAD_BOUND_ENV_VARS: dict[str, str] = {
-        "OMP_NUM_THREADS": "1",
-        "MKL_NUM_THREADS": "1",
-        "OPENBLAS_NUM_THREADS": "1",
-        "NUMEXPR_NUM_THREADS": "1",
-        "BLIS_NUM_THREADS": "1",
-        "VECLIB_MAXIMUM_THREADS": "1",
-        "ACCELERATE_MAX_THREADS": "1",
-    }
-
-    def apply_thread_determinism(env=None):
-        target = env if env is not None else os.environ
-        for key, value in THREAD_BOUND_ENV_VARS.items():
-            target.setdefault(key, value)
+    from core.utils.determinism import apply_thread_determinism, THREAD_BOUND_ENV_VARS
+except ImportError:  # pragma: no cover - fallback when optional deps missing
+    _determinism_path = pathlib.Path(__file__).parent / "core" / "utils" / "determinism.py"
+    if not _determinism_path.is_file():
+        msg = f"Determinism helpers missing at {_determinism_path.as_posix()}"
+        raise ImportError(msg)
+    spec = importlib.util.spec_from_file_location(
+        "_tradepulse_determinism", _determinism_path
+    )
+    if spec is None or spec.loader is None:
+        msg = (
+            f"Unable to load determinism helpers from {_determinism_path.as_posix()}"
+        )
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    THREAD_BOUND_ENV_VARS = module.THREAD_BOUND_ENV_VARS
+    apply_thread_determinism = module.apply_thread_determinism
 
 
 class _FlakyTracker:
@@ -230,7 +233,13 @@ if (
             holidays=(date(2024, 7, 4),),
         ),
         "CMES": _BaseCalendar(
-            "America/Chicago", time(0, 0), time(23, 59, 59), (5,), holidays=()
+            # Globex operates nearly 24/5; keep the stub open to mirror exchange_calendars'
+            # lack of daily maintenance breaks.
+            "America/Chicago",
+            time(0, 0),
+            time(23, 59, 59),
+            (5,),
+            holidays=(),
         ),
     }
 
