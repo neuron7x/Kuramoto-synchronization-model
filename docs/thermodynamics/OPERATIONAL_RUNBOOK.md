@@ -315,16 +315,16 @@ systemctl status tradepulse-protocols
    ```
 
 3. **After Maintenance:**
-   Use the canonical comparator script at `scripts/compare_states.py` (repository root) to diff pre/post states.
+   Use the canonical comparator script at [`scripts/compare_states.py`](../../scripts/compare_states.py) (repository root) to diff pre/post states.
    ```bash
    # Verify energy returned to baseline
    curl http://localhost:8080/thermo/status > post_maintenance_state.json
    
    # Compare with baseline (canonical comparator; replaces compare_thermo_states.py)
-    python scripts/compare_states.py \
-      pre_maintenance_baseline.json \
-      post_maintenance_state.json
-    ```
+   python scripts/compare_states.py \
+     pre_maintenance_baseline.json \
+     post_maintenance_state.json
+   ```
 
 ### Controller Restart
 
