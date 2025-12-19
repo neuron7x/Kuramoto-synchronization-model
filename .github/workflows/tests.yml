@@ -84,19 +84,29 @@ jobs:
         id: venv-cache-lint
         with:
           path: .venv
-          key: venv-lint-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          key: venv-lint-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-lint-${{ runner.os }}-py${{ matrix.python-version }}-v2-
             venv-lint-${{ runner.os }}-py${{ matrix.python-version }}-
+          save-always: true
       - name: Create virtual environment
-        if: steps.venv-cache-lint.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
       - name: Install Python dependencies
-        if: steps.venv-cache-lint.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
           .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
           .venv/bin/pip install pre-commit detect-secrets
+      - name: Verify virtual environment
+        run: |
+          echo "::group::Virtual environment diagnostics"
+          .venv/bin/python --version
+          .venv/bin/pip --version
+          .venv/bin/pip list | sed -n '1,50p'
+          echo "::endgroup::"
       - name: Validate localization bundles
         run: .venv/bin/python scripts/localization/sync_translations.py --check
         
@@ -212,14 +222,17 @@ jobs:
         id: venv-cache
         with:
           path: .venv
-          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-${{ runner.os }}-py${{ matrix.python-version }}-v2-
             venv-${{ runner.os }}-py${{ matrix.python-version }}-
+          save-always: true
       - name: Create virtual environment
-        if: steps.venv-cache.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
       - name: Install dependencies
-        if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
@@ -499,14 +512,17 @@ jobs:
         id: venv-cache-security
         with:
           path: .venv
-          key: venv-security-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          key: venv-security-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-security-${{ runner.os }}-py${{ matrix.python-version }}-v2-
             venv-security-${{ runner.os }}-py${{ matrix.python-version }}-
+          save-always: true
       - name: Create virtual environment
-        if: steps.venv-cache-security.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
       - name: Install dependencies
-        if: steps.venv-cache-security.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
@@ -566,16 +582,19 @@ jobs:
         id: venv-cache-full
         with:
           path: .venv
-          key: venv-full-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          key: venv-full-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-full-${{ runner.os }}-py${{ matrix.python-version }}-v2-
             venv-full-${{ runner.os }}-py${{ matrix.python-version }}-
+          save-always: true
             
       - name: Create virtual environment
-        if: steps.venv-cache-full.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
         
       - name: Install dependencies
-        if: steps.venv-cache-full.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
@@ -686,16 +705,19 @@ jobs:
         id: venv-cache-mutation
         with:
           path: .venv
-          key: venv-mutation-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          key: venv-mutation-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-mutation-${{ runner.os }}-py3.11-v2-
             venv-mutation-${{ runner.os }}-py3.11-
+          save-always: true
             
       - name: Create virtual environment
-        if: steps.venv-cache-mutation.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
         
       - name: Install dependencies
-        if: steps.venv-cache-mutation.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
@@ -781,16 +803,19 @@ jobs:
         id: venv-cache-bench
         with:
           path: .venv
-          key: venv-bench-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          key: venv-bench-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-bench-${{ runner.os }}-py3.11-v2-
             venv-bench-${{ runner.os }}-py3.11-
+          save-always: true
             
       - name: Create virtual environment
-        if: steps.venv-cache-bench.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
         
       - name: Install dependencies
-        if: steps.venv-cache-bench.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
@@ -949,16 +974,19 @@ jobs:
         id: venv-cache-xdist
         with:
           path: .venv
-          key: venv-xdist-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}
+          key: venv-xdist-${{ runner.os }}-py3.11-${{ hashFiles('requirements.lock', 'requirements-dev.lock', 'constraints/security.txt') }}-v2
           restore-keys: |
+            venv-xdist-${{ runner.os }}-py3.11-v2-
             venv-xdist-${{ runner.os }}-py3.11-
+          save-always: true
             
       - name: Create virtual environment
-        if: steps.venv-cache-xdist.outputs.cache-hit != 'true'
-        run: python -m venv .venv
+        run: |
+          if [ ! -d ".venv" ]; then
+            python -m venv .venv
+          fi
         
       - name: Install dependencies
-        if: steps.venv-cache-xdist.outputs.cache-hit != 'true'
         run: |
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
