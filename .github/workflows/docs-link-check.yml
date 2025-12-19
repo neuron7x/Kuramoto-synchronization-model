@@ -68,7 +68,9 @@ jobs:
             echo "No markdown files were modified in this change." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "📄 Found ${#files[@]} changed markdown file(s):"
-            printf '  - %s\n' "${files[@]}"
+            for file in "${files[@]}"; do
+              echo "  - $file"
+            done
             
             # Create CSV list
             md_files_csv=$(IFS=,; echo "${files[*]}")
@@ -78,7 +80,9 @@ jobs:
             
             echo "## 📝 Markdown Link Check: Active" >> "$GITHUB_STEP_SUMMARY"
             echo "Checking ${#files[@]} file(s):" >> "$GITHUB_STEP_SUMMARY"
-            printf '- %s\n' "${files[@]}" >> "$GITHUB_STEP_SUMMARY"
+            for file in "${files[@]}"; do
+              echo "- $file" >> "$GITHUB_STEP_SUMMARY"
+            done
           fi
 
       - name: Check links in modified markdown files (PR/push)
