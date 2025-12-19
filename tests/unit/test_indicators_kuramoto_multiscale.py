@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
+import builtins
+import importlib
 from typing import Sequence
 
 import numpy as np
@@ -54,6 +56,23 @@ def test_hilbert_phase_fallback_matches_scipy_on_sloped_signal(
     order_fft, _ = kuramoto_mod._kuramoto(phases_fft)
     order_scipy, _ = kuramoto_mod._kuramoto(phases_scipy)
     assert order_fft == pytest.approx(order_scipy, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
+
+
+def test_fractal_gcl_handles_torch_loader_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    import core.indicators.fractal_gcl as fractal_gcl
+
+    real_import = builtins.__import__
+
+    def raising_import(name, *args, **kwargs):
+        if name == "torch":
+            raise OSError("libtorch missing")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", raising_import)
+    reloaded = importlib.reload(fractal_gcl)
+    assert reloaded._TORCH_AVAILABLE is False
+    assert reloaded.torch is None
+    assert reloaded.F is None
 
 
 def test_timeframe_properties_expose_human_friendly_metadata() -> None:
