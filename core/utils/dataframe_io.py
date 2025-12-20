@@ -74,11 +74,13 @@ def _restore_iso_datetimes(frame: pd.DataFrame) -> pd.DataFrame:
             continue
 
         as_str = non_null.astype(str)
-        if not as_str.str.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:").all():
+        if not as_str.str.match(
+            r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+        ).all():
             continue
 
         parsed = pd.to_datetime(series, utc=True, errors="coerce")
-        if parsed.count() == non_null.shape[0]:
+        if parsed.count() / max(1, non_null.shape[0]) >= 0.9:
             restored[column] = parsed
 
     return restored
