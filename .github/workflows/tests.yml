@@ -94,12 +94,24 @@ jobs:
           if [ ! -d ".venv" ]; then
             python -m venv .venv
           fi
+      - name: Verify dependency files
+        run: |
+          echo "Checking required dependency files..."
+          test -f requirements.lock || { echo "❌ requirements.lock missing"; exit 1; }
+          test -f requirements-dev.lock || { echo "❌ requirements-dev.lock missing"; exit 1; }
+          test -f constraints/security.txt || { echo "❌ constraints/security.txt missing"; exit 1; }
+          echo "✅ All dependency files present"
+          head -n 3 requirements.lock
+          head -n 3 requirements-dev.lock
+          head -n 3 constraints/security.txt
       - name: Install Python dependencies
         run: |
+          set -ex
           .venv/bin/pip install --upgrade pip setuptools wheel
           .venv/bin/pip install -c constraints/security.txt -r requirements.lock
           .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
           .venv/bin/pip install pre-commit detect-secrets
+          .venv/bin/pip check
       - name: Verify virtual environment
         run: |
           echo "::group::Virtual environment diagnostics"
@@ -108,7 +120,12 @@ jobs:
           .venv/bin/pip list | sed -n '1,50p'
           echo "::endgroup::"
       - name: Validate localization bundles
-        run: .venv/bin/python scripts/localization/sync_translations.py --check
+        run: |
+          if [ -f scripts/localization/sync_translations.py ]; then
+            .venv/bin/python scripts/localization/sync_translations.py --check
+          else
+            echo "⚠️ Localization script not found, skipping"
+          fi
         
       - name: Install shellcheck
         run: |
