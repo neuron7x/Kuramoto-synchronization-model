@@ -283,11 +283,11 @@ def compute_phase(
             if n % 2 == 0 and spectrum.size > 1:
                 spectrum[-1] = 0
             imag = _scipy_fft.irfft(spectrum, n)
-            imag = np.asarray(imag, dtype=dtype, copy=False)
+            imag = np.asarray(imag, dtype=dtype)
         elif hilbert is not None:
             a = hilbert(x)
-            real = np.asarray(a.real, dtype=dtype, copy=False)
-            imag = np.asarray(a.imag, dtype=dtype, copy=False)
+            real = np.asarray(a.real, dtype=dtype)
+            imag = np.asarray(a.imag, dtype=dtype)
         else:
             # Analytic signal via real FFT-based Hilbert transform. Using rfft/irfft
             # halves the amount of spectral data we have to touch compared to the

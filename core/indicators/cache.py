@@ -377,14 +377,12 @@ class FileSystemIndicatorCache:
         return _SafeUnpickler(handle).load()
 
     def _deserialize(self, path: Path, fmt: str) -> Any:
-        if fmt == "parquet":
-            return read_dataframe(path)
+        if fmt == "parquet" or fmt == "dataframe-json":
+            return read_dataframe(path, allow_json_fallback=True)
         if fmt == "numpy":
             return np.load(path, allow_pickle=False)
-        if fmt == "dataframe-json":
-            return pd.read_json(path, orient="split")
         if fmt == "series-json":
-            frame = pd.read_json(path, orient="split")
+            frame = read_dataframe(path, allow_json_fallback=True)
             series = frame.iloc[:, 0]
             series.name = frame.columns[0]
             return series

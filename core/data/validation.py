@@ -512,4 +512,7 @@ def validate_timeseries_frame(
     try:
         return schema.validate(frame, lazy=False)
     except SchemaError as exc:  # pragma: no cover - exercised in unit tests
-        raise TimeSeriesValidationError(str(exc)) from exc
+        raise TimeSeriesValidationError(
+            f"expected series '{config.timestamp_column}' to satisfy timeseries "
+            f"constraints: {exc}"
+        ) from exc

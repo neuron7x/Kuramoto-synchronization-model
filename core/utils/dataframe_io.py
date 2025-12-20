@@ -55,6 +55,35 @@ def _load_polars() -> object:
     return pl
 
 
+def _restore_iso_datetimes(frame: pd.DataFrame) -> pd.DataFrame:
+    """Best-effort reconstruction of datetime columns when reading JSON payloads.
+
+    The JSON backend persists timestamps as ISO-8601 strings. Pandas does not
+    automatically restore them to datetime dtypes when using ``orient="split"``,
+    so we conservatively detect ISO-like columns and parse them back with UTC.
+    """
+
+    restored = frame.copy()
+    for column in restored.columns:
+        series = restored[column]
+        if not pd.api.types.is_object_dtype(series):
+            continue
+
+        non_null = series.dropna()
+        if non_null.empty:
+            continue
+
+        as_str = non_null.astype(str)
+        if not as_str.str.match(r"\d{4}-\d{2}-\d{2}T").all():
+            continue
+
+        parsed = pd.to_datetime(series, utc=True, errors="coerce")
+        if parsed.notna().sum() == non_null.shape[0]:
+            restored[column] = parsed
+
+    return restored
+
+
 def reset_dataframe_io_backends() -> None:
     """Reset cached backend discovery (useful for tests)."""
 
@@ -138,7 +167,8 @@ def _json_backend() -> _Backend:
         )
 
     def _read(path: Path) -> pd.DataFrame:
-        return pd.read_json(path, orient="split")
+        frame = pd.read_json(path, orient="split", dtype=False)
+        return _restore_iso_datetimes(frame)
 
     return _Backend("json", _JSON_SUFFIX, _write, _read, None)
 

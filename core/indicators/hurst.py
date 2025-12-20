@@ -373,7 +373,7 @@ def hurst_exponent(
         try:
             if selected_backend == "cuda":
                 tau = _compute_tau_cuda(
-                    np.asarray(x, dtype=np.float32, copy=False), lags
+                    np.asarray(x, dtype=np.float32), lags
                 )
                 if tau_buffer is not None and tau_buffer.shape == tau.shape:
                     np.copyto(tau_buffer, tau)
@@ -383,7 +383,7 @@ def hurst_exponent(
                 tau = tau_buffer
                 if tau is None or tau.shape[0] != lags.size:
                     tau = np.empty(lags.size, dtype=float)
-                x_float64 = np.asarray(x, dtype=np.float64, copy=False)
+                x_float64 = np.asarray(x, dtype=np.float64)
                 _compute_tau_numba(x_float64, lags_int, tau)
                 _LAST_HURST_BACKEND = "numba"
             else:
