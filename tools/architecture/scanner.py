@@ -200,6 +200,8 @@ class ArchitectureScanner:
             for file_path in directory.rglob("*.py"):
                 if "__pycache__" in file_path.parts:
                     continue
+                if not file_path.exists():
+                    continue
                 normalized = file_path.resolve()
                 if normalized in seen:
                     continue

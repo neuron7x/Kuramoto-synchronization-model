@@ -28,3 +28,19 @@ def test_repository_architecture_regression_guard() -> None:
     package_roots = {name.split(".")[0] for name in report.modules}
     missing = EXPECTED_ROOT_PACKAGES.difference(package_roots)
     assert not missing, f"Missing expected root packages: {sorted(missing)}"
+
+
+def test_architecture_scanner_skips_broken_symlinks(tmp_path: Path) -> None:
+    package_root = tmp_path / "pkg"
+    package_root.mkdir()
+    (package_root / "__init__.py").write_text("")
+    (package_root / "module.py").write_text("import os\n")
+
+    # Simulate legacy symlink pointing to a removed file.
+    broken_link = package_root / "orphaned.py"
+    broken_link.symlink_to(tmp_path / "missing.py")
+
+    report = ArchitectureScanner(tmp_path, include=[package_root]).scan()
+
+    assert "pkg.module" in report.modules
+    assert "pkg.orphaned" not in report.modules

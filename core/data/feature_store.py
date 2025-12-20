@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import math
 import os
 import shutil
@@ -12,7 +13,6 @@ import ssl
 from dataclasses import dataclass, field
 from datetime import UTC
 from decimal import Decimal, InvalidOperation
-from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Literal, Mapping, Protocol
 from urllib.parse import urlparse
@@ -20,6 +20,9 @@ from urllib.parse import urlparse
 import pandas as pd
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from pandas.api import types as pd_types
+
+if not hasattr(pd, "_pandas_datetime_CAPI"):  # pragma: no cover - runtime shim
+    pd._pandas_datetime_CAPI = None
 
 from core.utils.dataframe_io import (
     purge_dataframe_artifacts,
@@ -139,7 +142,32 @@ class InMemoryKeyValueClient:
 def _serialize_frame(frame: pd.DataFrame) -> bytes:
     """Serialize a dataframe to bytes using a safe JSON representation."""
 
-    payload = frame.to_json(orient="table", index=False, date_unit="ns")
+    if frame.empty:
+        return b""
+
+    def _encode(value: Any) -> Any:
+        if pd.isna(value):
+            return None
+        formatter = getattr(value, "isoformat", None)
+        if callable(formatter):
+            try:
+                return formatter()
+            except Exception:
+                pass
+        return value
+
+    columns = list(frame.columns)
+    dtypes = [str(frame[col].dtype) for col in columns]
+    data = [
+        [_encode(item) for item in row]
+        for row in frame.itertuples(index=False, name=None)
+    ]
+
+    payload = json.dumps(
+        {"columns": columns, "dtypes": dtypes, "data": data},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     return payload.encode("utf-8")
 
 
@@ -148,7 +176,36 @@ def _deserialize_frame(payload: bytes) -> pd.DataFrame:
 
     if not payload:
         return pd.DataFrame()
-    return pd.read_json(BytesIO(payload), orient="table")
+    text = payload.decode("utf-8")
+    try:
+        decoded = json.loads(text)
+    except json.JSONDecodeError:
+        return pd.DataFrame()
+
+    # Legacy "table" orient payloads include a schema key; delegate to pandas.
+    if isinstance(decoded, dict) and "schema" in decoded and "data" in decoded:
+        return pd.read_json(text, orient="table")
+
+    columns: list[str] = decoded.get("columns", [])
+    dtypes: list[str] = decoded.get("dtypes", [])
+    data = decoded.get("data", [])
+
+    frame = pd.DataFrame(data=data, columns=columns)
+
+    for column, dtype_str in zip(columns, dtypes):
+        if dtype_str.startswith("datetime64"):
+            frame[column] = pd.to_datetime(frame[column], utc="UTC" in dtype_str)
+            continue
+        if dtype_str.startswith("timedelta64"):
+            frame[column] = pd.to_timedelta(frame[column])
+            continue
+        if dtype_str != "object":
+            try:
+                frame[column] = frame[column].astype(dtype_str)
+            except (TypeError, ValueError):
+                continue
+
+    return frame
 
 
 @dataclass(frozen=True)
@@ -846,12 +903,28 @@ class OnlineFeatureStore:
     def _snapshot(frame: pd.DataFrame) -> IntegritySnapshot:
         canonical = OnlineFeatureStore._canonicalize(frame)
         normalized = OnlineFeatureStore._normalize_for_hash(canonical)
-        payload = normalized.to_json(
-            orient="split",
-            index=False,
-            date_format="iso",
-            date_unit="ns",
-            double_precision=15,
+        columns = list(normalized.columns)
+
+        def _encode(value: Any) -> Any:
+            if pd.isna(value):
+                return None
+            iso_formatter = getattr(value, "isoformat", None)
+            if callable(iso_formatter):
+                try:
+                    return iso_formatter()
+                except Exception:
+                    pass
+            return value
+
+        data = [
+            [_encode(item) for item in row]
+            for row in normalized.itertuples(index=False, name=None)
+        ]
+
+        payload = json.dumps(
+            {"columns": columns, "data": data},
+            ensure_ascii=False,
+            separators=(",", ":"),
         )
         digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
         return IntegritySnapshot(row_count=int(canonical.shape[0]), data_hash=digest)
