@@ -10,8 +10,12 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
+import pandas as pd
 import pytest
 import yaml
+
+if not hasattr(pd, "_pandas_datetime_CAPI"):  # pragma: no cover - import-time guard
+    pd._pandas_datetime_CAPI = None
 
 from observability.audit.trail import (
     get_access_audit_trail,
