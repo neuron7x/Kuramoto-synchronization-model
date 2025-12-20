@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, MutableMapping, Protocol, Sequence
 
@@ -80,6 +81,28 @@ class StreamMaterializer:
         self._dedup_keys = tuple(dedup_keys)
         self._backfill_loader = backfill_loader
 
+    @staticmethod
+    def _encode_value(value: Any) -> Any:
+        if isinstance(value, pd.Timestamp):
+            return value.isoformat(timespec="nanoseconds").replace("+00:00", "Z")
+        if isinstance(value, pd.Timedelta):
+            return value.isoformat()
+        if hasattr(value, "item"):
+            try:
+                return value.item()
+            except Exception:
+                pass
+        return value
+
+    def _stable_split_payload(self, frame: pd.DataFrame) -> str:
+        payload = frame.to_dict(orient="split")
+        payload.pop("index", None)
+        payload["data"] = [
+            [self._encode_value(value) for value in row]
+            for row in payload.get("data", [])
+        ]
+        return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
     def materialize(
         self,
         feature_view: str,
@@ -144,13 +167,7 @@ class StreamMaterializer:
 
     def _checkpoint_id(self, feature_view: str, frame: pd.DataFrame) -> str:
         canonical = OnlineFeatureStore._canonicalize(frame)
-        payload = canonical.to_json(
-            orient="split",
-            index=False,
-            date_format="iso",
-            date_unit="ns",
-            double_precision=15,
-        )
+        payload = self._stable_split_payload(canonical)
         digest = hashlib.sha256()
         digest.update(feature_view.encode("utf-8"))
         digest.update(payload.encode("utf-8"))

@@ -14,11 +14,9 @@ class AuditLogger:
 
     def __init__(self, log_path: str | Path = "/var/log/tradepulse/audit.log") -> None:
         self.logger = logging.getLogger("security.audit")
-        handler = self._build_handler(Path(log_path))
-        if not self.logger.handlers or all(
-            isinstance(existing, logging.NullHandler) for existing in self.logger.handlers
-        ):
-            self.logger.addHandler(handler)
+        target = Path(log_path)
+        self.logger.handlers.clear()
+        self.logger.addHandler(self._build_handler(target))
         self.logger.setLevel(logging.INFO)
 
     def _build_handler(self, log_path: Path) -> logging.Handler:

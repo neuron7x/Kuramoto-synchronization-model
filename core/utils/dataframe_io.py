@@ -127,15 +127,28 @@ def _polars_backend() -> _Backend:
 
 
 def _json_backend() -> _Backend:
+    def _encode_value(value):
+        if isinstance(value, pd.Timestamp):
+            return value.isoformat(timespec="nanoseconds").replace("+00:00", "Z")
+        if isinstance(value, pd.Timedelta):
+            return value.isoformat()
+        if hasattr(value, "item"):
+            try:
+                return value.item()
+            except Exception:
+                pass
+        return value
+
     def _write(frame: pd.DataFrame, path: Path, index: bool) -> None:
-        frame.to_json(
-            path,
-            orient="split",
-            index=index,
-            date_format="iso",
-            date_unit="ns",
-            double_precision=15,
-        )
+        payload = frame.to_dict(orient="split")
+        if not index:
+            payload.pop("index", None)
+        else:
+            payload["index"] = [_encode_value(value) for value in payload.get("index", [])]
+        payload["data"] = [
+            [_encode_value(value) for value in row] for row in payload.get("data", [])
+        ]
+        path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
     def _read(path: Path) -> pd.DataFrame:
         return pd.read_json(path, orient="split")

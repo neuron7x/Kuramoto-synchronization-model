@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 from __future__ import annotations
 
+import json
 import math
 import sqlite3
 import ssl
@@ -12,6 +13,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from pandas.io.json._table_schema import build_table_schema
 
 from core.data.feature_store import (
     _ENVELOPE_PREFIX,
@@ -115,6 +117,28 @@ def sample_frame() -> pd.DataFrame:
             "value": [1.0, 2.0],
         }
     )
+
+
+def _table_orient_payload(frame: pd.DataFrame) -> bytes:
+    schema = build_table_schema(frame, index=False)
+    records: list[dict[str, Any]] = []
+
+    for row in frame.to_dict(orient="records"):
+        encoded: dict[str, Any] = {}
+        for key, value in row.items():
+            if isinstance(value, pd.Timestamp):
+                encoded[key] = value.isoformat(timespec="nanoseconds").replace(
+                    "+00:00", "Z"
+                )
+            else:
+                encoded[key] = value
+        records.append(encoded)
+
+    return json.dumps(
+        {"schema": schema, "data": records},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
 
 
 @pytest.fixture
@@ -717,9 +741,7 @@ def test_sqlite_reencrypt_from_plaintext(
         connection.execute(
             "CREATE TABLE IF NOT EXISTS feature_views (name TEXT PRIMARY KEY, payload BLOB)"
         )
-        payload = sample_frame.to_json(
-            orient="table", index=False, date_unit="ns"
-        ).encode("utf-8")
+        payload = _table_orient_payload(sample_frame)
         connection.execute(
             "REPLACE INTO feature_views (name, payload) VALUES (?, ?)",
             ("demo.view", payload),
