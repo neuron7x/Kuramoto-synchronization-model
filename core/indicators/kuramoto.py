@@ -280,7 +280,7 @@ def compute_phase(
             spectrum = _scipy_fft.rfft(real)
             spectrum *= -1j
             spectrum[0] = 0
-            if n % 2 == 0 and spectrum.size > 0:
+            if n % 2 == 0 and spectrum.size >= 2:
                 spectrum[-1] = 0
             imag = _scipy_fft.irfft(spectrum, n)
             imag = np.asarray(imag, dtype=dtype)

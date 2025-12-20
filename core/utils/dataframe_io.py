@@ -80,7 +80,8 @@ def _restore_iso_datetimes(frame: pd.DataFrame) -> pd.DataFrame:
             continue
 
         as_str = non_null.astype(str)
-        if not as_str.str.match(_ISO_TS_PATTERN).all():
+        matches = as_str.str.match(_ISO_TS_PATTERN)
+        if not matches.all():
             continue
 
         parsed = pd.to_datetime(series, utc=True, errors="coerce")
