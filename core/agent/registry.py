@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Callable, Iterable, Mapping, MutableMapping
 
-from runtime.misanthropic_agent import MisanthropicAgent
+try:  # Optional heavy dependency; allow registry import without torch stack
+    from runtime.misanthropic_agent import MisanthropicAgent
+except Exception as exc:  # pragma: no cover - exercised when torch is absent
+    MisanthropicAgent = None  # type: ignore[assignment]
+    _IMPORT_ERROR = exc
+else:
+    _IMPORT_ERROR = None
 
 AgentFactory = Callable[..., object]
 
@@ -55,4 +62,11 @@ def global_agent_registry() -> AgentRegistry:
 
 
 _GLOBAL_REGISTRY = AgentRegistry()
-_GLOBAL_REGISTRY.register("misanthropic", MisanthropicAgent)
+
+if MisanthropicAgent is not None:
+    _GLOBAL_REGISTRY.register("misanthropic", MisanthropicAgent)
+else:  # pragma: no cover - depends on optional torch availability
+    logging.getLogger(__name__).debug(
+        "Skipping misanthropic agent registration (torch unavailable): %s",
+        _IMPORT_ERROR,
+    )
