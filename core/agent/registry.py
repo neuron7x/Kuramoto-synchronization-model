@@ -4,17 +4,31 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Callable, Iterable, Mapping, MutableMapping
-
-try:  # Optional heavy dependency; allow registry import without torch stack
-    from runtime.misanthropic_agent import MisanthropicAgent
-except Exception as exc:  # pragma: no cover - exercised when torch is absent
-    MisanthropicAgent = None  # type: ignore[assignment]
-    _IMPORT_ERROR = exc
-else:
-    _IMPORT_ERROR = None
+from typing import Callable, Iterable, Mapping, MutableMapping, NoReturn, cast
 
 AgentFactory = Callable[..., object]
+
+
+def _missing_agent_factory(*_: object, **__: object) -> NoReturn:
+    raise RuntimeError(
+        "MisanthropicAgent is unavailable because torch or its native dependencies "
+        "are not installed. Install torch (e.g. `pip install torch`) to enable this "
+        "agent."
+    )
+
+
+try:  # Optional heavy dependency; torch can raise ImportError/OSError when libs are missing
+    from runtime.misanthropic_agent import MisanthropicAgent as _ImportedMisanthropicAgent
+except (ImportError, OSError) as exc:  # pragma: no cover - exercised when torch is absent/broken
+    MisanthropicAgent: type[object] | None = None
+    _misanthropic_factory: AgentFactory = _missing_agent_factory
+    _HAS_MISANTHROPIC_AGENT = False
+    _IMPORT_ERROR = exc
+else:
+    MisanthropicAgent = _ImportedMisanthropicAgent
+    _misanthropic_factory = cast(AgentFactory, _ImportedMisanthropicAgent)
+    _HAS_MISANTHROPIC_AGENT = True
+    _IMPORT_ERROR = None
 
 
 class AgentRegistryError(RuntimeError):
@@ -63,8 +77,8 @@ def global_agent_registry() -> AgentRegistry:
 
 _GLOBAL_REGISTRY = AgentRegistry()
 
-if MisanthropicAgent is not None:
-    _GLOBAL_REGISTRY.register("misanthropic", MisanthropicAgent)
+if _HAS_MISANTHROPIC_AGENT:
+    _GLOBAL_REGISTRY.register("misanthropic", _misanthropic_factory)
 else:  # pragma: no cover - depends on optional torch availability
     logging.getLogger(__name__).debug(
         "Skipping misanthropic agent registration (torch unavailable): %s",
