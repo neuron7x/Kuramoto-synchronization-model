@@ -1,45 +1,9 @@
 """Advanced neurobiological trading components."""
 
-from .aic import AgencyControlNetwork
-from .causal import GrangerResult, granger_causality
-from .config import (
-    AICConfig,
-    AlertThresholds,
-    DecisionIntegratorWeights,
-    DPAConfig,
-    NeuroAdvancedConfig,
-    NREConfig,
-    PolicyBounds,
-)
-from .divergence import (
-    DivergenceConfig,
-    DivergenceOutput,
-    compute_divergence_convergence_phi,
-)
-from .dpa import DopaminePredictionNetwork
-from .integrated import (
-    CandidateGenerator,
-    ECANeuroTradingAdapter,
-    EnhancedFractalNeuroeconomicCore,
-    IntegratedNeuroTradingSystem,
-    MarketContext,
-    MultiscaleFractalAnalyzer,
-    NeuroDecisionIntegrator,
-    NeuroRiskManager,
-    TradeOutcome,
-    TradeResult,
-)
-from .monitor import NeuroStateMonitor
-from .motivation import FractalMotivationController, FractalSignalTracker
-from .neuroecon import AdvancedNeuroEconCore, DecisionOption
-from .nre import NeuroplasticReinforcementEngine
-from .quantum import (
-    QuantumBeliefUpdate,
-    quantum_active_update,
-    quantum_relative_entropy,
-    to_density_matrix,
-    von_neumann_entropy,
-)
+from __future__ import annotations
+
+import importlib
+from typing import Any
 
 __all__ = [
     "AgencyControlNetwork",
@@ -78,3 +42,64 @@ __all__ = [
     "FractalMotivationController",
     "FractalSignalTracker",
 ]
+
+_MODULE_EXPORTS: dict[str, tuple[str, ...]] = {
+    "core.neuro.advanced.aic": ("AgencyControlNetwork",),
+    "core.neuro.advanced.causal": ("GrangerResult", "granger_causality"),
+    "core.neuro.advanced.config": (
+        "AICConfig",
+        "AlertThresholds",
+        "DecisionIntegratorWeights",
+        "DPAConfig",
+        "NeuroAdvancedConfig",
+        "NREConfig",
+        "PolicyBounds",
+    ),
+    "core.neuro.advanced.divergence": (
+        "DivergenceConfig",
+        "DivergenceOutput",
+        "compute_divergence_convergence_phi",
+    ),
+    "core.neuro.advanced.dpa": ("DopaminePredictionNetwork",),
+    "core.neuro.advanced.integrated": (
+        "CandidateGenerator",
+        "ECANeuroTradingAdapter",
+        "EnhancedFractalNeuroeconomicCore",
+        "IntegratedNeuroTradingSystem",
+        "MarketContext",
+        "MultiscaleFractalAnalyzer",
+        "NeuroDecisionIntegrator",
+        "NeuroRiskManager",
+        "TradeOutcome",
+        "TradeResult",
+    ),
+    "core.neuro.advanced.monitor": ("NeuroStateMonitor",),
+    "core.neuro.advanced.motivation": (
+        "FractalMotivationController",
+        "FractalSignalTracker",
+    ),
+    "core.neuro.advanced.neuroecon": (
+        "AdvancedNeuroEconCore",
+        "DecisionOption",
+    ),
+    "core.neuro.advanced.nre": ("NeuroplasticReinforcementEngine",),
+    "core.neuro.advanced.quantum": (
+        "QuantumBeliefUpdate",
+        "quantum_active_update",
+        "quantum_relative_entropy",
+        "to_density_matrix",
+        "von_neumann_entropy",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily import advanced neuro modules to avoid hard torch dependency."""
+
+    for module_name, exports in _MODULE_EXPORTS.items():
+        if name in exports:
+            module = importlib.import_module(module_name)
+            value = getattr(module, name)
+            globals()[name] = value
+            return value
+    raise AttributeError(f"module 'core.neuro.advanced' has no attribute '{name}'")

@@ -300,6 +300,10 @@ class FileSystemIndicatorCache:
             stored_path = write_dataframe(
                 value, data_path, index=True, allow_json_fallback=True
             )
+            if stored_path.suffix == ".json":
+                dtypes_path = stored_path.with_suffix(".dtypes.json")
+                dtype_map = {col: str(dtype) for col, dtype in value.dtypes.items()}
+                dtypes_path.write_text(json.dumps(dtype_map, sort_keys=True))
             fmt = "parquet" if stored_path.suffix == ".parquet" else "dataframe-json"
             return stored_path.name, fmt, self._file_digest(stored_path)
         if isinstance(value, pd.Series):
@@ -307,6 +311,10 @@ class FileSystemIndicatorCache:
             stored_path = write_dataframe(
                 frame, data_path, index=True, allow_json_fallback=True
             )
+            if stored_path.suffix == ".json":
+                dtypes_path = stored_path.with_suffix(".dtypes.json")
+                dtype_map = {frame.columns[0]: str(frame.dtypes[0])}
+                dtypes_path.write_text(json.dumps(dtype_map, sort_keys=True))
             fmt = "parquet" if stored_path.suffix == ".parquet" else "series-json"
             return stored_path.name, fmt, self._file_digest(stored_path)
         if isinstance(value, np.ndarray):
@@ -381,13 +389,20 @@ class FileSystemIndicatorCache:
             return read_dataframe(path)
         if fmt == "numpy":
             return np.load(path, allow_pickle=False)
-        if fmt == "dataframe-json":
-            return pd.read_json(path, orient="split")
-        if fmt == "series-json":
+        if fmt in {"dataframe-json", "series-json"}:
             frame = pd.read_json(path, orient="split")
-            series = frame.iloc[:, 0]
-            series.name = frame.columns[0]
-            return series
+            dtypes_path = path.with_suffix(".dtypes.json")
+            if dtypes_path.exists():
+                try:
+                    dtype_map = json.loads(dtypes_path.read_text(encoding="utf-8"))
+                    frame = frame.astype(dtype_map)
+                except Exception:
+                    pass
+            if fmt == "series-json":
+                series = frame.iloc[:, 0]
+                series.name = frame.columns[0]
+                return series
+            return frame
         if fmt == "json":
             payload = json.loads(path.read_text(encoding="utf-8"))
             return _decode_structure(payload)
