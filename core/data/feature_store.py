@@ -10,6 +10,7 @@ import os
 import shutil
 import sqlite3
 import ssl
+from io import StringIO
 from dataclasses import dataclass, field
 from datetime import UTC
 from decimal import Decimal, InvalidOperation
@@ -184,7 +185,7 @@ def _deserialize_frame(payload: bytes) -> pd.DataFrame:
 
     # Legacy "table" orient payloads include a schema key; delegate to pandas.
     if isinstance(decoded, dict) and "schema" in decoded and "data" in decoded:
-        return pd.read_json(text, orient="table")
+        return pd.read_json(StringIO(text), orient="table")
 
     columns: list[str] = decoded.get("columns", [])
     dtypes: list[str] = decoded.get("dtypes", [])
