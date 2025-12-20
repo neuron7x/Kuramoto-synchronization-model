@@ -295,15 +295,26 @@ class FileSystemIndicatorCache:
     def _serialize(self, directory: Path, value: Any) -> tuple[str, str, str]:
         data_path = directory / "payload"
 
+        def _write_dtypes(sidecar: Path, dtype_map: Mapping[str, str]) -> None:
+            try:
+                sidecar.write_text(json.dumps(dtype_map, sort_keys=True))
+            except (OSError, TypeError, ValueError) as exc:  # pragma: no cover - defensive
+                _logger.warning(
+                    "indicator_cache_dtypes_sidecar_write_failed",
+                    path=str(sidecar),
+                    error=str(exc),
+                )
+
         # pandas structures
         if isinstance(value, pd.DataFrame):
             stored_path = write_dataframe(
                 value, data_path, index=True, allow_json_fallback=True
             )
             if stored_path.suffix == ".json":
-                dtypes_path = stored_path.with_suffix(".dtypes.json")
-                dtype_map = {col: str(dtype) for col, dtype in value.dtypes.items()}
-                dtypes_path.write_text(json.dumps(dtype_map, sort_keys=True))
+                _write_dtypes(
+                    stored_path.with_suffix(".dtypes.json"),
+                    {col: str(dtype) for col, dtype in value.dtypes.items()},
+                )
             fmt = "parquet" if stored_path.suffix == ".parquet" else "dataframe-json"
             return stored_path.name, fmt, self._file_digest(stored_path)
         if isinstance(value, pd.Series):
@@ -312,9 +323,10 @@ class FileSystemIndicatorCache:
                 frame, data_path, index=True, allow_json_fallback=True
             )
             if stored_path.suffix == ".json":
-                dtypes_path = stored_path.with_suffix(".dtypes.json")
-                dtype_map = {frame.columns[0]: str(frame.dtypes[0])}
-                dtypes_path.write_text(json.dumps(dtype_map, sort_keys=True))
+                _write_dtypes(
+                    stored_path.with_suffix(".dtypes.json"),
+                    {frame.columns[0]: str(frame.dtypes[0])},
+                )
             fmt = "parquet" if stored_path.suffix == ".parquet" else "series-json"
             return stored_path.name, fmt, self._file_digest(stored_path)
         if isinstance(value, np.ndarray):
@@ -396,8 +408,12 @@ class FileSystemIndicatorCache:
                 try:
                     dtype_map = json.loads(dtypes_path.read_text(encoding="utf-8"))
                     frame = frame.astype(dtype_map)
-                except Exception:
-                    pass
+                except (json.JSONDecodeError, ValueError, TypeError) as exc:
+                    _logger.warning(
+                        "indicator_cache_dtypes_restore_failed",
+                        path=str(dtypes_path),
+                        error=str(exc),
+                    )
             if fmt == "series-json":
                 series = frame.iloc[:, 0]
                 series.name = frame.columns[0]

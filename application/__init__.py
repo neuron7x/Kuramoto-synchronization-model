@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import importlib
-from typing import Any, Tuple
+from typing import Any
 
 __all__ = [
     "BacktestingService",
@@ -31,7 +31,7 @@ __all__ = [
 # like `application.api.service` usable in environments where optional
 # dependencies are not installed (e.g., unit tests that only exercise DTO
 # models).
-_IMPORT_MAP: dict[str, Tuple[str, str]] = {
+_IMPORT_MAP: dict[str, tuple[str, str]] = {
     "BacktestingService": ("application.microservices", "BacktestingService"),
     "ExecutionRequest": ("application.microservices", "ExecutionRequest"),
     "ExecutionService": ("application.microservices", "ExecutionService"),

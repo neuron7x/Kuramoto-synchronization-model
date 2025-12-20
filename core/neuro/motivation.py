@@ -25,7 +25,7 @@ def _softmax(values: np.ndarray) -> np.ndarray:
     shifted = values - np.max(values)
     exp = np.exp(shifted)
     denom = exp.sum()
-    if denom == 0:
+    if not np.isfinite(denom):
         return np.full_like(exp, 1.0 / exp.size)
     return exp / denom
 
@@ -102,16 +102,15 @@ class FractalMotivationEngine:
         else:
             prev_probs = _softmax(np.asarray(previous, dtype=float))
 
+        eps = 1e-12
         kl = np.sum(
             prev_probs
-            * (np.log(prev_probs + 1e-12) - np.log(current_probs + 1e-12))
+            * (np.log(prev_probs + eps) - np.log(current_probs + eps))
         )
         return float(max(kl, 0.0))
 
     def _compute_context_coherence(self, hidden_states: np.ndarray) -> float:
-        tensor = np.asarray(hidden_states, dtype=float)
-        if tensor.ndim == 1:
-            tensor = tensor[np.newaxis, :]
+        tensor = np.atleast_2d(np.asarray(hidden_states, dtype=float))
         norm = np.linalg.norm(tensor, axis=-1, keepdims=True) + 1e-8
         sim = (tensor @ tensor.T) / (norm * norm.transpose(0, 1))
         return float(np.mean(sim))
@@ -204,11 +203,19 @@ class AllostaticRegulator:
 
 
 class ValuePredictor:
-    """Lightweight predictor that avoids the PyTorch dependency for tests."""
+    """Lightweight predictor that avoids the PyTorch dependency for tests.
+
+    Provides a deterministic linear projection over the state vector so callers
+    still receive a stable, repeatable signal without requiring training.
+    """
 
     def __init__(self, input_dim: int = 4, hidden_dim: int = 16) -> None:
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
+        # Deterministic ramped weights provide a stable, non-learning projection
+        # without introducing randomness or an external dependency.
+        weights = np.linspace(0.5, 1.0, num=self.input_dim, dtype=float)
+        self._weights = weights / np.linalg.norm(weights)
 
     def __call__(self, state: np.ndarray) -> float:
         return self.forward(state)
@@ -223,7 +230,8 @@ class ValuePredictor:
             tensor = np.concatenate((tensor, padding), axis=-1)
         elif feature_dim > self.input_dim:
             tensor = tensor[..., : self.input_dim]
-        return float(np.mean(tensor))
+        projected = tensor @ self._weights
+        return float(np.mean(projected))
 
 
 class RealTimeMotivationMonitor:

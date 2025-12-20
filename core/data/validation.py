@@ -528,7 +528,7 @@ def validate_timeseries_frame(
 
     try:
         tz = raw_series.dt.tz  # type: ignore[attr-defined]
-    except Exception:
+    except AttributeError:
         tz = None
 
     required_tz = _resolve_timezone(config.require_timezone)
@@ -541,7 +541,7 @@ def validate_timeseries_frame(
         )
 
     normalized = frame.copy()
-    normalized[timestamp_col] = pd.to_datetime(raw_series, utc=True)
+    normalized[timestamp_col] = raw_series.dt.tz_convert("UTC")
 
     schema = build_timeseries_schema(config)
     try:
