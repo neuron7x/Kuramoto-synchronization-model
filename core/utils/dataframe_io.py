@@ -55,6 +55,12 @@ def _load_polars() -> object:
     return pl
 
 
+_ISO_TS_PATTERN = (
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
+_ISO_PARSE_SUCCESS_THRESHOLD = 0.9
+
+
 def _restore_iso_datetimes(frame: pd.DataFrame) -> pd.DataFrame:
     """Best-effort reconstruction of datetime columns when reading JSON payloads.
 
@@ -74,13 +80,11 @@ def _restore_iso_datetimes(frame: pd.DataFrame) -> pd.DataFrame:
             continue
 
         as_str = non_null.astype(str)
-        if not as_str.str.match(
-            r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
-        ).all():
+        if not as_str.str.match(_ISO_TS_PATTERN).all():
             continue
 
         parsed = pd.to_datetime(series, utc=True, errors="coerce")
-        if parsed.count() / max(1, non_null.shape[0]) >= 0.9:
+        if parsed.count() / max(1, non_null.shape[0]) >= _ISO_PARSE_SUCCESS_THRESHOLD:
             restored[column] = parsed
 
     return restored
