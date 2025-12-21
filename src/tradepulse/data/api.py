@@ -292,19 +292,28 @@ def _load_parquet_bars(
     close_col = ohlcv.get("close", "close")
     volume_col = ohlcv.get("volume", "volume")
 
+    columns = list(frame.columns)
     missing = [
         column
         for column in {ts_col, open_col, high_col, low_col, close_col}
-        if column not in frame.columns
+        if column not in columns
     ]
     if missing:
         raise ValueError(
             f"Parquet dataset missing required columns: {missing}. Available columns: {list(frame.columns)}"
         )
 
+    ts_idx = columns.index(ts_col)
+    open_idx = columns.index(open_col)
+    high_idx = columns.index(high_col)
+    low_idx = columns.index(low_col)
+    close_idx = columns.index(close_col)
+    volume_idx = columns.index(volume_col) if volume_col in columns else None
+    symbol_idx = columns.index("symbol") if "symbol" in columns else None
+
     bars: List[Bar] = []
-    for row_idx, row in frame.iterrows():
-        ts_value = row.get(ts_col)
+    for row_idx, row in enumerate(frame.itertuples(index=False, name=None)):
+        ts_value = row[ts_idx]
         if pd.isna(ts_value):
             logger.warning(
                 f"Row {row_idx}: Missing timestamp column '{ts_col}'. "
@@ -326,11 +335,11 @@ def _load_parquet_bars(
             )
             continue
 
-        open_val = row.get(open_col)
-        high_val = row.get(high_col)
-        low_val = row.get(low_col)
-        close_val = row.get(close_col)
-        volume_val = row.get(volume_col, 0)
+        open_val = row[open_idx]
+        high_val = row[high_idx]
+        low_val = row[low_idx]
+        close_val = row[close_idx]
+        volume_val = row[volume_idx] if volume_idx is not None else 0
 
         if any(pd.isna(val) for val in (open_val, high_val, low_val, close_val)):
             missing_values = [
@@ -350,7 +359,7 @@ def _load_parquet_bars(
             )
             continue
 
-        symbol = config.symbol or row.get("symbol", "UNKNOWN")
+        symbol = config.symbol or (row[symbol_idx] if symbol_idx is not None else "UNKNOWN")
         timeframe = config.timeframe or Timeframe.M1
 
         try:
