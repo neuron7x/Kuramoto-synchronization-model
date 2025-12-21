@@ -12,12 +12,18 @@ from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-# Provide a benign default for the admin API two-factor secret so importing the
-# heavyweight ``tradepulse.sdk`` module in developer environments (and within
-# unit tests) does not fail when the sensitive configuration is absent. Real
-# deployments override this via environment variables or configuration files.
-os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "test-secret")
-os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+_PROFILE = os.environ.get("TRADEPULSE_PROFILE", os.environ.get("APP_ENV", "dev")).lower()
+
+# Provide a benign default for the admin API two-factor secret only in local/test
+# environments. Production-like profiles must supply real secrets explicitly.
+if _PROFILE in {"dev", "development", "test", "ci", "local"}:
+    os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "test-secret")
+    os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+else:
+    if "TRADEPULSE_TWO_FACTOR_SECRET" not in os.environ and "ADMIN_API_SETTINGS__two_factor_secret" not in os.environ:
+        msg = "Two-factor secret must be configured for non-development profiles"
+        raise RuntimeError(msg)
+
 os.environ.setdefault("TRADEPULSE_BOOTSTRAP_STRATEGY", "lazy")
 
 _MODULE_NAME = "src.tradepulse"

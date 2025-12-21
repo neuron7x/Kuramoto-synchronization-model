@@ -1,4 +1,4 @@
-"""Event bus abstractions with Kafka and NATS backends."""
+"""Event bus abstractions with Kafka backend support."""
 
 from __future__ import annotations
 
