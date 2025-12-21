@@ -30,7 +30,7 @@ The `application/` package bridges domain primitives to external experiences (AP
 2. **Wire services** through `ServiceRegistry.from_system(system)` and use `TradePulseOrchestrator` to expose ingestion/backtest/execution flows to APIs or workers.
 3. **Enforce TLS**: `application/runtime/server.py` requires TLS unless explicitly permitted; `application/security/tls.py` defines cipher suites and client certificate policies.
 4. **Apply RBAC**: `application/security/rbac.py` validates subjects/roles and emits audit logs via `AuditLogger` before accessing execution credentials or admin APIs.
-5. **Load secrets via vaults**: `application/configuration/secure_store.py` registers namespaces and routes reads through `SecretVault` with rotation handled by `SecretRotator`; never embed credentials in settings files.
+5. **Load secrets via vaults**: `application/configuration/secure_store.py` registers namespaces and routes reads through `SecretVault`. Secret rotation is handled by `SecretRotator`, and credentials should never be embedded in settings files.
 
 ## Operational notes
 
