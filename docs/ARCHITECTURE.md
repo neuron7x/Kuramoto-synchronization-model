@@ -7,6 +7,8 @@ mandate. This blueprint captures the current 2025 architecture baseline that all
 infrastructure teams align to when planning enhancements, incident response, or compliance audits.
 It complements the deep-dive assets located in [`docs/architecture/`](architecture/) and is reviewed every
 release train by the architecture review board.
+Application-layer orchestration, bootstrap, and secret/security controls are detailed in
+[`architecture/application_layer.md`](architecture/application_layer.md).
 
 ## Capability Pillars
 
