@@ -50,6 +50,8 @@ from typing import (
     Union,
 )
 
+import pandas as pd
+
 from .schema import Bar, FeatureVector, MarketSnapshot, Timeframe
 
 __all__ = [
@@ -270,13 +272,6 @@ def _load_parquet_bars(path: Path, config: DataSourceConfig) -> List[Bar]:
     if not path.exists():
         raise FileNotFoundError(f"Parquet file not found: {path}")
 
-    try:
-        import pandas as pd
-    except ImportError as exc:  # pragma: no cover - dependency is declared
-        raise RuntimeError(
-            "Parquet support requires pandas with pyarrow installed"
-        ) from exc
-
     df = pd.read_parquet(path)
     ohlcv = config.ohlcv_columns
     ts_col = config.timestamp_column
@@ -287,13 +282,13 @@ def _load_parquet_bars(path: Path, config: DataSourceConfig) -> List[Bar]:
     volume_col = ohlcv.get("volume", "volume")
 
     bars: List[Bar] = []
-    for row_num, row in enumerate(df.to_dict(orient="records"), start=2):
+    for row_num, (_, row) in enumerate(df.iterrows(), start=2):
         try:
             ts_val = row.get(ts_col, "")
             if ts_val in (None, ""):
                 logger.warning(
                     f"Row {row_num}: Missing timestamp column '{ts_col}'. "
-                    f"Available columns: {list(row.keys())}. Skipping row."
+                    f"Available columns: {list(df.columns)}. Skipping row."
                 )
                 continue
 
@@ -305,16 +300,19 @@ def _load_parquet_bars(path: Path, config: DataSourceConfig) -> List[Bar]:
             close_val = row.get(close_col, "")
             volume_val = row.get(volume_col, "0")
 
-            if not all([open_val, high_val, low_val, close_val]):
+            def _is_missing(value: object) -> bool:
+                return value is None or value == "" or pd.isna(value)
+
+            if any(_is_missing(val) for val in [open_val, high_val, low_val, close_val]):
                 missing = [
                     name
-                    for name, val in [
+                    for name, val in (
                         (open_col, open_val),
                         (high_col, high_val),
                         (low_col, low_val),
                         (close_col, close_val),
-                    ]
-                    if not val
+                    )
+                    if _is_missing(val)
                 ]
                 logger.warning(
                     f"Row {row_num}: Missing OHLC columns: {missing}. "
