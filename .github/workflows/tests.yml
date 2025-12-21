@@ -170,6 +170,10 @@ jobs:
   fast-unit-tests:
     runs-on: ubuntu-latest
     needs: lint
+    outputs:
+      line_rate: ${{ steps.coverage_summary.outputs.line_rate }}
+      branch_rate: ${{ steps.coverage_summary.outputs.branch_rate }}
+      tests_total: ${{ steps.test_summary.outputs.total }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -531,6 +535,117 @@ jobs:
             reports/security/sast_summary.json
             reports/security/dast_report.json
           if-no-files-found: warn
+
+  stop-the-line-gate:
+    name: Stop-the-Line Quality Gate
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - fast-unit-tests
+      - security-fast
+      - web-lint
+    if: ${{ always() }}
+    permissions:
+      contents: read
+    steps:
+      - name: Enforce canonical gates
+        env:
+          LINT_STATUS: ${{ needs.lint.result }}
+          TEST_STATUS: ${{ needs.fast-unit-tests.result }}
+          SECURITY_STATUS: ${{ needs.security-fast.result }}
+          WEB_STATUS: ${{ needs.web-lint.result }}
+          LINE_RATE: ${{ needs.fast-unit-tests.outputs.line_rate }}
+          BRANCH_RATE: ${{ needs.fast-unit-tests.outputs.branch_rate }}
+          LINE_THRESHOLD: "95.0"
+          BRANCH_THRESHOLD: "90.0"
+        run: |
+          set -euo pipefail
+
+          declare -A REQUIRED_JOBS=(
+            ["lint"]="$LINT_STATUS"
+            ["fast-unit-tests"]="$TEST_STATUS"
+            ["security-fast"]="$SECURITY_STATUS"
+            ["web-lint"]="$WEB_STATUS"
+          )
+
+          failures=0
+          summary_lines=("### Stop-the-Line Gate" "" "| Check | Status |" "| --- | --- |")
+
+          for job in "${!REQUIRED_JOBS[@]}"; do
+            status="${REQUIRED_JOBS[$job]}"
+            if [[ "$status" != "success" ]]; then
+              echo "❌ ${job} did not succeed (status=${status})"
+              summary_lines+=("| ${job} | ❌ ${status} |")
+              failures=1
+            else
+              echo "✅ ${job} succeeded"
+              summary_lines+=("| ${job} | ✅ success |")
+            fi
+          done
+
+          set +e
+          python - <<'PY' "$LINE_RATE" "$BRANCH_RATE" "$LINE_THRESHOLD" "$BRANCH_THRESHOLD"
+import sys
+
+line_rate, branch_rate, line_threshold, branch_threshold = sys.argv[1:]
+
+def parse(value: str) -> float | None:
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+line = parse(line_rate)
+branch = parse(branch_rate)
+line_gate = parse(line_threshold) or 95.0
+branch_gate = parse(branch_threshold) or 90.0
+
+messages: list[str] = []
+exit_code = 0
+
+if line is None:
+    messages.append(f"❌ Coverage metrics missing; cannot enforce line coverage gate ({line_gate}%)")
+    exit_code = 1
+elif line < line_gate:
+    messages.append(f"❌ Line coverage {line:.2f}% below gate ({line_gate:.2f}%)")
+    exit_code = 1
+else:
+    messages.append(f"✅ Line coverage {line:.2f}% meets gate ({line_gate:.2f}%)")
+
+if branch is None:
+    messages.append(f"❌ Branch coverage metrics missing; cannot enforce branch gate ({branch_gate}%)")
+    exit_code = 1
+elif branch < branch_gate:
+    messages.append(f"❌ Branch coverage {branch:.2f}% below gate ({branch_gate:.2f}%)")
+    exit_code = 1
+else:
+    messages.append(f"✅ Branch coverage {branch:.2f}% meets gate ({branch_gate:.2f}%)")
+
+for line in messages:
+    print(line)
+
+if exit_code:
+    raise SystemExit(exit_code)
+PY
+          coverage_status=$?
+          set -e
+          if [[ $coverage_status -ne 0 ]]; then
+            failures=1
+            summary_lines+=("| Coverage gate | ❌ failed |")
+          else
+            summary_lines+=("| Coverage gate | ✅ passed |")
+          fi
+          summary_lines+=("| Line coverage | ${LINE_RATE:-n/a} (gate ${LINE_THRESHOLD}%) |")
+          summary_lines+=("| Branch coverage | ${BRANCH_RATE:-n/a} (gate ${BRANCH_THRESHOLD}%) |")
+
+          if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+            printf "%s\n" "${summary_lines[@]}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [[ $failures -ne 0 ]]; then
+            echo "❌ Stop-the-line gate blocked this run"
+            exit 1
+          fi
 
   # ============================================================================
   # HEAVY / EXTENDED JOBS - Run on schedule (nightly), main push, or manual trigger
