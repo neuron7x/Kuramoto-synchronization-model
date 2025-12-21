@@ -794,7 +794,10 @@ class OnlineFeatureStore:
         """Load the persisted dataframe for ``feature_view``."""
 
         path = self._resolve_path(feature_view)
-        return read_dataframe(path, allow_json_fallback=True)
+        frame = read_dataframe(path, allow_json_fallback=True)
+        if "ts" in frame.columns:
+            frame["ts"] = pd.to_datetime(frame["ts"], utc=True, errors="coerce")
+        return frame
 
     def sync(
         self,

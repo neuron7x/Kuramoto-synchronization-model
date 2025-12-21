@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Callable, Iterable, Mapping, Sequence
 
 import pandas as pd
 
@@ -24,10 +24,12 @@ from application.system import (
     TradePulseSystem,
     TradePulseSystemConfig,
 )
-from core.neuro.fractal_regulator import EEPFractalRegulator, RegulatorMetrics
 from domain import Order
 from execution.connectors import BinanceConnector, CoinbaseConnector
 from execution.risk import RiskLimits
+
+if TYPE_CHECKING:
+    from core.neuro.fractal_regulator import EEPFractalRegulator, RegulatorMetrics
 
 
 def build_tradepulse_system(
@@ -90,16 +92,25 @@ class TradePulseOrchestrator:
         self._execution = self._services.execution
 
         # Initialize optional fractal regulator for crisis handling
-        self._fractal_regulator: EEPFractalRegulator | None = None
+        self._fractal_regulator: "EEPFractalRegulator | None"
         if enable_fractal_regulator:
+            Regulator = globals().get("EEPFractalRegulator")
+            if Regulator is None:
+                from core.neuro.fractal_regulator import (
+                    EEPFractalRegulator as Regulator,
+                    RegulatorMetrics,
+                )
+
             config = regulator_config or {}
-            self._fractal_regulator = EEPFractalRegulator(
+            self._fractal_regulator = Regulator(
                 window_size=config.get("window_size", 100),
                 embodied_baseline=config.get("embodied_baseline", 1.0),
                 crisis_threshold=config.get("crisis_threshold", 0.3),
                 energy_damping=config.get("energy_damping", 0.9),
                 seed=config.get("seed"),
             )
+        else:
+            self._fractal_regulator = None
         self._crisis_callback = None
 
     @property
@@ -162,12 +173,12 @@ class TradePulseOrchestrator:
         self._execution.ensure_live_loop()
 
     @property
-    def fractal_regulator(self) -> EEPFractalRegulator | None:
+    def fractal_regulator(self) -> "EEPFractalRegulator | None":
         """Expose the fractal regulator if enabled."""
 
         return self._fractal_regulator
 
-    def set_crisis_callback(self, callback: Callable[[RegulatorMetrics], None]) -> None:
+    def set_crisis_callback(self, callback: Callable[["RegulatorMetrics"], None]) -> None:
         """Set a callback to be invoked when crisis is detected.
 
         Args:
@@ -180,7 +191,7 @@ class TradePulseOrchestrator:
         """
         self._crisis_callback = callback
 
-    def update_system_health(self, signal: float) -> RegulatorMetrics | None:
+    def update_system_health(self, signal: float) -> "RegulatorMetrics | None":
         """Update system health monitor with a signal value.
 
         Args:
@@ -218,7 +229,7 @@ class TradePulseOrchestrator:
             return False
         return self._fractal_regulator.is_in_crisis()
 
-    def get_system_health_metrics(self) -> RegulatorMetrics | None:
+    def get_system_health_metrics(self) -> "RegulatorMetrics | None":
         """Get current system health metrics without updating state.
 
         Returns:
@@ -232,8 +243,22 @@ class TradePulseOrchestrator:
 __all__ = [
     "ExecutionRequest",
     "MarketDataSource",
+    "EEPFractalRegulator",
     "RegulatorMetrics",
     "StrategyRun",
     "TradePulseOrchestrator",
     "build_tradepulse_system",
 ]
+
+
+def __getattr__(name: str):
+    if name in {"RegulatorMetrics", "EEPFractalRegulator"}:
+        from core.neuro.fractal_regulator import (
+            EEPFractalRegulator as _EEPF,
+            RegulatorMetrics as _RM,
+        )
+
+        globals()["EEPFractalRegulator"] = _EEPF
+        globals()["RegulatorMetrics"] = _RM
+        return globals()[name]
+    raise AttributeError(f"module 'application.system_orchestrator' has no attribute '{name}'")

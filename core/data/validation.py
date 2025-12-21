@@ -472,7 +472,13 @@ def build_timeseries_schema(config: TimeSeriesValidationConfig) -> DataFrameSche
         return tz_name == timezone_key
 
     timestamp_checks.append(
-        Check(_check_timezone, error=f"timestamps must be in {timezone_key}")
+        Check(
+            _check_timezone,
+            error=(
+                f"expected series '{config.timestamp_column}' to be timezone-aware "
+                f"({timezone_key})"
+            ),
+        )
     )
 
     columns: dict[str, Column] = {
@@ -508,8 +514,37 @@ def validate_timeseries_frame(
 ) -> pd.DataFrame:
     """Validate a ``pandas`` DataFrame according to the provided configuration."""
 
+    timestamp_col = config.timestamp_column
+    if timestamp_col not in frame.columns:
+        raise TimeSeriesValidationError(
+            f"expected series '{timestamp_col}' to exist in payload"
+        )
+
+    raw_series = frame[timestamp_col]
+    if not pd.api.types.is_datetime64_any_dtype(raw_series):
+        raise TimeSeriesValidationError(
+            f"expected series '{timestamp_col}' to be timezone-aware ({config.require_timezone})"
+        )
+
+    try:
+        tz = raw_series.dt.tz  # type: ignore[attr-defined]
+    except AttributeError:
+        tz = None
+
+    required_tz = _resolve_timezone(config.require_timezone)
+    required_key = getattr(required_tz, "key", None) or str(required_tz)
+    current_key = getattr(tz, "key", None) or str(tz) if tz is not None else None
+
+    if tz is None or current_key != required_key:
+        raise TimeSeriesValidationError(
+            f"expected series '{timestamp_col}' to be timezone-aware ({config.require_timezone})"
+        )
+
+    normalized = frame.copy()
+    normalized[timestamp_col] = raw_series.dt.tz_convert("UTC")
+
     schema = build_timeseries_schema(config)
     try:
-        return schema.validate(frame, lazy=False)
+        return schema.validate(normalized, lazy=False)
     except SchemaError as exc:  # pragma: no cover - exercised in unit tests
         raise TimeSeriesValidationError(str(exc)) from exc

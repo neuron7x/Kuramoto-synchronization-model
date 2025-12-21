@@ -24,7 +24,33 @@ else:
     _IMPORT_ERROR = None
 
 
-if torch is not None and nn is not None:
+if torch is None or nn is None:
+
+    @dataclass(frozen=True)
+    class DecisionOption:
+        """Placeholder when PyTorch is unavailable."""
+
+        reward: float = 0.0
+        risk: float = 0.0
+        cost: float = 0.0
+
+        @classmethod
+        def from_mapping(cls, option: Mapping[str, float]) -> "DecisionOption":
+            return cls(
+                reward=float(option.get("reward", 0.0)),
+                risk=float(option.get("risk", 0.0)),
+                cost=float(option.get("cost", 0.0)),
+            )
+
+    class AdvancedNeuroEconCore:  # pragma: no cover - runtime guard
+        """Stub that surfaces the missing dependency at call time."""
+
+        def __init__(self, *args, **kwargs) -> None:  # noqa: D401
+            raise ModuleNotFoundError(
+                "PyTorch is required for AdvancedNeuroEconCore"
+            ) from _IMPORT_ERROR
+
+else:
 
     @dataclass(frozen=True)
     class DecisionOption:
@@ -314,18 +340,5 @@ if torch is not None and nn is not None:
                 )
                 history.append(delta)
             return history
-
-else:
-
-    class AdvancedNeuroEconCore:
-        """Fallback that raises a descriptive error when PyTorch is unavailable."""
-
-        def __init__(
-            self, *args: object, **kwargs: object
-        ) -> None:  # noqa: D401 - simple guard
-            raise ModuleNotFoundError(
-                "PyTorch is required for AdvancedNeuroEconCore"
-            ) from _IMPORT_ERROR
-
 
 __all__ = ["AdvancedNeuroEconCore", "DecisionOption"]
