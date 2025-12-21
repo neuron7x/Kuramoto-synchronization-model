@@ -46,6 +46,8 @@ dependencies = [
     "opentelemetry-api>=1.38.0",
     "opentelemetry-sdk>=1.38.0",
     "opentelemetry-exporter-otlp>=1.38.0",
+    "aiokafka>=0.11.0",
+    "pyarrow>=15.0.0",
     "redis>=7.0.0",
     "httpx>=0.28.1",
     "websockets>=15.0.1",
@@ -174,12 +176,13 @@ include = [
     "observability.*",
     "tools",
     "tools.*",
+    "src",
+    "src.*",
 ]
-# Note: 'src' is excluded from installation packages.
-# The 'src/' directory is a source layout container for internal modules,
-# NOT a runtime importable package. Use canonical imports like 'tradepulse.*'.
+# Note: 'src' packages are included so that legacy imports such as
+# ``src.tradepulse`` resolve correctly when the project is installed.
 # See docs/architecture/packaging.md for details.
-exclude = ["tests", "tests.*", "docs", "docs.*", "src", "src.*"]
+exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]

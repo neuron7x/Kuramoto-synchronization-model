@@ -341,6 +341,37 @@ class TestLoadHistoricalBars:
         assert bars[0].symbol == "BTCUSDT"
         assert bars[0].close == Decimal("102")
 
+    def test_loads_from_parquet(self, tmp_path: Path) -> None:
+        """Should load bars from Parquet file."""
+        pd = pytest.importorskip("pandas")
+        pytest.importorskip("pyarrow")
+
+        parquet_file = tmp_path / "test_data.parquet"
+        df = pd.DataFrame(
+            [
+                {
+                    "timestamp": "2024-01-01 00:00:00",
+                    "open": 100,
+                    "high": 105,
+                    "low": 95,
+                    "close": 102,
+                    "volume": 1000,
+                }
+            ]
+        )
+        df.to_parquet(parquet_file)
+
+        bars = load_historical_bars(
+            parquet_file,
+            symbol="BTCUSDT",
+            timeframe=Timeframe.M1,
+            validate=False,
+        )
+
+        assert len(bars) == 1
+        assert bars[0].symbol == "BTCUSDT"
+        assert bars[0].close == Decimal("102")
+
     def test_raises_for_missing_file(self, tmp_path: Path) -> None:
         """Should raise FileNotFoundError for missing file."""
         with pytest.raises(FileNotFoundError):
