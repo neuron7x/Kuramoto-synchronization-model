@@ -729,9 +729,9 @@ class AdvancedRiskManager:
 
             # Precision (inverse variance of recent observations)
             # Use ddof=1 for unbiased sample variance estimation
-            finite_vol_history = [v for v in self._volatility_history if np.isfinite(v)]
-            if len(finite_vol_history) >= 3:
-                variance = float(np.var(finite_vol_history, ddof=1))
+            vol_history = list(self._volatility_history)
+            if len(vol_history) >= 3:
+                variance = float(np.var(vol_history, ddof=1))
                 # Guard against negative variance from numerical instability
                 variance = max(0.0, variance)
                 precision = self._config.fe_precision_base / (variance + 1e-6)
@@ -852,7 +852,8 @@ class AdvancedRiskManager:
                 if not np.isfinite(current_vol) or current_vol < 0:
                     current_vol = 0.0
 
-                self._volatility_history.append(float(current_vol))
+                current_vol = float(current_vol)
+                self._volatility_history.append(current_vol)
 
                 # Update equity and drawdown
                 if equity is not None:
@@ -892,7 +893,9 @@ class AdvancedRiskManager:
 
                 # Composite risk score (weighted average)
                 risk_score = (
-                    0.35 * vol_risk + 0.25 * liq_risk + 0.40 * dd_risk
+                    0.35 * vol_risk
+                    + 0.25 * liq_risk
+                    + 0.40 * dd_risk
                 )
 
                 # Factor in free energy stability
