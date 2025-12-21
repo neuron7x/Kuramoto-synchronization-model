@@ -76,6 +76,12 @@ See `PR_TEST_FIXES_SUMMARY.md` for detailed technical documentation.
 
 See `PR_TEST_OPTIMIZATION_IMPLEMENTATION.md` for complete documentation.
 
+### Phase 5: Stop-the-Line Enforcement (2025-12-21)
+1. ✅ Introduced `stop-the-line-gate` in `tests.yml` to hard-require lint, security, backend, and web checks.
+2. ✅ Reinstated coverage guardrail on the PR fast path (95% line / 90% branch) to block regressions instead of only reporting.
+
+**Result:** Deterministic stop-the-line gate that blocks merges when any canonical check or coverage budget is missed.
+
 ### Benefits
 - **⚡ 60-70% faster PR feedback** - Reduced from ~28 to ~10 active workflows on typical PR
 - **💰 Massive CI cost reduction** - Eliminated redundant and expensive workflow executions
