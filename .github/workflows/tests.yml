@@ -631,9 +631,6 @@ PY
           set -e
           if [[ $coverage_status -ne 0 ]]; then
             failures=1
-          fi
-
-          if [[ $coverage_status -ne 0 ]]; then
             summary_lines+=("| Coverage gate | ❌ failed |")
           else
             summary_lines+=("| Coverage gate | ✅ passed |")
