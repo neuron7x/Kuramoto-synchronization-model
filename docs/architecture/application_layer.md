@@ -2,7 +2,7 @@
 title: Application Layer Orchestration Guide
 ---
 
-# Application Layer Orchestration (Застосунковий шар)
+# Application Layer Orchestration
 
 The `application/` package bridges domain primitives to external experiences (APIs, microservices, runtime services) while enforcing secure bootstrap, configuration hygiene, and secret handling. This guide captures how orchestration, startup, security, and secret management are structured across the application layer.
 
@@ -20,7 +20,7 @@ The `application/` package bridges domain primitives to external experiences (AP
 | `application/api/` | FastAPI surface, middleware, rate limiting, idempotency, and OAuth/OIDC enforcement. | Request guards (`rate_limit.py`, `idempotency.py`), security adapters (`security.py`, `system_access.py`), GraphQL and realtime endpoints. |
 | `application/microservices/` | Service registry and orchestrated services (market data, backtesting, execution). | [`ServiceRegistry`](../../application/microservices/registry.py) ensures lifecycle management; DTOs and contracts live alongside the services. |
 | `application/runtime/` | Runtime bootstrap for the API server. | [`runtime/server.py`](../../application/runtime/server.py) enforces TLS (fails fast when `allow_plaintext` is false) and applies runtime log levels. |
-| `application/security/` | Role-based access control, TLS context builders, and two-factor helpers. | [`rbac.py`](../../application/security/rbac.py) centralises authorisation with audit logging; [`tls.py`](../../application/security/tls.py) builds hardened SSL contexts. |
+| `application/security/` | Role-based access control, TLS context builders, and two-factor helpers. | [`rbac.py`](../../application/security/rbac.py) centralizes authorisation with audit logging; [`tls.py`](../../application/security/tls.py) builds hardened SSL contexts. |
 | `application/secrets/` | Secret backends, rotation policies, and secure channels. | Vault and HashiCorp clients (`vault.py`, `hashicorp.py`), rotation engine (`rotation.py`), and encrypted transport (`secure_channel.py`). |
 | `application/configuration/` | Secure configuration facade over secret stores. | [`secure_store.py`](../../application/configuration/secure_store.py) wraps `SecretVault`, enforces namespace-level ACLs, and emits audit events. |
 
