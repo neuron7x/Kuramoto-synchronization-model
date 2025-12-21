@@ -421,6 +421,23 @@ class TestNonFiniteInputHandling:
         # Should complete without error, filtering non-finite values
         assert np.isfinite(assessment.risk_score)
 
+    def test_nan_volatility_keeps_state_finite(
+        self, manager: AdvancedRiskManager
+    ) -> None:
+        """NaN volatility should not poison free energy state or risk score."""
+        # Establish baseline with a finite observation
+        manager.assess_risk(volatility=0.02)
+
+        assessment = manager.assess_risk(volatility=float("nan"))
+        fe_state = manager._fe_state
+
+        assert np.isfinite(assessment.risk_score)
+        assert 0.0 <= assessment.risk_score <= 1.0
+        assert np.isfinite(fe_state.current_free_energy)
+        assert np.isfinite(fe_state.precision)
+        assert np.isfinite(fe_state.prediction_error)
+        assert np.isfinite(fe_state.entropy)
+
 
 # =============================================================================
 # Determinism Tests

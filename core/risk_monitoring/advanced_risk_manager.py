@@ -696,8 +696,22 @@ class AdvancedRiskManager:
             Updated free energy state.
         """
         with self._lock:
+            safe_drawdown = 0.0
+            if math.isfinite(observed_drawdown):
+                safe_drawdown = min(max(observed_drawdown, 0.0), 1.0)
+
+            if not math.isfinite(observed_volatility) or observed_volatility < 0:
+                observed_volatility = (
+                    self._baseline_volatility
+                    if self._baseline_volatility is not None
+                    and math.isfinite(self._baseline_volatility)
+                    else 0.0
+                )
+
             # Update baseline if not set
-            if self._baseline_volatility is None:
+            if self._baseline_volatility is None or not math.isfinite(
+                self._baseline_volatility
+            ):
                 self._baseline_volatility = max(0.001, observed_volatility)
 
             expected = (
@@ -705,19 +719,22 @@ class AdvancedRiskManager:
                 if expected_volatility is not None
                 else self._baseline_volatility
             )
+            if not math.isfinite(expected) or expected <= 0:
+                expected = self._baseline_volatility
 
             # Prediction error (surprise)
             prediction_error = abs(observed_volatility - expected)
+            if not math.isfinite(prediction_error):
+                prediction_error = 0.0
 
             # Precision (inverse variance of recent observations)
             # Use ddof=1 for unbiased sample variance estimation
-            if len(self._volatility_history) >= 3:
-                variance = float(np.var(list(self._volatility_history), ddof=1))
+            finite_vol_history = [v for v in self._volatility_history if np.isfinite(v)]
+            if len(finite_vol_history) >= 3:
+                variance = float(np.var(finite_vol_history, ddof=1))
                 # Guard against negative variance from numerical instability
                 variance = max(0.0, variance)
-                precision = (
-                    self._config.fe_precision_base / (variance + 1e-6)
-                )
+                precision = self._config.fe_precision_base / (variance + 1e-6)
             else:
                 precision = self._config.fe_precision_base
 
@@ -728,11 +745,13 @@ class AdvancedRiskManager:
             # Higher uncertainty = higher entropy
             entropy = (
                 0.5 * math.log(max(1e-6, observed_volatility))
-                + 0.5 * observed_drawdown
+                + 0.5 * safe_drawdown
             )
 
             # Free energy: F = precision * prediction_error^2 / 2 + entropy
             new_fe = (precision * prediction_error * prediction_error / 2.0) + entropy
+            if not math.isfinite(new_fe):
+                new_fe = self._fe_state.current_free_energy
 
             # Check monotonicity
             previous_fe = self._fe_state.current_free_energy
@@ -830,7 +849,10 @@ class AdvancedRiskManager:
                 else:
                     current_vol = 0.0
 
-                self._volatility_history.append(current_vol)
+                if not np.isfinite(current_vol) or current_vol < 0:
+                    current_vol = 0.0
+
+                self._volatility_history.append(float(current_vol))
 
                 # Update equity and drawdown
                 if equity is not None:
@@ -839,7 +861,11 @@ class AdvancedRiskManager:
                         self._peak_equity = equity
 
                 # Calculate drawdown
-                if current_price is not None and peak_price is not None and peak_price > 0:
+                if (
+                    current_price is not None
+                    and peak_price is not None
+                    and peak_price > 0
+                ):
                     drawdown = max(0.0, (peak_price - current_price) / peak_price)
                 elif self._peak_equity > 0:
                     drawdown = max(
@@ -848,6 +874,11 @@ class AdvancedRiskManager:
                     )
                 else:
                     drawdown = 0.0
+
+                if not np.isfinite(drawdown) or drawdown < 0:
+                    drawdown = 0.0
+                else:
+                    drawdown = min(drawdown, 1.0)
 
                 self._drawdown_history.append(drawdown)
 
@@ -861,9 +892,7 @@ class AdvancedRiskManager:
 
                 # Composite risk score (weighted average)
                 risk_score = (
-                    0.35 * vol_risk
-                    + 0.25 * liq_risk
-                    + 0.40 * dd_risk
+                    0.35 * vol_risk + 0.25 * liq_risk + 0.40 * dd_risk
                 )
 
                 # Factor in free energy stability
@@ -871,6 +900,8 @@ class AdvancedRiskManager:
                     risk_score = min(1.0, risk_score * 1.2)
                 if not self._fe_state.is_monotonic:
                     risk_score = min(1.0, risk_score * 1.1)
+
+                risk_score = float(np.clip(risk_score, 0.0, 1.0))
 
                 # Determine risk state
                 risk_state = self._determine_risk_state(risk_score)
