@@ -50,6 +50,9 @@ from typing import (
     Union,
 )
 
+import pandas as pd
+from core.utils.dataframe_io import MissingParquetDependencyError, read_dataframe
+
 from .schema import Bar, FeatureVector, MarketSnapshot, Timeframe
 
 __all__ = [
@@ -265,6 +268,113 @@ def _load_csv_bars(
     return bars
 
 
+def _load_parquet_bars(
+    path: Path,
+    config: DataSourceConfig,
+) -> List[Bar]:
+    """Load bars from a parquet file."""
+
+    if not path.exists():
+        raise FileNotFoundError(f"Parquet file not found: {path}")
+
+    try:
+        frame = read_dataframe(path, allow_json_fallback=True)
+    except MissingParquetDependencyError as exc:
+        raise RuntimeError(
+            "Parquet loading requires either pyarrow or polars. Install the 'tradepulse[feature_store]' extra."
+        ) from exc
+
+    ohlcv = config.ohlcv_columns
+    ts_col = config.timestamp_column
+    open_col = ohlcv.get("open", "open")
+    high_col = ohlcv.get("high", "high")
+    low_col = ohlcv.get("low", "low")
+    close_col = ohlcv.get("close", "close")
+    volume_col = ohlcv.get("volume", "volume")
+
+    missing = [
+        column
+        for column in {ts_col, open_col, high_col, low_col, close_col}
+        if column not in frame.columns
+    ]
+    if missing:
+        raise ValueError(
+            f"Parquet dataset missing required columns: {missing}. Available columns: {list(frame.columns)}"
+        )
+
+    bars: List[Bar] = []
+    for row_idx, row in frame.iterrows():
+        ts_value = row.get(ts_col)
+        if pd.isna(ts_value):
+            logger.warning(
+                f"Row {row_idx}: Missing timestamp column '{ts_col}'. "
+                f"Available columns: {list(frame.columns)}. Skipping row."
+            )
+            continue
+
+        try:
+            if isinstance(ts_value, datetime):
+                timestamp = ts_value
+                if timestamp.tzinfo is None:
+                    timestamp = timestamp.replace(tzinfo=timezone.utc)
+                timestamp = timestamp.astimezone(timezone.utc)
+            else:
+                timestamp = _parse_timestamp(str(ts_value), config.source_timezone)
+        except ValueError as exc:
+            logger.warning(
+                f"Row {row_idx}: Error parsing timestamp '{ts_value}': {exc}. Skipping row."
+            )
+            continue
+
+        open_val = row.get(open_col)
+        high_val = row.get(high_col)
+        low_val = row.get(low_col)
+        close_val = row.get(close_col)
+        volume_val = row.get(volume_col, 0)
+
+        if any(pd.isna(val) for val in (open_val, high_val, low_val, close_val)):
+            missing_values = [
+                name
+                for name, val in [
+                    (open_col, open_val),
+                    (high_col, high_val),
+                    (low_col, low_val),
+                    (close_col, close_val),
+                ]
+                if pd.isna(val)
+            ]
+            logger.warning(
+                f"Row {row_idx}: Missing OHLC columns: {missing_values}. "
+                f"Expected columns: open='{open_col}', high='{high_col}', "
+                f"low='{low_col}', close='{close_col}'. Skipping row."
+            )
+            continue
+
+        symbol = config.symbol or row.get("symbol", "UNKNOWN")
+        timeframe = config.timeframe or Timeframe.M1
+
+        try:
+            bar = Bar(
+                timestamp=timestamp,
+                symbol=symbol,
+                timeframe=timeframe,
+                open=Decimal(str(open_val)),
+                high=Decimal(str(high_val)),
+                low=Decimal(str(low_val)),
+                close=Decimal(str(close_val)),
+                volume=Decimal(str(volume_val)) if not pd.isna(volume_val) else Decimal("0"),
+            )
+        except (ValueError, TypeError, ArithmeticError) as exc:
+            logger.warning(
+                f"Row {row_idx}: Error parsing row - {type(exc).__name__}: {exc}. Skipping row."
+            )
+            continue
+
+        bars.append(bar)
+
+    return bars
+
+
 def normalize_bars(
     bars: Sequence[Bar],
     *,
@@ -320,7 +430,7 @@ def load_historical_bars(
     """Load historical bars from a data source.
 
     This is the primary entry point for loading historical data.
-    It handles CSV files, parquet files (future), and API sources (future).
+    It handles CSV files, parquet files, and API sources (future).
 
     Args:
         source: Path to data file or DataSourceConfig
@@ -364,8 +474,10 @@ def load_historical_bars(
     # Load based on source type
     if config.source_type == "csv" and config.path:
         bars = _load_csv_bars(config.path, config)
+    elif config.source_type == "parquet" and config.path:
+        bars = _load_parquet_bars(config.path, config)
     elif config.source_type == "parquet":
-        raise NotImplementedError("Parquet loading not yet implemented")
+        raise ValueError("Parquet source requires a file path")
     else:
         raise ValueError(f"Unknown source type: {config.source_type}")
 

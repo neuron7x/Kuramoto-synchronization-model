@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 # Add src to path for proper imports
@@ -32,6 +33,10 @@ from tradepulse.data.api import (  # noqa: E402
     normalize_bars,
 )
 from tradepulse.data.schema import Bar, FeatureVector, Timeframe  # noqa: E402
+from core.utils.dataframe_io import (  # noqa: E402
+    MissingParquetDependencyError,
+    write_dataframe,
+)
 
 
 def make_bar(
@@ -335,6 +340,35 @@ class TestLoadHistoricalBars:
             symbol="BTCUSDT",
             timeframe=Timeframe.M1,
             validate=False,  # Skip validation for simple test
+        )
+
+        assert len(bars) == 2
+        assert bars[0].symbol == "BTCUSDT"
+        assert bars[0].close == Decimal("102")
+
+    def test_loads_from_parquet(self, tmp_path: Path) -> None:
+        """Should load bars from parquet file."""
+        df = pd.DataFrame(
+            {
+                "timestamp": ["2024-01-01 00:00:00", "2024-01-01 00:01:00"],
+                "open": [100, 102],
+                "high": [105, 107],
+                "low": [95, 100],
+                "close": [102, 105],
+                "volume": [1000, 1500],
+            }
+        )
+        parquet_file = tmp_path / "test_data.parquet"
+        try:
+            write_dataframe(df, parquet_file)
+        except MissingParquetDependencyError:
+            pytest.skip("Parquet backend unavailable")
+
+        bars = load_historical_bars(
+            parquet_file,
+            symbol="BTCUSDT",
+            timeframe=Timeframe.M1,
+            validate=False,
         )
 
         assert len(bars) == 2
