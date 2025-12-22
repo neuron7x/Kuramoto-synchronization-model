@@ -54,7 +54,7 @@
 ### For Infrastructure Engineers
 - **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)
 - **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
-- **Comprehensive Testing**: Target 98% coverage with unit, integration, property-based, and fuzz testing (currently ~71%, actively expanding)
+- **Comprehensive Testing**: CI gates enforce unit, integration, property-based, fuzz suites, and 98% coverage on `core/`, `execution/`, `runtime/`, and `tacl/`
 
 ---
 
@@ -118,6 +118,8 @@ Code: [Security Documentation](docs/security/), [`SECURITY.md`](SECURITY.md)
 **Custom Indicators** — Add your own technical or geometric indicators  
 **Rust Accelerators** — High-performance compute kernels  
 **Neuro Modules** — Advanced neural trading components  
+
+All plugins implement the standard registry contracts in [`strategies/registry.py`](strategies/registry.py) and indicator interfaces in [`core/indicators/base.py`](core/indicators/base.py); RL/Neuro modules are exercised in a sandbox gate before any live test.
 
 Code: [`strategies/`](strategies/), [`rust/tradepulse-accel/`](rust/tradepulse-accel/), [`hydrobrain_v2/`](hydrobrain_v2/), [`rl/`](rl/)
 
@@ -392,6 +394,8 @@ Free Energy `F = U - T·S` where:
 
 **Energy Envelope**: Free energy ≤ 1.35 (12% safety margin from hot-path load tests)
 
+**Telemetry Discipline**: Latency, coherency, and cost signals are exported as OTLP traces and Prometheus time-series. Every controller state transition is logged for ≥400-day retention. RL/GA/LinkActivator actuators remain locked behind dual human approval plus CI safety gates—no autonomous refactors are permitted without the gate.
+
 #### Safety Model: Monotonic Free Energy Descent
 
 ```
@@ -482,11 +486,16 @@ pytest tests/property/
 mutmut run --use-coverage
 ```
 
+### CI/CD Merge Gates
+
+- **Test coverage**: PRs run `pytest -m "not flaky"` across unit, integration, property-based, fuzz, contracts, reliability, and e2e smoke suites. Merges are blocked if any gate fails or coverage drops below the critical-surface threshold.  
+- **Security & Quality**: Required workflows execute SAST (ruff, mypy, bandit, golangci-lint), dependency checks (`pip-audit` with `constraints/security.txt`), and SBOM generation/verification (CycloneDX) before merge.  
+- **Artifacts**: Coverage XML, mutation reports, and SBOMs are uploaded per run to document evidence for internal audits.
+
 ### Coverage Status
 
-**Target Goal**: 98% coverage gate for all PRs (currently ~71%, actively expanding)  
-**Current Coverage**: backtest (74%), execution (44%), core (32%)  
-**Module Goals**: backtest (100%), execution (100%), core modules (90-95%)
+**Gate**: CI enforces 98% line coverage on `core/`, `execution/`, `runtime/`, and `tacl/` using the critical-surface guardrail (`configs/quality/critical_surface.coveragerc` + `configs/quality/critical_surface.toml`).  
+**Module Goals**: backtest (100%), execution (100%), core modules (90-95%) with branch coverage parity.
 
 To verify current coverage:
 ```bash
@@ -503,6 +512,8 @@ make test-coverage
 TradePulse is designed for low-latency, high-throughput trading operations.
 
 > ⚠️ **Design Targets Only**: Performance metrics below are architecture targets (status: `design_target`), NOT measured results.
+
+Instrumentation captures latency, memory, and compute budgets for data ingestion, execution, runtime orchestration, and dashboard queries via Prometheus/OpenTelemetry. Any code path consuming >30% of the hot-loop budget must ship (or fall back to) a Rust accelerator from [`rust/tradepulse-accel/`](rust/tradepulse-accel/).
 
 ### Design Goals
 
