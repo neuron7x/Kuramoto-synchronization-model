@@ -9,11 +9,17 @@ import uvicorn
 
 if __name__ == "__main__":
     host = os.getenv("CORTEX_SERVICE_HOST", "127.0.0.1")
-    if ipaddress.ip_address(host).is_unspecified:
+    try:
+        ip = ipaddress.ip_address(host)
+        is_public = not ip.is_loopback
+    except ValueError:
+        is_public = host not in {"localhost", "127.0.0.1", "::1"}
+    if is_public:
         import logging
 
         logging.getLogger(__name__).warning(
-            "Cortex service binding to 0.0.0.0; use a reverse proxy for external access."
+            "Cortex service binding to non-loopback interface '%s'; use a reverse proxy for external access.",
+            host,
         )
     uvicorn.run(
         "cortex_service.app.api:create_app",

@@ -40,6 +40,14 @@ def configure_logging(level: int = logging.INFO) -> logging.Logger:
 logger = configure_logging()
 
 
+def _is_public_bind(host: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(host)
+        return not ip.is_loopback
+    except ValueError:
+        return host not in {"localhost", "127.0.0.1"}
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="mlsdm-governed-cognitive-memory CLI",
@@ -131,11 +139,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-def _is_public_bind(host: str) -> bool:
-    try:
-        ip = ipaddress.ip_address(host)
-        return not ip.is_loopback
-    except ValueError:
-        return host not in {"localhost", "127.0.0.1"}
