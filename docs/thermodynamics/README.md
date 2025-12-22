@@ -2,9 +2,14 @@
 
 This directory contains comprehensive documentation for the **Thermodynamic Autonomic Control Layer (TACL)** in TradePulse.
 
+Automation anchors:
+- Current thermodynamics version: `runtime/thermo_config.py::__version__`
+- Test inventory: `docs/_generated/thermo_stats.md` (generated via `tools/audit/thermo_test_stats.py`)
+- Numerical claims below are design targets unless corroborated by CI outputs linked from the generated stats.
+
 ## Overview
 
-TACL is a self-regulating control system that manages the TradePulse distributed topology as a physical system. It applies thermodynamic principles (specifically the Free Energy Principle from neuroscience) to autonomous system optimization while maintaining formal safety guarantees.
+TACL is intended to be a self-regulating control system that manages the TradePulse distributed topology as a physical system. It applies thermodynamic principles (specifically the Free Energy Principle from neuroscience) to autonomous system optimization while maintaining formally specified safety constraints.
 
 ## Key Concepts
 
@@ -185,6 +190,8 @@ Complete examples in `examples/`:
 
 ### Unit Tests
 
+Test inventory is tracked automatically via `python tools/audit/thermo_test_stats.py` (see `docs/_generated/thermo_stats.md` for the current collection). Execute the suites below to validate results:
+
 ```bash
 # Run energy validator tests
 pytest tests/test_energy_validator.py -v
@@ -256,18 +263,18 @@ Format:
 
 ## Performance
 
-### Benchmarks
+### Benchmarks (targets—rerun benchmarks to validate)
 
-- **Control loop latency**: <1ms per step
-- **Energy computation**: <100μs
-- **GA evolution**: ~10ms (16 individuals, 10 generations)
-- **Protocol activation**: <5s with fallbacks
+- **Control loop latency**: target <1ms per step
+- **Energy computation**: target <100μs
+- **GA evolution**: target ~10ms (16 individuals, 10 generations)
+- **Protocol activation**: target <5s with fallbacks
 
-### Scaling
+### Scaling (targets)
 
-- **Node count**: Tested up to 100 nodes
-- **Edge count**: Tested up to 500 edges
-- **History retention**: 10,000 telemetry records
+- **Node count**: targeted up to 100 nodes
+- **Edge count**: targeted up to 500 edges
+- **History retention**: targeted 10,000 telemetry records
 
 ## Troubleshooting
 

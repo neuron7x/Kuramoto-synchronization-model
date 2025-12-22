@@ -2,7 +2,8 @@
 
 **Date**: 2025-11-10  
 **Status**: ✅ IMPLEMENTATION COMPLETE  
-**Controller Version**: v2.4.0
+**Controller Version**: v2.4.0 (source: `src/tradepulse/core/neuro/serotonin/__init__.py::__version__`)
+**Current test evidence**: `docs/_generated/serotonin_stats.md` (generated via `tools/audit/serotonin_test_stats.py`)
 
 ---
 
@@ -10,10 +11,10 @@
 
 The Serotonin Controller v2.4.0 practical suitability assessment and implementation stages are **COMPLETE**. The controller has been:
 
-1. ✅ **Thoroughly tested** - All 62 unit tests passing
-2. ✅ **Documented comprehensively** - Assessment, deployment guide, examples
-3. ✅ **Validated practically** - Validation demo confirms functionality
-4. ✅ **Production-ready** - With configuration tuning recommendations
+1. ✅ **Test visibility established** - See `docs/_generated/serotonin_stats.md` for collected test inventory
+2. ✅ **Documentation assembled** - Assessment, deployment guide, examples
+3. ✅ **Validation hooks prepared** - Run `python -m pytest` to evaluate current status
+4. ⚠️ **Production readiness is a target** - Deployment depends on current CI evidence
 
 ---
 
@@ -21,7 +22,7 @@ The Serotonin Controller v2.4.0 practical suitability assessment and implementat
 
 ### 1. Test Suite Validation ✅
 
-**Status**: All tests passing (62/62 = 100%)
+**Status**: Test collection summarized in `docs/_generated/serotonin_stats.md`; run `python -m pytest` for up-to-date pass/fail results.
 
 - Updated 3 tests to match v2.4.0 enhanced behavior:
   - `test_aversive_state` - Non-linear transforms (sqrt, quadratic, tanh)
@@ -37,7 +38,7 @@ cd /home/runner/work/TradePulse/TradePulse
 cd core/neuro && mv __init__.py __init__.py.bak && touch __init__.py
 cd ../..
 python -m pytest core/neuro/tests/test_serotonin_controller.py -v
-# All 62 tests pass
+# Inspect pytest output for current results
 cd core/neuro && mv __init__.py.bak __init__.py
 ```
 
@@ -49,7 +50,7 @@ Created three major documentation artifacts:
 
 **File**: `docs/SEROTONIN_PRACTICAL_SUITABILITY_ASSESSMENT.md`
 
-Comprehensive assessment across 13 categories:
+Comprehensive assessment across 13 categories (historical manual scores; automation does not enforce these values):
 1. Functional Suitability (10/10)
 2. Reliability & Robustness (10/10)
 3. Performance (10/10)
@@ -61,8 +62,8 @@ Comprehensive assessment across 13 categories:
 9. Risk Assessment (Low risk)
 10. Deployment Recommendations
 
-**Overall Score**: 9.5/10 ⭐⭐⭐⭐⭐  
-**Verdict**: **PRODUCTION-READY**
+**Overall Score**: 9.5/10 ⭐⭐⭐⭐⭐ (historical)  
+**Verdict**: **Design target for production readiness pending current CI evidence**
 
 #### B. Deployment Guide (13KB+)
 
@@ -176,7 +177,7 @@ python examples/serotonin_validation_demo.py
 
 ## Practical Suitability Determination
 
-### Overall Rating: **9.5/10** - EXCELLENT
+### Overall Rating: **9.5/10** - EXCELLENT (historical manual assessment; automation pending)
 
 | Category | Score | Status |
 |----------|-------|--------|
@@ -187,12 +188,12 @@ python examples/serotonin_validation_demo.py
 | Production Features | 10/10 | ✅ Perfect |
 | Security | 10/10 | ✅ Perfect |
 | Documentation | 10/10 | ✅ Perfect |
-| Testing | 10/10 | ✅ Perfect |
+| Testing | 10/10 | ✅ Perfect (tracked via generated stats, not hardcoded) |
 
 ### Key Strengths
 
-1. **Perfect Test Coverage** - 62/62 tests passing
-2. **Zero Breaking Changes** - 100% backward compatible
+1. **Test Coverage Tracked** - See `docs/_generated/serotonin_stats.md` for current collection
+2. **Backward Compatibility Goal** - Treated as a design target; enforce via CI before release
 3. **Production-Grade Features** - Health checks, state persistence, monitoring
 4. **Excellent Documentation** - Comprehensive guides and examples
 5. **Validated Improvements** - Hysteresis eliminates oscillations
@@ -212,9 +213,9 @@ python examples/serotonin_validation_demo.py
 
 ## Deployment Recommendation
 
-### **✅ APPROVED FOR PRODUCTION DEPLOYMENT**
+### **Deployment depends on current CI evidence**
 
-The Serotonin Controller v2.4.0 is **PRODUCTION-READY** with the following guidance:
+The Serotonin Controller v2.4.0 targets production readiness; proceed when current CI runs (including `python -m pytest`) are green and documentation checks pass:
 
 #### Immediate Actions
 
@@ -339,10 +340,10 @@ phasic_veto: 0.9          # -10% decrease
 - [x] All functional requirements met
 - [x] No critical bugs or issues
 - [x] Performance acceptable for trading
-- [x] Backward compatible (100%)
+- [x] Backward compatibility targeted (verify via regression tests)
 - [x] Security validated (0 vulnerabilities)
 - [x] Documentation complete
-- [x] Testing comprehensive (62/62)
+- [x] Testing tracked via `docs/_generated/serotonin_stats.md`
 - [x] Production features implemented
 - [x] Monitoring and health checks ready
 - [x] Deployment procedures documented
@@ -358,7 +359,7 @@ phasic_veto: 0.9          # -10% decrease
 ### Quality Gates ✅
 
 - [x] Code quality: Excellent
-- [x] Test coverage: 100% (62/62)
+- [x] Test coverage: tracked via generated stats and pytest
 - [x] Documentation: Comprehensive
 - [x] Security: Clean scan
 - [x] Performance: Within acceptable range
@@ -369,20 +370,20 @@ phasic_veto: 0.9          # -10% decrease
 
 ## Final Verdict
 
-### ✅ **IMPLEMENTATION COMPLETE - PRODUCTION-READY**
+### ✅ **IMPLEMENTATION COMPLETE - RELEASE REQUIRES CURRENT CI EVIDENCE**
 
-The Serotonin Controller v2.4.0 has successfully completed all assessment and implementation stages:
+The Serotonin Controller v2.4.0 has successfully completed all documented assessment stages; release decisions must reference up-to-date CI runs (including `python -m pytest` and documentation drift checks):
 
-1. **Practical Suitability: CONFIRMED** (9.5/10)
+1. **Practical Suitability: Historical rating 9.5/10**
 2. **All Stages Implemented: YES**
-3. **Production-Ready: YES**
-4. **Deployment Approved: YES**
+3. **Production-Ready: Targeted pending CI**
+4. **Deployment Approved: Only when CI is green**
 
 ### Key Achievements
 
-- ✨ 62/62 tests passing (100%)
-- ✨ Enhanced with v2.4.0 improvements (validated)
-- ✨ Zero breaking changes (perfect compatibility)
+- ✨ Test inventory tracked via automation (`docs/_generated/serotonin_stats.md`)
+- ✨ Enhanced with v2.4.0 improvements (validated in design)
+- ✨ Backward compatibility treated as a guardrail (verify in regression runs)
 - ✨ Comprehensive documentation (45KB+)
 - ✨ Practical validation complete (7 scenarios)
 - ✨ Hysteresis eliminates oscillations (confirmed)
@@ -437,9 +438,9 @@ Recommended for next version:
 
 **Implementation Date**: 2025-11-10  
 **Controller Version**: v2.4.0  
-**Assessment Score**: 9.5/10  
-**Status**: ✅ **PRODUCTION-READY**  
-**Recommendation**: **DEPLOY**
+**Assessment Score**: 9.5/10 (historical)  
+**Status**: ⚠️ **Production readiness is a target pending CI evidence**  
+**Recommendation**: **Deploy only when CI (pytest + doc truth guard) is green**
 
 ---
 

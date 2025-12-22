@@ -3,22 +3,24 @@
 **Assessment Date**: 2025-11-10  
 **Assessor**: GitHub Copilot Coding Agent  
 **Controller Version**: v2.4.0  
-**Status**: ✅ APPROVED FOR PRODUCTION
+**Status**: ⚠️ Production-readiness target (requires current CI evidence)
+
+> This document records the 2025-11-10 manual assessment. Current automated evidence lives in `docs/_generated/serotonin_stats.md` and the command `python -m pytest -q`. Numeric results below are historical unless backed by those automated outputs.
 
 ---
 
 ## Executive Summary
 
-The Serotonin Controller v2.4.0 has been rigorously assessed for practical suitability in production algorithmic trading environments. **The controller is deemed PRODUCTION-READY** with high practical suitability for deployment.
+The Serotonin Controller v2.4.0 has been assessed for practical suitability in production algorithmic trading environments. **The controller targets production readiness** with high practical suitability for deployment when supported by current CI runs.
 
 ### Overall Rating: **9.5/10** ⭐⭐⭐⭐⭐
 
 ### Key Findings
 
-✅ **All 62 unit tests pass** (100% success rate)  
-✅ **Backward compatibility maintained** - Drop-in replacement for v2.3.1  
-✅ **Performance verified** - <3μs per call (2.33μs measured)  
-✅ **Security validated** - No vulnerabilities detected  
+✅ **Test inventory tracked** - See `docs/_generated/serotonin_stats.md`; run `python -m pytest` for status  
+✅ **Backward compatibility goal** - Drop-in replacement for v2.3.1 (verify in regression runs)  
+✅ **Performance target** - <3μs per call (2.33μs historical measurement; rerun benchmarks)  
+✅ **Security validated** - No vulnerabilities detected in last scan  
 ✅ **Production features complete** - Health checks, state persistence, diagnostics  
 ✅ **Code quality excellent** - Well-documented, type-safe, SOLID principles  
 
@@ -28,7 +30,7 @@ The Serotonin Controller v2.4.0 has been rigorously assessed for practical suita
 
 ### 1.1 Core Functionality ✅ EXCELLENT
 
-**Test Coverage**: 62/62 tests passing (100%)
+**Test Coverage**: See `docs/_generated/serotonin_stats.md` for collected tests (run `python -m pytest` for status)
 
 Key functional areas validated:
 - ✅ Aversive state estimation with non-linear transforms
@@ -404,14 +406,14 @@ Neuroscience foundation:
 
 ## 10. Final Verdict
 
-### Overall Assessment: ✅ **PRODUCTION-READY**
+### Overall Assessment: ✅ **Production readiness targeted (release gated by CI)**
 
 **Strengths**:
-1. ⭐ Complete functionality with zero gaps
-2. ⭐ Exceptional performance (2.33μs per call)
-3. ⭐ Perfect backward compatibility
+1. ⭐ Complete functionality with zero gaps (historical assessment)
+2. ⭐ Exceptional performance (2.33μs per call historical measurement)
+3. ⭐ Backward compatibility goal (verify via regression)
 4. ⭐ Production-grade operational features
-5. ⭐ Comprehensive testing (62/62 passing)
+5. ⭐ Test coverage tracked via automation (`docs/_generated/serotonin_stats.md`)
 6. ⭐ Clean security scan (0 vulnerabilities)
 7. ⭐ Excellent documentation
 8. ⭐ Strong neurological foundation
@@ -430,8 +432,8 @@ Neuroscience foundation:
 
 ### 11.1 Immediate Actions ✅
 
-1. ✅ **Deploy to production** - Controller is ready
-2. ✅ **Update tests to v2.4.0 expectations** - Tests now match enhanced behavior
+1. ✅ **Deploy to production when CI is green** - Gate on `python -m pytest` and doc truth guard
+2. ✅ **Update tests to v2.4.0 expectations** - Tests now match enhanced behavior (see generated stats)
 3. ✅ **Monitor telemetry for 24 hours** - Standard practice for any deployment
 4. ✅ **Document numerical differences** - Already in technical docs
 
@@ -474,27 +476,27 @@ Consider for next version:
 - 3.0-4.9: ⭐⭐ Poor - Not suitable for production
 - 0.0-2.9: ⭐ Failed - Major issues present
 
-**Result**: ⭐⭐⭐⭐⭐ **9.5/10 - EXCELLENT - PRODUCTION-READY**
+**Result**: ⭐⭐⭐⭐⭐ **9.5/10 - EXCELLENT (historical assessment; release gated by CI)**
 
 ---
 
 ## 13. Conclusion
 
-The Serotonin Controller v2.4.0 demonstrates **exceptional practical suitability** for production deployment in algorithmic trading systems. The controller:
+The Serotonin Controller v2.4.0 demonstrates **exceptional practical suitability** for production deployment in algorithmic trading systems when current CI evidence supports it. The controller:
 
-- ✅ Achieves 100% test success rate (62/62)
-- ✅ Maintains perfect backward compatibility
-- ✅ Delivers measurable performance improvements
-- ✅ Passes all security checks
+- ✅ Tracks test success via automation (`docs/_generated/serotonin_stats.md`) and `python -m pytest`
+- ✅ Targets backward compatibility (verify via regression)
+- ✅ Delivers measurable performance improvements (historical benchmarks)
+- ✅ Passes security checks in the last scan
 - ✅ Includes comprehensive operational tooling
 - ✅ Provides production-grade monitoring and diagnostics
 - ✅ Has clear documentation and migration guidance
 
-**The controller is APPROVED for immediate production deployment.**
+**Deployment requires green CI (pytest + doc truth guard).**
 
 The v2.4.0 enhancements represent a significant step forward in neurologically-accurate risk control, combining biological plausibility with engineering excellence. The implementation demonstrates careful attention to both theoretical foundations and practical considerations.
 
-**Deployment Recommendation**: **PROCEED WITH CONFIDENCE** ✅
+**Deployment Recommendation**: **Proceed when CI is green** ✅
 
 ---
 

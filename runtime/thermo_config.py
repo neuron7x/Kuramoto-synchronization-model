@@ -13,6 +13,8 @@ from typing import Any, Dict, List
 
 import yaml
 
+__version__ = "0.1.0"
+
 
 @dataclass
 class CrisisThresholds:
@@ -738,4 +740,5 @@ __all__ = [
     "ConfigValidationResult",
     "ConfigValidationError",
     "load_default_config",
+    "__version__",
 ]
