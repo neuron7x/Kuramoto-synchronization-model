@@ -246,6 +246,23 @@ class TestTACLMetricsCollector:
         assert any("rpe" in v.lower() for v in violations)
         assert any("latency" in v.lower() for v in violations)
 
+    def test_check_thresholds_non_finite(self):
+        """Non-finite metrics should surface observability violations."""
+        collector = TACLMetricsCollector()
+
+        collector.record_metric("tacl_free_energy", float("nan"))
+        collector.record_metric("dopamine_rpe", float("inf"))
+        collector.record_metric("latency_p99_ms", float("-inf"))
+
+        violations = collector.check_thresholds(
+            free_energy_max=1.0,
+            rpe_max=2.0,
+            latency_p99_max_ms=120.0,
+        )
+
+        assert len(violations) == 3
+        assert all("non-finite" in v.lower() for v in violations)
+
 
 class TestSecretManager:
     """Test secret management (Requirement #15, #20)."""

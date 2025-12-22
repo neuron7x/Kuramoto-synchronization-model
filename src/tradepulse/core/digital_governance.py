@@ -35,6 +35,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import math
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -266,17 +267,23 @@ class TACLMetricsCollector:
         violations = []
 
         free_energy = self._metrics.get("tacl_free_energy", 0.0)
-        if free_energy > free_energy_max:
+        if not math.isfinite(free_energy):
+            violations.append("Free energy is non-finite")
+        elif free_energy > free_energy_max:
             violations.append(
                 f"Free energy {free_energy:.3f} exceeds max {free_energy_max}"
             )
 
         rpe = self._metrics.get("dopamine_rpe", 0.0)
-        if abs(rpe) > rpe_max:
+        if not math.isfinite(rpe):
+            violations.append("RPE is non-finite")
+        elif abs(rpe) > rpe_max:
             violations.append(f"RPE {rpe:.3f} exceeds max {rpe_max}")
 
         latency = self._metrics.get("latency_p99_ms", 0.0)
-        if latency > latency_p99_max_ms:
+        if not math.isfinite(latency):
+            violations.append("Latency P99 is non-finite")
+        elif latency > latency_p99_max_ms:
             violations.append(
                 f"Latency P99 {latency:.1f}ms exceeds max {latency_p99_max_ms}ms"
             )
