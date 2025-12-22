@@ -37,6 +37,26 @@ Each pillar maintains an explicit backlog and architectural runway captured in t
 Cross-cutting concerns such as authentication, tracing headers, and protobuf compatibility are validated through
 continuous integration pipelines defined in [`docs/github_actions_automation.md`](github_actions_automation.md).
 
+## Module Boundaries and Contracts
+
+| Module | Contract Surface | Allowed Dependencies | Versioning & Gates |
+| --- | --- | --- | --- |
+| `core/` | Pydantic DTOs + JSON Schemas in [`schemas/core/`](../schemas/core/) and stable function signatures exported via [`core/contracts`](../core/contracts) | None (foundation) | SemVer (`core.api.v1`); breaking changes require major bump + compatibility shims |
+| `backtest/` | Simulation driver interfaces in [`interfaces/backtest_runner.py`](../interfaces/backtest_runner.py) and schemas in [`schemas/backtest/`](../schemas/backtest/) | `core/` | SemVer (`backtest.api.v1`); runs behind CI contract tests |
+| `execution/` | Gateway/request contracts in [`execution/gateway.py`](../execution/gateway.py) and [`schemas/execution/`](../schemas/execution/) | `core/` | SemVer (`execution.api.v1`); FIX/REST adapters must stay backward compatible |
+| `runtime/` | Orchestrator CLI + gRPC/web contracts in [`interfaces/live_runner.py`](../interfaces/live_runner.py) | `core/`, `execution/` | SemVer (`runtime.api.v1`); release gates run integration + property suites |
+| `observability/` | OTLP/Prom exporters and log schemas in [`observability/`](../observability/) | `core/` (telemetry types only) | SemVer (`observability.telemetry.v1`); trace/metric shape changes require dual approval |
+| `ui/dashboard/` | gRPC-web/GraphQL DTOs generated from [`schemas/ui/`](../schemas/ui/) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
+| `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
+
+### Dependency & Event Graph (high level)
+- `core` publishes normalized market events → consumed by `backtest` and `execution`.
+- `runtime` orchestrates `execution` adapters and routes policy decisions from `strategies/` through the `core` DTOs.
+- `observability` passively consumes metrics/traces/logs from every module; no reverse imports allowed.
+- `tacl` subscribes to latency/coherency/cost metrics and can only actuate `runtime` via the control API with human-approved gates.
+
+Color-coded gates for schema and API changes are maintained in [`docs/architecture/system_overview.md`](architecture/system_overview.md); any cross-module change must update the relevant schema version and cross-reference the change in [`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md).
+
 ## Data and Knowledge Fabric
 
 | Layer | Technologies | Durability Strategy | Notes |

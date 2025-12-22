@@ -76,6 +76,13 @@ Before deploying, install the following tools:
   hostname and certificate validation protect against downgrade attacks. The configuration loader now rejects weaker modes,
   causing application startup to fail fast if misconfigured.【F:core/config/postgres.py†L6-L43】
 
+## Golden-Path Deployment, Rollback, and Monitoring
+
+1. **Install Path**: Build/pull the container image (`Dockerfile`) → run workstation/staging via Docker Compose → promote with Helm/Kustomize overlays (`deploy/kustomize/overlays/*`) for Kubernetes.  
+2. **Production Readiness**: Apply liveness/readiness probes from `deploy/kustomize/base/` and confirm mTLS/secret mounts render correctly via `kubectl rollout status`.  
+3. **Rollback**: Use `kubectl rollout undo deployment/tradepulse-api -n <env>` (or `helm rollback <release> <rev>`) after capturing Prometheus snapshots; rerun `pytest tests/smoke -m smoke` as a post-rollback verification.  
+4. **Monitoring & Alerting**: Prometheus scrapes `/metrics`, Alertmanager routes pages for SLO breaches, and the OpenTelemetry collector exports traces to your APM. Keep alerts for latency, error rate, queue depth, and thermodynamic free-energy spikes enabled in production.
+
 ## Docker Compose Deployment
 
 The repository ships with a lightweight Compose stack that builds the TradePulse container and runs Prometheus for metrics scraping.【F:docker-compose.yml†L1-L12】
