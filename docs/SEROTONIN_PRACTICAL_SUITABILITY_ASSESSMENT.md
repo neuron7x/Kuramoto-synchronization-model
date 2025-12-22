@@ -261,7 +261,7 @@ Documentation quality:
 ### 5.4 Testing ✅ EXCELLENT
 
 Test coverage:
-- ✅ 62 unit tests (100% passing)
+- ✅ Test inventory tracked via `docs/_generated/serotonin_stats.md`
 - ✅ Integration tests (step API)
 - ✅ Backward compatibility tests
 - ✅ Performance benchmarks
