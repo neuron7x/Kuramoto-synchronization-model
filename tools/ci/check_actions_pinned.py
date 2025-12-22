@@ -93,7 +93,9 @@ def find_unpinned_actions(workflows: Iterable[Path]) -> List[Tuple[Path, str]]:
             if parsed is None:
                 continue
             target, ref = parsed
-            if ref is None or not Path(target).is_absolute() and not _ref_is_sha(ref):
+            if ref is None or (
+                not Path(target).is_absolute() and not _ref_is_sha(ref)
+            ):
                 findings.append((workflow, uses_value))
     return findings
 
