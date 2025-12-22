@@ -33,9 +33,19 @@ class RiskConfig:
         var_alpha: float | None = None,
         f_max: float | None = None,
     ):
-        self.es_limit = es_limit or float(os.getenv("TP_ES_LIMIT", "0.03"))
-        self.var_alpha = var_alpha or float(os.getenv("TP_VAR_ALPHA", "0.975"))
-        self.f_max = f_max or float(os.getenv("TP_FMAX", "1.0"))
+        self.es_limit = (
+            float(os.getenv("TP_ES_LIMIT", "0.03"))
+            if es_limit is None
+            else float(es_limit)
+        )
+        self.var_alpha = (
+            float(os.getenv("TP_VAR_ALPHA", "0.975"))
+            if var_alpha is None
+            else float(var_alpha)
+        )
+        self.f_max = (
+            float(os.getenv("TP_FMAX", "1.0")) if f_max is None else float(f_max)
+        )
 
 
 def var_es(returns: np.ndarray, alpha: float = 0.975) -> tuple[float, float]:
@@ -57,11 +67,14 @@ def var_es(returns: np.ndarray, alpha: float = 0.975) -> tuple[float, float]:
     -----
     We compute VaR/ES on losses (L = -r) so positive values indicate losses.
     """
-    if len(returns) == 0:
+    returns_array = np.asarray(returns, dtype=float)
+    finite_returns = returns_array[np.isfinite(returns_array)]
+
+    if len(finite_returns) == 0:
         return 0.0, 0.0
 
     # Convert to losses (negative returns)
-    losses = -returns
+    losses = -finite_returns
 
     # VaR is the alpha-quantile of losses
     var = float(np.quantile(losses, alpha))
@@ -167,4 +180,6 @@ def check_risk_breach(es: float, es_limit: float) -> Literal["OK", "BREACH"]:
     Literal["OK", "BREACH"]
         Risk state
     """
+    if not np.isfinite(es):
+        return "BREACH"
     return "BREACH" if es > es_limit else "OK"

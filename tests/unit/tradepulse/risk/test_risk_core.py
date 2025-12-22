@@ -5,6 +5,7 @@ import importlib.util
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 spec = importlib.util.spec_from_file_location(
     "risk_core",
@@ -18,6 +19,7 @@ var_es = risk_module.var_es
 kelly_shrink = risk_module.kelly_shrink
 compute_final_size = risk_module.compute_final_size
 check_risk_breach = risk_module.check_risk_breach
+RiskConfig = risk_module.RiskConfig
 
 
 class TestVarES:
@@ -32,6 +34,16 @@ class TestVarES:
 
         assert var > 0
         assert es > 0
+        assert es >= var
+
+    def test_handles_non_finite_inputs(self):
+        """Non-finite inputs should be ignored safely."""
+        returns = np.array([0.01, np.nan, 0.02, np.inf, -0.03])
+
+        var, es = var_es(returns, alpha=0.95)
+
+        assert np.isfinite(var)
+        assert np.isfinite(es)
         assert es >= var
 
 
@@ -75,3 +87,36 @@ class TestCheckRiskBreach:
         """Test when ES exceeds limit."""
         state = check_risk_breach(0.04, 0.03)
         assert state == "BREACH"
+
+    def test_non_finite_es_flags_breach(self):
+        """Non-finite ES should be treated as a breach for safety."""
+        state = check_risk_breach(float("nan"), 0.03)
+        assert state == "BREACH"
+
+
+class TestRiskConfig:
+    """Test risk configuration handling."""
+
+    def test_respects_zero_overrides(self, monkeypatch):
+        """Explicit zero values should not fall back to env defaults."""
+        monkeypatch.setenv("TP_ES_LIMIT", "0.10")
+        monkeypatch.setenv("TP_VAR_ALPHA", "0.90")
+        monkeypatch.setenv("TP_FMAX", "0.50")
+
+        cfg = RiskConfig(es_limit=0.0, var_alpha=0.0, f_max=0.0)
+
+        assert cfg.es_limit == 0.0
+        assert cfg.var_alpha == 0.0
+        assert cfg.f_max == 0.0
+
+    def test_env_defaults_used_when_none(self, monkeypatch):
+        """Environment variables should provide defaults when params omitted."""
+        monkeypatch.setenv("TP_ES_LIMIT", "0.07")
+        monkeypatch.setenv("TP_VAR_ALPHA", "0.93")
+        monkeypatch.setenv("TP_FMAX", "0.75")
+
+        cfg = RiskConfig()
+
+        assert cfg.es_limit == pytest.approx(0.07)
+        assert cfg.var_alpha == pytest.approx(0.93)
+        assert cfg.f_max == pytest.approx(0.75)
