@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Dict, Optional
+
+DEFAULT_HEALTH_HOST = os.getenv("TRADEPULSE_HEALTH_HOST", "127.0.0.1")
 
 
 class _HealthState:
@@ -44,7 +47,7 @@ class _HealthState:
 class HealthServer:
     """Threaded HTTP server exposing ``/healthz`` and ``/readyz`` endpoints."""
 
-    def __init__(self, host: str = "0.0.0.0", port: int = 8085) -> None:
+    def __init__(self, host: str = DEFAULT_HEALTH_HOST, port: int = 8085) -> None:
         self._state = _HealthState()
         self._server = ThreadingHTTPServer(
             (host, port), self._handler_factory(self._state)

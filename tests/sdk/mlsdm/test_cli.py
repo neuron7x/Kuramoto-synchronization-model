@@ -140,7 +140,7 @@ class TestBuildArgParser:
         assert args.config == "config/default_config.yaml"
         assert args.steps == 100
         assert args.api is False
-        assert args.host == "0.0.0.0"
+        assert args.host == "127.0.0.1"
         assert args.port == 8000
 
     def test_parser_custom_config(self) -> None:
@@ -188,6 +188,14 @@ class TestBuildArgParser:
         assert args.api is True
         assert args.host == "localhost"
         assert args.port == 3000
+
+    def test_parser_honours_env_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("MLSDM_API_HOST", "10.0.0.5")
+        parser = build_arg_parser()
+
+        args = parser.parse_args([])
+
+        assert args.host == "10.0.0.5"
 
 
 class TestMainFunction:

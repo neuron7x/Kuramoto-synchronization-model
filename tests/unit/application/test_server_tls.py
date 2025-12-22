@@ -100,6 +100,7 @@ def test_api_server_settings_require_tls_by_default(tmp_path: Path) -> None:
         }
     )
     assert settings.tls is not None
+    assert settings.host == "127.0.0.1"
 
 
 def test_api_server_tls_settings_normalises_sequences(tmp_path: Path) -> None:

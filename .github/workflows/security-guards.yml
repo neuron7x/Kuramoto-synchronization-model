@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install bandit
+          pip install bandit pyyaml
       
       - name: 🔒 Key Material Guard
         run: |
@@ -54,12 +54,7 @@ jobs:
       - name: 🔗 Action Pinning Guard
         run: |
           echo "::group::Action Pinning Guard"
-          bash scripts/guards/action_pinning_guard.sh || {
-            echo "::warning::Action pinning check failed. This is expected until Dependabot PRs are merged."
-            echo "::notice::See .github/workflows/ACTIONS_SECURITY.md for details on automated pinning via Dependabot."
-            # Don't fail the build yet - this is informational until Dependabot does its work
-            exit 0
-          }
+          bash scripts/guards/action_pinning_guard.sh
           echo "::endgroup::"
       
       - name: 📊 Security Status Summary
@@ -70,7 +65,7 @@ jobs:
           echo "✅ Key Material: No private keys in tracked files" >> $GITHUB_STEP_SUMMARY
           echo "✅ Bandit: No MEDIUM/HIGH severity issues" >> $GITHUB_STEP_SUMMARY
           echo "✅ Python Matrix: Versions aligned with pyproject.toml" >> $GITHUB_STEP_SUMMARY
-          echo "ℹ️  Action Pinning: Automated by Dependabot (see .github/dependabot.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Action Pinning: Guard enforces SHA-pinned workflows" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📚 **Documentation:**" >> $GITHUB_STEP_SUMMARY
           echo "- [Actions Security Guide](.github/workflows/ACTIONS_SECURITY.md)" >> $GITHUB_STEP_SUMMARY

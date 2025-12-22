@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 from typing import Any, Dict
 
 from .core.memory_manager import MemoryManager
@@ -59,11 +60,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run HTTP API instead of local simulation.",
     )
+    default_host = os.getenv("MLSDM_API_HOST", "127.0.0.1")
     parser.add_argument(
         "--host",
         type=str,
-        default="0.0.0.0",  # nosec B104 - API server intentionally binds to all interfaces for container access
-        help="Host for API server (used only with --api). Default 0.0.0.0 for container/network access.",
+        default=default_host,
+        help=(
+            "Host for API server (used only with --api). "
+            "Precedence: CLI > MLSDM_API_HOST env > default 127.0.0.1."
+        ),
     )
     parser.add_argument(
         "--port",

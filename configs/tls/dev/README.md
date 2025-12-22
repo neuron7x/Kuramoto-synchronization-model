@@ -8,24 +8,16 @@ This directory contains TLS certificates and keys for local development and test
 
 ## Generating Development Certificates
 
-Development TLS certificates and keys are auto-generated when needed. You have two options:
-
-### Option 1: Auto-generation (Recommended)
-
-The application will automatically generate development certificates on first run if they don't exist.
-
-### Option 2: Manual Generation
-
-If you need to regenerate certificates manually, use:
+Development TLS certificates and keys are generated locally. Recommended path:
 
 ```bash
 # From repository root
-make generate-dev-certs
-
-# Or directly with OpenSSL
-cd configs/tls/dev
-./generate_certs.sh
+./scripts/gen_dev_tls.sh
+ls configs/tls/dev/generated
 ```
+
+The script writes fresh keys/certs to `configs/tls/dev/generated/` and never
+touches tracked files.
 
 ## Files in This Directory
 

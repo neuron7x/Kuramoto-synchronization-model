@@ -4,7 +4,7 @@ service:
   description: Cognitive signal orchestration for TradePulse portfolios
   metrics_path: /metrics
   log_level: INFO
-  host: 0.0.0.0
+  host: 127.0.0.1
   port: 8001
   tls:
     cert_file: /service/tls/cortex-server.pem

@@ -41,6 +41,7 @@ venv/
 # TLS keys (dev keys generated locally, never committed)
 configs/tls/dev/*.key.pem
 configs/tls/dev/*.key
+configs/tls/dev/generated/
 *.key.pem
 
 # GitHub Actions local testing (act)

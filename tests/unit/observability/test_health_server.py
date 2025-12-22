@@ -41,3 +41,9 @@ def test_health_endpoints_expose_liveness_and_readiness() -> None:
         live_response = httpx.get(f"{base_url}/health/live", timeout=2.0)
         assert live_response.status_code == 503
         assert live_response.json()["status"] == "down"
+
+
+def test_health_server_default_host_is_loopback() -> None:
+    with HealthServer(port=0) as server:
+        host = server._server.server_address[0]  # type: ignore[index]
+        assert host.startswith("127.")

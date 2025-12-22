@@ -246,7 +246,11 @@ class ApiServerSettings(BaseSettings):
     """Runtime configuration for the HTTPS listener."""
 
     host: str = Field(
-        "0.0.0.0", description="Network interface bound by the API server."
+        "127.0.0.1",
+        description=(
+            "Network interface bound by the API server. "
+            "Precedence: CLI > environment (TRADEPULSE_API_SERVER_HOST) > config > default."
+        ),
     )
     port: PositiveInt = Field(8000, description="TCP port exposed by the API server.")
     allow_plaintext: bool = Field(

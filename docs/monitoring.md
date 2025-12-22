@@ -896,6 +896,11 @@ with HealthServer(port=8085) as server:
     run_application_loop()
 ```
 
+The health listener binds to loopback by default (`TRADEPULSE_HEALTH_HOST` env
+variable) to avoid accidental exposure. If you need to publish it externally,
+route it through a reverse proxy/ingress and override the host explicitly
+(CLI/env > config > default).
+
 Pair the HTTP server with `observability.health_monitor.PeriodicHealthMonitor`
 to keep the readiness state fresh without relying on ad-hoc probes. The helper
 executes the default checks in `observability.health_checks` on a cadence and

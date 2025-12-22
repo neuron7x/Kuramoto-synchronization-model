@@ -108,7 +108,7 @@ class ServiceMeta:
     description: str = "Cognitive signal orchestration for TradePulse portfolios"
     metrics_path: str = "/metrics"
     log_level: str = "INFO"
-    host: str = "0.0.0.0"
+    host: str = "127.0.0.1"
     port: int = 8001
     tls: ServiceTLSSettings | None = None
 

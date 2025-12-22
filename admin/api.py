@@ -166,7 +166,12 @@ def create_admin_app(
 
 
 if __name__ == "__main__":
+    import os
     import uvicorn
 
     app = create_admin_app()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host=os.getenv("ADMIN_API_HOST", "127.0.0.1"),
+        port=int(os.getenv("ADMIN_API_PORT", "8000")),
+    )
