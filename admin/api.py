@@ -166,16 +166,17 @@ def create_admin_app(
 
 
 if __name__ == "__main__":
-    import ipaddress
     import os
+    from core.utils.network import is_public_bind
     import uvicorn
 
     host = os.getenv("ADMIN_API_HOST", "127.0.0.1")
-    if ipaddress.ip_address(host).is_unspecified:
+    if is_public_bind(host):
         import logging
 
         logging.getLogger(__name__).warning(
-            "Admin API binding to 0.0.0.0; prefer loopback or a reverse proxy."
+            "Admin API binding to non-loopback interface '%s'; prefer loopback or a reverse proxy.",
+            host,
         )
 
     app = create_admin_app()

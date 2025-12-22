@@ -1,10 +1,10 @@
 import argparse
-import ipaddress
 import json
 import logging
 import os
 from typing import Any, Dict
 
+from core.utils.network import is_public_bind
 from .core.memory_manager import MemoryManager
 from .utils.config_loader import ConfigLoader
 
@@ -38,14 +38,6 @@ def configure_logging(level: int = logging.INFO) -> logging.Logger:
 
 
 logger = configure_logging()
-
-
-def _is_public_bind(host: str) -> bool:
-    try:
-        ip = ipaddress.ip_address(host)
-        return not ip.is_loopback
-    except ValueError:
-        return host not in {"localhost", "127.0.0.1"}
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -101,7 +93,7 @@ def main() -> None:
             logger.exception("Failed to import API app or uvicorn: %s", exc)
             raise SystemExit(1) from exc
 
-        if _is_public_bind(args.host):
+        if is_public_bind(args.host):
             logger.warning(
                 "API server binding to public interface '%s'. Use a reverse proxy for exposure.",
                 args.host,
