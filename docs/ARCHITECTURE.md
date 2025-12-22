@@ -49,6 +49,8 @@ continuous integration pipelines defined in [`docs/github_actions_automation.md`
 | `ui/dashboard/` | gRPC-web/GraphQL DTOs generated from [`schemas/ui/`](../schemas/ui/) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
 | `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
 
+Links use `../` because this document lives under `docs/`; they resolve to the repo-root `schemas/`, `interfaces/`, and module directories listed above.
+
 ### Dependency & Event Graph (high level)
 - `core` publishes normalized market events → consumed by `backtest` and `execution`.
 - `runtime` orchestrates `execution` adapters and routes policy decisions from `strategies/` through the `core` DTOs.

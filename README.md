@@ -394,7 +394,7 @@ Free Energy `F = U - T·S` where:
 
 **Energy Envelope**: Free energy ≤ 1.35 (12% safety margin from hot-path load tests)
 
-**Telemetry Discipline**: Latency, coherency, and cost signals are exported as OTLP traces and Prometheus time-series, and every controller state transition is logged for ≥400-day retention. RL/GA/LinkActivator actuators remain locked behind dual human approval plus CI safety gates—no autonomous refactors are permitted without the gate.
+**Telemetry Discipline**: Latency, coherency, and cost signals are exported as OTLP traces and Prometheus time-series. Every controller state transition is logged for ≥400-day retention. RL/GA/LinkActivator actuators remain locked behind dual human approval plus CI safety gates—no autonomous refactors are permitted without the gate.
 
 #### Safety Model: Monotonic Free Energy Descent
 
