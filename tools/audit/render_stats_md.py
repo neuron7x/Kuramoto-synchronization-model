@@ -4,23 +4,42 @@ import argparse
 import importlib
 import json
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+ORIGINAL_SYS_PATH = list(sys.path)
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.audit.serotonin_test_stats import collect_serotonin_stats
 from tools.audit.thermo_test_stats import collect_thermo_stats
 
+sys.path[:] = ORIGINAL_SYS_PATH
 
-def _load_version(module_path: str, attribute: str = "__version__", base_dir: Path | None = None) -> str:
-    if base_dir:
-        sys.path.insert(0, str(base_dir / "src"))
-        sys.path.insert(0, str(base_dir))
-    module = importlib.import_module(module_path)
-    return getattr(module, attribute, "unknown")
+
+@contextmanager
+def _temp_sys_path(base_dir: Path) -> None:
+    original = list(sys.path)
+    sys.path.insert(0, str(base_dir / "src"))
+    sys.path.insert(0, str(base_dir))
+    try:
+        yield
+    finally:
+        sys.path[:] = original
+
+
+def _load_version(
+    module_path: str, attribute: str = "__version__", base_dir: Path | None = None
+) -> str:
+    if base_dir is None:
+        module = importlib.import_module(module_path)
+        return getattr(module, attribute, "unknown")
+
+    with _temp_sys_path(base_dir):
+        module = importlib.import_module(module_path)
+        return getattr(module, attribute, "unknown")
 
 
 def _render_stats(title: str, stats: Dict[str, object], version: str) -> str:
