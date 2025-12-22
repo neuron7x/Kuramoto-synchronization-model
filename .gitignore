@@ -42,6 +42,7 @@ venv/
 configs/tls/dev/*.key.pem
 configs/tls/dev/*.key
 configs/tls/dev/generated/
+audit/artifacts/
 *.key.pem
 
 # GitHub Actions local testing (act)

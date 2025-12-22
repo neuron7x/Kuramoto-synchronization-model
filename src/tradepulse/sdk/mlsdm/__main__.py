@@ -1,4 +1,5 @@
 import argparse
+import ipaddress
 import json
 import logging
 import os
@@ -92,6 +93,11 @@ def main() -> None:
             logger.exception("Failed to import API app or uvicorn: %s", exc)
             raise SystemExit(1) from exc
 
+        if _is_public_bind(args.host):
+            logger.warning(
+                "API server binding to public interface '%s'. Use a reverse proxy for exposure.",
+                args.host,
+            )
         logger.info("Starting API server")
         uvicorn.run(app, host=args.host, port=args.port)
         return
@@ -125,3 +131,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def _is_public_bind(host: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(host)
+        return not ip.is_loopback
+    except ValueError:
+        return host not in {"localhost", "127.0.0.1"}

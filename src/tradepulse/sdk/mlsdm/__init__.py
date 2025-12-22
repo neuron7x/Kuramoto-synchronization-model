@@ -43,6 +43,7 @@ Example usage::
 
 from __future__ import annotations
 
+from . import api  # noqa: F401
 from .config import AgentConfig, FHMCConfig, MLSDMConfig, OptimizerConfig
 from .contracts import (
     BiomarkerState,
@@ -78,4 +79,5 @@ __all__ = [
     "OptimizationResult",
     "ReplayTransition",
     "TrainingStep",
+    "api",
 ]

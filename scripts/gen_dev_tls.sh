@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -23,6 +24,8 @@ generate_root() {
   openssl req -x509 -new -nodes -key "${ROOT_KEY}" -sha256 -days 730 \
     -subj "/CN=TradePulse Dev Root/O=TradePulse Dev" \
     -out "${ROOT_CERT}" >/dev/null
+  chmod 600 "${ROOT_KEY}"
+  chmod 644 "${ROOT_CERT}"
 }
 
 generate_cert() {

@@ -197,6 +197,14 @@ class TestBuildArgParser:
 
         assert args.host == "10.0.0.5"
 
+    def test_cli_overrides_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("MLSDM_API_HOST", "10.0.0.5")
+        parser = build_arg_parser()
+
+        args = parser.parse_args(["--host", "0.0.0.0"])
+
+        assert args.host == "0.0.0.0"
+
 
 class TestMainFunction:
     """Tests for main function."""

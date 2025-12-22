@@ -8,13 +8,16 @@ This directory contains TLS certificates and keys for local development and test
 
 ## Generating Development Certificates
 
-Development TLS certificates and keys are generated locally. Recommended path:
+Development TLS certificates and keys are generated locally. Recommended path (3 commands):
 
 ```bash
-# From repository root
+cd /home/runner/work/TradePulse/TradePulse
 ./scripts/gen_dev_tls.sh
 ls configs/tls/dev/generated
 ```
+
+Rotation: any private key ever committed must be treated as compromised. Regenerate
+all dev material with the script above whenever keys are exposed.
 
 The script writes fresh keys/certs to `configs/tls/dev/generated/` and never
 touches tracked files.

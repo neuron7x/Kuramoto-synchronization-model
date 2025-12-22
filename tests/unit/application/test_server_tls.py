@@ -135,3 +135,40 @@ def test_build_api_server_ssl_context(tmp_path: Path) -> None:
 
     assert context.minimum_version is ssl.TLSVersion.TLSv1_2
     assert context.verify_mode == ssl.CERT_OPTIONAL
+
+
+def test_api_server_env_precedence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    ca, cert, key = _generate_server_material(tmp_path)
+    monkeypatch.setenv("TRADEPULSE_API_SERVER_HOST", "10.1.1.1")
+
+    settings = ApiServerSettings.model_validate(
+        {
+            "tls": {
+                "cert_file": str(cert),
+                "key_file": str(key),
+                "client_ca_file": str(ca),
+                "require_client_certificate": False,
+            }
+        }
+    )
+
+    assert settings.host == "10.1.1.1"
+
+
+def test_api_server_cli_overrides_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    ca, cert, key = _generate_server_material(tmp_path)
+    monkeypatch.setenv("TRADEPULSE_API_SERVER_HOST", "10.1.1.1")
+
+    settings = ApiServerSettings.model_validate(
+        {
+            "host": "1.2.3.4",
+            "tls": {
+                "cert_file": str(cert),
+                "key_file": str(key),
+                "client_ca_file": str(ca),
+                "require_client_certificate": False,
+            },
+        }
+    )
+
+    assert settings.host == "1.2.3.4"
