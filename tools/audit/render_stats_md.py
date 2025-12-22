@@ -18,6 +18,11 @@ from tools.audit.thermo_test_stats import collect_thermo_stats
 
 sys.path[:] = ORIGINAL_SYS_PATH
 
+ALLOWED_VERSION_MODULES = {
+    "tradepulse.core.neuro.serotonin",
+    "runtime.thermo_config",
+}
+
 
 @contextmanager
 def _temp_sys_path(base_dir: Path) -> None:
@@ -33,6 +38,8 @@ def _temp_sys_path(base_dir: Path) -> None:
 def _load_version(
     module_path: str, attribute: str = "__version__", base_dir: Path | None = None
 ) -> str:
+    if module_path not in ALLOWED_VERSION_MODULES:
+        raise ValueError(f"Unsupported module requested for version lookup: {module_path}")
     if base_dir is None:
         module = importlib.import_module(module_path)
         return getattr(module, attribute, "unknown")

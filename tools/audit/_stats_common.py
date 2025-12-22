@@ -38,9 +38,20 @@ def collect_nodeids(root: Path, test_files: List[Path]) -> List[str]:
     ]
     env = os.environ.copy()
     env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    proc = subprocess.run(
-        cmd, cwd=root, capture_output=True, text=True, env=env, check=False
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=root,
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("pytest collection timed out") from exc
+
+    # pytest exit code 5 == no tests collected (acceptable for targeted discovery)
     if proc.returncode not in (0, 5):
         raise RuntimeError(
             f"pytest collection failed with code {proc.returncode}: {proc.stderr or proc.stdout}"
