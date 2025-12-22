@@ -494,7 +494,7 @@ mutmut run --use-coverage
 
 ### Coverage Status
 
-**Gate**: CI enforces 98% line coverage on `core/`, `execution/`, `runtime/`, and `tacl/` using the critical-surface guardrail (`configs/quality/critical_surface.*`).  
+**Gate**: CI enforces 98% line coverage on `core/`, `execution/`, `runtime/`, and `tacl/` using the critical-surface guardrail (`configs/quality/critical_surface.coveragerc` + `configs/quality/critical_surface.toml`).  
 **Module Goals**: backtest (100%), execution (100%), core modules (90-95%) with branch coverage parity.
 
 To verify current coverage:

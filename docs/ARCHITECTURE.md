@@ -57,7 +57,7 @@ Links use `../` because this document lives under `docs/`; they resolve to the r
 - `observability` passively consumes metrics/traces/logs from every module; no reverse imports allowed.
 - `tacl` subscribes to latency/coherency/cost metrics and can only actuate `runtime` via the control API with human-approved gates.
 
-Color-coded gates for schema and API changes are maintained in [`docs/architecture/system_overview.md`](architecture/system_overview.md); any cross-module change must update the relevant schema version and cross-reference the change in [`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md).
+Schema and API diagrams live in [`docs/architecture/system_overview.md`](architecture/system_overview.md); any cross-module change must update the relevant schema version and cross-reference the change in [`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md).
 
 ## Data and Knowledge Fabric
 
