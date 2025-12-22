@@ -119,7 +119,7 @@ Code: [Security Documentation](docs/security/), [`SECURITY.md`](SECURITY.md)
 **Rust Accelerators** — High-performance compute kernels  
 **Neuro Modules** — Advanced neural trading components  
 
-All plugins implement the standard contracts in [`strategies/base.py`](strategies/base.py) and indicator interfaces in [`core/indicators/base.py`](core/indicators/base.py); RL/Neuro modules are exercised in a sandbox gate before any live test.
+All plugins implement the standard registry contracts in [`strategies/registry.py`](strategies/registry.py) and indicator interfaces in [`core/indicators/base.py`](core/indicators/base.py); RL/Neuro modules are exercised in a sandbox gate before any live test.
 
 Code: [`strategies/`](strategies/), [`rust/tradepulse-accel/`](rust/tradepulse-accel/), [`hydrobrain_v2/`](hydrobrain_v2/), [`rl/`](rl/)
 

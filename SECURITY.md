@@ -12,7 +12,7 @@ For a cross-functional "digital risk" playbook that consolidates confidentiality
 - **Secrets**: All runtime secrets are sourced from HashiCorp Vault or AWS Secrets Manager; CI renders ephemeral env files only. Static `.env` files are forbidden in production pipelines.  
 - **Encryption**: TLS 1.3 with modern cipher suites in transit; AES-256 (or stronger) for storage, backups, and database tablespaces.  
 - **Administrative MFA**: Admin and operational flows (break-glass, deploy, kill-switch) require MFA-backed identities; GitHub environment protection enforces two-person approval.  
-- **Exploit Protection**: `.github/workflows/tests.yml` and `.github/workflows/security.yml` block merges unless SAST (bandit/mypy/ruff/golangci-lint), dependency-check (`pip-audit` + constraints), linter, and CycloneDX SBOM jobs succeed.  
+- **Exploit Protection**: The required workflows `tests.yml` and `security.yml` (under `.github/workflows/`) block merges unless SAST (bandit/mypy/ruff/golangci-lint), dependency-check (`pip-audit` + constraints), linter, and CycloneDX SBOM jobs succeed.  
 - **SDK Least-Privilege Gate**: Service SDK tokens are scoped per module (e.g., `execution` cannot read `core` internals directly) and are issued with role policies that match the allowed dependency graph in `docs/ARCHITECTURE.md`. Cross-boundary calls outside those policies are denied and audited.
 
 ## Thermodynamic Autonomic Control Layer (TACL)

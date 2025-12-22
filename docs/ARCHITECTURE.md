@@ -41,12 +41,12 @@ continuous integration pipelines defined in [`docs/github_actions_automation.md`
 
 | Module | Contract Surface | Allowed Dependencies | Versioning & Gates |
 | --- | --- | --- | --- |
-| `core/` | Pydantic DTOs + JSON Schemas in [`schemas/core/`](../schemas/core/) and stable function signatures exported via [`core/contracts`](../core/contracts) | None (foundation) | SemVer (`core.api.v1`); breaking changes require major bump + compatibility shims |
-| `backtest/` | Simulation driver interfaces in [`interfaces/backtest_runner.py`](../interfaces/backtest_runner.py) and schemas in [`schemas/backtest/`](../schemas/backtest/) | `core/` | SemVer (`backtest.api.v1`); runs behind CI contract tests |
-| `execution/` | Gateway/request contracts in [`execution/gateway.py`](../execution/gateway.py) and [`schemas/execution/`](../schemas/execution/) | `core/` | SemVer (`execution.api.v1`); FIX/REST adapters must stay backward compatible |
+| `core/` | Pydantic DTOs + JSON Schemas in [`schemas/events/`](../schemas/events/) and stable function signatures exported via [`core/`](../core/) | None (foundation) | SemVer (`core.api.v1`); breaking changes require major bump + compatibility shims |
+| `backtest/` | Simulation driver interfaces in [`interfaces/backtest.py`](../interfaces/backtest.py) and workflow harnesses in [`backtest/`](../backtest/) | `core/` | SemVer (`backtest.api.v1`); runs behind CI contract tests |
+| `execution/` | Adapter/request contracts in [`interfaces/execution/`](../interfaces/execution/) and adapter bases in [`execution/adapters/`](../execution/adapters/) | `core/` | SemVer (`execution.api.v1`); FIX/REST adapters must stay backward compatible |
 | `runtime/` | Orchestrator CLI + gRPC/web contracts in [`interfaces/live_runner.py`](../interfaces/live_runner.py) | `core/`, `execution/` | SemVer (`runtime.api.v1`); release gates run integration + property suites |
 | `observability/` | OTLP/Prom exporters and log schemas in [`observability/`](../observability/) | `core/` (telemetry types only) | SemVer (`observability.telemetry.v1`); trace/metric shape changes require dual approval |
-| `ui/dashboard/` | gRPC-web/GraphQL DTOs generated from [`schemas/ui/`](../schemas/ui/) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
+| `ui/dashboard/` | gRPC-web/GraphQL DTOs derived from [`schemas/openapi/tradepulse-online-inference-v1.json`](../schemas/openapi/tradepulse-online-inference-v1.json) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
 | `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
 
 Links use `../` because this document lives under `docs/`; they resolve to the repo-root `schemas/`, `interfaces/`, and module directories listed above.
