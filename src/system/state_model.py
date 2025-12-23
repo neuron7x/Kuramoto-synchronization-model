@@ -8,8 +8,14 @@ from enum import Enum
 from typing import Mapping, Sequence
 
 
+def _utc_now() -> datetime:
+    """Return a timezone-aware UTC timestamp."""
+
+    return datetime.now(timezone.utc)
+
+
 class LifecycleState(str, Enum):
-    """Enumerate recognised lifecycle phases for the platform."""
+    """Enumerate recognized lifecycle phases for the platform."""
 
     INIT = "init"
     READY = "ready"
@@ -50,7 +56,7 @@ class StateTransition:
     from_state: LifecycleState
     to_state: LifecycleState
     reason: str = ""
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=_utc_now)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "reason", self.reason.strip())
@@ -61,7 +67,7 @@ class LifecycleModel:
     """State machine capturing lifecycle, transitions, and invariants."""
 
     state: LifecycleState = LifecycleState.INIT
-    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = field(default_factory=_utc_now)
     transitions: list[StateTransition] = field(default_factory=list)
 
     def can_transition(self, target: LifecycleState) -> bool:
@@ -87,7 +93,7 @@ class LifecycleModel:
         if target not in _ALLOWED_TRANSITIONS[self.state]:
             raise ValueError(f"invalid transition {self.state.value} -> {target.value}")
 
-        timestamp = at or datetime.now(timezone.utc)
+        timestamp = at or _utc_now()
         last_timestamp = self.transitions[-1].timestamp if self.transitions else self.started_at
         if timestamp < last_timestamp:
             raise ValueError("transition timestamp must be monotonic")
