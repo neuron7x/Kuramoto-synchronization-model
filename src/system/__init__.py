@@ -15,6 +15,7 @@ from .action_control import (
     TaclDecision,
     TaclGate,
 )
+from .state_model import LifecycleModel, LifecycleState, StateTransition
 from .api_messaging_integration import (
     GatewayRequest,
     IntegrationRoute,
@@ -74,4 +75,7 @@ __all__ = [
     "SystemState",
     "TaclDecision",
     "TaclGate",
+    "LifecycleModel",
+    "LifecycleState",
+    "StateTransition",
 ]
