@@ -121,8 +121,6 @@ class LifecycleModel:
 
         if self.state is not last_state:
             raise ValueError("current state diverges from transition history")
-        if self.state in _TERMINAL_STATES and _ALLOWED_TRANSITIONS[self.state]:
-            raise ValueError("terminal states must not declare outbound transitions")
 
     @property
     def is_terminal(self) -> bool:
