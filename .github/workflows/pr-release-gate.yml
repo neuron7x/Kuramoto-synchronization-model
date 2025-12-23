@@ -9,8 +9,9 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  checks: write
+  pull-requests: read
+  issues: write
+  checks: read
 
 jobs:
   quality-assessment:

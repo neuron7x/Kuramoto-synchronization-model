@@ -43,3 +43,4 @@ Missing or noisy metrics reduce the usefulness of the score; callers are respons
 - No formal proofs or external audits exist for this heuristic.
 - Thresholds and weights are environment-specific; defaults are illustrative only.
 - The formulation assumes reasonably scaled metrics; extreme or unscaled values can distort results.
+- Metrics are proxies for system stability and only as reliable as the instrumentation and sampling strategy used.

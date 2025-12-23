@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TACL materials describe the experimental free-energy heuristic used to score system stability in sandboxes. All terminology is metaphorical; no formal guarantees or biological/physical claims are made.
+TACL materials describe the experimental free-energy heuristic used to score system stability in sandboxes. All terminology is metaphorical thermodynamics; no formal guarantees or biological/physical claims are made.
 
 ## Documents
 

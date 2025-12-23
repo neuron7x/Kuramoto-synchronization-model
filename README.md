@@ -45,12 +45,12 @@
 
 ### For Quantitative Researchers
 - **Geometric Market Indicators**: Kuramoto oscillators, Ricci flow, entropy measures for deep market analysis
-- **Research → Production Pipeline**: Seamless transition from research to live trading
+- **Research → Experiment Pipeline**: Sandbox-first path for moving from research to supervised demos; live hooks are experimental
 - **Advanced Backtesting**: Event-driven engine with walk-forward optimization and property-based testing
 
 ### For Algorithmic Traders
 - **Multi-Exchange Support**: Binance, Coinbase, Kraken, Alpaca, and more via CCXT
-- **Live Trading**: Real-time signal generation and execution with built-in risk management
+- **Live Trading (experimental)**: Real-time signal generation hooks with risk checks for paper/sandbox modes; supervised before any live tests
 - **Observability**: Prometheus metrics, OpenTelemetry tracing, and comprehensive logging
 
 ### For Infrastructure Engineers
@@ -66,7 +66,7 @@
 - No external audits, certifications, or guarantees of model behavior, uptime, or safety.
 - No promise of biological fidelity for neuromodulator-inspired components (serotonin, dopamine, etc.).
 - No guarantee that thermodynamic terminology reflects physical thermodynamics; it is used as a control heuristic.
-- No assertion of complete test coverage; internal tests exist but coverage varies by module.
+- No assertion of exhaustive test coverage; internal tests exist but coverage varies by module.
 
 ---
 
@@ -256,7 +256,7 @@ PYTHONPATH=. streamlit run interfaces/dashboard_streamlit.py
 
 ### Golden Path Workflow
 
-Demonstrate the complete TradePulse workflow from data to results:
+Demonstrate the end-to-end TradePulse workflow from data to results:
 
 ```bash
 # One-command demonstration of the full workflow
@@ -601,6 +601,8 @@ risk_manager = RiskManager(
 ---
 
 ## 📖 Glossary of Metaphors
+
+These terms are engineering abstractions used for research scaffolding; they are not literal biological or physical models.
 
 - **Thermodynamic / Free-Energy**: A weighted control heuristic for system resource and stability metrics; not a physical thermodynamics model.
 - **Neuromodulators (Serotonin/Dopamine)**: Simplified control abstractions inspired by neuroscience terms; they do not model biological systems.
