@@ -35,7 +35,6 @@ _ALLOWED_TRANSITIONS: Mapping[LifecycleState, Sequence[LifecycleState]] = {
     ),
     LifecycleState.DEGRADED: (
         LifecycleState.RECOVERING,
-        LifecycleState.RUNNING,
         LifecycleState.STOPPED,
     ),
     LifecycleState.RECOVERING: (
@@ -49,6 +48,7 @@ _ALLOWED_TRANSITIONS: Mapping[LifecycleState, Sequence[LifecycleState]] = {
 _TERMINAL_STATES = frozenset(
     state for state, allowed in _ALLOWED_TRANSITIONS.items() if not allowed
 )
+TERMINAL_STATES = _TERMINAL_STATES
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,4 +143,5 @@ __all__ = [
     "LifecycleModel",
     "LifecycleState",
     "StateTransition",
+    "TERMINAL_STATES",
 ]
