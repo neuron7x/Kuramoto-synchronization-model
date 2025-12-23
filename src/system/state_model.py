@@ -75,7 +75,9 @@ class LifecycleModel:
     def can_transition(self, target: LifecycleState) -> bool:
         """Return True if ``target`` is reachable from the current state."""
 
-        if target == self.state or self.state in _TERMINAL_STATES:
+        if target == self.state:
+            return False
+        if self.state in _TERMINAL_STATES:
             return False
         return target in _ALLOWED_TRANSITIONS[self.state]
 

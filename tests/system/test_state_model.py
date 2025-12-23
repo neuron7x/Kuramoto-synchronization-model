@@ -32,7 +32,7 @@ def test_valid_transition_sequence_respects_invariants() -> None:
     )
 
     model.verify_invariants()
-    assert model.state is LifecycleState.RUNNING
+    assert model.state == LifecycleState.RUNNING
     assert [t.to_state for t in model.transitions] == [
         LifecycleState.READY,
         LifecycleState.RUNNING,
@@ -54,7 +54,7 @@ def test_terminal_state_blocks_additional_changes() -> None:
     model.transition(LifecycleState.RUNNING)
     model.transition(LifecycleState.STOPPED)
 
-    assert model.state is LifecycleState.STOPPED
+    assert model.state == LifecycleState.STOPPED
     with pytest.raises(ValueError):
         model.transition(LifecycleState.RUNNING)
 
