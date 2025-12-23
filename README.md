@@ -2,7 +2,7 @@
 
 # TradePulse
 
-*Enterprise-Grade Algorithmic Trading Platform with Geometric Market Intelligence*
+*Control-systems R&D platform for sandboxed trading and reliability heuristics*
 
 <br>
 
@@ -11,7 +11,7 @@
 [![License: TPLA](https://img.shields.io/badge/License-TPLA-0066CC?style=flat)](LICENSE)
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 
-**TradePulse** is a production-grade algorithmic trading platform combining advanced geometric market indicators with enterprise reliability for quantitative researchers, algorithmic traders, and financial institutions.
+**TradePulse** is a control-systems research platform that prototypes feedback controllers for trading-style workloads. The trading stack here is a sandbox and stress-test harness, not an alpha-generating production engine.
 
 [Quick Start](#-quick-start) • [Features](#-feature-highlights) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
@@ -22,6 +22,7 @@
 ## 📋 Table of Contents
 
 - [Why TradePulse?](#-why-tradepulse)
+- [What This Project Explicitly Does NOT Claim](#-what-this-project-explicitly-does-not-claim)
 - [Feature Highlights](#-feature-highlights)
 - [System Architecture](#-system-architecture)
 - [Quick Start](#-quick-start)
@@ -33,6 +34,7 @@
 - [Deployment](#-deployment)
 - [Use Cases](#-use-cases)
 - [Project Status & Roadmap](#-project-status--roadmap)
+- [Glossary of Metaphors](#-glossary-of-metaphors)
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Disclaimer](#-disclaimer)
@@ -52,13 +54,25 @@
 - **Observability**: Prometheus metrics, OpenTelemetry tracing, and comprehensive logging
 
 ### For Infrastructure Engineers
-- **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)
-- **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
-- **Comprehensive Testing**: CI gates enforce unit, integration, property-based, fuzz suites, and 98% coverage on `core/`, `execution/`, `runtime/`, and `tacl/`
+- **Security Control Experiments**: Controls aligned with NIST SP 800-53 and ISO 27001 design patterns (no external audit)
+- **Scalable Architecture Patterns**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
+- **Internal Testing**: CI runs unit/integration/property-based suites where configured; coverage varies by module
+
+---
+
+## 🚫 What This Project Explicitly Does NOT Claim
+
+- Not a production trading platform or profit-seeking alpha engine.
+- No external audits, certifications, or guarantees of model behavior, uptime, or safety.
+- No promise of biological fidelity for neuromodulator-inspired components (serotonin, dopamine, etc.).
+- No guarantee that thermodynamic terminology reflects physical thermodynamics; it is used as a control heuristic.
+- No assertion of complete test coverage; internal tests exist but coverage varies by module.
 
 ---
 
 ## ✨ Feature Highlights
+
+These capabilities are implemented as research scaffolding. Modules run in sandboxes/backtests first; live hooks exist for stress-testing but are not positioned as a production trading stack.
 
 ### 🧮 Geometric Market Intelligence
 
@@ -253,7 +267,7 @@ make golden-path
 1. **Data Generation** — Creates 500 bars of synthetic market data with deterministic seed
 2. **Market Analysis** — Detects regime using Kuramoto-Ricci indicators
 3. **Backtest Integration** — Validates strategy execution with PnL calculation
-4. **Results** — Produces validated output in <30 seconds
+4. **Results** — Produces internally tested demo output in <30 seconds
 
 **Expected output:**
 ```
@@ -359,183 +373,58 @@ python -m interfaces.cli generate \
 
 ## 🌡️ TACL: Thermodynamic Autonomic Control Layer
 
-**TACL is the governing brain of system stability**, not a feature. It manages the TradePulse topology as a thermodynamic system where autonomous changes must respect **Monotonic Free Energy Descent**: no self-degrading change without explicit human approval.
+TACL in this repository is an experimental control loop that uses a free-energy-style heuristic to decide whether runtime or topology changes should proceed in sandboxes. The thermodynamics vocabulary is metaphorical; it is not a physical model or a formal guarantee.
 
-### Global Invariants
+### What exists today
+- **Heuristic**: `F = U - T·S` scoring implemented in [`runtime/energy_validator.py`](runtime/energy_validator.py) and configured via [`runtime/thermo_config.py`](runtime/thermo_config.py).
+- **Controller loop**: [`runtime/thermo_controller.py`](runtime/thermo_controller.py) consumes that score to gate actions and expose telemetry through [`runtime/thermo_api.py`](runtime/thermo_api.py).
+- **Actuators**: Link activator, recovery agent, and GA prototypes are present for experimentation and expect human supervision.
 
-TACL enforces five non-negotiable invariants across all autonomous operations:
+### How to use it (sandbox-first)
+- Provide metrics (latency, coherency, CPU, memory, queue depth) and run them through the validator to get an `F` score.
+- Tune thresholds in [`config/thermo_config.yaml`](config/thermo_config.yaml) for the environment you are testing; defaults are illustrative.
+- Keep automatic actuations behind feature flags; treat the score as guidance for manual decision-making.
 
-| Invariant | Description | Failure Consequence |
-|-----------|-------------|---------------------|
-| **Safety** | No uncontrolled degradation; explicit human approval for non-monotonic moves | Automated rollback triggered |
-| **Auditability** | 7-year retention for decisions, config, model/policy versions, regime switches | Compliance violation, incident response blocked |
-| **Resource Governance** | Latency, coherency, and resource cost are first-class (Free Energy F) | SLO breach, capacity exhaustion |
-| **Reproducibility** | Deterministic replay; versioned configs; testable interfaces | Debug/audit impossible |
-| **Event-based Sparsity** | Compute is sparse and triggered; avoid always-on overhead | Resource waste, latency degradation |
+### Known limitations
+- No formal proofs, service-level guarantees, or external audits exist.
+- Behavior depends entirely on the fidelity of incoming metrics; missing or noisy inputs reduce usefulness.
+- Not externally verified for unattended production environments; intended for research and stress-testing.
 
-### Core Mechanisms
-
-#### Free Energy Measurement
-
-Free Energy `F = U - T·S` where:
-- **U** (Internal Energy): Weighted penalties from latency, coherency, and resource metrics
-- **T** (Temperature): Control temperature (0.60) representing discount on available slack
-- **S** (Entropy): Stability term proportional to headroom relative to thresholds
-
-| Metric | Threshold | Weight | Unit |
-|--------|-----------|--------|------|
-| `latency_p95` | 85.0 | 1.6 | ms |
-| `latency_p99` | 120.0 | 1.9 | ms |
-| `coherency_drift` | 0.08 | 1.2 | ratio |
-| `cpu_burn` | 0.75 | 0.9 | ratio |
-| `mem_cost` | 6.5 | 0.8 | GiB |
-| `queue_depth` | 32.0 | 0.7 | messages |
-| `packet_loss` | 0.005 | 1.4 | ratio |
-
-**Energy Envelope**: Free energy ≤ 1.35 (12% safety margin from hot-path load tests)
-
-**Telemetry Discipline**: Latency, coherency, and cost signals are exported as OTLP traces and Prometheus time-series. Every controller state transition is logged for ≥400-day retention. RL/GA/LinkActivator actuators remain locked behind dual human approval plus CI safety gates—no autonomous refactors are permitted without the gate.
-
-#### Safety Model: Monotonic Free Energy Descent
-
-```
-IF F(t+1) > F(t) + tolerance THEN
-  IF has_dual_approval(operations, safety) THEN
-    log_override_with_approvals()
-    proceed()
-  ELSE
-    trigger_automated_rollback()
-    engage_kill_switch_authority()
-  END
-END
-```
-
-- **Rest Potential**: 1.0 (stabilised baseline)
-- **Action Potential**: 1.35 (maximum tolerable stress before kill-switch)
-- **Monotonic Tolerance**: 5×10⁻³
-
-#### Protocol Hot-Swap
-
-Dynamic switching between communication protocols with admissibility guards:
-
-- **RDMA**: Low-latency, high-throughput (requires compatible hardware)
-- **CRDT**: Conflict-free replicated data types for eventual consistency
-- **gRPC**: Standard RPC with protobuf serialization
-- **Shared Memory**: Ultra-low latency for co-located services
-- **Gossip**: Epidemic protocol for distributed state synchronization
-
-**Rollback Policy**: Any hot-swap that increases F beyond tolerance triggers automatic reversion within 30s.
-
-### Technical Classification
-
-| Aspect | Status | Verification |
-|--------|--------|--------------|
-| **TRL** | 7 (internal assessment, post-staging) | Staging load tests |
-| **Adaptation** | GA/RL with runtime monotonic gates | CI safety gates |
-| **Audit Trail** | 7-year retention (config present, production validation pending) | `.ci_artifacts/energy_validation.json` |
-| **Crisis Modes** | Adaptive recovery with severity escalation | `runtime/thermo_controller.py` |
-
-### Authorization for Exceptions
-
-Temporary exceptions to the energy budget require **dual approval**:
-
-1. **Thermodynamic Duty Officer** (rotating weekly)
-2. **Platform Staff Engineer** (responsible for affected cluster)
-
-Both approvals must be recorded in the release ticket with telemetry snapshots.
-
-📖 **TACL Documentation**: [docs/TACL.md](docs/TACL.md), [`tacl/`](tacl/), [`runtime/thermo_controller.py`](runtime/thermo_controller.py)
-
-📊 **Metrics Formalization**: [docs/thermodynamics/METRICS_FORMALIZATION.md](docs/thermodynamics/METRICS_FORMALIZATION.md)
-
-⚙️ **Operational Runbook**: [docs/thermodynamics/OPERATIONAL_RUNBOOK.md](docs/thermodynamics/OPERATIONAL_RUNBOOK.md)
+📖 **TACL Documentation**: [docs/thermodynamics/README.md](docs/thermodynamics/README.md), [`tacl/`](tacl/), [`runtime/thermo_controller.py`](runtime/thermo_controller.py)
 
 ---
 
 ## 🧪 Testing & Quality
 
-> 📊 **Claims Registry**: All high-level quality, performance, and security claims are tracked in [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md).
+Internal CI and local workflows run unit and integration suites where dependencies are available. Optional accelerators (GPU/Rust) and some datasets are not exercised in every run, so coverage varies by module.
 
-TradePulse maintains comprehensive test coverage with multiple testing strategies:
-
-### Test Types
-
-- **Unit Tests**: Module-level validation (`tests/unit/`)
-- **Integration Tests**: End-to-end workflows (`tests/integration/`)
-- **Property-Based Tests**: Hypothesis-driven testing (`tests/property/`)
-- **Fuzz Tests**: Adversarial input testing (`tests/fuzz/`)
-- **Contract Tests**: API schema validation (`tests/contracts/`)
-- **Mutation Testing**: Test suite quality assurance
-
-### Running Tests
+### Example commands
 
 ```bash
-# Run all tests
-pytest tests/
-
-# Fast feedback loop (skip slow tests)
+# Run default test selection (may require extras)
 pytest tests/ -m "not slow"
 
-# With coverage report
-pytest tests/ --cov=core --cov=backtest --cov=execution --cov-report=html
-
-# Property-based tests only
-pytest tests/property/
-
-# Mutation testing
-mutmut run --use-coverage
+# Focus on thermodynamics heuristics
+pytest tests/test_energy_validator.py -v
 ```
 
-### CI/CD Merge Gates
-
-- **Test coverage**: PRs run `pytest -m "not flaky"` across unit, integration, property-based, fuzz, contracts, reliability, and e2e smoke suites. Merges are blocked if any gate fails or coverage drops below the critical-surface threshold.  
-- **Security & Quality**: Required workflows execute SAST (ruff, mypy, bandit, golangci-lint), dependency checks (`pip-audit` with `constraints/security.txt`), and SBOM generation/verification (CycloneDX) before merge.  
-- **Artifacts**: Coverage XML, mutation reports, and SBOMs are uploaded per run to document evidence for internal audits.
-
-### Coverage Status
-
-**Gate**: CI enforces 98% line coverage on `core/`, `execution/`, `runtime/`, and `tacl/` using the critical-surface guardrail (`configs/quality/critical_surface.coveragerc` + `configs/quality/critical_surface.toml`).  
-**Module Goals**: backtest (100%), execution (100%), core modules (90-95%) with branch coverage parity.
-
-To verify current coverage:
-```bash
-make test-coverage
-# View report: reports/coverage/index.html
-```
-
-📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
+> Note: Many tests require optional services or compiled extensions. Consult `TESTING.md` for environment details.
 
 ---
 
 ## ⚡ Performance
 
-TradePulse is designed for low-latency, high-throughput trading operations.
-
-> ⚠️ **Design Targets Only**: Performance metrics below are architecture targets (status: `design_target`), NOT measured results.
-
-Instrumentation captures latency, memory, and compute budgets for data ingestion, execution, runtime orchestration, and dashboard queries via Prometheus/OpenTelemetry. Any code path consuming >30% of the hot-loop budget must ship (or fall back to) a Rust accelerator from [`rust/tradepulse-accel/`](rust/tradepulse-accel/).
-
-### Design Goals
-
-All claims below have status `design_target`. See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for definitions.
-
-- **Backtesting**: 1M+ bars/second throughput
-- **Live Trading**: Sub-5ms order latency (exchange dependent)
-- **Signal Generation**: Sub-1ms with cached indicators
-- **Memory**: ~200MB steady-state for live trading
-- **GPU Acceleration**: `planned` — CUDA kernels not implemented
+Performance benchmarks in this repository are exploratory. Targets are research goals rather than measured promises, and results depend on optional accelerators, datasets, and environment tuning.
 
 ### Benchmarks
 
 ```bash
-# Run performance benchmarks
+# Run performance benchmarks (requires optional dependencies)
 make perf
 
 # Run specific benchmark tests
 pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable
 ```
-
-📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
 
 ---
 
@@ -683,31 +572,40 @@ risk_manager = RiskManager(
 
 ### Current Version: v0.1.0
 
-**Status**: Pre-Production Beta — Core functionality stable, preparing for v1.0 release
+**Status**: Research platform with sandbox trading paths; live execution remains experimental and should be treated as a controlled test harness.
 
-**Current Focus** (December 2025): Test coverage expansion, documentation finalization, dashboard hardening
+**Current Focus** (December 2025): Strengthening documentation and internal test coverage, hardening dashboards for demos, and improving controller heuristics.
 
 ### Component Maturity
 
-| Component | Status | Stability |
-|-----------|--------|-----------|
-| **Core Engine** | ✅ Production Ready | Stable |
-| **Indicators (50+)** | ✅ Production Ready | Stable |
-| **Backtesting** | ✅ Production Ready | Stable |
-| **Live Trading** | 🔄 Beta | Active Development |
-| **Web Dashboard** | 🚧 Alpha | Early Preview |
-| **Documentation** | 🔄 In Progress | 85% Complete |
+| Component | State | Notes |
+|-----------|-------|-------|
+| **Core Engine** | ✅ Production-oriented research | Internally tested with demos |
+| **Indicators (50+)** | ✅ Production-oriented research | Stable for backtests/sandboxes |
+| **Backtesting** | ✅ Production-oriented research | Used for strategy experiments |
+| **Live Trading** | 🔄 Experimental | Keep in paper/sandbox mode |
+| **Web Dashboard** | 🚧 Alpha | Early preview |
+| **Documentation** | 🔄 In Progress | Coverage varies by module |
 
 ### Development Roadmap
 
-- **Q4 2025 → Q1 2026**: Complete live trading module, finalize dashboard
-- **Q1 2026**: v1.0 production release preparation
-- **Q2 2026**: Options & derivatives support
-- **Q3-Q4 2026**: Multi-asset portfolio optimization and advanced features
+- **Q4 2025 → Q1 2026**: Improve live trading safety rails and dashboard resilience
+- **Q1 2026**: Expand controller demos and documentation clarity
+- **Q2 2026**: Options & derivatives research (subject to dependency readiness)
+- **Q3-Q4 2026**: Multi-asset portfolio experiments and advanced features
 
 📖 **Full Roadmap**: [docs/roadmap.md](docs/roadmap.md)  
 📰 **Changelog**: [CHANGELOG.md](CHANGELOG.md)  
 📋 **Product Planning**: [PRODUCT_PAIN_SOLUTION.md](PRODUCT_PAIN_SOLUTION.md)
+
+---
+
+## 📖 Glossary of Metaphors
+
+- **Thermodynamic / Free-Energy**: A weighted control heuristic for system resource and stability metrics; not a physical thermodynamics model.
+- **Neuromodulators (Serotonin/Dopamine)**: Simplified control abstractions inspired by neuroscience terms; they do not model biological systems.
+- **Geometric Intelligence**: Indicator families that use geometric or differential concepts (e.g., Ricci flow, oscillators) for feature engineering in research backtests.
+- **Governance**: Sandbox-oriented guardrails and approval patterns to prevent unreviewed changes; not a compliance certification or legal guarantee.
 
 ---
 
@@ -829,7 +727,7 @@ The TPLA permits **internal, non-commercial evaluation and development use only*
 
 **TradePulse is an R&D/research platform** provided for **educational and research purposes only**. 
 
-- **No Performance Guarantees**: This is a research laboratory, not a production trading system with guaranteed returns
+- **No Performance Guarantees**: This is a research laboratory, not a production trading system with promised returns
 - **Beta Software**: Live trading components are in beta; paper trading recommended for evaluation
 - **Due Diligence Required**: Always perform your own analysis and testing before deploying strategies
 - **Risk Management**: Never invest more than you can afford to lose
