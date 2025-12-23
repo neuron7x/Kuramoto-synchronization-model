@@ -1,15 +1,15 @@
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
-def _load_stats(path: Path) -> Dict:
+def _load_stats(path: Path) -> Dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"Missing stats file: {path}")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _render_markdown(title: str, data: Dict, destination: Path) -> None:
+def _render_markdown(title: str, data: Dict[str, Any], destination: Path) -> None:
     lines: List[str] = [
         f"# {title}",
         "",
