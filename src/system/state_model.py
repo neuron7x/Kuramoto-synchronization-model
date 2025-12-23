@@ -45,10 +45,9 @@ _ALLOWED_TRANSITIONS: Mapping[LifecycleState, Sequence[LifecycleState]] = {
     LifecycleState.STOPPED: (),
 }
 
-_TERMINAL_STATES = frozenset(
+TERMINAL_STATES = frozenset(
     state for state, allowed in _ALLOWED_TRANSITIONS.items() if not allowed
 )
-TERMINAL_STATES = _TERMINAL_STATES
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,7 +76,7 @@ class LifecycleModel:
 
         if target == self.state:
             return False
-        if self.state in _TERMINAL_STATES:
+        if self.state in TERMINAL_STATES:
             return False
         return target in _ALLOWED_TRANSITIONS[self.state]
 
@@ -92,7 +91,7 @@ class LifecycleModel:
 
         if target == self.state:
             raise ValueError("no-op transition is not allowed")
-        if self.state in _TERMINAL_STATES:
+        if self.state in TERMINAL_STATES:
             raise ValueError(f"cannot transition from terminal state {self.state.value}")
         if target not in _ALLOWED_TRANSITIONS[self.state]:
             raise ValueError(f"invalid transition {self.state.value} -> {target.value}")
@@ -136,7 +135,7 @@ class LifecycleModel:
     def is_terminal(self) -> bool:
         """Whether the lifecycle is in a terminal state."""
 
-        return self.state in _TERMINAL_STATES
+        return self.state in TERMINAL_STATES
 
 
 __all__ = [
