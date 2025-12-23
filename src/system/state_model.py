@@ -108,7 +108,7 @@ class LifecycleModel:
         last_state = LifecycleState.INIT
         last_timestamp = self.started_at
         for transition in self.transitions:
-            if transition.from_state is not last_state:
+            if transition.from_state != last_state:
                 raise ValueError("transition source does not match current state")
             if transition.to_state not in _ALLOWED_TRANSITIONS[last_state]:
                 raise ValueError(
@@ -119,7 +119,7 @@ class LifecycleModel:
             last_state = transition.to_state
             last_timestamp = transition.timestamp
 
-        if self.state is not last_state:
+        if self.state != last_state:
             raise ValueError("current state diverges from transition history")
 
     @property
