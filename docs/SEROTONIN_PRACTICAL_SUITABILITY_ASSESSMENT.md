@@ -66,7 +66,7 @@ The v2.4.0 enhancements bring significant improvements:
    - Psychophysically-inspired heuristic
 
 4. **Exponential Desensitization** ✅
-   - Biologically-inspired GPCR-style kinetics (metaphor)
+   - Biologically inspired GPCR-style kinetics (metaphor)
    - Temperature-dependent recovery rates
    - Observed faster recovery from stress states in internal tests (per v2.4.0 summary)
 
