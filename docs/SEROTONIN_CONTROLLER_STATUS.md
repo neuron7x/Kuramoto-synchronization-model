@@ -2,7 +2,7 @@
 
 **Date**: 2025-11-10  
 **Status**: Active research component (sandbox-first)  
-**Controller Version**: v2.4.0
+**Controller Version**: not declared in code (document-only label)
 
 ---
 
