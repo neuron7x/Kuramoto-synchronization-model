@@ -33,7 +33,13 @@ def test_valid_transition_sequence_respects_invariants() -> None:
 
     model.verify_invariants()
     assert model.state is LifecycleState.RUNNING
-    assert [t.to_state for t in model.transitions][-1] is LifecycleState.RUNNING
+    assert [t.to_state for t in model.transitions] == [
+        LifecycleState.READY,
+        LifecycleState.RUNNING,
+        LifecycleState.DEGRADED,
+        LifecycleState.RECOVERING,
+        LifecycleState.RUNNING,
+    ]
 
 
 def test_invalid_transition_is_rejected() -> None:
