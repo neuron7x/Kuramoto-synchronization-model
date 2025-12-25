@@ -4,7 +4,7 @@
 #
 #    pip-compile --constraint=constraints/security.txt --no-annotate --output-file=requirements.lock --strip-extras requirements.txt
 #
-aiodns==3.5.0
+aiodns==3.6.1
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.0
 aiolimiter==1.2.1
@@ -153,7 +153,7 @@ zipp==3.23.0
 #
 #    pip-compile --constraint=constraints/security.txt --no-annotate --output-file=requirements-dev.lock --strip-extras requirements-dev.txt
 #
-aiodns==3.5.0
+aiodns==3.6.1
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.0
 aiolimiter==1.2.1
@@ -400,7 +400,7 @@ zipp==3.23.0
 #
 # To regenerate: grep -v -E "^(torch|triton|nvidia-)" requirements.lock > requirements-scan.lock
 #
-aiodns==3.5.0
+aiodns==3.6.1
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.0
 aiolimiter==1.2.1
