@@ -14,17 +14,17 @@ This summary documents the **current** optimization and integration workstreams 
    - Typical cadence: fast iteration loops (~0.1 ms/step) with momentum-based updates and patience resets to escape local optima.
 
 2. **Thermodynamic Control Integration**
-   - Bridge: NeuralTACLBridge (`tradepulse/neural_controller/integration/bridge.py`, repo root) connects the neuro controller to the TACL optimization layer.
+   - Bridge: NeuralTACLBridge (`tradepulse/neural_controller/integration/bridge.py`) connects the neuro controller to the TACL optimization layer.
    - Safeguards: synchrony throttling via Kuramoto order parameter, desync downscaling, deterministic fallback when the runtime TACL provider is unavailable.
    - Iteration control: generation limits are propagated from the neural controller to TACL to keep optimization bounded.
 
 3. **Execution and Observability Optimizations**
-   - Caching & batching: `examples/optimization_examples.py` provides the `IndicatorCache`, adaptive polling, and streaming replayer patterns for low-latency ingestion.
+   - Caching & batching: `IndicatorCache` in `examples/optimization_examples.py` provides adaptive polling and streaming replayer patterns for low-latency ingestion.
    - Async metrics: background batch flushing with Prometheus-friendly gauges reduces hot-path blocking.
    - Performance guardrails: optional float32/chunking paths in indicator modules preserve numerical parity while trimming memory pressure.
 
 ## Integration Coverage
-- **CLI and SDK**: Optimization workflows are exposed through `tradepulse_cli optimize` and the MLSDM facade (`src/tradepulse/sdk/mlsdm/facade.py`), reusing the same optimization engines.
+- **CLI and SDK**: Optimization workflows are exposed through `tradepulse_cli optimize` and the MLSDM (Multi-Level Stochastic Decision Model) facade (`src/tradepulse/sdk/mlsdm/facade.py`), reusing the same optimization engines.
 - **Telemetry**: Metrics emitters (`core/utils/metrics.py`, `tradepulse/neural_controller/telemetry`) track optimization duration and iteration counts for dashboards and alerts.
 - **Safety**: CVaR gating and mode-aware temperature coupling (NeuralTACLBridge) keep optimization outputs within risk thresholds.
 
