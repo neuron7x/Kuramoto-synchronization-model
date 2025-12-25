@@ -104,7 +104,14 @@ class HeadingFirstRule:
                     rule=self.name,
                 )
             ]
-        return []
+        return [
+            LintIssue(
+                path=path,
+                line=1,
+                message="first content line must be a level-1 heading",
+                rule=self.name,
+            )
+        ]
 
 
 class TrailingWhitespaceRule:

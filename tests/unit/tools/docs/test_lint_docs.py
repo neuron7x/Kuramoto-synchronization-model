@@ -39,6 +39,17 @@ def test_heading_rule_flags_missing_h1(tmp_path: Path) -> None:
     assert issues[0].message == "first content line must be a level-1 heading"
 
 
+def test_heading_rule_flags_empty_document(tmp_path: Path) -> None:
+    document = ""
+    path = _write(tmp_path, "empty.md", document)
+
+    issues = list(HeadingFirstRule().check(path, document.splitlines()))
+
+    assert len(issues) == 1
+    assert issues[0].line == 1
+    assert issues[0].message == "first content line must be a level-1 heading"
+
+
 def test_heading_rule_accepts_html_comment(tmp_path: Path) -> None:
     document = "<!-- AUTO-GENERATED FILE. DO NOT EDIT. -->\n# Title\n\nBody\n"
     path = _write(tmp_path, "generated.md", document)
