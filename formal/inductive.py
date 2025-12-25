@@ -63,7 +63,9 @@ class InductiveProofEngine:
             constraints, (str, bytes)
         ):
             return list(constraints)
-        raise TypeError("Inductive predicates must return a BoolRef or iterable of BoolRef")
+        raise TypeError(
+            "Inductive predicates must return a Z3 Boolean constraint or an iterable of such constraints"
+        )
 
     def prove(
         self,
