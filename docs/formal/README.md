@@ -33,19 +33,28 @@ formal/
 
 **Key Property:**
 ```
-∀ state transitions: F_{t+1} ≤ F_t + ε, where ε ≤ 0.05
+∀ state transitions: F_{t+1} ≤ F_t + ε (ε ≤ 0.05) and any spike must decay below the originating state within a 3-step recovery window (decay=0.9, tolerance floor=1e-4)
 ```
+Base case enforces non-negative initial free energy with capped perturbation; the inductive step asserts that the recovery mean over the three-step window (mirroring ``ThermoController._predict_recovery_window``) falls back below the originating state.
 
 **Status:** ✅ Verified (UNSAT - no counterexample exists)
 
 **Usage:**
 ```bash
-python formal/proof_invariant.py
+python formal/proof_invariant.py              # regenerates INVARIANT_CERT.txt
+pytest formal/tests/test_proof_invariant.py   # UNSAT/SAT plus tolerance property tests
 ```
+
+**Assumptions (aligned with runtime TACL):**
+- Non-negative initial free energy with per-step perturbations clamped to ``ε ≤ 0.05``.
+- Recovery horizon of 3 steps with exponential decay ``0.9`` toward the baseline state.
+- Tolerance budget mirrors ``ThermoController._monotonic_tolerance_budget``: ``max(1e-4, 0.01·max(|baseline|, |F_t|), 0.5·|ε_t|)``.
+- Baseline is fixed to the pre-crisis free energy (``F0``); kill-switch/dual approval gates remain unchanged.
 
 **Dependencies:**
 ```bash
 pip install z3-solver
+# Recommended for tests: pip install -r requirements-dev.txt
 ```
 
 ---
@@ -157,7 +166,7 @@ def test_free_energy_monotonic(energy_series):
 Used for mathematical proofs of system invariants.
 
 **Current Proofs:**
-1. ✅ Free energy boundedness
+1. ✅ Free energy boundedness (inductive recovery + monotone tolerance budget)
 2. 🔄 Position limit safety (planned)
 3. 🔄 Order idempotency (planned)
 
