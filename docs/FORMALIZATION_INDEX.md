@@ -406,8 +406,10 @@ Formal methods and verification artifacts for critical system properties.
 **Result:** UNSAT (no counterexample exists)
 
 ```
-∀ state transitions: F_{t+1} ≤ F_t + ε, where ε ≤ 0.05
+∀ state transitions: F_{t+1} ≤ F_t + ε (ε ≤ 0.05) and any spike must decay below the originating state within a 3-step recovery window (decay=0.9, tolerance floor=1e-4)
 ```
+
+**Tests:** `pytest formal/tests/test_proof_invariant.py`
 
 #### 2. Serotonin Controller Falsification
 **File:** `formal/falsification_serotonin_controller_v2_2.md`  

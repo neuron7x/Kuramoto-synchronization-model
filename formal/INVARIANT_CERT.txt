@@ -2,4 +2,9 @@ Free energy boundedness proof
 Solver status: unsat
 epsilon_cap <= 0.05
 delta_growth = 0.2
+recovery_window = 3
+recovery_decay = 0.9
+tolerance_floor = 0.0001
+Base case: non-negative initial energy with capped per-step perturbation.
+Inductive step: recovery mean must return below the originating state.
 Result: UNSAT – no unbounded growth exists under the transition rules.
