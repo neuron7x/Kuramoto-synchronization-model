@@ -303,7 +303,7 @@ py-serializable==2.1.0
 py-spy==0.4.1
 pyarrow==21.0.0
 pycares==4.11.0
-pycodestyle==2.12.1
+pycodestyle==2.14.0
 pycparser==2.23
 pydantic==2.12.4
 pydantic-core==2.41.5
