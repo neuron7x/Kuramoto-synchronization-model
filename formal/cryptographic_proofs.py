@@ -329,7 +329,7 @@ class CryptographicProver:
                 certificate=(
                     "UNSAT - SHA-256 provides 128-bit collision resistance. "
                     "For ≤2^64 queries, collision probability is ≤2^-129 (negligible). "
-                    "Merkle–Damgård chaining verified inductively (base and step UNSAT)."
+                    "Merkle-Damgård chaining verified inductively (base and step UNSAT)."
                 ),
                 details={
                     "security_bits": 128,
@@ -346,7 +346,7 @@ class CryptographicProver:
                 security_property=prop,
                 status=ProofStatus.UNKNOWN,
                 certificate=(
-                    "Collision bound holds but Merkle–Damgård induction was not proved.\n"
+                    "Collision bound holds but Merkle-Damgård induction was not proved.\n"
                     f"{induction_result.certificate}"
                 ),
                 details={

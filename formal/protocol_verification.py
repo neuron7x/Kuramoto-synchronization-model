@@ -348,7 +348,7 @@ class TLSProtocolVerifier:
             )
             fresh_nonce = count_k(nonce_new) == 0
             transition = z3m.ForAll(
-                idx, count_k1(idx) == z3m.If(idx == nonce_new, count_k(idx) + 1, count_k(idx))
+                idx, count_k1(idx) == z3m.If(idx == nonce_new, 1, count_k(idx))
             )
             violation = z3m.Exists(idx, count_k1(idx) > 1)
             return [safe_k, fresh_nonce, transition, violation]

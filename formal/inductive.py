@@ -11,7 +11,7 @@ from __future__ import annotations
 import importlib.util
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any, Callable, Iterable
 
 HAS_Z3 = importlib.util.find_spec("z3") is not None
 MISSING_Z3_MESSAGE = (
@@ -59,7 +59,9 @@ class InductiveProofEngine:
     def _normalize(self, constraints: Any) -> list[Any]:
         if isinstance(constraints, self._z3.BoolRef):
             return [constraints]
-        if isinstance(constraints, Sequence) or isinstance(constraints, Iterable):
+        if isinstance(constraints, Iterable) and not isinstance(
+            constraints, (str, bytes)
+        ):
             return list(constraints)
         raise TypeError("Inductive predicates must return a BoolRef or iterable of BoolRef")
 
