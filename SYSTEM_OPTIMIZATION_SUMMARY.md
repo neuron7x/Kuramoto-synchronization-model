@@ -14,7 +14,7 @@ This summary documents the **current** optimization and integration workstreams 
    - Typical cadence: fast iteration loops (~0.1 ms/step) with momentum-based updates and patience resets to escape local optima.
 
 2. **Thermodynamic Control Integration**
-   - Bridge: `tradepulse/neural_controller/integration/bridge.py` connects the neuro controller to the TACL optimization layer.
+   - Bridge: NeuralTACLBridge (`tradepulse/neural_controller/integration/bridge.py`, repo root) connects the neuro controller to the TACL optimization layer.
    - Safeguards: synchrony throttling via Kuramoto order parameter, desync downscaling, deterministic fallback when the runtime TACL provider is unavailable.
    - Iteration control: generation limits are propagated from the neural controller to TACL to keep optimization bounded.
 
@@ -30,9 +30,9 @@ This summary documents the **current** optimization and integration workstreams 
 
 ## Verification and Iteration
 - Functional coverage exists in:
-  - `tests/optimization/test_optimization_examples.py`
-  - `tests/unit/core/neuro/test_neuro_optimizer.py`
-  - `tradepulse/neural_controller/tests/test_integration.py`
-- These suites validate iterator behaviour, cache correctness, neuro-loop state updates, and bridge-level guardrails without expanding scope.
+    - `tests/optimization/test_optimization_examples.py`
+    - `tests/unit/core/neuro/test_neuro_optimizer.py`
+    - `tradepulse/neural_controller/tests/test_integration.py`
+- These suites validate iterator behavior, cache correctness, neuro-loop state updates, and bridge-level guardrails without expanding scope.
 
 The current optimization stack is operational, integrated, and bounded. Future work should extend this document only when additional optimizations graduate into production pathways.
