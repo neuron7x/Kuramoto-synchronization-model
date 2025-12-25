@@ -50,6 +50,9 @@ class TestCryptographicProver:
         assert "UNSAT" in result.certificate
         assert "128-bit" in result.certificate
         assert result.details.get("security_bits") == 128
+        assert result.details.get("induction_base_unsat") is True
+        assert result.details.get("induction_step_unsat") is True
+        assert "merkle" in result.certificate.lower()
 
     def test_hash_preimage_resistance_proof(self, prover: CryptographicProver) -> None:
         """Test hash preimage resistance proof completes and passes."""

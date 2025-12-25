@@ -69,6 +69,7 @@ class TestTLSProtocolVerifier:
         assert result.property == ProtocolProperty.REPLAY_RESISTANCE
         assert result.holds is True
         assert "nonce" in result.certificate.lower()
+        assert "inductive" in result.certificate.lower()
 
     def test_session_binding(self, verifier: TLSProtocolVerifier) -> None:
         """Test session binding verification."""

@@ -40,6 +40,8 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from .inductive import InductiveProofEngine, InductiveProofResult
+
 if TYPE_CHECKING:  # pragma: no cover - only for static analysis
     pass
 
@@ -209,6 +211,9 @@ class CryptographicProver:
 
         self._z3 = z3
         self._report.z3_version = z3.get_version_string()
+        self._inductive_engine = InductiveProofEngine(
+            timeout_ms=timeout_ms, z3_module=self._z3
+        )
 
     def _create_solver(self) -> "Any":
         """Create a configured Z3 solver instance."""
@@ -254,6 +259,52 @@ class CryptographicProver:
         n_bits = z3.Int("n_bits")  # hash output bits
         security_margin = z3.Int("security_margin")  # bits of security
 
+        def base_case_predicate(z3m: Any) -> list[Any]:
+            compress = z3m.Function(
+                "compress_base", z3m.IntSort(), z3m.IntSort(), z3m.IntSort()
+            )
+            h1, h2, b1, b2 = z3m.Ints("h1 h2 b1 b2")
+            block_a, block_b = z3m.Ints("block_a block_b")
+            iv = z3m.Int("iv")
+            injective = z3m.ForAll(
+                [h1, h2, b1, b2],
+                z3m.Implies(
+                    z3m.Or(h1 != h2, b1 != b2),
+                    compress(h1, b1) != compress(h2, b2),
+                ),
+            )
+            collision = compress(iv, block_a) == compress(iv, block_b)
+            return [injective, block_a != block_b, collision]
+
+        def inductive_step_predicate(z3m: Any) -> list[Any]:
+            compress = z3m.Function(
+                "compress_step", z3m.IntSort(), z3m.IntSort(), z3m.IntSort()
+            )
+            h_prev_a, h_prev_b = z3m.Ints("h_prev_a h_prev_b")
+            block_a, block_b = z3m.Ints("block_step_a block_step_b")
+            ha1, ha2, ba1, ba2 = z3m.Ints("ha1 ha2 ba1 ba2")
+            h_next_a = compress(h_prev_a, block_a)
+            h_next_b = compress(h_prev_b, block_b)
+
+            injective = z3m.ForAll(
+                [ha1, ha2, ba1, ba2],
+                z3m.Implies(
+                    z3m.Or(
+                        ha1 != ha2,
+                        ba1 != ba2,
+                    ),
+                    compress(ha1, ba1) != compress(ha2, ba2),
+                ),
+            )
+
+            previous_safe = h_prev_a != h_prev_b
+            violation = h_next_a == h_next_b
+            return [injective, previous_safe, violation]
+
+        induction_result: InductiveProofResult = self._inductive_engine.prove(
+            base_case_predicate, inductive_step_predicate
+        )
+
         solver.add(n_bits == 256)  # SHA-256 output
 
         # Birthday bound: collision after ~2^(n/2) = 2^128 queries
@@ -271,14 +322,14 @@ class CryptographicProver:
 
         status = solver.check()
 
-        if status == z3.unsat:
+        if status == z3.unsat and induction_result.proved:
             return ProofResult(
                 security_property=prop,
                 status=ProofStatus.PROVED,
                 certificate=(
                     "UNSAT - SHA-256 provides 128-bit collision resistance. "
                     "For ≤2^64 queries, collision probability is ≤2^-129 (negligible). "
-                    "Security margin: 257 - 2*64 = 129 bits."
+                    "Merkle–Damgård chaining verified inductively (base and step UNSAT)."
                 ),
                 details={
                     "security_bits": 128,
@@ -286,6 +337,21 @@ class CryptographicProver:
                     "bound_type": "birthday_bound",
                     "max_queries_log2": 64,
                     "security_margin_bits": 129,
+                    "induction_base_unsat": induction_result.base_case_unsat,
+                    "induction_step_unsat": induction_result.inductive_step_unsat,
+                },
+            )
+        elif status == z3.unsat and not induction_result.proved:
+            return ProofResult(
+                security_property=prop,
+                status=ProofStatus.UNKNOWN,
+                certificate=(
+                    "Collision bound holds but Merkle–Damgård induction was not proved.\n"
+                    f"{induction_result.certificate}"
+                ),
+                details={
+                    "induction_base_unsat": induction_result.base_case_unsat,
+                    "induction_step_unsat": induction_result.inductive_step_unsat,
                 },
             )
         elif status == z3.sat:
