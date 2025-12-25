@@ -4,7 +4,7 @@ This directory contains TLS certificates and keys for local development and test
 
 ## Security Notice
 
-**Private keys (.key.pem files) are never committed to version control** and must be generated locally on each development machine.
+**Private keys (.key.pem files) are never committed to version control** and must be generated locally on each development machine. Public certificate files in this directory are redacted placeholders. Regenerate real development certificates locally before use.
 
 ## Generating Development Certificates
 
