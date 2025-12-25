@@ -1,3 +1,13 @@
+---
+owner: docs@tradepulse
+review_cadence: monthly
+last_reviewed: 2025-12-25
+status: active
+links:
+  - DOCUMENTATION_SUMMARY.md
+  - docs/documentation_quality_metrics.md
+---
+
 # Metrics Contract: Claims vs Evidence
 
 > **Purpose**: Single source of truth for TradePulse quality/performance/security claims.
@@ -5,7 +15,7 @@
 > All coverage, performance, security, and compliance claims in README.md, TESTING.md, SECURITY.md,
 > and docs/** must reference this document for their evidence status.
 >
-> **Last Updated**: 2025-12-19
+> **Last Updated**: 2025-12-25
 > **Maintainer**: TradePulse Team
 
 ## ⚠️ Important Disclaimers
@@ -127,7 +137,7 @@
 | SEC_GDPR_CCPA | compliance | Privacy controls for GDPR/CCPA | N/A | docs/security/ | partial | Privacy patterns implemented, NO formal audit |
 | SEC_SOC2 | compliance | SOC 2-aligned telemetry and controls | N/A | SECURITY.md | partial | Telemetry present, NO SOC 2 examination |
 | SEC_EU_AI_ACT | compliance | EU AI Act alignment (human oversight) | N/A | SECURITY.md, docs/TACL.md | partial | Manual reset endpoints documented |
-| SEC_PIP_AUDIT | security | Python dependencies vulnerability-free | `make audit` | `pip-audit` output | partial | CI enforced but narwhals version conflict 2025-12-12: requirements-dev.lock has 2.8.0, requirements.lock has 2.9.0. Needs resolution via `make deps-update`. |
+| SEC_PIP_AUDIT | security | Python dependencies vulnerability-free | `make audit` | `pip-audit` output | partial | CI enforced; narwhals pinned to 2.9.0 in requirements.lock and requirements-dev.lock. Latest artifact `audit/artifacts/pip_audit.json` (2025-12-12) reports 0 vulnerabilities; rerun monthly. |
 | SEC_BANDIT_SCAN | security | Static security analysis passes | `bandit -r core/ backtest/ execution/ src/ -ll -q` | CI output | proven | CI enforced |
 | SEC_SECRETS_SCAN | security | No secrets in codebase | `detect-secrets scan` | CI output | proven | CI enforced in tests.yml |
 | SEC_CONTAINER_SCAN | security | Container images scanned for vulnerabilities | Trivy/Grype in CI | Security workflow | partial | Workflow exists, critical vulns block |
