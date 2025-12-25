@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.util
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma: no cover - only for static analyzers
     pass
@@ -28,8 +28,76 @@ class ProofResult:
     certificate: str
 
 
+@dataclass(slots=True)
+class InductionSystem:
+    """Container for the inductive proof state."""
+
+    solver: Any
+    states: tuple[Any, Any, Any, Any]
+    epsilons: tuple[Any, Any, Any]
+    epsilon_cap: Any
+    delta: Any
+
+
 EPSILON_CAP = 0.05
 DELTA_GROWTH = 0.2
+
+
+def build_three_step_induction() -> InductionSystem:
+    """Prepare solver and symbols for the three-step inductive proof."""
+
+    if not HAS_Z3:
+        raise RuntimeError(MISSING_Z3_MESSAGE)
+
+    from z3 import Real, Solver
+
+    solver = Solver()
+
+    states = tuple(Real(f"F{i}") for i in range(4))
+    epsilons = tuple(Real(f"eps{i}") for i in range(3))
+    epsilon_cap = Real("epsilon_cap")
+    delta = Real("delta")
+
+    for var in (*states, *epsilons):
+        solver.add(var >= 0)
+
+    solver.add(epsilon_cap == EPSILON_CAP)
+    for eps in epsilons:
+        solver.add(eps <= epsilon_cap)
+
+    solver.add(delta == DELTA_GROWTH)
+
+    return InductionSystem(
+        solver=solver,
+        states=states,  # F0, F1, F2, F3
+        epsilons=epsilons,  # eps0, eps1, eps2
+        epsilon_cap=epsilon_cap,
+        delta=delta,
+    )
+
+
+def apply_three_step_induction(system: InductionSystem) -> None:
+    """Attach base and inductive-step constraints to the solver."""
+
+    from z3 import And, Or, Sum
+
+    F0, F1, F2, F3 = system.states
+    eps0, eps1, eps2 = system.epsilons
+    solver = system.solver
+
+    solver.add(
+        Or(
+            F1 <= F0 + eps0,
+            And(
+                F1 > F0 + eps0,
+                3 * F0 >= Sum(F1, F2, F3),
+            ),
+        )
+    )
+    solver.add(F2 <= F1 + eps1)
+    solver.add(F3 <= F2 + eps2)
+
+    solver.add(F3 >= F0 + system.delta)
 
 
 def run_proof(output_path: Optional[Path] = None) -> ProofResult:
@@ -46,44 +114,23 @@ def run_proof(output_path: Optional[Path] = None) -> ProofResult:
     if not HAS_Z3:
         raise RuntimeError(MISSING_Z3_MESSAGE)
 
-    from z3 import And, Or, Real, Solver, Sum, sat, unsat
+    from z3 import sat, unsat
 
-    solver = Solver()
+    system = build_three_step_induction()
+    F0, F1, F2, F3 = system.states
+    eps0, eps1, eps2 = system.epsilons
 
-    F0, F1, F2, F3 = Real("F0"), Real("F1"), Real("F2"), Real("F3")
-    eps0, eps1, eps2 = Real("eps0"), Real("eps1"), Real("eps2")
+    apply_three_step_induction(system)
 
-    for var in (F0, F1, F2, F3, eps0, eps1, eps2):
-        solver.add(var >= 0)
-
-    epsilon_cap = Real("epsilon_cap")
-    solver.add(epsilon_cap == EPSILON_CAP)
-    for eps in (eps0, eps1, eps2):
-        solver.add(eps <= epsilon_cap)
-
-    solver.add(
-        Or(
-            F1 <= F0 + eps0,
-            And(
-                F1 > F0 + eps0,
-                3 * F0 >= Sum(F1, F2, F3),
-            ),
-        )
-    )
-    solver.add(F2 <= F1 + eps1)
-    solver.add(F3 <= F2 + eps2)
-
-    delta = Real("delta")
-    solver.add(delta == DELTA_GROWTH)
-    solver.add(F3 >= F0 + delta)
-
-    status = solver.check()
+    status = system.solver.check()
 
     certificate_lines = [
         "Free energy boundedness proof",
         f"Solver status: {status}",
         f"epsilon_cap <= {EPSILON_CAP}",
         f"delta_growth = {DELTA_GROWTH}",
+        "Base case: non-negative initial energy with capped per-step perturbation.",
+        "Inductive step: three-step recovery with moving-average guard.",
     ]
 
     if status == unsat:
@@ -92,7 +139,7 @@ def run_proof(output_path: Optional[Path] = None) -> ProofResult:
         )
     elif status == sat:
         certificate_lines.append("Result: SAT – counterexample exists.")
-        model = solver.model()
+        model = system.solver.model()
         certificate_lines.append("Model:")
         for symbol in (F0, F1, F2, F3, eps0, eps1, eps2):
             certificate_lines.append(f"  {symbol} = {model.evaluate(symbol)}")
