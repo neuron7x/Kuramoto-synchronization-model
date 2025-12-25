@@ -37,20 +37,23 @@ TradePulse/
 ├── analytics/              # Market analytics and signal generation
 ├── application/            # Application services (API, runtime, security)
 ├── apps/                   # User-facing applications (web dashboard, risk guardian)
-├── backtest/              # Backtesting engine and strategies
-├── core/                  # Core trading logic and neuromodulator systems
-├── execution/             # Order execution and exchange adapters
-├── observability/         # Logging, metrics, tracing, health checks
-├── runtime/               # Runtime controllers and lifecycle management
-├── src/                   # Source package (SDK, protocol implementations)
-│   ├── tradepulse/       # Main SDK package
-│   └── tradepulse_agent/ # Agent framework
-├── tests/                 # Test suite (unit, integration, e2e, property-based)
-├── docs/                  # Documentation
-├── examples/              # Usage examples and demos
-├── scripts/               # Utility scripts
-├── tools/                 # Development and deployment tools
-└── ...                    # Additional components
+├── backtest/               # Backtesting engine and strategies
+├── cli/                    # Command-line tooling and developer UX entrypoints
+├── core/                   # Core trading logic and neuromodulator systems
+├── cortex_service/         # Cortex orchestration service surface for control-plane flows
+├── execution/              # Order execution and exchange adapters
+├── observability/          # Logging, metrics, tracing, health checks
+├── runtime/                # Runtime controllers and lifecycle management
+├── src/                    # Source package (SDK, protocol implementations)
+│   ├── tradepulse/         # Main SDK package
+│   └── tradepulse_agent/   # Agent framework
+├── tests/                  # Test suite (unit, integration, e2e, property-based)
+├── docs/                   # Documentation
+├── examples/               # Usage examples and demos
+├── scripts/                # Utility scripts
+├── tools/                  # Development and deployment tools
+├── ui/                     # Frontend experience layer (dashboard bundle and shared assets)
+└── ...                     # Additional components
 ```
 
 ### Key Root Directories
@@ -64,6 +67,8 @@ TradePulse/
 #### Applications & Services
 - **`application/`** - API services, configuration management, runtime services
 - **`apps/`** - User-facing applications (web dashboard, risk guardian)
+- **`cli/`** - Unified CLI surface for operators and developers
+- **`ui/`** - Frontend delivery (dashboard bundle, design system assets)
 - **`observability/`** - Logging, metrics, tracing, health monitoring
 
 #### Infrastructure
@@ -79,6 +84,7 @@ TradePulse/
 - **`scripts/`** - Utility scripts for common tasks
 
 #### Special Purpose
+- **`cortex_service/`** - Dedicated Cortex service entrypoint for control-plane orchestration
 - **`nak_controller/`** - Neuromodulator controller (standalone module)
 - **`neurotrade_pro/`** - Advanced trading models (legacy, being refactored)
 - **`neuropro/`** - Professional neuromodulation features
