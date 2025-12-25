@@ -1,6 +1,6 @@
 {
   "notice": "Sensitive scan artifacts have been redacted to remove secrets, PII, and internal identifiers.",
-  "regenerate": "Run `scripts/guards/key_material_guard.sh` or the documented security scan workflow to produce fresh artifacts locally.",
+  "regenerate": "Regenerate locally using the repo guard scripts (e.g., `scripts/guards/key_material_guard.sh`) or follow the documented security scan workflow in audit/README.md.",
   "findings_summary": [
     {
       "id": "tls-dev-private-keys",
