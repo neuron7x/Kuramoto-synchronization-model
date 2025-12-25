@@ -343,7 +343,7 @@ rfc3986==2.0.0
 rich==14.2.0
 rpds-py==0.27.1
 ruff==0.14.0
-scalene==1.5.55
+scalene==2.0.1
 scikit-learn==1.8.0
 scipy==1.16.2
 secretstorage==3.4.0
