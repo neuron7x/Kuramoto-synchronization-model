@@ -40,7 +40,7 @@ TradePulse/
 ├── backtest/               # Backtesting engine and strategies
 ├── cli/                    # Command-line tooling and developer UX entrypoints
 ├── core/                   # Core trading logic and neuromodulator systems
-├── cortex_service/         # Cortex microservice surface (Go) for orchestration and control
+├── cortex_service/         # Cortex orchestration service surface for control-plane flows
 ├── execution/              # Order execution and exchange adapters
 ├── observability/          # Logging, metrics, tracing, health checks
 ├── runtime/                # Runtime controllers and lifecycle management
@@ -52,7 +52,7 @@ TradePulse/
 ├── examples/               # Usage examples and demos
 ├── scripts/                # Utility scripts
 ├── tools/                  # Development and deployment tools
-├── ui/                     # Frontend experience layer (Next.js dashboard and assets)
+├── ui/                     # Frontend experience layer (dashboard bundle and shared assets)
 └── ...                     # Additional components
 ```
 
@@ -84,7 +84,7 @@ TradePulse/
 - **`scripts/`** - Utility scripts for common tasks
 
 #### Special Purpose
-- **`cortex_service/`** - Dedicated Cortex service entrypoint for orchestration flows
+- **`cortex_service/`** - Dedicated Cortex service entrypoint for control-plane orchestration
 - **`nak_controller/`** - Neuromodulator controller (standalone module)
 - **`neurotrade_pro/`** - Advanced trading models (legacy, being refactored)
 - **`neuropro/`** - Professional neuromodulation features
