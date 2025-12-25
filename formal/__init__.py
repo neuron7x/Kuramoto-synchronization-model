@@ -20,6 +20,10 @@ from .proof_invariant import (
 )
 from .proof_invariant import ProofResult as InvariantProofResult
 from .proof_invariant import run_proof as run_invariant_proof
+from .inductive import (
+    InductiveProofEngine,
+    InductiveProofResult,
+)
 
 # Only export cryptographic proof classes if available
 try:
@@ -46,6 +50,9 @@ try:
         "MISSING_Z3_MESSAGE",
         "InvariantProofResult",
         "run_invariant_proof",
+        # Inductive engine
+        "InductiveProofEngine",
+        "InductiveProofResult",
         # Cryptographic proofs
         "CryptographicProver",
         "CryptographicProofReport",
