@@ -25,11 +25,11 @@ This summary documents the **current** optimization and integration workstreams 
 
 ## Integration Coverage
 - **CLI and SDK**: Optimization workflows are exposed through `tradepulse_cli optimize` and the MLSDM (Multi-Level Stochastic Decision Model) facade (`src/tradepulse/sdk/mlsdm/facade.py`), reusing the same optimization engines.
-- **Telemetry**: Metrics emitters (`core/utils/metrics.py`, `tradepulse/neural_controller/telemetry`) track optimization duration and iteration counts for dashboards and alerts.
+- **Telemetry**: Metrics emitters (`core/utils/metrics.py`, `tradepulse/neural_controller/telemetry/metrics.py`) track optimization duration and iteration counts for dashboards and alerts.
 - **Safety**: CVaR gating and mode-aware temperature coupling (NeuralTACLBridge) keep optimization outputs within risk thresholds.
 
 ## Verification and Iteration
-- Functional coverage exists in:
+- Functional coverage exists in (repository-relative paths):
     - `tests/optimization/test_optimization_examples.py`
     - `tests/unit/core/neuro/test_neuro_optimizer.py`
     - `tradepulse/neural_controller/tests/test_integration.py`
