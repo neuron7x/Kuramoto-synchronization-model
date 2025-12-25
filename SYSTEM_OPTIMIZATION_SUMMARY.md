@@ -14,9 +14,9 @@ This summary documents the **current** optimization and integration workstreams 
    - Typical cadence: fast iteration loops (~0.1 ms/step) with momentum-based updates and patience resets to escape local optima.
 
 2. **Thermodynamic Control Integration**
-   - Bridge: `tradepulse/neural_controller/integration/bridge.py` connects the neuro controller to the TACL optimisation layer.
+   - Bridge: `tradepulse/neural_controller/integration/bridge.py` connects the neuro controller to the TACL optimization layer.
    - Safeguards: synchrony throttling via Kuramoto order parameter, desync downscaling, deterministic fallback when the runtime TACL provider is unavailable.
-   - Iteration control: generation limits are propagated from the neural controller to TACL to keep optimisation bounded.
+   - Iteration control: generation limits are propagated from the neural controller to TACL to keep optimization bounded.
 
 3. **Execution and Observability Optimizations**
    - Caching & batching: `examples/optimization_examples.py` provides the `IndicatorCache`, adaptive polling, and streaming replayer patterns for low-latency ingestion.
@@ -24,9 +24,9 @@ This summary documents the **current** optimization and integration workstreams 
    - Performance guardrails: optional float32/chunking paths in indicator modules preserve numerical parity while trimming memory pressure.
 
 ## Integration Coverage
-- **CLI and SDK**: Optimization workflows are exposed through `tradepulse_cli optimize` and the MLSDM facade (`src/tradepulse/sdk/mlsdm/facade.py`), reusing the same optimisation engines.
-- **Telemetry**: Metrics emitters (`core/utils/metrics.py`, `tradepulse/neural_controller/telemetry`) track optimisation duration and iteration counts for dashboards and alerts.
-- **Safety**: CVaR gating and mode-aware temperature coupling (NeuralTACLBridge) keep optimisation outputs within risk thresholds.
+- **CLI and SDK**: Optimization workflows are exposed through `tradepulse_cli optimize` and the MLSDM facade (`src/tradepulse/sdk/mlsdm/facade.py`), reusing the same optimization engines.
+- **Telemetry**: Metrics emitters (`core/utils/metrics.py`, `tradepulse/neural_controller/telemetry`) track optimization duration and iteration counts for dashboards and alerts.
+- **Safety**: CVaR gating and mode-aware temperature coupling (NeuralTACLBridge) keep optimization outputs within risk thresholds.
 
 ## Verification and Iteration
 - Functional coverage exists in:
@@ -35,4 +35,4 @@ This summary documents the **current** optimization and integration workstreams 
   - `tradepulse/neural_controller/tests/test_integration.py`
 - These suites validate iterator behaviour, cache correctness, neuro-loop state updates, and bridge-level guardrails without expanding scope.
 
-The current optimisation stack is operational, integrated, and bounded. Future work should extend this document only when additional optimisations graduate into production pathways.
+The current optimization stack is operational, integrated, and bounded. Future work should extend this document only when additional optimizations graduate into production pathways.
