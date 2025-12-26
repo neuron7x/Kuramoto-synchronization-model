@@ -100,13 +100,15 @@ class CountingConnector(BinanceConnector):
         super().__init__()
         self.placements = 0
 
-    def connect(self, credentials=None) -> None:  # type: ignore[override]
+    def connect(self, credentials: object | None) -> None:  # type: ignore[override]
         self.connected = True
 
     def disconnect(self) -> None:  # type: ignore[override]
         self.connected = False
 
     def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:  # type: ignore[override]
+        if not self.connected:
+            raise RuntimeError("connector must be connected before placing orders")
         self.placements += 1
         return super().place_order(order, idempotency_key=idempotency_key)
 
