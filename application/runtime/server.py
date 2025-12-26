@@ -133,8 +133,6 @@ def run(
             telemetry=gate_result.telemetry,
         )
         print(json.dumps(health_snapshot, sort_keys=True))
-        if health_only:
-            return
         return
 
     runtime_settings = init_result.runtime_settings

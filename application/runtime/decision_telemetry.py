@@ -31,6 +31,8 @@ _THERMO_MISSING_FLAG = "thermo_missing"
 _SEROTONIN_PROXY_FLAGS = (_SEROTONIN_MISSING_FLAG, "stress_proxy", "drawdown_proxy")
 _THERMO_PROXY_FLAGS = ("thermo_free_energy_proxy", _THERMO_MISSING_FLAG)
 _CONTROL_GATE_THROTTLE_BUCKETS = (0, 10, 50, 100, 250, 500, 1000, 2500, 5000, float("inf"))
+_SEROTONIN_KEY = "serotonin"
+_THERMO_KEY = "thermo"
 
 
 class DecisionTelemetryEvent(TypedDict):
@@ -171,15 +173,14 @@ def build_decision_event(
     trace_id: str | None = None,
 ) -> DecisionTelemetryEvent:
     reasons = list(getattr(gate, "reasons", []))
-    decision_value = getattr(getattr(gate, "decision", None), "value", None) or str(
-        getattr(gate, "decision", "UNKNOWN")
-    )
+    decision_attr = getattr(gate, "decision", None)
+    decision_value = getattr(decision_attr, "value", None) or str(decision_attr or "UNKNOWN")
     if decision_value in ("THROTTLE", "DENY") and not reasons:
         raise ValueError(f"reasons must be populated for decision={decision_value}")
 
     controller_states = {
-        "serotonin": _safe(telemetry.get("serotonin", {})),
-        "thermo": _safe(telemetry.get("thermo", {})),
+        _SEROTONIN_KEY: _safe(telemetry.get(_SEROTONIN_KEY, {})),
+        _THERMO_KEY: _safe(telemetry.get(_THERMO_KEY, {})),
     }
     proxy_flags = _proxy_flags(getattr(gate, "meta", None))
     proxies = {
@@ -259,7 +260,7 @@ def get_controller_health(
         last_update = getattr(ctrl, "last_update", None)
         if flags & set(_SEROTONIN_PROXY_FLAGS):
             notes.append("proxy_inputs_active")
-        metrics_snapshot = telemetry.get("serotonin", {}).get("metrics", {}) if isinstance(telemetry, Mapping) else {}
+        metrics_snapshot = telemetry.get(_SEROTONIN_KEY, {}).get("metrics", {}) if isinstance(telemetry, Mapping) else {}
         if metrics_snapshot and metrics_snapshot.get("cooldown_s", 0) and not cooldown:
             cooldown = metrics_snapshot.get("cooldown_s")
         status = "degraded" if notes else "ok"
@@ -288,12 +289,12 @@ def get_controller_health(
         status = "degraded" if notes else "ok"
         return {"status": status, "free_energy": _safe(free_energy), "budget": _safe(budget), "notes": notes}
 
-    serotonin_state = _status_for_serotonin(controllers.get("serotonin"))
-    thermo_state = _status_for_thermo(controllers.get("thermo"))
+    serotonin_state = _status_for_serotonin(controllers.get(_SEROTONIN_KEY))
+    thermo_state = _status_for_thermo(controllers.get(_THERMO_KEY))
 
     overall_notes: list[str] = []
     overall_status = "ok"
-    for name, state in (("serotonin", serotonin_state), ("thermo", thermo_state)):
+    for name, state in ((_SEROTONIN_KEY, serotonin_state), (_THERMO_KEY, thermo_state)):
         if state["status"] == "missing":
             overall_status = "missing"
             overall_notes.append(f"{name}_missing")
