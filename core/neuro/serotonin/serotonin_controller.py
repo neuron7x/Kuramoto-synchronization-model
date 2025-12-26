@@ -50,11 +50,64 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
 from time import perf_counter_ns, time
-from typing import Any, Callable, Literal, Mapping, Optional, Sequence
+from typing import Any, Callable, Iterator, Literal, Mapping, Optional, Sequence
 
 import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+
+class SerotoninStepResult:
+    """Hybrid tuple+mapping return type for SerotoninController.step().
+
+    Temperature floor is exposed via mapping access only to preserve backward
+    compatibility with legacy tuple unpacking (4-value tuples).
+    """
+
+    _KEY_INDEX = {"hold": 0, "veto": 1, "cooldown": 2, "level": 3}
+    __slots__ = ("hold", "veto", "cooldown", "level", "temperature_floor")
+
+    def __init__(
+        self, hold: bool, veto: bool, cooldown: float, level: float, temperature_floor: float
+    ) -> None:
+        self.hold = bool(hold)
+        self.veto = bool(veto)
+        self.cooldown = float(cooldown)
+        self.level = float(level)
+        self.temperature_floor = float(temperature_floor)
+
+    def __iter__(self) -> Iterator[bool | float]:
+        return iter(self._tuple_fields())
+
+    def __getitem__(self, key: int | str) -> float | bool:
+        fields = self._tuple_fields()
+        if isinstance(key, int):
+            if 0 <= key < len(fields):
+                return fields[key]
+            raise IndexError(f"Index {key} out of range, valid indices are 0-3")
+
+        if key == "temperature_floor":
+            return self.temperature_floor
+
+        idx = self._KEY_INDEX.get(key)
+        if idx is not None:
+            return fields[idx]
+
+        raise KeyError(
+            f"Key {key!r} not found; valid keys are: hold, veto, cooldown, level, temperature_floor"
+        )
+
+    def _tuple_fields(self) -> tuple[bool, bool, float, float]:
+        return (self.hold, self.veto, self.cooldown, self.level)
+
+    def to_dict(self) -> dict[str, float | bool]:
+        return {
+            "hold": self.hold,
+            "veto": self.veto,
+            "cooldown": self.cooldown,
+            "level": self.level,
+            "temperature_floor": self.temperature_floor,
+        }
 
 
 class SerotoninConfig(BaseModel):
@@ -589,7 +642,7 @@ class SerotoninController:
         free_energy: Optional[float] = None,
         cum_losses: Optional[float] = None,
         rho_loss: Optional[float] = None,
-    ) -> tuple[bool, bool, float, float]:
+    ) -> SerotoninStepResult:
         """Execute one serotonin control step and return decision signals.
 
         This is the primary API for risk/fatigue control integration. It consolidates
@@ -606,11 +659,10 @@ class SerotoninController:
             rho_loss: Optional rho-loss complement. If None, defaults to 0.0.
 
         Returns:
-            A tuple of (hold, veto, cooldown_s, level):
-            - hold (bool): True if the controller recommends HOLD (no new positions).
-            - veto (bool): True if the controller triggers a veto (same as hold, for clarity).
-            - cooldown_s (float): Time in seconds since cooldown started, or 0.0 if not in cooldown.
-            - level (float): Current serotonin level in [0, 1].
+            A SerotoninStepResult that behaves like both a tuple and mapping:
+            - Tuple iteration/unpacking returns (hold, veto, cooldown, level)
+            - Mapping keys expose hold, veto, cooldown, level, temperature_floor
+              (temperature_floor is mapping-only to keep tuple arity stable)
 
         Raises:
             ValueError: If stress, drawdown magnitude, or novelty are negative.
@@ -678,7 +730,13 @@ class SerotoninController:
             self._log("tacl.5ht.hold", float(hold))
             self._log("tacl.5ht.cooldown", cooldown_s)
 
-            return hold, veto, cooldown_s, level
+            return SerotoninStepResult(
+                hold=hold,
+                veto=veto,
+                cooldown=cooldown_s,
+                level=level,
+                temperature_floor=self.temperature_floor,
+            )
 
     @staticmethod
     def _resolve_config_path(config_path: str) -> Path:
