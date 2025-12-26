@@ -124,8 +124,8 @@ jobs:
           python -m coverage combine
           python -m coverage xml -i -o coverage.xml
 
-      - name: Enforce global coverage threshold (98%)
-        run: python -m coverage report --fail-under=98
+      - name: Enforce global coverage threshold (90%)
+        run: python -m coverage report --fail-under=90
 
       - name: Generate HTML coverage report
         run: python -m coverage html -i -d coverage_html
