@@ -151,8 +151,7 @@ def test_decision_event_shape_preserves_proxies_and_inputs() -> None:
             "default_decision": "THROTTLE",
             "min_position_multiplier": 0.1,
             "max_position_multiplier": 1.0,
-        }
-        ,
+        },
         controllers_required=False,
     )
     gate_result = evaluate_control_gates(
