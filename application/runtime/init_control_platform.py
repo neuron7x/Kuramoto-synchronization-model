@@ -139,16 +139,23 @@ def initialize_control_platform(
 
     controllers: Dict[str, object] = {}
     if serotonin_factory is None:
-        from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        from core.neuro.serotonin.serotonin_controller import (
             SerotoninController as _SerotoninController,
         )
 
-        serotonin_factory = lambda path: _SerotoninController(path)  # type: ignore[arg-type]
+        def _build_serotonin_controller(path: str) -> object:
+            return _SerotoninController(path)
+
+        serotonin_factory = _build_serotonin_controller
+
     if thermo_factory is None:
         from runtime.thermo_api import _build_default_graph as _build_default_graph
         from runtime.thermo_controller import ThermoController as _ThermoController
 
-        thermo_factory = lambda: _ThermoController(_build_default_graph())  # type: ignore[arg-type]
+        def _build_thermo_controller() -> object:
+            return _ThermoController(_build_default_graph())
+
+        thermo_factory = _build_thermo_controller
 
     controllers["serotonin"] = serotonin_factory(serotonin_config_path)
     controllers["thermo"] = thermo_factory()

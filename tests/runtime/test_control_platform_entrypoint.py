@@ -2,7 +2,8 @@ from application.runtime.init_control_platform import initialize_control_platfor
 
 
 def test_initialize_control_platform_smoke():
-    thermo_stub = lambda: object()
+    def thermo_stub() -> object:
+        return object()
 
     result = initialize_control_platform(thermo_factory=thermo_stub)
 
