@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import logging
 import random
@@ -47,6 +48,21 @@ def _full_jitter_backoff(base: float, attempt: int, cap: float) -> float:
         Delay in seconds with full jitter
     """
     return float(random.uniform(0.0, min(cap, base * (2 ** max(0, attempt)))))
+
+
+def _snapshot_timestamp(path: Path) -> float:
+    """Return the timestamp embedded in an OMS snapshot filename.
+
+    Falls back to file modification time when the filename does not conform to
+    the expected ``oms_snapshot_{ts}.json`` pattern.
+    """
+    stem_parts = path.stem.rsplit("_", 1)
+    if len(stem_parts) < 2:
+        return path.stat().st_mtime
+    try:
+        return float(stem_parts[-1])
+    except ValueError:
+        return path.stat().st_mtime
 
 
 class Signal:
@@ -448,9 +464,12 @@ class LiveExecutionLoop:
             payload["checksum"] = f"sha256:{checksum}"
 
             fname = snapshot_dir / f"oms_snapshot_{int(now)}.json"
-            fname.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            tmp_path = fname.with_suffix(fname.suffix + ".tmp")
+            with tmp_path.open("w", encoding="utf-8") as fh:
+                fh.write(json.dumps(payload, ensure_ascii=False, indent=2))
+                fh.flush()
+                os.fsync(fh.fileno())
+            tmp_path.replace(fname)
 
             self._last_snapshot_ts = now
             self._logger.debug(
@@ -459,12 +478,22 @@ class LiveExecutionLoop:
             )
 
             # Clean up old snapshots (keep last 5)
-            all_snapshots = sorted(snapshot_dir.glob("oms_snapshot_*.json"))
-            for old_snapshot in all_snapshots[:-5]:
-                try:
-                    old_snapshot.unlink()
-                except Exception:
-                    pass
+            all_snapshots = list(snapshot_dir.glob("oms_snapshot_*.json"))
+            if len(all_snapshots) > 5:
+                all_snapshots.sort(key=_snapshot_timestamp)
+                for old_snapshot in all_snapshots[:-5]:
+                    try:
+                        old_snapshot.unlink()
+                    except Exception as exc:
+                        self._logger.debug(
+                            "Failed to remove old snapshot",
+                            extra={
+                                "event": "live_loop.snapshot_cleanup_failed",
+                                "path": str(old_snapshot),
+                                "error_type": type(exc).__name__,
+                                "error": str(exc),
+                            },
+                        )
         except Exception as exc:
             self._logger.debug(
                 f"Snapshot persistence failed: {exc}",

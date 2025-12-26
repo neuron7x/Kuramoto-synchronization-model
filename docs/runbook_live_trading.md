@@ -173,7 +173,8 @@ order lifecycle event:
 ### OMS Snapshots
 
 OMS snapshots are persisted periodically (default: every 30 seconds, configurable
-via `LiveLoopConfig.snapshot_interval`):
+via `LiveLoopConfig.snapshot_interval`) using atomic temp-write-then-rename to
+avoid partial files:
 
 ```json
 {
@@ -198,7 +199,8 @@ via `LiveLoopConfig.snapshot_interval`):
 ```
 
 - Snapshots are stored at `<state_dir>/oms_snapshots/oms_snapshot_{timestamp}.json`.
-- The last 5 snapshots are retained; older snapshots are automatically pruned.
+- The last 5 snapshots (newest timestamps) are retained deterministically; older
+  snapshots are pruned with debug logs on cleanup failure.
 
 ### Recovery Procedure
 

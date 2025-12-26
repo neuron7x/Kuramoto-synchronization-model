@@ -182,7 +182,8 @@ include = [
 ]
 # Legacy only. Canonical namespace is ``tradepulse.*``.
 # 'src' entries remain so that existing ``src.tradepulse`` imports keep working
-# while we migrate callers. See docs/architecture/packaging.md for details.
+# while we migrate callers. See docs/architecture/packaging.md and
+# scripts/check_namespace_policy.py for enforcement details.
 exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]

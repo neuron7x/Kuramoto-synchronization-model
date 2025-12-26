@@ -16,7 +16,12 @@ import httpx
 from domain import Order, OrderSide, OrderStatus, OrderType
 from execution.connectors import OrderError
 
-from .common import AuthenticatedRESTExecutionConnector, CredentialError, HMACSigner
+from .common import (
+    AuthenticatedRESTExecutionConnector,
+    CredentialError,
+    CredentialProvider,
+    HMACSigner,
+)
 
 _STATUS_MAP = {
     "OPEN": OrderStatus.OPEN,
@@ -49,8 +54,10 @@ class CoinbaseExecutionConnector(AuthenticatedRESTExecutionConnector):
             base_url=self.REST_BASE,
             sandbox_url=self.REST_SANDBOX,
             ws_url=self.WS_BASE,
-            credential_provider=None,
-            optional_credential_keys=("API_PASSPHRASE",),
+            credential_provider=CredentialProvider(
+                "COINBASE", required_keys=("API_KEY", "API_SECRET", "API_PASSPHRASE")
+            ),
+            optional_credential_keys=None,
             http_client=http_client,
             transport=transport,
             ws_factory=ws_factory,

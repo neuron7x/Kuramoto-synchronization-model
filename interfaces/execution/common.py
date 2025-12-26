@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import os
 import random
 import threading
@@ -174,17 +175,20 @@ class HTTPBackoffController:
         self._lock = threading.Lock()
         self._backoff_until: float = 0.0
         self._attempts: int = 0
+        self._throttle_events: int = 0
 
     def throttle(self) -> None:
         with self._lock:
             delay = self._backoff_until - self._clock()
         if delay > 0:
+            self._throttle_events += 1
             self._sleep(delay)
 
     def reset(self) -> None:
         with self._lock:
             self._attempts = 0
             self._backoff_until = 0.0
+            self._throttle_events = 0
 
     def backoff(self, response: httpx.Response | None = None) -> None:
         with self._lock:
@@ -435,6 +439,24 @@ def ensure_timestamp_skew(response: httpx.Response, *, max_skew: float = 5.0) ->
         )
 
 
+def is_rate_limited(response: httpx.Response) -> bool:
+    """Return True when the response indicates a rate limit condition."""
+
+    if response.status_code == 429:
+        return True
+    headers = {k.lower(): v for k, v in response.headers.items()}
+    remaining = headers.get("x-ratelimit-remaining")
+    if remaining is not None:
+        try:
+            if float(remaining) <= 0:
+                return True
+        except ValueError:
+            pass
+    if "retry-after" in headers:
+        return True
+    return False
+
+
 class AuthenticatedRESTExecutionConnector(ExecutionConnector):
     """Base class bundling authentication, rate limiting and WS plumbing."""
 
@@ -680,9 +702,17 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             except RuntimeError:
                 response.raise_for_status()
             status = response.status_code
-            if status == 429:
+            if is_rate_limited(response):
                 self._circuit_breaker.record_failure(None)
                 if not allow_retry or attempt >= max_attempts:
+                    _LOG.info(
+                        "Rate limit encountered",
+                        extra={
+                            "event": "connector.rate_limit",
+                            "env": self.env_prefix,
+                            "status": status,
+                        },
+                    )
                     response.raise_for_status()
                 self._backoff.backoff(response)
                 continue
@@ -818,3 +848,4 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
 
     def stream_is_healthy(self) -> bool:
         return not self._health.is_stale()
+_LOG = logging.getLogger(__name__)
