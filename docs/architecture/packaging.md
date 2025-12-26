@@ -15,6 +15,14 @@ from src.tradepulse import ...  # Not recommended
 import src.tradepulse  # Not recommended
 ```
 
+### Import Reality Check (current)
+
+- `tradepulse.*` is canonical and installed; prefer it for all new code.
+- `src.tradepulse.*` exists only as a legacy mirror to avoid breaking older imports.
+- `core.*` stays internal/legacy; serotonin canonical implementation lives in `core.neuro.serotonin`.
+- New features should target `tradepulse.*` while maintaining shims for `src.tradepulse.*`.
+- Expect future clean-up to remove `src.*` once consumers migrate.
+
 ## Directory Structure
 
 ```
@@ -47,10 +55,9 @@ Previously, `src/__init__.py` made `src` an importable Python package, creating 
 
 ### Solution
 
-1. **`src/` is a source directory, not a package**
-   - `src/` is explicitly excluded from installed packages
-   - Contains internal development modules
-   - NOT intended for external API use
+1. **`src.tradepulse.*` is kept only as a compatibility shim**
+   - Included in packaging to keep legacy imports working
+   - Do not add new `src.*` entry points
 
 2. **`tradepulse.*` is the canonical namespace**
    - Installed as the public API
@@ -69,12 +76,11 @@ In development mode (`pip install -e .`), you may still import from `src.*` due 
 
 ### After Installation
 
-After running `pip install .` (non-editable), the `src` package is **not available**:
+After running `pip install .` (non-editable), `tradepulse.*` is installed as the
+public API. Legacy `src.tradepulse.*` shims are still packaged for backward
+compatibility, but should be treated as deprecated:
 
 ```python
->>> import src
-ModuleNotFoundError: No module named 'src'
-
 >>> import tradepulse
 >>> tradepulse.__file__
 '/path/to/site-packages/tradepulse/__init__.py'
@@ -148,14 +154,16 @@ where = ["."]
 include = [
     "tradepulse",
     "tradepulse.*",
-    # ... other packages
+    # ... other packages ...
+    "src",
+    "src.*",  # legacy shim to keep existing imports alive
 ]
-exclude = ["tests", "tests.*", "docs", "docs.*", "src", "src.*"]
+exclude = ["tests", "tests.*", "docs", "docs.*"]
 ```
 
 Key points:
-- `src` and `src.*` are **explicitly excluded**
-- Only canonical packages are included
+- Canonical namespace is `tradepulse.*`
+- `src.*` is packaged only as a legacy mirror
 - Tests and docs are excluded from distribution
 
 ## Related Documentation
