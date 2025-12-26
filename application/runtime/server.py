@@ -118,9 +118,7 @@ def run(
         config.ssl = build_api_server_ssl_context(tls_settings)
         scheme = "https"
 
-    controllers_loaded: list[str] = list(
-        init_result.telemetry_meta.get("controllers_loaded", [])
-    )
+    controllers_loaded = init_result.telemetry_meta.get("controllers_loaded", [])
     _LOGGER.info(
         "Starting TradePulse API server on %s://%s:%s effective_config_source=%s controllers_loaded=%s",
         scheme,

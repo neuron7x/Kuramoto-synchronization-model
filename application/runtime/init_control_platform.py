@@ -6,13 +6,19 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional, Type, TypeVar
 
 import yaml
 
 from application.settings import ApiServerSettings, BackendRuntimeSettings
 
 LOGGER = logging.getLogger("tradepulse.control_platform")
+SettingsT = TypeVar("SettingsT", bound="BaseSettings")
+
+try:
+    from pydantic_settings import BaseSettings
+except Exception:  # pragma: no cover - fallback type guard
+    BaseSettings = object  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -39,14 +45,21 @@ def _load_yaml(path: Optional[str]) -> Dict[str, Any]:
     return loaded
 
 
-def _extract_defaults_and_env(settings_cls: Any) -> tuple[Dict[str, Any], Dict[str, Any]]:
+def _extract_defaults_and_env(
+    settings_cls: Type[SettingsT],
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Return defaults-only values and env-derived overrides for a BaseSettings class."""
 
     defaults_instance = settings_cls.model_construct()
 
     try:
         env_instance = settings_cls()
-    except Exception:
+    except Exception as exc:  # pragma: no cover - defensive guard
+        LOGGER.warning(
+            "Falling back to defaults for %s due to init error: %s",
+            settings_cls.__name__,
+            exc,
+        )
         env_instance = defaults_instance
 
     defaults = defaults_instance.model_dump()
@@ -59,10 +72,10 @@ def _extract_defaults_and_env(settings_cls: Any) -> tuple[Dict[str, Any], Dict[s
 
 def _merge_precedence(
     *,
-    settings_cls: Any,
+    settings_cls: Type[SettingsT],
     yaml_section: Mapping[str, Any] | None,
     cli_overrides: Mapping[str, Any] | None,
-) -> Any:
+) -> SettingsT:
     """Apply precedence CLI > ENV > YAML > defaults for a single settings class."""
 
     defaults, env_overrides = _extract_defaults_and_env(settings_cls)
@@ -74,6 +87,10 @@ def _merge_precedence(
     if cli_overrides:
         merged.update({k: v for k, v in cli_overrides.items() if v is not None})
     if merged.get("tls") is None and not merged.get("allow_plaintext", False):
+        LOGGER.warning(
+            "No TLS configuration detected; enabling allow_plaintext for local runs. "
+            "Provide TRADEPULSE_API_SERVER_TLS__* or --allow-plaintext to override."
+        )
         merged["allow_plaintext"] = True
     return settings_cls.model_validate(merged)
 
