@@ -24,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.11"
           cache: "pip"
           cache-dependency-path: |
             requirements.lock
@@ -34,7 +34,7 @@ jobs:
       - name: Install system build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3-dev
+          sudo apt-get install -y build-essential python3-dev libffi-dev libssl-dev
 
       - name: Ensure build tools are up to date
         run: |
