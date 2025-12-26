@@ -119,4 +119,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(
+        "Deprecated entrypoint. Use: python -m application.runtime.server --config <path>"
+    )

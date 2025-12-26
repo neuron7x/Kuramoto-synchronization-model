@@ -229,6 +229,24 @@ Entry Signal:     0.000
 
 > **Note:** Use `PYTHONPATH=.` to ensure Python can find the local modules. On Windows PowerShell: `$env:PYTHONPATH='.'; python examples/quick_start.py`
 
+### Run the control platform (canonical)
+
+```bash
+PYTHONPATH=. python -m application.runtime.server --allow-plaintext --host 127.0.0.1 --port 8000
+```
+
+- Optional: `--config path/to/config.yaml` (precedence: CLI > ENV > YAML > defaults)
+- Logs include `effective_config_source=... controllers_loaded=[...]`
+
+### Canonical code root
+
+- Package root: `tradepulse` under `src/`
+- Import controllers from canonical paths, e.g.:
+  ```python
+  from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
+  ```
+- Legacy `core.*` imports are deprecated shims and will be removed in a future release; see `docs/ARCHITECTURE_MAP.md`.
+
 ### Interactive Dashboard
 
 ```bash

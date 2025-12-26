@@ -5,6 +5,6 @@ from __future__ import annotations
 import uvicorn
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "cortex_service.app.api:create_app", host="0.0.0.0", port=8001, factory=True
+    raise SystemExit(
+        "Deprecated entrypoint. Use: python -m application.runtime.server --config <path>"
     )

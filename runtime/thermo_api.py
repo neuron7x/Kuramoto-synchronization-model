@@ -118,10 +118,6 @@ def manual_override(request: ManualOverrideRequest) -> Dict[str, object]:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    import uvicorn
-
-    # CWE-605: Use environment variables for host/port configuration
-    # Default to localhost for security, require explicit configuration for external access
-    host = os.environ.get("THERMO_API_HOST", "127.0.0.1")
-    port = int(os.environ.get("THERMO_API_PORT", "8080"))
-    uvicorn.run(app, host=host, port=port)
+    raise SystemExit(
+        "Deprecated entrypoint. Use: python -m application.runtime.server --config <path>"
+    )
