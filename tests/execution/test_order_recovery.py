@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import time
+import json
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -11,7 +12,7 @@ import pytest
 
 from domain import Order, OrderSide, OrderType
 from execution.connectors import ExecutionConnector
-from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
+from execution.live_loop import LiveExecutionLoop, LiveLoopConfig, _snapshot_timestamp
 from execution.order_lifecycle import IdempotentSubmitter
 from execution.risk import RiskLimits, RiskManager
 
@@ -317,6 +318,49 @@ def test_snapshot_persistence_and_recovery(
         loop2.shutdown()
 
 
+def test_snapshot_retention_is_deterministic(
+    monkeypatch: pytest.MonkeyPatch,
+    live_loop_config: LiveLoopConfig,
+    risk_manager: RiskManager,
+) -> None:
+    """Ensure snapshot pruning keeps latest files and leaves valid JSON only."""
+    connector = FlakyConnector(failures_remaining=0)
+    loop = LiveExecutionLoop(
+        {"binance": connector},
+        risk_manager,
+        config=live_loop_config,
+    )
+
+    snapshot_dir = live_loop_config.state_dir / "oms_snapshots"
+    loop._config.snapshot_interval = 0.0  # allow rapid snapshotting for test
+
+    base = 1_000_000
+    generated: list[int] = []
+
+    def _fake_time() -> float:
+        nonlocal base
+        base += 2
+        generated.append(base)
+        return float(base)
+
+    monkeypatch.setattr(time, "time", _fake_time)
+
+    for _ in range(7):
+        loop._last_snapshot_ts = 0.0
+        loop._persist_oms_snapshot_if_needed()
+
+    snapshots = sorted(snapshot_dir.glob("oms_snapshot_*.json"))
+    assert len(snapshots) == 5
+
+    timestamps = [int(_snapshot_timestamp(path)) for path in snapshots]
+    expected = [int(ts) for ts in generated[-5:]]
+    assert timestamps == expected
+
+    for path in snapshots:
+        json_content = json.loads(path.read_text(encoding="utf-8"))
+    assert not list(snapshot_dir.glob("*.tmp"))
+
+
 def test_ledger_replay_after_snapshot(
     live_loop_config: LiveLoopConfig,
     risk_manager: RiskManager,
@@ -421,5 +465,41 @@ def test_reconnect_triggers_reconciliation(
         outstanding = loop._oms_state.outstanding("binance")
         order_ids = {o.order_id for o in outstanding}
         assert stray.order_id in order_ids
+    finally:
+        loop.shutdown()
+
+
+def test_reconnect_reconcile_does_not_duplicate_state(
+    live_loop_config: LiveLoopConfig,
+    risk_manager: RiskManager,
+) -> None:
+    """Ensure reconnection reconciliation adopts stray orders without duplicates."""
+    connector = FlakyConnector(failures_remaining=3)
+
+    stray = connector.place_order(
+        Order(
+            symbol="BTCUSDT",
+            side=OrderSide.BUY,
+            quantity=0.1,
+            price=20000.0,
+            order_type=OrderType.LIMIT,
+        )
+    )
+
+    loop = LiveExecutionLoop(
+        {"binance": connector},
+        risk_manager,
+        config=live_loop_config,
+    )
+
+    loop.start(cold_start=True)
+    try:
+        # allow heartbeat failures and reconnections to run
+        wait_time = loop._config.heartbeat_interval + loop._config.max_backoff + 0.5
+        time.sleep(wait_time)
+
+        outstanding = loop._oms_state.outstanding("binance")
+        order_ids = [o.order_id for o in outstanding if o.order_id is not None]
+        assert order_ids.count(stray.order_id) == 1
     finally:
         loop.shutdown()
