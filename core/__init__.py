@@ -25,7 +25,6 @@ def __getattr__(name: str):
 # legacy and canonical import paths.
 try:  # pragma: no cover - best effort mapping
     _sero_mod = import_module("tradepulse.core.neuro.serotonin.serotonin_controller")
-    sys.modules["core.neuro"] = import_module("tradepulse.core.neuro")
     sys.modules["core.neuro.serotonin"] = import_module("tradepulse.core.neuro.serotonin")
     sys.modules["core.neuro.serotonin.serotonin_controller"] = _sero_mod
 except ImportError:
