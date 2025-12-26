@@ -15,6 +15,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 LOGGER = logging.getLogger("tradepulse.api.errors")
 
+# Prefer the modern Starlette/FastAPI constant while avoiding deprecated access.
+HTTP_422_UNPROCESSABLE = int(
+    getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", HTTPStatus.UNPROCESSABLE_ENTITY)
+)
+
 
 class ApiErrorCode(str, Enum):
     """Stable error codes returned by the public HTTP APIs."""
@@ -44,9 +49,7 @@ DEFAULT_ERROR_CODES: dict[int, ApiErrorCode] = {
     status.HTTP_403_FORBIDDEN: ApiErrorCode.FORBIDDEN,
     status.HTTP_404_NOT_FOUND: ApiErrorCode.NOT_FOUND,
     status.HTTP_409_CONFLICT: ApiErrorCode.IDEMPOTENCY_CONFLICT,
-    getattr(
-        status, "HTTP_422_UNPROCESSABLE_CONTENT", status.HTTP_422_UNPROCESSABLE_ENTITY
-    ): ApiErrorCode.VALIDATION_FAILED,
+    HTTP_422_UNPROCESSABLE: ApiErrorCode.VALIDATION_FAILED,
     status.HTTP_429_TOO_MANY_REQUESTS: ApiErrorCode.RATE_LIMIT,
     status.HTTP_500_INTERNAL_SERVER_ERROR: ApiErrorCode.INTERNAL,
     status.HTTP_503_SERVICE_UNAVAILABLE: ApiErrorCode.INTERNAL,
@@ -127,9 +130,7 @@ COMMON_ERROR_RESPONSES: dict[int, dict[str, Any]] = {
         "model": ErrorResponse,
         "description": "Idempotency key conflict detected for the supplied payload.",
     },
-    getattr(
-        status, "HTTP_422_UNPROCESSABLE_CONTENT", status.HTTP_422_UNPROCESSABLE_ENTITY
-    ): {
+    HTTP_422_UNPROCESSABLE: {
         "model": ErrorResponse,
         "description": "Payload schema is syntactically valid but semantically incorrect.",
     },
@@ -181,7 +182,7 @@ def register_exception_handlers(
         content = ErrorResponse(error=payload).model_dump(mode="json")
         content["detail"] = error_list
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=HTTP_422_UNPROCESSABLE,
             content=content,
         )
 
