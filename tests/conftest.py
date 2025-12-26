@@ -11,8 +11,15 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
 import pandas as pd
+import pydantic_settings
 import pytest
 import yaml
+
+if not hasattr(pydantic_settings, "SettingsError"):
+    class SettingsError(Exception):
+        """Compatibility shim for pydantic-settings <=2.x without SettingsError."""
+
+    pydantic_settings.SettingsError = SettingsError  # type: ignore[attr-defined]
 
 if not hasattr(pd, "_pandas_datetime_CAPI"):  # pragma: no cover - import-time guard
     pd._pandas_datetime_CAPI = None
