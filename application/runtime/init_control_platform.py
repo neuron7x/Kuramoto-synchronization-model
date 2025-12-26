@@ -162,7 +162,7 @@ def initialize_control_platform(
 
     controllers: Dict[str, object] = {}
     if serotonin_factory is None:
-        from core.neuro.serotonin.serotonin_controller import (
+        from tradepulse.core.neuro.serotonin.serotonin_controller import (
             SerotoninController as _SerotoninController,
         )
 
