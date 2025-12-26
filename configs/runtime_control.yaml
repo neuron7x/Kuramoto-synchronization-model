@@ -1,0 +1,6 @@
+runtime:
+  controllers_required: true
+  gate_defaults:
+    min_position_multiplier: 0.0
+    max_position_multiplier: 1.0
+    default_decision: ALLOW

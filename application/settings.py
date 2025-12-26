@@ -908,6 +908,18 @@ class BackendRuntimeSettings(BaseSettings):
         True,
         description=("Emit a debug snapshot at startup when debug mode is enabled."),
     )
+    controllers_required: bool = Field(
+        True,
+        description="Require serotonin/thermo controllers to be present during runtime init.",
+    )
+    gate_defaults: dict[str, float | str] = Field(
+        default_factory=lambda: {
+            "min_position_multiplier": 0.0,
+            "max_position_multiplier": 1.0,
+            "default_decision": "ALLOW",
+        },
+        description="Default bounds for control-gate decisions.",
+    )
 
     model_config = SettingsConfigDict(env_prefix="TRADEPULSE_BACKEND_", extra="ignore")
 
@@ -933,6 +945,21 @@ class BackendRuntimeSettings(BaseSettings):
     @classmethod
     def _normalise_redact_patterns(cls, value: Any) -> tuple[str, ...]:
         return cls._coerce_sequence(value, lower=True)
+
+    @model_validator(mode="after")
+    def _validate_gate_defaults(self) -> "BackendRuntimeSettings":
+        defaults = dict(self.gate_defaults or {})
+        min_mul = float(defaults.get("min_position_multiplier", 0.0) or 0.0)
+        max_mul = float(defaults.get("max_position_multiplier", 1.0) or 1.0)
+        if min_mul < 0 or max_mul < 0 or max_mul < min_mul:
+            raise ValueError("gate_defaults must define non-negative min/max multipliers")
+        decision = str(defaults.get("default_decision", "ALLOW")).upper()
+        if decision not in {"ALLOW", "THROTTLE", "DENY"}:
+            raise ValueError("gate_defaults.default_decision must be ALLOW, THROTTLE, or DENY")
+        defaults["min_position_multiplier"] = min_mul
+        defaults["max_position_multiplier"] = max_mul
+        defaults["default_decision"] = decision
+        return self.model_copy(update={"gate_defaults": defaults})
 
     def resolve_log_level(self) -> int:
         """Return the numeric logging level configured for the backend."""

@@ -44,7 +44,9 @@ DEFAULT_ERROR_CODES: dict[int, ApiErrorCode] = {
     status.HTTP_403_FORBIDDEN: ApiErrorCode.FORBIDDEN,
     status.HTTP_404_NOT_FOUND: ApiErrorCode.NOT_FOUND,
     status.HTTP_409_CONFLICT: ApiErrorCode.IDEMPOTENCY_CONFLICT,
-    status.HTTP_422_UNPROCESSABLE_CONTENT: ApiErrorCode.VALIDATION_FAILED,
+    getattr(
+        status, "HTTP_422_UNPROCESSABLE_CONTENT", status.HTTP_422_UNPROCESSABLE_ENTITY
+    ): ApiErrorCode.VALIDATION_FAILED,
     status.HTTP_429_TOO_MANY_REQUESTS: ApiErrorCode.RATE_LIMIT,
     status.HTTP_500_INTERNAL_SERVER_ERROR: ApiErrorCode.INTERNAL,
     status.HTTP_503_SERVICE_UNAVAILABLE: ApiErrorCode.INTERNAL,
@@ -125,7 +127,9 @@ COMMON_ERROR_RESPONSES: dict[int, dict[str, Any]] = {
         "model": ErrorResponse,
         "description": "Idempotency key conflict detected for the supplied payload.",
     },
-    status.HTTP_422_UNPROCESSABLE_CONTENT: {
+    getattr(
+        status, "HTTP_422_UNPROCESSABLE_CONTENT", status.HTTP_422_UNPROCESSABLE_ENTITY
+    ): {
         "model": ErrorResponse,
         "description": "Payload schema is syntactically valid but semantically incorrect.",
     },
