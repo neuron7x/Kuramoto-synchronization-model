@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import types
+from typing import Any
 
 import pytest
 
@@ -32,7 +33,7 @@ class _Serotonin:
         self._reason_codes = reason_codes
         self._metrics = metrics or {}
 
-    def update(self, observation):  # noqa: ANN001 - signature matches controller API
+    def update(self, observation: Any) -> types.SimpleNamespace:
         return types.SimpleNamespace(
             action_gate=self._action_gate,
             risk_budget=self._risk_budget,

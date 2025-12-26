@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import time
 import types
+from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -45,7 +47,7 @@ class _SerotoninAllow:
     def __init__(self, risk_budget: float = 1.0) -> None:
         self._risk_budget = risk_budget
 
-    def update(self, observation):  # noqa: ANN001 - controller signature
+    def update(self, observation: Any) -> types.SimpleNamespace:
         return types.SimpleNamespace(
             action_gate="ALLOW",
             risk_budget=self._risk_budget,
@@ -74,7 +76,7 @@ class GateAwareRisk:
     def set_default_decision(self, value: str) -> None:
         self.config.gate_defaults["default_decision"] = value
 
-    def validate_order(self, symbol, side, quantity, reference_price):  # noqa: ANN001
+    def validate_order(self, symbol: str, side: Any, quantity: float, reference_price: float) -> None:
         result = evaluate_control_gates(self.config, self.controllers, dict(self._signals))
         self.last_gate = result.gate.decision
         if result.gate.decision is Decision.DENY:
@@ -83,13 +85,13 @@ class GateAwareRisk:
         if result.gate.decision is Decision.THROTTLE:
             raise OrderRateExceeded("control gate throttle")
 
-    def register_fill(self, symbol, side, quantity, price) -> None:  # noqa: ANN001
+    def register_fill(self, symbol: str, side: Any, quantity: float, price: float) -> None:
         pass
 
     def exposure_snapshot(self):
         return {}
 
-    def hydrate_positions(self, snapshot, *, replace: bool = False) -> None:  # noqa: ANN001
+    def hydrate_positions(self, snapshot: Any, *, replace: bool = False) -> None:
         pass
 
 
@@ -110,7 +112,7 @@ class CountingConnector(BinanceConnector):
 
 
 @pytest.fixture()
-def live_loop_config(tmp_path):
+def live_loop_config(tmp_path: Path):
     return LiveLoopConfig(
         state_dir=tmp_path / "state",
         submission_interval=POLL_INTERVAL_S,
