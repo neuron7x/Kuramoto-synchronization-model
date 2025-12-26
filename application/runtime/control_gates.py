@@ -8,6 +8,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
+from application.runtime.decision_telemetry import (
+    DecisionTelemetryEvent,
+    build_decision_event,
+    emit_decision_event,
+)
+
 LOGGER = logging.getLogger("tradepulse.control_gates")
 
 DEFAULT_DRAWDOWN = -0.01
@@ -46,6 +52,7 @@ class GatePipelineResult:
     gate: GateDecision
     controllers: dict[str, object]
     telemetry: dict[str, object]
+    decision_event: DecisionTelemetryEvent | None = None
 
 
 def _severity(decision: Decision) -> int:
@@ -228,7 +235,16 @@ def evaluate_control_gates(
         meta=meta,
     )
     telemetry["gate_summary"] = {**gate.meta, "decision": gate.decision.value}
-    return GatePipelineResult(gate=gate, controllers=dict(controllers), telemetry=telemetry)
+    event = build_decision_event(
+        gate=gate,
+        telemetry=telemetry,
+        effective_config=effective_config,
+        signals=signals,
+    )
+    emit_decision_event(event, logger=LOGGER)
+    return GatePipelineResult(
+        gate=gate, controllers=dict(controllers), telemetry=telemetry, decision_event=event
+    )
 
 
 __all__ = ["Decision", "GateDecision", "GatePipelineResult", "evaluate_control_gates"]
