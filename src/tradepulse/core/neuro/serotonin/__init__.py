@@ -1,26 +1,41 @@
-"""Serotonin controller package with SRE observability."""
+"""Legacy mirror for serotonin API; canonical lives in core.neuro.serotonin.*"""
 
-from .observability import (
+from core.neuro.serotonin import (  # noqa: F401
+    ControllerOutput,
+    SerotoninConfig,
+    SerotoninConfigEnvelope,
+    SerotoninController,
+    SerotoninLegacyConfig,
+    _generate_config_table,
+)
+from core.neuro.serotonin.observability import (  # noqa: F401
+    Alert,
+    AlertSeverity,
+    SLI,
+    SLO,
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
     SEROTONIN_SLOS,
-    SLI,
-    SLO,
-    Alert,
-    AlertSeverity,
     SerotoninMonitor,
+    create_grafana_dashboard_json,
+    create_prometheus_metrics,
 )
-from .serotonin_controller import SerotoninConfig, SerotoninController
 
 __all__ = [
-    "SerotoninConfig",
-    "SerotoninController",
     "Alert",
     "AlertSeverity",
+    "ControllerOutput",
+    "SerotoninConfig",
+    "SerotoninConfigEnvelope",
+    "SerotoninController",
+    "SerotoninLegacyConfig",
     "SerotoninMonitor",
     "SLI",
     "SLO",
     "SEROTONIN_ALERTS",
     "SEROTONIN_SLIS",
     "SEROTONIN_SLOS",
+    "_generate_config_table",
+    "create_grafana_dashboard_json",
+    "create_prometheus_metrics",
 ]
