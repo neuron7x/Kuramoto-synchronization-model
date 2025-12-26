@@ -1,5 +1,16 @@
 latency:
-  samples_ms: [45.0, 47.5, 49.1, 50.3, 51.8, 53.2, 54.0]
+  samples_source: tests/fixtures/recordings/coinbase_btcusd.jsonl
+  samples_ms:
+    - 45.467
+    - 44.648
+    - 45.652
+    - 45.066
+    - 44.434
+    - 44.488
+    - 44.074
+    - 43.416
+    - 44.445
+    - 44.664
   median_target_ms: 60.0
   p95_target_ms: 85.0
   max_target_ms: 120.0
