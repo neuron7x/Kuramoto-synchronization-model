@@ -377,7 +377,7 @@ class LiveExecutionLoop:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-            for tmp in snapshot_dir.glob("oms_snapshot_*.tmp"):
+            for tmp in snapshot_dir.glob("oms_snapshot_[0-9]*.tmp"):
                 with suppress(OSError):
                     tmp.unlink()
 
@@ -399,7 +399,8 @@ class LiveExecutionLoop:
                     json.JSONDecodeError,
                     UnicodeDecodeError,
                     FileNotFoundError,
-                    OSError,
+                    PermissionError,
+                    IsADirectoryError,
                 ):
                     self._logger.warning(
                         "Skipping corrupt OMS snapshot",
@@ -410,7 +411,7 @@ class LiveExecutionLoop:
                     )
                     continue
 
-            if payload is None or last_snapshot is None:
+            if last_snapshot is None:
                 self._logger.info("No valid OMS snapshot found; starting fresh")
                 return
 
