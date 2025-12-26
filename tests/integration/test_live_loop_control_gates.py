@@ -11,6 +11,9 @@ from execution.connectors import BinanceConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import LimitViolation, OrderRateExceeded, RiskLimits
 
+SUBMISSION_WAIT_S = 2.0
+POLL_INTERVAL_S = 0.05
+
 
 class _DummyKillSwitch:
     def __init__(self) -> None:
@@ -81,13 +84,13 @@ class GateAwareRisk:
             raise OrderRateExceeded("control gate throttle")
 
     def register_fill(self, symbol, side, quantity, price) -> None:  # noqa: ANN001
-        return None
+        pass
 
     def exposure_snapshot(self):
         return {}
 
     def hydrate_positions(self, snapshot, *, replace: bool = False) -> None:  # noqa: ANN001
-        return None
+        pass
 
 
 class CountingConnector(BinanceConnector):
@@ -110,8 +113,8 @@ class CountingConnector(BinanceConnector):
 def live_loop_config(tmp_path):
     return LiveLoopConfig(
         state_dir=tmp_path / "state",
-        submission_interval=0.05,
-        fill_poll_interval=0.05,
+        submission_interval=POLL_INTERVAL_S,
+        fill_poll_interval=POLL_INTERVAL_S,
         heartbeat_interval=0.1,
         max_backoff=0.2,
     )
@@ -166,9 +169,9 @@ def test_live_loop_respects_control_gate_decisions(live_loop_config) -> None:
     try:
         _submit_sample(allow_loop, "allow-1")
 
-        deadline = time.monotonic() + 2.0
+        deadline = time.monotonic() + SUBMISSION_WAIT_S
         while allow_connector.placements == 0 and time.monotonic() < deadline:
-            time.sleep(0.05)
+            time.sleep(POLL_INTERVAL_S)
         assert allow_connector.placements >= 1
     finally:
         allow_loop.shutdown()
