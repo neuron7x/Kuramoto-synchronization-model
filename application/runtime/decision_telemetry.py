@@ -25,6 +25,9 @@ from core.utils.metrics import get_metrics_collector
 
 LOGGER = logging.getLogger("tradepulse.control_gates")
 GATE_PIPELINE_VERSION = "gate_pipeline.v1"
+_PROXY_RISK_KEYWORDS = ("risk", "stress", "drawdown")
+_SEROTONIN_PROXY_FLAGS = ("serotonin_missing", "stress_proxy", "drawdown_proxy")
+_THERMO_PROXY_FLAGS = ("thermo_free_energy_proxy", "thermo_missing")
 
 
 class DecisionTelemetryEvent(TypedDict):
@@ -179,7 +182,9 @@ def build_decision_event(
     proxies = {
         "missing_metrics": any("missing" in flag for flag in proxy_flags),
         "proxy_energy": any("thermo" in flag or "energy" in flag for flag in proxy_flags),
-        "proxy_risk": any("risk" in flag or "stress" in flag or "drawdown" in flag for flag in proxy_flags),
+        "proxy_risk": any(
+            any(keyword in flag for keyword in _PROXY_RISK_KEYWORDS) for flag in proxy_flags
+        ),
         "flags": proxy_flags,
     }
     event: DecisionTelemetryEvent = {
@@ -244,7 +249,7 @@ def get_controller_health(
         notes: list[str] = []
         cooldown = getattr(ctrl, "cooldown", None) or getattr(ctrl, "cooldown_s", None)
         last_update = getattr(ctrl, "last_update", None)
-        if flags & {"serotonin_missing", "stress_proxy", "drawdown_proxy"}:
+        if flags & set(_SEROTONIN_PROXY_FLAGS):
             notes.append("proxy_inputs_active")
         metrics_snapshot = telemetry.get("serotonin", {}).get("metrics", {}) if isinstance(telemetry, Mapping) else {}
         if metrics_snapshot and metrics_snapshot.get("cooldown_s", 0) and not cooldown:
@@ -265,7 +270,7 @@ def get_controller_health(
         budget = getattr(ctrl, "baseline_F", None)
         if getattr(ctrl, "circuit_breaker_active", False):
             notes.append("circuit_breaker_active")
-        if flags & {"thermo_free_energy_proxy", "thermo_missing"}:
+        if flags & set(_THERMO_PROXY_FLAGS):
             notes.append("proxy_inputs_active")
         status = "degraded" if notes else "ok"
         return {"status": status, "free_energy": _safe(free_energy), "budget": _safe(budget), "notes": notes}

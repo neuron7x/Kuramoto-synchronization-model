@@ -36,7 +36,7 @@ def test_decision_event_serializable_and_proxies() -> None:
     parsed = json.loads(json_line)
     assert parsed["decision"] == "THROTTLE"
     assert parsed["reasons"] == ["RISK_HIGH"]
-    assert parsed["proxies"]["proxy_risk"] is True
+    assert parsed["proxies"]["proxy_risk"]
     assert isinstance(parsed["ts_unix_ms"], int)
 
 
