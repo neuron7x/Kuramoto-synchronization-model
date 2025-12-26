@@ -250,12 +250,23 @@ tradepulse-server --allow-plaintext --host 127.0.0.1 --port 8000
 
 ### Interactive Dashboard
 
+**Canonical — TypeScript dashboard (`ui/dashboard`)**
+
 ```bash
-# Launch the Streamlit dashboard (install streamlit first: pip install streamlit)
+cd ui/dashboard
+npm ci
+npm test  # fast, headless smoke that exercises the canonical UI
+```
+
+> Optional preview: open `demo.html` in a local HTTP server for visual inspection.
+
+**Prototype — Streamlit dashboard (dev-only)**
+
+```bash
 PYTHONPATH=. streamlit run interfaces/dashboard_streamlit.py
 ```
 
-> **Note:** The dashboard requires streamlit to be installed. It provides interactive market analysis and visualization.
+> Prototype only; keep Streamlit installed separately (`pip install streamlit streamlit-authenticator`).
 
 📖 **Dashboard Guide**: [docs/ui_logical_structure.md](docs/ui_logical_structure.md)
 
@@ -503,6 +514,9 @@ pytest tests/property/
 
 # Mutation testing
 mutmut run --use-coverage
+
+# UI dashboard smoke (canonical)
+cd ui/dashboard && npm test
 ```
 
 ### CI/CD Merge Gates
