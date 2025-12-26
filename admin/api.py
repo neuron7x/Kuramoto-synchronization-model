@@ -166,7 +166,6 @@ def create_admin_app(
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    app = create_admin_app()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    raise SystemExit(
+        "Deprecated entrypoint. Use: python -m application.runtime.server --config <path>"
+    )

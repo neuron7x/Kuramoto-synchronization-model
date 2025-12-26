@@ -1,0 +1,179 @@
+"""Unified initialization for the TradePulse control platform."""
+
+from __future__ import annotations
+
+import logging
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Mapping, Optional
+
+import yaml
+
+from application.settings import ApiServerSettings, BackendRuntimeSettings
+
+LOGGER = logging.getLogger("tradepulse.control_platform")
+
+
+@dataclass(frozen=True)
+class ControlPlatformInitResult:
+    """Return container for unified initialization."""
+
+    runtime_settings: BackendRuntimeSettings
+    server_settings: ApiServerSettings
+    controllers: Dict[str, object]
+    app: Any
+    telemetry_meta: Dict[str, Any]
+
+
+def _load_yaml(path: Optional[str]) -> Dict[str, Any]:
+    if not path:
+        return {}
+    candidate = Path(path)
+    if not candidate.exists():
+        raise FileNotFoundError(f"Configuration file not found: {candidate}")
+    with candidate.open("r", encoding="utf-8") as handle:
+        loaded = yaml.safe_load(handle) or {}
+    if not isinstance(loaded, dict):
+        raise ValueError("Top-level YAML configuration must be a mapping")
+    return loaded
+
+
+def _extract_defaults_and_env(settings_cls: Any) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Return defaults-only values and env-derived overrides for a BaseSettings class."""
+
+    defaults_instance = settings_cls.model_construct()
+
+    try:
+        env_instance = settings_cls()
+    except Exception:
+        env_instance = defaults_instance
+
+    defaults = defaults_instance.model_dump()
+    env_applied = env_instance.model_dump()
+    env_overrides = {
+        key: value for key, value in env_applied.items() if env_applied.get(key) != defaults.get(key)
+    }
+    return defaults, env_overrides
+
+
+def _merge_precedence(
+    *,
+    settings_cls: Any,
+    yaml_section: Mapping[str, Any] | None,
+    cli_overrides: Mapping[str, Any] | None,
+) -> Any:
+    """Apply precedence CLI > ENV > YAML > defaults for a single settings class."""
+
+    defaults, env_overrides = _extract_defaults_and_env(settings_cls)
+    merged: Dict[str, Any] = {}
+    merged.update(defaults)
+    if yaml_section:
+        merged.update({k: v for k, v in yaml_section.items() if v is not None})
+    merged.update(env_overrides)
+    if cli_overrides:
+        merged.update({k: v for k, v in cli_overrides.items() if v is not None})
+    if merged.get("tls") is None and not merged.get("allow_plaintext", False):
+        merged["allow_plaintext"] = True
+    return settings_cls.model_validate(merged)
+
+
+def _resolve_path_precedence(
+    *,
+    default: str,
+    yaml_value: Optional[str],
+    env_value: Optional[str],
+    cli_value: Optional[str],
+) -> str:
+    for candidate in (cli_value, env_value, yaml_value, default):
+        if candidate:
+            return str(candidate)
+    return default
+
+
+def initialize_control_platform(
+    *,
+    config_path: Optional[str] = None,
+    cli_server_overrides: Optional[Mapping[str, Any]] = None,
+    cli_runtime_overrides: Optional[Mapping[str, Any]] = None,
+    cli_serotonin_config: Optional[str] = None,
+    cli_thermo_config: Optional[str] = None,
+    app_factory: Optional[Any] = None,
+    serotonin_factory: Optional[Any] = None,
+    thermo_factory: Optional[Any] = None,
+) -> ControlPlatformInitResult:
+    """Initialize config, controllers, observability, and app."""
+
+    if app_factory is None:
+        from application.api.service import create_app as _create_app
+
+        app_factory = _create_app
+
+    yaml_cfg = _load_yaml(config_path)
+    runtime_section = yaml_cfg.get("runtime") or yaml_cfg.get("runtime_settings") or {}
+    server_section = yaml_cfg.get("server") or yaml_cfg.get("api_server") or {}
+
+    runtime_settings = _merge_precedence(
+        settings_cls=BackendRuntimeSettings,
+        yaml_section=runtime_section,
+        cli_overrides=cli_runtime_overrides,
+    )
+    server_settings = _merge_precedence(
+        settings_cls=ApiServerSettings,
+        yaml_section=server_section,
+        cli_overrides=cli_server_overrides,
+    )
+
+    serotonin_config_path = _resolve_path_precedence(
+        default="configs/serotonin.yaml",
+        yaml_value=yaml_cfg.get("serotonin_config"),
+        env_value=os.getenv("TRADEPULSE_SEROTONIN_CONFIG"),
+        cli_value=cli_serotonin_config,
+    )
+    thermo_config_path = _resolve_path_precedence(
+        default="configs/thermo_config.yaml",
+        yaml_value=yaml_cfg.get("thermo_config"),
+        env_value=os.getenv("TRADEPULSE_THERMO_CONFIG"),
+        cli_value=cli_thermo_config,
+    )
+
+    controllers: Dict[str, object] = {}
+    if serotonin_factory is None:
+        from tradepulse.core.neuro.serotonin.serotonin_controller import (
+            SerotoninController as _SerotoninController,
+        )
+
+        serotonin_factory = lambda path: _SerotoninController(path)  # type: ignore[arg-type]
+    if thermo_factory is None:
+        from runtime.thermo_api import _build_default_graph as _build_default_graph
+        from runtime.thermo_controller import ThermoController as _ThermoController
+
+        thermo_factory = lambda: _ThermoController(_build_default_graph())  # type: ignore[arg-type]
+
+    controllers["serotonin"] = serotonin_factory(serotonin_config_path)
+    controllers["thermo"] = thermo_factory()
+
+    app = app_factory(runtime_settings=runtime_settings)
+
+    telemetry_meta = {
+        "effective_config_source": config_path or "defaults",
+        "controllers_loaded": sorted(controllers.keys()),
+        "serotonin_config_path": serotonin_config_path,
+        "thermo_config_path": thermo_config_path,
+    }
+    LOGGER.info(
+        "control_platform_init effective_config_source=%s controllers_loaded=%s",
+        telemetry_meta["effective_config_source"],
+        telemetry_meta["controllers_loaded"],
+    )
+
+    return ControlPlatformInitResult(
+        runtime_settings=runtime_settings,
+        server_settings=server_settings,
+        controllers=controllers,
+        app=app,
+        telemetry_meta=telemetry_meta,
+    )
+
+
+__all__ = ["initialize_control_platform", "ControlPlatformInitResult"]
