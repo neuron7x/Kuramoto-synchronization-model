@@ -124,7 +124,7 @@ def run(
         scheme,
         server_settings.host,
         server_settings.port,
-        init_result.telemetry_meta["effective_config_source"],
+        init_result.telemetry_meta.get("effective_config_source", "unknown"),
         controllers_loaded,
     )
 

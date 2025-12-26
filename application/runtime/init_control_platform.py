@@ -11,6 +11,7 @@ from typing import Any, Dict, Mapping, Optional, Type, TypeVar
 import yaml
 
 from application.settings import ApiServerSettings, BackendRuntimeSettings
+from pydantic import ValidationError
 
 LOGGER = logging.getLogger("tradepulse.control_platform")
 SettingsT = TypeVar("SettingsT", bound="BaseSettings")
@@ -54,7 +55,7 @@ def _extract_defaults_and_env(
 
     try:
         env_instance = settings_cls()
-    except Exception as exc:  # pragma: no cover - defensive guard
+    except (ValidationError, ValueError) as exc:  # pragma: no cover - defensive guard
         LOGGER.warning(
             "Falling back to defaults for %s due to init error: %s",
             settings_cls.__name__,
@@ -86,7 +87,12 @@ def _merge_precedence(
     merged.update(env_overrides)
     if cli_overrides:
         merged.update({k: v for k, v in cli_overrides.items() if v is not None})
-    if merged.get("tls") is None and not merged.get("allow_plaintext", False):
+    local_default = not yaml_section and not cli_overrides and not env_overrides
+    if (
+        merged.get("tls") is None
+        and not merged.get("allow_plaintext", False)
+        and local_default
+    ):
         LOGGER.warning(
             "No TLS configuration detected; enabling allow_plaintext for local runs. "
             "Provide TRADEPULSE_API_SERVER_TLS__* or --allow-plaintext to override."
@@ -169,13 +175,13 @@ def initialize_control_platform(
         from runtime.thermo_api import _build_default_graph as _build_default_graph
         from runtime.thermo_controller import ThermoController as _ThermoController
 
-        def _build_thermo_controller() -> object:
+        def _build_thermo_controller(config_path: Optional[str] = None) -> object:
             return _ThermoController(_build_default_graph())
 
         thermo_factory = _build_thermo_controller
 
     controllers["serotonin"] = serotonin_factory(serotonin_config_path)
-    controllers["thermo"] = thermo_factory()
+    controllers["thermo"] = thermo_factory(thermo_config_path)
 
     app = app_factory(runtime_settings=runtime_settings)
 
