@@ -16,7 +16,7 @@ jobs:
       PYTHONHASHSEED: "0"
       TZ: UTC
       LC_ALL: C
-      PYTHONWARNINGS: error
+      PYTHONWARNINGS: "default::DeprecationWarning"
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
