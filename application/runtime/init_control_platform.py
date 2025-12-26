@@ -10,6 +10,7 @@ from typing import Any, Dict, Mapping, Optional, Type, TypeVar
 
 import yaml
 
+from application.runtime.control_gates import evaluate_control_gates
 from application.settings import ApiServerSettings, BackendRuntimeSettings
 from pydantic import ValidationError
 
@@ -31,6 +32,8 @@ class ControlPlatformInitResult:
     controllers: Dict[str, object]
     app: Any
     telemetry_meta: Dict[str, Any]
+    gate_pipeline: Any
+    controllers_required: bool
 
 
 def _load_yaml(path: Optional[str]) -> Dict[str, Any]:
@@ -183,6 +186,9 @@ def initialize_control_platform(
     controllers["serotonin"] = serotonin_factory(serotonin_config_path)
     controllers["thermo"] = thermo_factory(thermo_config_path)
 
+    controllers_required = getattr(runtime_settings, "controllers_required", True)
+    gate_pipeline = evaluate_control_gates
+
     app = app_factory(runtime_settings=runtime_settings)
 
     telemetry_meta = {
@@ -190,6 +196,7 @@ def initialize_control_platform(
         "controllers_loaded": sorted(controllers.keys()),
         "serotonin_config_path": serotonin_config_path,
         "thermo_config_path": thermo_config_path,
+        "controllers_required": controllers_required,
     }
     LOGGER.info(
         "control_platform_init effective_config_source=%s controllers_loaded=%s",
@@ -203,6 +210,8 @@ def initialize_control_platform(
         controllers=controllers,
         app=app,
         telemetry_meta=telemetry_meta,
+        gate_pipeline=gate_pipeline,
+        controllers_required=controllers_required,
     )
 
 

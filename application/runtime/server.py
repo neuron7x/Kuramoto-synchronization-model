@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import ssl
 from typing import Any, Dict, Optional
@@ -54,6 +55,12 @@ def _build_cli_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to thermo controller config",
     )
+    parser.add_argument(
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        help="Initialise control platform and evaluate gates without starting the server",
+    )
     return parser
 
 
@@ -65,10 +72,14 @@ def run(
     """Start the TradePulse API server with unified initialization."""
 
     cli_overrides = cli_overrides or {}
+    dry_run = bool(cli_overrides.get("dry_run"))
+    allow_plaintext_override = cli_overrides.get("allow_plaintext")
+    if dry_run:
+        allow_plaintext_override = True
     server_overrides = {
         "host": cli_overrides.get("host"),
         "port": cli_overrides.get("port"),
-        "allow_plaintext": cli_overrides.get("allow_plaintext"),
+        "allow_plaintext": allow_plaintext_override,
     }
 
     init_result = initialize_control_platform(
@@ -79,10 +90,36 @@ def run(
         cli_thermo_config=cli_overrides.get("thermo_config"),
     )
 
+    if dry_run:
+        baseline_signals = {
+            "risk_score": 1.0,
+            "volatility": 1.0,
+            "drawdown": -0.01,
+            "free_energy": 0.2,
+        }
+        gate_result = init_result.gate_pipeline(
+            init_result.runtime_settings, init_result.controllers, baseline_signals
+        )
+        summary = {
+            "control_gate_decision": gate_result.gate.decision.value,
+            "reasons": gate_result.gate.reasons,
+            "position_multiplier": gate_result.gate.position_multiplier,
+            "effective_config_source": init_result.telemetry_meta.get(
+                "effective_config_source", "unknown"
+            ),
+        }
+        summary_json = json.dumps(summary, sort_keys=True)
+        _LOGGER.info(summary_json)
+        print(summary_json)
+        return
+
     runtime_settings = init_result.runtime_settings
     server_settings = init_result.server_settings
     tls_settings = server_settings.tls
     app = init_result.app
+    app.state.control_gates = init_result.gate_pipeline
+    app.state.controllers = init_result.controllers
+    app.state.controllers_required = init_result.controllers_required
 
     config_kwargs: dict[str, object] = {
         "app": app,
@@ -143,6 +180,7 @@ def main() -> None:  # pragma: no cover - CLI wiring
             "allow_plaintext": args.allow_plaintext,
             "serotonin_config": args.serotonin_config,
             "thermo_config": args.thermo_config,
+            "dry_run": args.dry_run,
         },
     )
 
