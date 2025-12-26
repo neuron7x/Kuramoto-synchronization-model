@@ -26,8 +26,10 @@ from core.utils.metrics import get_metrics_collector
 LOGGER = logging.getLogger("tradepulse.control_gates")
 GATE_PIPELINE_VERSION = "gate_pipeline.v1"
 _PROXY_RISK_KEYWORDS = ("risk", "stress", "drawdown")
-_SEROTONIN_PROXY_FLAGS = ("serotonin_missing", "stress_proxy", "drawdown_proxy")
-_THERMO_PROXY_FLAGS = ("thermo_free_energy_proxy", "thermo_missing")
+_SEROTONIN_MISSING_FLAG = "serotonin_missing"
+_THERMO_MISSING_FLAG = "thermo_missing"
+_SEROTONIN_PROXY_FLAGS = (_SEROTONIN_MISSING_FLAG, "stress_proxy", "drawdown_proxy")
+_THERMO_PROXY_FLAGS = ("thermo_free_energy_proxy", _THERMO_MISSING_FLAG)
 
 
 class DecisionTelemetryEvent(TypedDict):
@@ -172,7 +174,7 @@ def build_decision_event(
         getattr(gate, "decision", "UNKNOWN")
     )
     if decision_value in ("THROTTLE", "DENY") and not reasons:
-        raise ValueError("reasons must be populated for THROTTLE or DENY decisions")
+        raise ValueError(f"reasons must be populated for decision={decision_value}")
 
     controller_states = {
         "serotonin": _safe(telemetry.get("serotonin", {})),
@@ -245,7 +247,12 @@ def get_controller_health(
 
     def _status_for_serotonin(ctrl: Any) -> dict[str, object]:
         if ctrl is None:
-            return {"status": "missing", "cooldown": None, "last_update": None, "notes": ["serotonin_missing"]}
+            return {
+                "status": "missing",
+                "cooldown": None,
+                "last_update": None,
+                "notes": [_SEROTONIN_MISSING_FLAG],
+            }
         notes: list[str] = []
         cooldown = getattr(ctrl, "cooldown", None) or getattr(ctrl, "cooldown_s", None)
         last_update = getattr(ctrl, "last_update", None)
@@ -264,7 +271,12 @@ def get_controller_health(
 
     def _status_for_thermo(ctrl: Any) -> dict[str, object]:
         if ctrl is None:
-            return {"status": "missing", "free_energy": None, "budget": None, "notes": ["thermo_missing"]}
+            return {
+                "status": "missing",
+                "free_energy": None,
+                "budget": None,
+                "notes": [_THERMO_MISSING_FLAG],
+            }
         notes: list[str] = []
         free_energy = getattr(ctrl, "previous_F", None)
         budget = getattr(ctrl, "baseline_F", None)
