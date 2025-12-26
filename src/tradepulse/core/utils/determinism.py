@@ -3,8 +3,11 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
+from typing import Iterable
 
-_LEGACY_DIR = Path(__file__).resolve().parents[4] / "core" / "utils"
+from . import _find_legacy_utils_dir
+
+_LEGACY_DIR = _find_legacy_utils_dir()
 _LEGACY_FILE = _LEGACY_DIR / "determinism.py"
 _spec = importlib.util.spec_from_file_location(
     "core.utils.determinism", _LEGACY_FILE, submodule_search_locations=[str(_LEGACY_DIR)]
@@ -16,4 +19,4 @@ sys.modules["core.utils.determinism"] = _legacy
 _spec.loader.exec_module(_legacy)
 
 globals().update(_legacy.__dict__)
-__all__ = [name for name in globals() if not name.startswith("_")]
+__all__: Iterable[str] = getattr(_legacy, "__all__", tuple())

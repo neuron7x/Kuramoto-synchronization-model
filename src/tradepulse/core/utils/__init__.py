@@ -5,8 +5,18 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
+from typing import Iterable
 
-_LEGACY_DIR = Path(__file__).resolve().parents[4] / "core" / "utils"
+
+def _find_legacy_utils_dir() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "core" / "utils"
+        if candidate.exists():
+            return candidate
+    raise ImportError("Unable to locate legacy core/utils directory")
+
+
+_LEGACY_DIR = _find_legacy_utils_dir()
 _LEGACY_INIT = _LEGACY_DIR / "__init__.py"
 _spec = importlib.util.spec_from_file_location(
     "core.utils", _LEGACY_INIT, submodule_search_locations=[str(_LEGACY_DIR)]
@@ -18,4 +28,4 @@ sys.modules["core.utils"] = _legacy_pkg
 _spec.loader.exec_module(_legacy_pkg)
 
 globals().update(_legacy_pkg.__dict__)
-__all__ = [name for name in globals() if not name.startswith("_")]
+__all__: Iterable[str] = getattr(_legacy_pkg, "__all__", tuple())

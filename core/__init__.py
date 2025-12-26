@@ -28,5 +28,5 @@ try:  # pragma: no cover - best effort mapping
     sys.modules["core.neuro"] = import_module("tradepulse.core.neuro")
     sys.modules["core.neuro.serotonin"] = import_module("tradepulse.core.neuro.serotonin")
     sys.modules["core.neuro.serotonin.serotonin_controller"] = _sero_mod
-except Exception:
+except ImportError:
     pass
