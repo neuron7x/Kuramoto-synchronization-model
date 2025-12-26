@@ -148,6 +148,12 @@ links:
 | SEC_AUDIT_400_DAY | security | 400-day audit log retention | N/A | SECURITY.md | partial | Configuration documented |
 | SEC_7_YEAR_THERMO | security | 7-year TACL audit retention | N/A | SECURITY.md, docs/TACL.md | partial | Design documented, production TBD |
 
+### Responsible AI & Fairness Claims
+
+| id | domain | claim | measurement_command | evidence_path | status | notes |
+|----|--------|-------|---------------------|---------------|--------|-------|
+| FAIR_BIAS_GUARDS | fairness | Bias metrics (demographic parity, equal opportunity) validated | `pytest tests/test_metric_validations.py -q` | `tests/test_metric_validations.py`, `src/risk/fairness_metrics.py` | proven | Unit tests cover metric correctness and threshold enforcement for auditability. |
+
 ### TACL (Thermodynamic Autonomic Control Layer) Claims
 
 | id | domain | claim | measurement_command | evidence_path | status | notes |
