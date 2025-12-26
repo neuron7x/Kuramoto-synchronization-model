@@ -1,8 +1,11 @@
 """TradePulse public Python package.
 
+Canonical public namespace: ``tradepulse.*``.
+
 This shim keeps backward compatibility with non-src based tooling while the
-project transitions to the unified protocol layout.  All heavy lifting lives
-under ``src.tradepulse`` so that packaging metadata remains consistent.
+project transitions to the unified protocol layout. All heavy lifting lives
+under ``src.tradepulse`` so that packaging metadata remains consistent. Avoid
+importing ``src.*`` directly in new code.
 """
 
 import os

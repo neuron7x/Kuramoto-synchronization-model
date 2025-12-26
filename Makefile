@@ -103,6 +103,7 @@ lint-python:
 	@echo "🔍 Linting Python code..."
 	python -m ruff check .
 	python -m flake8
+	python scripts/check_namespace_policy.py
 	python -m mypy --config-file=mypy.ini
 
 .PHONY: lint-go
