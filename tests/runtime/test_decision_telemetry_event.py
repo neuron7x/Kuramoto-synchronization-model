@@ -12,6 +12,14 @@ from application.runtime.decision_telemetry import (
 )
 
 
+def _sample_value(counter, **labels: str) -> float:
+    metric = counter.collect()[0]
+    for sample in metric.samples:
+        if sample.labels == labels:
+            return float(sample.value)
+    return 0.0
+
+
 def test_decision_event_serializable_and_proxies() -> None:
     gate = GateDecision(
         decision=Decision.THROTTLE,
@@ -50,8 +58,8 @@ def test_metrics_reason_counters_increment() -> None:
     if CONTROL_GATE_DECISIONS_TOTAL is None or CONTROL_GATE_REASON_TOTAL is None:
         return
 
-    before_decision = CONTROL_GATE_DECISIONS_TOTAL.labels(decision="DENY")._value.get()
-    before_reason = CONTROL_GATE_REASON_TOTAL.labels(reason="TEST_REASON")._value.get()
+    before_decision = _sample_value(CONTROL_GATE_DECISIONS_TOTAL, decision="DENY")
+    before_reason = _sample_value(CONTROL_GATE_REASON_TOTAL, reason="TEST_REASON")
 
     gate = GateDecision(
         decision=Decision.DENY,
@@ -70,7 +78,7 @@ def test_metrics_reason_counters_increment() -> None:
 
     emit_decision_event(event, logger=logging.getLogger("tradepulse.test.telemetry"))
 
-    after_decision = CONTROL_GATE_DECISIONS_TOTAL.labels(decision="DENY")._value.get()
-    after_reason = CONTROL_GATE_REASON_TOTAL.labels(reason="TEST_REASON")._value.get()
+    after_decision = _sample_value(CONTROL_GATE_DECISIONS_TOTAL, decision="DENY")
+    after_reason = _sample_value(CONTROL_GATE_REASON_TOTAL, reason="TEST_REASON")
     assert after_decision == before_decision + 1
     assert after_reason == before_reason + 1

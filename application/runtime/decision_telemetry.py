@@ -30,6 +30,7 @@ _SEROTONIN_MISSING_FLAG = "serotonin_missing"
 _THERMO_MISSING_FLAG = "thermo_missing"
 _SEROTONIN_PROXY_FLAGS = (_SEROTONIN_MISSING_FLAG, "stress_proxy", "drawdown_proxy")
 _THERMO_PROXY_FLAGS = ("thermo_free_energy_proxy", _THERMO_MISSING_FLAG)
+_CONTROL_GATE_THROTTLE_BUCKETS = (0, 10, 50, 100, 250, 500, 1000, 2500, 5000, float("inf"))
 
 
 class DecisionTelemetryEvent(TypedDict):
@@ -83,7 +84,7 @@ CONTROL_GATE_THROTTLE_MS = (
         "control_gate_throttle_ms",
         "Observed throttle durations in milliseconds",
         registry=_REGISTRY,
-        buckets=(0, 10, 50, 100, 250, 500, 1000, 2500, 5000, float("inf")),
+        buckets=_CONTROL_GATE_THROTTLE_BUCKETS,
     )
     if Histogram is not None
     else None
@@ -146,7 +147,7 @@ def _sanitize_inputs(signals: Mapping[str, object]) -> dict[str, object]:
     sanitized: dict[str, object] = {}
     for key, value in signals.items():
         key_lower = str(key).lower()
-        if any(secret in key_lower for secret in ("token", "secret", "key", "password")):
+        if any(secret in key_lower for secret in ("token", "secret", "password", "cred", "auth")):
             continue
         sanitized[str(key)] = _safe(value)
     return sanitized
