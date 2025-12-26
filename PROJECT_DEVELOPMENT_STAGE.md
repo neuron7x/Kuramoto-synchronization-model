@@ -211,6 +211,16 @@ The project is in the final preparation phase before its first major release wit
 - No production deployments for reference
 - SLO definitions need finalization
 
+## 🧭 Architecture & Structural Completion Plan (toward v1.0)
+
+- **Publish remaining ADRs** for cross-module decisions so 100% of architectural changes are traceable.
+- **Lock module contracts and dependency guardrails** (SemVer verification + import lint) with a CI gate.
+- **Validate topology and observability baselines** against production SLOs via failover drills and telemetry snapshots.
+- **Run an Architecture Readiness Review** (ARB) with a remediation backlog and named owners; ensure all P0 items are accepted.
+- **Freeze diagrams and schemas** in `docs/architecture/assets/` and `docs/schemas/` prior to the first release tag.
+
+**Acceptance signal:** ARB sign-off with a green architecture CI gate and diagrams/schemas matching the deployed topology.
+
 ---
 
 ## 🎯 Roadmap and Plans
