@@ -382,7 +382,7 @@ class LiveExecutionLoop:
                     tmp.unlink()
 
             files = sorted(
-                snapshot_dir.glob("oms_snapshot_*.json"), key=_snapshot_timestamp
+                snapshot_dir.glob("oms_snapshot_[0-9]*.json"), key=_snapshot_timestamp
             )
             if not files:
                 self._logger.info("No OMS snapshot found; starting with empty state")
@@ -395,7 +395,12 @@ class LiveExecutionLoop:
                     payload = json.loads(candidate.read_text(encoding="utf-8"))
                     last_snapshot = candidate
                     break
-                except (json.JSONDecodeError, UnicodeDecodeError, FileNotFoundError):
+                except (
+                    json.JSONDecodeError,
+                    UnicodeDecodeError,
+                    FileNotFoundError,
+                    OSError,
+                ):
                     self._logger.warning(
                         "Skipping corrupt OMS snapshot",
                         extra={
