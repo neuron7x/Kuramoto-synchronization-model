@@ -45,6 +45,9 @@ jobs:
           if [ -f requirements.lock ]; then pip install -c constraints/security.txt -r requirements.lock; fi
           if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
 
+      - name: Install TradePulse in editable mode
+        run: pip install -e .
+
       - name: Byte-compile sources
         run: python -m compileall .
 
