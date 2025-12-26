@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+import yaml
 
 from execution.compliance import ComplianceReport
 from observability.release_gates import ReleaseGateEvaluator, ReleaseGateResult
@@ -79,3 +80,35 @@ def test_compliance_and_checklist_gates() -> None:
     violation_result = evaluator.evaluate_compliance(failing_reports)
     assert violation_result.passed is False
     assert "blocked" in str(violation_result.reason)
+
+
+def test_release_gate_config_matches_raw_evidence() -> None:
+    config_path = Path("ci/release_gates.yml")
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+    latency_cfg = config["latency"]
+    dataset = Path(latency_cfg["samples_source"])
+    sample_latencies: list[float] = []
+    for line in dataset.read_text(encoding="utf-8").splitlines():
+        record = json.loads(line)
+        exchange_ts = _parse_timestamp(record["exchange_ts"])
+        ingest_ts = _parse_timestamp(record["ingest_ts"])
+        sample_latencies.append((ingest_ts - exchange_ts).total_seconds() * 1000.0)
+    configured_samples = [float(value) for value in latency_cfg["samples_ms"]]
+    assert configured_samples == pytest.approx(sample_latencies, abs=1e-6)
+    assert len(configured_samples) == len(sample_latencies)
+
+    perf_path = Path(config["perf_budgets_file"])
+    assert perf_path.exists()
+    perf_budgets = yaml.safe_load(perf_path.read_text(encoding="utf-8")).get(
+        "components", {}
+    )
+    assert perf_budgets
+
+    scenario_path = Path(config["scenario_file"])
+    scenarios = yaml.safe_load(scenario_path.read_text(encoding="utf-8")).get(
+        "scenarios", {}
+    )
+    assert config["energy_scenario"] in scenarios
+    for name in config.get("energy_negative_tests", []):
+        assert name in scenarios
