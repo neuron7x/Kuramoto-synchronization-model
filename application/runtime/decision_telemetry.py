@@ -185,7 +185,7 @@ def build_decision_event(
         "missing_metrics": any("missing" in flag for flag in proxy_flags),
         "proxy_energy": any("thermo" in flag or "energy" in flag for flag in proxy_flags),
         "proxy_risk": any(
-            any(keyword in flag for keyword in _PROXY_RISK_KEYWORDS) for flag in proxy_flags
+            keyword in flag for flag in proxy_flags for keyword in _PROXY_RISK_KEYWORDS
         ),
         "flags": proxy_flags,
     }

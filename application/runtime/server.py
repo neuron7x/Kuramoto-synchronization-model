@@ -122,9 +122,7 @@ def run(
         summary_json = json.dumps(summary, sort_keys=True)
         _LOGGER.info(summary_json)
         print(summary_json)
-        decision_event = gate_result.decision_event or gate_result.telemetry.get(
-            "decision_event"
-        )
+        decision_event = gate_result.decision_event
         if decision_event:
             event_line = to_json_line(decision_event)
             _LOGGER.info("dry_run_decision_event %s", event_line)

@@ -241,7 +241,6 @@ def evaluate_control_gates(
         effective_config=effective_config,
         signals=signals,
     )
-    telemetry["decision_event"] = event
     emit_decision_event(event, logger=LOGGER)
     return GatePipelineResult(
         gate=gate, controllers=dict(controllers), telemetry=telemetry, decision_event=event

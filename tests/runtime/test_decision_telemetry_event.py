@@ -18,7 +18,7 @@ def test_decision_event_serializable_and_proxies() -> None:
         position_multiplier=0.5,
         throttle_ms=120,
         reasons=["RISK_HIGH"],
-        meta={"proxy_flags": ["stress_proxy"]},
+        meta={"proxy_flags": ["risk_signal_missing"]},
     )
     telemetry = {
         "serotonin": {"action_gate": "ALLOW", "reason_codes": [], "metrics": {}},
