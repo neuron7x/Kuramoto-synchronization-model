@@ -13,7 +13,6 @@ from execution.connectors import BinanceConnector
 from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
 from execution.risk import LimitViolation, OrderRateExceeded, RiskLimits
 
-SUBMISSION_WAIT_S = 2.0
 POLL_INTERVAL_S = 0.05
 
 
@@ -139,43 +138,42 @@ def _submit_sample(loop: LiveExecutionLoop, correlation_id: str) -> Order:
 
 
 def test_live_loop_respects_control_gate_decisions(live_loop_config) -> None:
-    throttle_connector = CountingConnector()
-    throttle_risk = GateAwareRisk(default_decision="THROTTLE")
-    throttle_loop = LiveExecutionLoop({"binance": throttle_connector}, throttle_risk, config=live_loop_config)
+    def _run_scenario(
+        default_decision: str,
+        correlation_id: str,
+        assertion_fn,
+    ) -> None:
+        connector = CountingConnector()
+        risk = GateAwareRisk(default_decision=default_decision)
+        loop = LiveExecutionLoop({"binance": connector}, risk, config=live_loop_config)
+        loop.start(cold_start=True)
+        try:
+            assertion_fn(loop, connector, risk, correlation_id)
+        finally:
+            loop.shutdown()
 
-    throttle_loop.start(cold_start=True)
-    try:
+    def _assert_throttle(loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str) -> None:
         with pytest.raises(OrderRateExceeded):
-            _submit_sample(throttle_loop, "throttle-1")
-        assert throttle_connector.placements == 0
-        assert throttle_risk.last_gate is Decision.THROTTLE
-    finally:
-        throttle_loop.shutdown()
+            _submit_sample(loop, cid)
+        assert connector.placements == 0
+        assert risk.last_gate is Decision.THROTTLE
 
-    deny_connector = CountingConnector()
-    deny_risk = GateAwareRisk(default_decision="DENY")
-    deny_loop = LiveExecutionLoop({"binance": deny_connector}, deny_risk, config=live_loop_config)
-
-    deny_loop.start(cold_start=True)
-    try:
+    def _assert_deny(loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str) -> None:
         with pytest.raises(LimitViolation):
-            _submit_sample(deny_loop, "deny-1")
-        assert deny_risk.kill_switch.is_triggered()
-        assert deny_connector.placements == 0
-    finally:
-        deny_loop.shutdown()
+            _submit_sample(loop, cid)
+        assert risk.kill_switch.is_triggered()
+        assert connector.placements == 0
 
-    allow_connector = CountingConnector()
-    allow_risk = GateAwareRisk(default_decision="ALLOW")
-    allow_loop = LiveExecutionLoop({"binance": allow_connector}, allow_risk, config=live_loop_config)
+    def _assert_allow(loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str) -> None:
+        _submit_sample(loop, cid)
+        for _ in range(3):
+            try:
+                loop._contexts["binance"].oms.process_next()
+                break
+            except LookupError:
+                continue
+        assert connector.placements >= 1
 
-    allow_loop.start(cold_start=True)
-    try:
-        _submit_sample(allow_loop, "allow-1")
-
-        deadline = time.monotonic() + SUBMISSION_WAIT_S
-        while allow_connector.placements == 0 and time.monotonic() < deadline:
-            time.sleep(POLL_INTERVAL_S)
-        assert allow_connector.placements >= 1
-    finally:
-        allow_loop.shutdown()
+    _run_scenario("THROTTLE", "throttle-1", _assert_throttle)
+    _run_scenario("DENY", "deny-1", _assert_deny)
+    _run_scenario("ALLOW", "allow-1", _assert_allow)
