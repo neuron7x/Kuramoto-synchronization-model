@@ -10,6 +10,10 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 
+from application.runtime.decision_telemetry import (
+    get_controller_health,
+    to_json_line,
+)
 from application.runtime.init_control_platform import initialize_control_platform
 from application.security.tls import build_api_server_ssl_context
 
@@ -61,6 +65,12 @@ def _build_cli_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Initialise control platform and evaluate gates without starting the server",
     )
+    parser.add_argument(
+        "--health",
+        dest="health",
+        action="store_true",
+        help="Emit controller health snapshot and exit (no server binding)",
+    )
     return parser
 
 
@@ -73,6 +83,7 @@ def run(
 
     cli_overrides = cli_overrides or {}
     dry_run = bool(cli_overrides.get("dry_run"))
+    health_only = bool(cli_overrides.get("health"))
     allow_plaintext_override = cli_overrides.get("allow_plaintext")
     if dry_run:
         allow_plaintext_override = True
@@ -90,7 +101,7 @@ def run(
         cli_thermo_config=cli_overrides.get("thermo_config"),
     )
 
-    if dry_run:
+    if dry_run or health_only:
         baseline_signals = {
             "risk_score": 1.0,
             "volatility": 1.0,
@@ -111,6 +122,21 @@ def run(
         summary_json = json.dumps(summary, sort_keys=True)
         _LOGGER.info(summary_json)
         print(summary_json)
+        decision_event = gate_result.decision_event or gate_result.telemetry.get(
+            "decision_event"
+        )
+        if decision_event:
+            event_line = to_json_line(decision_event)
+            _LOGGER.info("dry_run_decision_event %s", event_line)
+            print(event_line)
+        health_snapshot = get_controller_health(
+            init_result.controllers,
+            proxy_flags=getattr(gate_result.gate, "meta", {}).get("proxy_flags", []),
+            telemetry=gate_result.telemetry,
+        )
+        print(json.dumps(health_snapshot, sort_keys=True))
+        if health_only:
+            return
         return
 
     runtime_settings = init_result.runtime_settings
@@ -181,6 +207,7 @@ def main() -> None:  # pragma: no cover - CLI wiring
             "serotonin_config": args.serotonin_config,
             "thermo_config": args.thermo_config,
             "dry_run": args.dry_run,
+            "health": args.health,
         },
     )
 

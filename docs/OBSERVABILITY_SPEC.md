@@ -275,5 +275,20 @@ Response: detailed component status
 
 ---
 
+## Appendix: Control-gate decision telemetry
+
+Example `DECISION_EVENT` log line:
+
+```json
+{"config_fingerprint":"<sha256>","controller_states":{"serotonin":{"action_gate":"ALLOW"},"thermo":{"controller_state":"STABLE"}},"decision":"ALLOW","inputs_summary":{"risk_score":1.0,"free_energy":0.2},"position_multiplier":1.0,"proxies":{"flags":[],"missing_metrics":false,"proxy_energy":false,"proxy_risk":false},"reasons":[],"throttle_ms":0,"trace_id":null,"ts_unix_ms":1735226400000,"version":"gate_pipeline.v1"}
+```
+
+Runtime checks (no network bind):
+
+- `python -m application.runtime.server --config <path> --dry-run`
+- `python -m application.runtime.server --config <path> --health`
+
+---
+
 *Last updated: 2025-12-02*
 *Owner: Principal Observability & Incident Engineer*
