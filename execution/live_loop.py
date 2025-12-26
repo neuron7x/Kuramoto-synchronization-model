@@ -377,7 +377,7 @@ class LiveExecutionLoop:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-            for tmp in snapshot_dir.glob("*.tmp"):
+            for tmp in snapshot_dir.glob("oms_snapshot_*.tmp"):
                 with suppress(OSError):
                     tmp.unlink()
 
@@ -395,7 +395,7 @@ class LiveExecutionLoop:
                     payload = json.loads(candidate.read_text(encoding="utf-8"))
                     last_snapshot = candidate
                     break
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, UnicodeDecodeError, FileNotFoundError):
                     self._logger.warning(
                         "Skipping corrupt OMS snapshot",
                         extra={
