@@ -232,11 +232,12 @@ Entry Signal:     0.000
 ### Run the control platform (canonical)
 
 ```bash
-PYTHONPATH=. python -m application.runtime.server --allow-plaintext --host 127.0.0.1 --port 8000
+tradepulse-server --allow-plaintext --host 127.0.0.1 --port 8000
 ```
 
 - Optional: `--config path/to/config.yaml` (precedence: CLI > ENV > YAML > defaults)
 - Logs include `effective_config_source=... controllers_loaded=[...]`
+- Fallback (non-canonical): `PYTHONPATH=. python -m application.runtime.server --allow-plaintext --host 127.0.0.1 --port 8000`
 
 ### Canonical code root
 
