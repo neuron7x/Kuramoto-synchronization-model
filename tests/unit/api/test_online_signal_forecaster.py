@@ -18,9 +18,6 @@ from application.api.service import OnlineSignalForecaster, PredictionResponse
 from application.trading import signal_to_dto
 from domain.signal import SignalAction
 
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated.:DeprecationWarning"
-)
 
 
 class _StubPipeline:

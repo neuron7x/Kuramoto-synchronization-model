@@ -518,7 +518,7 @@ class SystemAccess:
                     symbol=request.symbol,
                 )
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail="reference price must be positive",
                 )
             try:
@@ -538,7 +538,7 @@ class SystemAccess:
                     error=str(exc),
                 )
                 raise HTTPException(
-                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=str(exc),
                 ) from exc
 
