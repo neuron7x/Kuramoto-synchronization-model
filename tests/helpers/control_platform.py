@@ -5,6 +5,15 @@ import json
 from types import SimpleNamespace
 from typing import Any, Mapping
 
+FORBIDDEN_PATTERNS = (
+    "token",
+    "secret",
+    "password",
+    "api_key",
+    "private",
+    "begin rsa",
+)
+
 from application.runtime.control_gates import (
     Decision,
     GateDecision,

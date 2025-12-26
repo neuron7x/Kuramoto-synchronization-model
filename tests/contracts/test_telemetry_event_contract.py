@@ -4,19 +4,10 @@ import json
 
 from application.settings import ApiServerSettings, BackendRuntimeSettings
 from tests.helpers.control_platform import (
+    FORBIDDEN_PATTERNS,
     build_gate_result,
     compute_config_fingerprint,
 )
-
-FORBIDDEN_TOKENS = (
-    "token",
-    "secret",
-    "password",
-    "api_key",
-    "private",
-    "BEGIN RSA",
-)
-
 
 def _make_event() -> dict[str, object]:
     runtime = BackendRuntimeSettings()
@@ -37,7 +28,7 @@ def test_telemetry_event_schema_contract() -> None:
 
     payload = json.dumps(event)
     lowered = payload.lower()
-    for token in FORBIDDEN_TOKENS:
+    for token in FORBIDDEN_PATTERNS:
         assert token not in lowered
 
     round_tripped = json.loads(payload)

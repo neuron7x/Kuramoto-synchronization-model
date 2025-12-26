@@ -5,19 +5,10 @@ import json
 from application.settings import ApiServerSettings, BackendRuntimeSettings
 from application.runtime.control_gates import GatePipelineResult
 from tests.helpers.control_platform import (
+    FORBIDDEN_PATTERNS,
     build_gate_result,
     compute_config_fingerprint,
 )
-
-FORBIDDEN_PATTERNS = (
-    "token",
-    "secret",
-    "password",
-    "api_key",
-    "private",
-    "begin rsa",
-)
-
 
 def test_no_secrets_in_telemetry_event() -> None:
     result: GatePipelineResult = build_gate_result()
