@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 from dataclasses import dataclass
@@ -117,6 +119,17 @@ def _resolve_path_precedence(
     return default
 
 
+def _config_fingerprint(
+    runtime_settings: BackendRuntimeSettings, server_settings: ApiServerSettings
+) -> str:
+    payload = {
+        "runtime": runtime_settings.model_dump(mode="json"),
+        "server": server_settings.model_dump(mode="json"),
+    }
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
 def initialize_control_platform(
     *,
     config_path: Optional[str] = None,
@@ -197,6 +210,7 @@ def initialize_control_platform(
         "serotonin_config_path": serotonin_config_path,
         "thermo_config_path": thermo_config_path,
         "controllers_required": controllers_required,
+        "config_fingerprint": _config_fingerprint(runtime_settings, server_settings),
     }
     LOGGER.info(
         "control_platform_init effective_config_source=%s controllers_loaded=%s",
