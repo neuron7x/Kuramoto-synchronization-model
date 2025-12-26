@@ -9,7 +9,7 @@ block the v1.0 release. Values are updated whenever a milestone changes state.
 |-----------------------|---------------|----------|-------|
 | Test coverage         | 🚧 In progress | 71% → 98% | Global coverage at ~71%; unit and property-based tests expanding across indicators and execution adapters. |
 | Documentation polish  | 🚧 In progress | 85% → 100% | Live trading operations and governance guides being rewritten for clarity and consistency. |
-| Dashboard hardening   | ⏳ Pending     | 50% → 100% | Streamlit prototype; production auth and observability outstanding. |
+| Dashboard hardening   | ⏳ Pending     | 50% → 100% | TypeScript dashboard (`ui/dashboard`) is canonical; Streamlit dashboard remains prototype/dev-only; production auth and observability outstanding. |
 | Release checklist     | ⏳ Pending     | 0% → 100% | Blocked until above items meet acceptance criteria. |
 | Security verification | ✅ Complete    | 100% | Zero critical vulnerabilities, CodeQL/Semgrep scanning active. |
 | Core engine           | ✅ Complete    | 100% | Production-ready with 351 core tests (100% pass rate). |
@@ -27,7 +27,7 @@ block the v1.0 release. Values are updated whenever a milestone changes state.
 | Backtesting Engine | 90% | 74% | 150+ | ✅ Production Ready |
 | Execution Layer | 85% | 44% | 100+ | ✅ Production Ready |
 | Live Trading | 70% | N/A | 50+ | 🔄 Beta |
-| Dashboard/UI | 50% | N/A | 20+ | 🚧 Alpha |
+| Dashboard/UI | 50% | N/A | 20+ | 🚧 Alpha (TypeScript canonical; Streamlit prototype) |
 | Documentation | 85% | N/A | N/A | 🔄 In Progress |
 
 ## Immediate Next Steps

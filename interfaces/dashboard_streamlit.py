@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Enhanced TradePulse Streamlit Dashboard with comprehensive analysis features.
+"""Prototype Streamlit dashboard (dev-only); canonical UI lives in ui/dashboard (TypeScript).
+
+Enhanced TradePulse Streamlit Dashboard with comprehensive analysis features.
 
 This module provides a web-based interface for analyzing market data using
 TradePulse's geometric indicators. Features include:
