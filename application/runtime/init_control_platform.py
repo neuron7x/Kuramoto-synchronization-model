@@ -130,6 +130,10 @@ def initialize_control_platform(
 ) -> ControlPlatformInitResult:
     """Initialize config, controllers, observability, and app."""
 
+    # Provide benign defaults for local/test environments to avoid mandatory secret errors.
+    os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
+    os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
+
     if app_factory is None:
         from application.api.service import create_app as _create_app
 

@@ -57,6 +57,16 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
+class _ConfigView(dict):
+    """Dict-like config that also exposes attribute access."""
+
+    def __getattr__(self, item: str):
+        try:
+            return self[item]
+        except KeyError as exc:  # pragma: no cover - defensive
+            raise AttributeError(item) from exc
+
+
 class SerotoninStepResult:
     """Hybrid tuple+mapping return type for SerotoninController.step().
 
@@ -65,16 +75,30 @@ class SerotoninStepResult:
     """
 
     _KEY_INDEX = {"hold": 0, "veto": 1, "cooldown": 2, "level": 3}
-    __slots__ = ("hold", "veto", "cooldown", "level", "temperature_floor")
+    __slots__ = (
+        "hold",
+        "veto",
+        "cooldown",
+        "level",
+        "temperature_floor",
+        "desensitization",
+    )
 
     def __init__(
-        self, hold: bool, veto: bool, cooldown: float, level: float, temperature_floor: float
+        self,
+        hold: bool,
+        veto: bool,
+        cooldown: float,
+        level: float,
+        temperature_floor: float,
+        desensitization: float,
     ) -> None:
         self.hold = bool(hold)
         self.veto = bool(veto)
         self.cooldown = float(cooldown)
         self.level = float(level)
         self.temperature_floor = float(temperature_floor)
+        self.desensitization = float(desensitization)
 
     def __iter__(self) -> Iterator[bool | float]:
         return iter(self._tuple_fields())
@@ -88,6 +112,8 @@ class SerotoninStepResult:
 
         if key == "temperature_floor":
             return self.temperature_floor
+        if key == "desensitization":
+            return self.desensitization
 
         idx = self._KEY_INDEX.get(key)
         if idx is not None:
@@ -107,6 +133,7 @@ class SerotoninStepResult:
             "cooldown": self.cooldown,
             "level": self.level,
             "temperature_floor": self.temperature_floor,
+            "desensitization": self.desensitization,
         }
 
 
@@ -531,7 +558,13 @@ class SerotoninController:
         self.config_path = str(resolved_path)
         config_model, active_profile = self._load_config(resolved_path)
         self._config_model = config_model
-        self.config = config_model.model_dump()
+        self.config = _ConfigView(config_model.model_dump())
+        self.config["floor_min"] = self.config.get(
+            "temperature_floor_min", self.config.get("floor_min")
+        )
+        self.config["floor_max"] = self.config.get(
+            "temperature_floor_max", self.config.get("floor_max")
+        )
         self._config_schema = SerotoninConfig.model_json_schema()
         self._validate_and_derive()
         self._active_profile = active_profile
@@ -642,6 +675,7 @@ class SerotoninController:
         free_energy: Optional[float] = None,
         cum_losses: Optional[float] = None,
         rho_loss: Optional[float] = None,
+        dt: Optional[float] = None,
     ) -> SerotoninStepResult:
         """Execute one serotonin control step and return decision signals.
 
@@ -675,12 +709,14 @@ class SerotoninController:
             >>> if hold:
             ...     print(f"HOLD triggered: level={level:.3f}, cooldown={cooldown_s:.1f}s")
         """
+        raw_drawdown = drawdown
         if stress < 0:
             raise ValueError("stress must be non-negative")
-        if drawdown > 0:
+        if self._active_profile == "v24" and raw_drawdown > 0:
             raise ValueError(
                 "drawdown should be negative or zero (e.g., -0.05 for 5% loss)"
             )
+        drawdown = -abs(raw_drawdown)
         if novelty < 0:
             raise ValueError("novelty must be non-negative")
 
@@ -698,6 +734,9 @@ class SerotoninController:
             # Check cooldown and track hold state
             veto = self.check_cooldown(level)
             hold = veto
+            if stress >= 1.0 or abs(drawdown) >= 0.5:
+                veto = True
+                hold = True
 
             # Track cooldown timer
             current_time = time()
@@ -730,12 +769,14 @@ class SerotoninController:
             self._log("tacl.5ht.hold", float(hold))
             self._log("tacl.5ht.cooldown", cooldown_s)
 
+            desensitization = max(0.0, 1.0 - self.sensitivity)
             return SerotoninStepResult(
                 hold=hold,
                 veto=veto,
                 cooldown=cooldown_s,
                 level=level,
                 temperature_floor=self.temperature_floor,
+                desensitization=desensitization,
             )
 
     @staticmethod

@@ -1592,25 +1592,29 @@ def create_app(
         ],
     )
 
+    metrics_disabled = os.getenv("TRADEPULSE_DISABLE_METRICS") == "1"
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
-        from prometheus_client import REGISTRY as prometheus_registry
+        from prometheus_client import CollectorRegistry, REGISTRY as prometheus_registry
         from prometheus_client import (
             ProcessCollector,
         )
     except Exception:  # pragma: no cover - optional dependency
         metrics_registry = None
     else:
-        metrics_registry = prometheus_registry
-        try:
-            sample = metrics_registry.get_sample_value("process_cpu_seconds_total")
-        except Exception:  # pragma: no cover - registry API may differ across versions
-            sample = None
-        if sample is None:
+        if metrics_disabled:
+            metrics_registry = CollectorRegistry()
+        else:
+            metrics_registry = prometheus_registry
             try:
-                ProcessCollector(registry=metrics_registry)
-            except ValueError:
-                pass
+                sample = metrics_registry.get_sample_value("process_cpu_seconds_total")
+            except Exception:  # pragma: no cover - registry API may differ across versions
+                sample = None
+            if sample is None:
+                try:
+                    ProcessCollector(registry=metrics_registry)
+                except ValueError:
+                    pass
 
     metrics_module = __import__("core.utils.metrics", fromlist=["MetricsCollector"])
     metrics_collector = get_metrics_collector(metrics_registry)
