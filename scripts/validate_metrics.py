@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
+import json
+import os
 import sys
 from pathlib import Path
 from typing import Iterable
 
 from fastapi.testclient import TestClient
-import importlib.util
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -88,7 +90,7 @@ def _parse_metric_value(payload: str, metric: str) -> float:
 
 def run_runtime(root: Path, catalogs: list[Path]) -> int:
     # The application factory requires audit secrets; default to safe values.
-    env = __import__("os").environ
+    env = os.environ
     env.setdefault("TRADEPULSE_AUDIT_SECRET", "0" * 16)
     env.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "1" * 32)
     env.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "2" * 32)
@@ -126,7 +128,7 @@ def run_expectations(root: Path, catalogs: list[Path]) -> int:
     if not metrics_path.exists():
         return 1
     payload = metrics_path.read_text(encoding="utf-8")
-    data = __import__("json").loads(payload)
+    data = json.loads(payload)
     delta = data.get("api_requests_total_delta")
     write_artifact(
         ARTIFACT_DIR / "expectations.json",
