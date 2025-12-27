@@ -9,7 +9,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Iterable
 
 from fastapi.testclient import TestClient
 
@@ -17,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.observability.builder import MetricDefinition, validate_metrics
+from tools.observability.builder import MetricDefinition, validate_metrics  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location(
     "metrics_validation", ROOT / "observability" / "metrics_validation.py"
@@ -102,7 +101,6 @@ def run_runtime(root: Path, catalogs: list[Path]) -> int:
 
     baseline = client.get("/metrics").text
     first_health = client.get("/health")
-    metrics_after_health = client.get("/metrics").text
     second_health = client.get("/health")
     metrics_after_second = client.get("/metrics").text
 

@@ -9,13 +9,13 @@ from core.neuro.serotonin import (  # noqa: F401
     _generate_config_table,
 )
 from core.neuro.serotonin.observability import (  # noqa: F401
-    Alert,
-    AlertSeverity,
-    SLI,
-    SLO,
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
     SEROTONIN_SLOS,
+    SLI,
+    SLO,
+    Alert,
+    AlertSeverity,
     SerotoninMonitor,
     create_grafana_dashboard_json,
     create_prometheus_metrics,

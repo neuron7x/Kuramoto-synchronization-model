@@ -5,9 +5,10 @@ import pytest
 
 z3 = pytest.importorskip("z3")  # noqa: F401
 hypothesis = pytest.importorskip("hypothesis")  # noqa: F401
-from hypothesis import given, strategies as st
+from hypothesis import given  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
 
-from formal.proof_invariant import (
+from formal.proof_invariant import (  # noqa: E402
     ProofConfig,
     recovery_mean,
     run_proof,

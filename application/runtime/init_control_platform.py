@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Type, TypeVar
 
 import yaml
+from pydantic import ValidationError
 
 from application.runtime.control_gates import evaluate_control_gates
 from application.settings import ApiServerSettings, BackendRuntimeSettings
-from pydantic import ValidationError
 
 LOGGER = logging.getLogger("tradepulse.control_platform")
 SettingsT = TypeVar("SettingsT", bound="BaseSettings")

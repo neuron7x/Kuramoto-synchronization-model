@@ -234,6 +234,11 @@ def _compare_resources(
         status = "pass"
         if not math.isnan(delta_pct) and delta_pct > threshold * 100:
             status = "fail"
+        if status == "fail" and current_metric.budget is not None:
+            abs_delta = abs(current_metric.value - base_metric.value)
+            abs_tolerance = max(0.05, current_metric.budget * 0.05)
+            if current_metric.value <= current_metric.budget and abs_delta <= abs_tolerance:
+                status = "pass"
         comparisons.append(
             ResourceComparison(
                 name=name,

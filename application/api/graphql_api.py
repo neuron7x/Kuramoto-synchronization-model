@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import warnings
 from datetime import datetime
 from typing import Any, List, Optional
 
-import warnings
+import strawberry
+from strawberry.fastapi import GraphQLRouter
+from strawberry.scalars import JSON
+
+from application.api.realtime import AnalyticsStore
 
 # Suppress deprecation noise from transitive dependency rename in strawberry.fastapi.
 warnings.filterwarnings(
@@ -13,12 +18,6 @@ warnings.filterwarnings(
     message="The 'lia' package has been renamed to 'cross_web'.",
     category=DeprecationWarning,
 )
-
-import strawberry
-from strawberry.fastapi import GraphQLRouter
-from strawberry.scalars import JSON
-
-from application.api.realtime import AnalyticsStore
 
 
 @strawberry.type

@@ -15,7 +15,6 @@ from .action_control import (
     TaclDecision,
     TaclGate,
 )
-from .state_model import LifecycleModel, LifecycleState, StateTransition
 from .api_messaging_integration import (
     GatewayRequest,
     IntegrationRoute,
@@ -41,6 +40,7 @@ from .module_orchestrator import (
     ModuleSynchronisationEntry,
     ModuleTimelineEntry,
 )
+from .state_model import LifecycleModel, LifecycleState, StateTransition
 
 __all__ = [
     "GatewayRequest",

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import uvicorn
-
 if __name__ == "__main__":
     raise SystemExit(
         "Deprecated entrypoint. Use: python -m application.runtime.server --config <path>"

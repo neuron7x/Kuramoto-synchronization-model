@@ -98,7 +98,6 @@ class TradePulseOrchestrator:
             if Regulator is None:
                 from core.neuro.fractal_regulator import (
                     EEPFractalRegulator as Regulator,
-                    RegulatorMetrics,
                 )
 
             config = regulator_config or {}
@@ -255,6 +254,8 @@ def __getattr__(name: str):
     if name in {"RegulatorMetrics", "EEPFractalRegulator"}:
         from core.neuro.fractal_regulator import (
             EEPFractalRegulator as _EEPF,
+        )
+        from core.neuro.fractal_regulator import (
             RegulatorMetrics as _RM,
         )
 
