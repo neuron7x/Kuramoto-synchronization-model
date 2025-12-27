@@ -2290,8 +2290,26 @@ def get_metrics_collector(registry: Optional[Any] = None) -> MetricsCollector:
     global _collector
     if _collector is None:
         _collector = MetricsCollector(registry)
-    elif registry is not None and registry is not _collector.registry:
-        _collector = MetricsCollector(registry)
+        return _collector
+
+    if registry is None:
+        return _collector
+
+    try:  # pragma: no cover - optional dependency guard
+        from prometheus_client import REGISTRY as _default_registry
+    except Exception:  # pragma: no cover - defensive fallback
+        _default_registry = None
+
+    current_registry = _collector.registry
+    if registry is current_registry:
+        return _collector
+
+    # Treat a collector built with the implicit default registry as equivalent
+    # to the explicit global REGISTRY to avoid duplicate metric registration.
+    if current_registry is None and registry is _default_registry:
+        return _collector
+
+    _collector = MetricsCollector(registry)
     return _collector
 
 

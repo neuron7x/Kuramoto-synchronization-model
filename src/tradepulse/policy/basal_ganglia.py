@@ -101,7 +101,7 @@ class BasalGangliaDecisionStack:
         )
 
         stress = constraints.get("stress", constraints.get("drawdown", 0.0))
-        drawdown = constraints.get("drawdown", 0.0)
+        drawdown = -abs(constraints.get("drawdown", 0.0))
         serotonin_state = self.serotonin.step(
             stress=float(max(0.0, stress)),
             drawdown=float(max(0.0, drawdown)),
