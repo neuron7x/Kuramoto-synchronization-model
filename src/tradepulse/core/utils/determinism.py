@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
 from typing import Iterable
 
 from . import _find_legacy_utils_dir

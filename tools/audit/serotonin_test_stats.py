@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 DATA = {
     "component": "serotonin",
     "version": "2.4.0",

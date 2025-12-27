@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import time
 import json
+import time
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -357,7 +357,7 @@ def test_snapshot_retention_is_deterministic(
     assert timestamps == expected
 
     for path in snapshots:
-        json_content = json.loads(path.read_text(encoding="utf-8"))
+        json.loads(path.read_text(encoding="utf-8"))
     assert not list(snapshot_dir.glob("*.tmp"))
 
 
