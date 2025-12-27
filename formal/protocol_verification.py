@@ -328,8 +328,6 @@ class TLSProtocolVerifier:
         Returns:
             ProtocolProofResult with replay resistance verification
         """
-        z3 = self._z3
-
         def base_case_predicate(z3m: Any) -> list[Any]:
             nonce = z3m.Int("nonce_base")
             count0 = z3m.Function("count0", z3m.IntSort(), z3m.IntSort())

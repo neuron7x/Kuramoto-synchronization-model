@@ -8,8 +8,8 @@ reside here.
 
 from __future__ import annotations
 
-from importlib import import_module
 import sys
+from importlib import import_module
 
 
 def __getattr__(name: str):

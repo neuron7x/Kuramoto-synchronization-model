@@ -1,3 +1,15 @@
+from .observability import (
+    SEROTONIN_ALERTS,
+    SEROTONIN_SLIS,
+    SEROTONIN_SLOS,
+    SLI,
+    SLO,
+    Alert,
+    AlertSeverity,
+    SerotoninMonitor,
+    create_grafana_dashboard_json,
+    create_prometheus_metrics,
+)
 from .serotonin_controller import (
     ControllerOutput,
     SerotoninConfig,
@@ -5,18 +17,6 @@ from .serotonin_controller import (
     SerotoninController,
     SerotoninLegacyConfig,
     _generate_config_table,
-)
-from .observability import (
-    Alert,
-    AlertSeverity,
-    SLI,
-    SLO,
-    SEROTONIN_ALERTS,
-    SEROTONIN_SLIS,
-    SEROTONIN_SLOS,
-    SerotoninMonitor,
-    create_grafana_dashboard_json,
-    create_prometheus_metrics,
 )
 
 __all__ = [

@@ -29,7 +29,7 @@ from typing import Iterable
 import pytest
 
 try:
-    from core.utils.determinism import apply_thread_determinism, THREAD_BOUND_ENV_VARS
+    from core.utils.determinism import THREAD_BOUND_ENV_VARS, apply_thread_determinism
 except ImportError:  # pragma: no cover - fallback when optional deps missing
     _determinism_path = pathlib.Path(__file__).parent / "core" / "utils" / "determinism.py"
     if not _determinism_path.is_file():
