@@ -377,12 +377,44 @@ class LiveExecutionLoop:
             snapshot_dir = self._config.state_dir / "oms_snapshots"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-            files = sorted(snapshot_dir.glob("*.json"))
+            for tmp in snapshot_dir.glob("oms_snapshot_[0-9]*.tmp"):
+                with suppress(OSError):
+                    tmp.unlink()
+
+            files = sorted(
+                snapshot_dir.glob("oms_snapshot_[0-9]*.json"), key=_snapshot_timestamp
+            )
             if not files:
                 self._logger.info("No OMS snapshot found; starting with empty state")
                 return
 
-            last_snapshot = files[-1]
+            last_snapshot: Path | None = None
+            payload: dict[str, object] | None = None
+            for candidate in reversed(files):
+                try:
+                    payload = json.loads(candidate.read_text(encoding="utf-8"))
+                    last_snapshot = candidate
+                    break
+                except (
+                    json.JSONDecodeError,
+                    UnicodeDecodeError,
+                    FileNotFoundError,
+                    PermissionError,
+                    IsADirectoryError,
+                ):
+                    self._logger.warning(
+                        "Skipping corrupt OMS snapshot",
+                        extra={
+                            "event": "live_loop.snapshot_corrupt",
+                            "path": str(candidate),
+                        },
+                    )
+                    continue
+
+            if last_snapshot is None:
+                self._logger.info("No valid OMS snapshot found; starting fresh")
+                return
+
             self._logger.info(
                 f"Restoring OMS snapshot from {last_snapshot.name}",
                 extra={
@@ -391,7 +423,6 @@ class LiveExecutionLoop:
                 },
             )
 
-            payload = json.loads(last_snapshot.read_text(encoding="utf-8"))
             oms_data = payload.get("oms")
             if oms_data:
                 self._oms_state = OMSState.restore(oms_data)
