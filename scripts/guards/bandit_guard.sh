@@ -23,7 +23,6 @@ trap 'rm -f "$TEMP_RESULT"' EXIT
 # Run Bandit and capture exit code
 set +e
 python -m bandit -r "${SCAN_PATHS[@]}" -ll -f json -o "$TEMP_RESULT" 2>&1
-BANDIT_EXIT=$?
 set -e
 
 # Parse results

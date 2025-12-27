@@ -20,8 +20,9 @@ _PROFILE = os.environ.get("TRADEPULSE_PROFILE", os.environ.get("APP_ENV", "dev")
 # Provide a benign default for the admin API two-factor secret only in local/test
 # environments. Production-like profiles must supply real secrets explicitly.
 if _PROFILE in {"dev", "development", "test", "ci", "local"}:
-    os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "test-secret")
-    os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
+    _default_totp = "JBSWY3DPEHPK3PXP"
+    os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", _default_totp)
+    os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", _default_totp)
 else:
     if "TRADEPULSE_TWO_FACTOR_SECRET" not in os.environ and "ADMIN_API_SETTINGS__two_factor_secret" not in os.environ:
         msg = "Two-factor secret must be configured for non-development profiles"

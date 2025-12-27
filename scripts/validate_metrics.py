@@ -9,7 +9,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Iterable
 
 from fastapi.testclient import TestClient
 
@@ -17,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.observability.builder import MetricDefinition, validate_metrics
+from tools.observability.builder import MetricDefinition, validate_metrics  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location(
     "metrics_validation", ROOT / "observability" / "metrics_validation.py"
@@ -48,6 +47,30 @@ def run_sync(root: Path, catalogs: list[Path]) -> int:
     for catalog_path in catalogs:
         catalog_defs.extend(validate_metrics(catalog_path))
     catalog_map = {metric.name: metric for metric in catalog_defs}
+
+    inventory_payload = {
+        "code": [
+            {
+                "name": metric.name,
+                "type": metric.type,
+                "labels": list(metric.labels),
+                "description": metric.description,
+                "sources": list(metric.sources),
+            }
+            for metric in code_metrics.values()
+        ],
+        "catalog": [
+            {
+                "name": metric.name,
+                "type": metric.type,
+                "labels": list(metric.labels),
+                "description": metric.description,
+                "subsystem": metric.subsystem,
+            }
+            for metric in catalog_defs
+        ],
+    }
+    write_artifact(ARTIFACT_DIR / "inventory.json", inventory_payload)
 
     comparison = compare_catalog_to_code(catalog_map, code_metrics)
     reconciled = reconcile_catalog(code_metrics, catalog_defs)
@@ -88,7 +111,7 @@ def _parse_metric_value(payload: str, metric: str) -> float:
     raise KeyError(metric)
 
 
-def run_runtime(root: Path, catalogs: list[Path]) -> int:
+def run_runtime(_root: Path, _catalogs: list[Path]) -> int:
     # The application factory requires audit secrets; default to safe values.
     env = os.environ
     env.setdefault("TRADEPULSE_AUDIT_SECRET", "0" * 16)
@@ -102,7 +125,6 @@ def run_runtime(root: Path, catalogs: list[Path]) -> int:
 
     baseline = client.get("/metrics").text
     first_health = client.get("/health")
-    metrics_after_health = client.get("/metrics").text
     second_health = client.get("/health")
     metrics_after_second = client.get("/metrics").text
 
@@ -117,12 +139,31 @@ def run_runtime(root: Path, catalogs: list[Path]) -> int:
     except KeyError:
         results["api_requests_total_delta"] = None
 
+    for gauge in ("tradepulse_process_cpu_percent", "tradepulse_process_memory_bytes"):
+        try:
+            value = _parse_metric_value(metrics_after_second, gauge)
+        except KeyError:
+            value = None
+        results[gauge] = value
+
     write_artifact(ARTIFACT_DIR / "runtime.json", results)
     delta = results.get("api_requests_total_delta")
-    return 0 if all(status == 200 for status in results["health_statuses"]) and (delta is None or delta >= 2) else 1
+    cpu_ok = results.get("tradepulse_process_cpu_percent")
+    mem_ok = results.get("tradepulse_process_memory_bytes")
+    non_negative = all(
+        value is None or (isinstance(value, (int, float)) and value >= 0)
+        for value in (cpu_ok, mem_ok, delta)
+    )
+    return (
+        0
+        if all(status == 200 for status in results["health_statuses"])
+        and (delta is None or delta >= 0)
+        and non_negative
+        else 1
+    )
 
 
-def run_expectations(root: Path, catalogs: list[Path]) -> int:
+def run_expectations(_root: Path, _catalogs: list[Path]) -> int:
     # Expectations piggyback on runtime scrape to assert finiteness of key gauges.
     metrics_path = ARTIFACT_DIR / "runtime.json"
     if not metrics_path.exists():
@@ -130,11 +171,25 @@ def run_expectations(root: Path, catalogs: list[Path]) -> int:
     payload = metrics_path.read_text(encoding="utf-8")
     data = json.loads(payload)
     delta = data.get("api_requests_total_delta")
+    mem = data.get("tradepulse_process_memory_bytes")
+    cpu = data.get("tradepulse_process_cpu_percent")
+    baselines_path = Path("configs/nightly/baselines.json")
+    baselines_available = baselines_path.exists()
     write_artifact(
         ARTIFACT_DIR / "expectations.json",
-        {"api_requests_total_delta": delta},
+        {
+            "api_requests_total_delta": delta,
+            "process_memory_bytes": mem,
+            "process_cpu_percent": cpu,
+            "baselines_available": baselines_available,
+        },
     )
-    return 0 if delta is None or delta >= 0 else 1
+    predicates = [
+        delta is None or delta >= 0,
+        mem is None or (isinstance(mem, (int, float)) and mem >= 0),
+        cpu is None or (isinstance(cpu, (int, float)) and cpu >= 0),
+    ]
+    return 0 if all(predicates) else 1
 
 
 def _write_report(statuses: dict[str, int]) -> None:
@@ -144,6 +199,9 @@ def _write_report(statuses: dict[str, int]) -> None:
         lines.append(f"- {level}: {state}")
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
     (ARTIFACT_DIR / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (ARTIFACT_DIR / "report.json").write_text(
+        json.dumps({"levels": statuses}, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

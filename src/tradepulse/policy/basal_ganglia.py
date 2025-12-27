@@ -101,13 +101,21 @@ class BasalGangliaDecisionStack:
         )
 
         stress = constraints.get("stress", constraints.get("drawdown", 0.0))
-        drawdown = constraints.get("drawdown", 0.0)
+        drawdown = -abs(constraints.get("drawdown", 0.0))
         serotonin_state = self.serotonin.step(
             stress=float(max(0.0, stress)),
-            drawdown=float(max(0.0, drawdown)),
+            drawdown=float(drawdown),
             novelty=float(max(0.0, novelty)),
             dt=constraints.get("dt", 1.0),
         )
+        if drawdown <= -0.5 or stress >= 1.0:
+            serotonin_state = serotonin_state.__class__(
+                hold=True,
+                veto=True,
+                cooldown=serotonin_state["cooldown"],
+                level=serotonin_state["level"],
+                temperature_floor=serotonin_state["temperature_floor"],
+            )
         serotonin_snapshot = SerotoninSnapshot(
             level=float(serotonin_state["level"]),
             hold=bool(serotonin_state["hold"] >= 0.5),

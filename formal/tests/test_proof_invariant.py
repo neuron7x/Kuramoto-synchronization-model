@@ -2,12 +2,13 @@ import math
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 z3 = pytest.importorskip("z3")  # noqa: F401
 hypothesis = pytest.importorskip("hypothesis")  # noqa: F401
-from hypothesis import given, strategies as st
 
-from formal.proof_invariant import (
+from formal.proof_invariant import (  # noqa: E402
     ProofConfig,
     recovery_mean,
     run_proof,

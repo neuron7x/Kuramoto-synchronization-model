@@ -14,16 +14,16 @@ Modules:
     protocol_verification: Formal verification of protocol security
 """
 
+from .inductive import (
+    InductiveProofEngine,
+    InductiveProofResult,
+)
 from .proof_invariant import (
     HAS_Z3,
     MISSING_Z3_MESSAGE,
 )
 from .proof_invariant import ProofResult as InvariantProofResult
 from .proof_invariant import run_proof as run_invariant_proof
-from .inductive import (
-    InductiveProofEngine,
-    InductiveProofResult,
-)
 
 # Only export cryptographic proof classes if available
 try:

@@ -81,7 +81,8 @@ class TimescaleSchemaManager:
         statements = []
         for dimension in self.schema.dimensions:
             statements.append(
-                f"CREATE INDEX IF NOT EXISTS ON {self.schema.table} ({dimension.name}, {self.schema.timestamp_column} DESC);"
+                "CREATE INDEX IF NOT EXISTS ON "
+                f"{self.schema.table} ({dimension.name}, {self.schema.timestamp_column} DESC);"
             )
         statements.append(
             f"CREATE INDEX IF NOT EXISTS ON {self.schema.table} ({self.schema.timestamp_column});"

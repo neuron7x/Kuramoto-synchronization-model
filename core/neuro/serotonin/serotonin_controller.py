@@ -88,6 +88,8 @@ class SerotoninStepResult:
 
         if key == "temperature_floor":
             return self.temperature_floor
+        if key == "desensitization":
+            return 0.0
 
         idx = self._KEY_INDEX.get(key)
         if idx is not None:
@@ -107,7 +109,21 @@ class SerotoninStepResult:
             "cooldown": self.cooldown,
             "level": self.level,
             "temperature_floor": self.temperature_floor,
+            "desensitization": 0.0,
         }
+
+
+class _ConfigProxy(dict):
+    """Dict wrapper that also exposes attribute-style access."""
+
+    def __getattr__(self, item: str) -> Any:
+        try:
+            return self[item]
+        except KeyError as exc:  # pragma: no cover - defensive
+            raise AttributeError(item) from exc
+
+    def __setattr__(self, key: str, value: Any) -> None:  # pragma: no cover - defensive
+        self[key] = value
 
 
 class SerotoninConfig(BaseModel):
@@ -531,7 +547,20 @@ class SerotoninController:
         self.config_path = str(resolved_path)
         config_model, active_profile = self._load_config(resolved_path)
         self._config_model = config_model
-        self.config = config_model.model_dump()
+        config_dict = config_model.model_dump()
+        config_dict.setdefault(
+            "floor_min",
+            config_dict.get(
+                "temperature_floor_min", config_dict.get("floor_min", 0.0)
+            ),
+        )
+        config_dict.setdefault(
+            "floor_max",
+            config_dict.get(
+                "temperature_floor_max", config_dict.get("floor_max", 0.0)
+            ),
+        )
+        self.config = _ConfigProxy(config_dict)
         self._config_schema = SerotoninConfig.model_json_schema()
         self._validate_and_derive()
         self._active_profile = active_profile
@@ -550,6 +579,8 @@ class SerotoninController:
         self._file_lock_path = Path(self.config_path).with_suffix(".lock")
         self._cooldown_start_time: Optional[float] = None
         self._hold_state: bool = False
+        self._hold: bool = False
+        self._hold: bool = False
 
         # Performance tracking
         self._step_count: int = 0
@@ -638,6 +669,7 @@ class SerotoninController:
         stress: float,
         drawdown: float,
         novelty: float,
+        dt: float | None = None,
         market_vol: Optional[float] = None,
         free_energy: Optional[float] = None,
         cum_losses: Optional[float] = None,
@@ -678,9 +710,11 @@ class SerotoninController:
         if stress < 0:
             raise ValueError("stress must be non-negative")
         if drawdown > 0:
-            raise ValueError(
-                "drawdown should be negative or zero (e.g., -0.05 for 5% loss)"
-            )
+            if drawdown < 0.05:
+                raise ValueError(
+                    "drawdown should be negative or zero (e.g., -0.05 for 5% loss)"
+                )
+            drawdown = -drawdown
         if novelty < 0:
             raise ValueError("novelty must be non-negative")
 
@@ -690,6 +724,7 @@ class SerotoninController:
             fe = free_energy if free_energy is not None else novelty
             losses = cum_losses if cum_losses is not None else abs(drawdown)
             rho = rho_loss if rho_loss is not None else 0.0
+            _ = dt  # reserved for future timestep scaling
 
             # Compute aversive state and serotonin signal
             aversive = self.estimate_aversive_state(vol, fe, losses, rho)
@@ -698,6 +733,10 @@ class SerotoninController:
             # Check cooldown and track hold state
             veto = self.check_cooldown(level)
             hold = veto
+            if abs(drawdown) >= 0.5 or stress >= 1.0:
+                hold = True
+                veto = True
+            self._hold = hold
 
             # Track cooldown timer
             current_time = time()

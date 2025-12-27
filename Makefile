@@ -102,7 +102,7 @@ lint: lint-python lint-go lint-shell
 lint-python:
 	@echo "🔍 Linting Python code..."
 	python -m ruff check .
-	python -m flake8
+	python -m flake8 application backtest core execution src observability libs formal
 	python scripts/check_namespace_policy.py
 	python -m mypy --config-file=mypy.ini
 

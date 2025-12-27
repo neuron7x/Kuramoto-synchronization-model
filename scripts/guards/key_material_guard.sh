@@ -21,7 +21,7 @@ done < <(git ls-files | grep -E '\.(key|key\.pem)$' || true)
 while IFS= read -r file; do
     if [[ -f "$file" ]] && grep -q "BEGIN.*PRIVATE KEY" "$file" 2>/dev/null; then
         # Avoid duplicates
-        if [[ ! " ${TRACKED_KEYS[*]} " =~ " ${file} " ]]; then
+        if [[ ! " ${TRACKED_KEYS[*]} " =~ ${file} ]]; then
             TRACKED_KEYS+=("$file (contains PRIVATE KEY header)")
         fi
     fi

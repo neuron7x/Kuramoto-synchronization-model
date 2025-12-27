@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 DATA = {
     "component": "thermo",
     "version": "0.1.0",

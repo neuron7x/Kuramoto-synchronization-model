@@ -92,7 +92,7 @@ echo "✅ All diagrams generated successfully!"
 echo "📁 Output location: $ASSETS_DIR"
 echo ""
 echo "Generated files:"
-ls -lh "$ASSETS_DIR"/*.svg | awk '{print "  - " $9 " (" $5 ")"}'
+find "$ASSETS_DIR" -maxdepth 1 -name "*.svg" -printf "  - %f (%s bytes)\n"
 
 echo ""
 echo "🎉 Done!"

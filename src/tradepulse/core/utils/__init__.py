@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
-from typing import Iterable
+from typing import Sequence
 
 
 def _find_legacy_utils_dir() -> Path:
@@ -28,4 +28,4 @@ sys.modules["core.utils"] = _legacy_pkg
 _spec.loader.exec_module(_legacy_pkg)
 
 globals().update(_legacy_pkg.__dict__)
-__all__: Iterable[str] = getattr(_legacy_pkg, "__all__", tuple())
+__all__: Sequence[str] = tuple(getattr(_legacy_pkg, "__all__", ()))

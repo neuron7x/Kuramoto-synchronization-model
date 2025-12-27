@@ -397,7 +397,8 @@ class FinOpsController:
                         OptimizationRecommendation(
                             resource_id=resource_id,
                             message=(
-                                "Resource exhibits sustained low utilisation; consider rightsizing or scheduling shutdowns."
+                                "Resource exhibits sustained low utilisation; consider rightsizing "
+                                "or scheduling shutdowns."
                             ),
                             severity="medium",
                             metadata={
@@ -416,7 +417,10 @@ class FinOpsController:
                     recommendations.append(
                         OptimizationRecommendation(
                             resource_id=resource_id,
-                            message="Latest cost sample spikes above historical trend; investigate anomalies or misconfigurations.",
+                            message=(
+                                "Latest cost sample spikes above historical trend; investigate anomalies or "
+                                "misconfigurations."
+                            ),
                             severity="high",
                             metadata={
                                 "latest_cost": round(latest, 2),
@@ -483,7 +487,8 @@ class FinOpsController:
                         OptimizationRecommendation(
                             resource_id=profile.resource_id,
                             message=(
-                                "Duplicate workload detected across resources; consolidate deployments to eliminate redundant spend."
+                                "Duplicate workload detected across resources; consolidate deployments to "
+                                "eliminate redundant spend."
                             ),
                             severity="medium",
                             metadata={
@@ -693,7 +698,8 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Spend pattern is steady; evaluate reserved instances or savings plans to lock in lower rates."
+                        "Spend pattern is steady; evaluate reserved instances or savings plans "
+                        "to lock in lower rates."
                     ),
                     severity="high",
                     metadata={
@@ -720,7 +726,8 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Workload tolerates interruption; migrate a portion to spot/preemptible capacity for cost relief."
+                        "Workload tolerates interruption; migrate a portion to spot/preemptible "
+                        "capacity for cost relief."
                     ),
                     severity="medium",
                     metadata={
@@ -749,7 +756,8 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "GPU capacity is underutilised; introduce time-slicing or shared job queues to increase occupancy."
+                        "GPU capacity is underutilised; introduce time-slicing or shared job queues "
+                        "to increase occupancy."
                     ),
                     severity="medium",
                     metadata={
@@ -777,7 +785,8 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Model footprint is heavy relative to throughput; pursue weight compression, quantisation, or distillation."
+                        "Model footprint is heavy relative to throughput; pursue weight compression, "
+                        "quantisation, or distillation."
                     ),
                     severity="medium",
                     metadata={
@@ -801,7 +810,8 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id=profile.resource_id,
                     message=(
-                        "Resource spends most of the window idle; enforce shutdown or scale-to-zero policies."
+                        "Resource spends most of the window idle; enforce shutdown or scale-to-zero "
+                        "policies."
                     ),
                     severity="high",
                     metadata={
@@ -843,7 +853,8 @@ class FinOpsController:
             OptimizationRecommendation(
                 resource_id=f"cloud:{top_cloud}",
                 message=(
-                    "Cloud spend profile updated; validate placement and leverage provider-native cost optimisation programmes."
+                    "Cloud spend profile updated; validate placement and leverage "
+                    "provider-native cost optimisation programmes."
                 ),
                 severity="medium",
                 metadata={"cloud": top_cloud, "total_cost": round(top_cost, 2)},
@@ -856,7 +867,8 @@ class FinOpsController:
                 OptimizationRecommendation(
                     resource_id="cloud:long_tail",
                     message=(
-                        "Fragmented tail spend detected across secondary clouds; review consolidation or shared services."
+                        "Fragmented tail spend detected across secondary clouds; review "
+                        "consolidation or shared services."
                     ),
                     severity="low",
                     metadata={"tail_cost": round(tail_cost, 2)},
@@ -894,7 +906,8 @@ class FinOpsController:
                     OptimizationRecommendation(
                         resource_id=status.budget.name,
                         message=(
-                            "Budget utilisation nearing limit; enforce guardrails, reprioritise workloads, or rebalance reservations."
+                            "Budget utilisation nearing limit; enforce guardrails, reprioritise "
+                            "workloads, or rebalance reservations."
                         ),
                         severity=severity,
                         metadata=metadata,

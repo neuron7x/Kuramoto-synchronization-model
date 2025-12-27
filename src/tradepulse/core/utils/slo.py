@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
-from typing import Iterable
+from typing import Sequence
 
 from . import _find_legacy_utils_dir
 
@@ -19,4 +18,4 @@ sys.modules["core.utils.slo"] = _legacy
 _spec.loader.exec_module(_legacy)
 
 globals().update(_legacy.__dict__)
-__all__: Iterable[str] = getattr(_legacy, "__all__", tuple())
+__all__: Sequence[str] = tuple(getattr(_legacy, "__all__", ()))

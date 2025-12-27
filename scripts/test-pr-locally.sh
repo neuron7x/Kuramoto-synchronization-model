@@ -49,6 +49,7 @@ if [[ ! -d ".venv" ]]; then
 fi
 
 # Activate venv
+# shellcheck source=/dev/null
 source .venv/bin/activate || {
     echo -e "${RED}❌ Failed to activate virtual environment${NC}"
     exit 1

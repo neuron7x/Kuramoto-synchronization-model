@@ -10,10 +10,10 @@ import os
 import shutil
 import sqlite3
 import ssl
-from io import StringIO
 from dataclasses import dataclass, field
 from datetime import UTC
 from decimal import Decimal, InvalidOperation
+from io import StringIO
 from pathlib import Path
 from typing import Any, Callable, Literal, Mapping, Protocol
 from urllib.parse import urlparse

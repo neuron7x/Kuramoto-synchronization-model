@@ -68,7 +68,10 @@ class KillSwitchPostgresSettings(BaseModel):
     )
     connect_timeout_seconds: PositiveFloat = Field(
         5.0,
-        description="Timeout, in seconds, applied to the initial TCP and TLS handshake when establishing new connections.",
+        description=(
+            "Timeout, in seconds, applied to the initial TCP and TLS handshake when "
+            "establishing new connections."
+        ),
     )
     statement_timeout_ms: PositiveInt = Field(
         5000,

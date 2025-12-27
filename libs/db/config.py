@@ -87,7 +87,10 @@ class DatabaseSettings(BaseModel):
     runtime: DatabaseRuntimeConfig = Field(default_factory=DatabaseRuntimeConfig)
     echo_statements: bool = Field(
         False,
-        description="Enable SQLAlchemy statement logging. Should remain disabled in production for performance reasons.",
+        description=(
+            "Enable SQLAlchemy statement logging. Should remain disabled in production "
+            "for performance reasons."
+        ),
     )
 
     @model_validator(mode="after")

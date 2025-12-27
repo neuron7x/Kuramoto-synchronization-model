@@ -260,7 +260,11 @@ def get_controller_health(
         last_update = getattr(ctrl, "last_update", None)
         if flags & set(_SEROTONIN_PROXY_FLAGS):
             notes.append("proxy_inputs_active")
-        metrics_snapshot = telemetry.get(_SEROTONIN_KEY, {}).get("metrics", {}) if isinstance(telemetry, Mapping) else {}
+        metrics_snapshot = (
+            telemetry.get(_SEROTONIN_KEY, {}).get("metrics", {})
+            if isinstance(telemetry, Mapping)
+            else {}
+        )
         if metrics_snapshot and metrics_snapshot.get("cooldown_s", 0) and not cooldown:
             cooldown = metrics_snapshot.get("cooldown_s")
         status = "degraded" if notes else "ok"

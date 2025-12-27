@@ -70,8 +70,9 @@ class ManagedSecret:
                 f"Secret '{config.name}' must provide a fallback value or managed path."
             )
         if config.path is not None or config.resolver is not None:
-            # Attempt an eager refresh so missing files are detected on startup. If the refresh fails but a fallback value is
-            # available we continue using the fallback and log the failure so operators can investigate.
+            # Attempt an eager refresh so missing files are detected on startup.
+            # If refresh fails but a fallback value is available we continue using
+            # the fallback and log the failure so operators can investigate.
             try:
                 self._refresh(force=True)
             except SecretManagerError as exc:
