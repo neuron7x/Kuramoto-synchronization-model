@@ -252,9 +252,11 @@ def compute_phase(
     with context_manager:
         dtype = np.float32 if use_float32 else np.float64
         dtype_obj = np.dtype(dtype)
-        x = np.asarray(x)
-        if x.dtype != dtype_obj:
-            x = x.astype(dtype_obj)
+
+        def _ensure_dtype(arr: np.ndarray) -> np.ndarray:
+            return arr if arr.dtype == dtype_obj else arr.astype(dtype_obj)
+
+        x = np.asarray(x, dtype=dtype_obj)
         target = None
         if out is not None:
             target = np.asarray(out)
@@ -312,17 +314,13 @@ def compute_phase(
             analytic = np.fft.ifft(spectrum * h)
             real = analytic.real
             imag = analytic.imag
-            if real.dtype != dtype_obj:
-                real = real.astype(dtype_obj)
-            if imag.dtype != dtype_obj:
-                imag = imag.astype(dtype_obj)
+            real = _ensure_dtype(analytic.real)
+            imag = _ensure_dtype(analytic.imag)
         if target is not None:
             np.arctan2(imag, real, out=target)
             return target
         phases = np.arctan2(imag, real)
-        if phases.dtype != dtype_obj:
-            phases = phases.astype(dtype_obj)
-        return phases
+        return _ensure_dtype(phases)
 
 
 def kuramoto_order(

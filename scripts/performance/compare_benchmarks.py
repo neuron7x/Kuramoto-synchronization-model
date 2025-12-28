@@ -7,15 +7,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 
-def _load(path: str) -> Dict[str, Any]:
+def _load(path: str) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
-def compare_benchmarks(baseline_file: str, current_file: str, threshold: float) -> List[Dict[str, Any]]:
+def compare_benchmarks(baseline_file: str, current_file: str, threshold: float) -> list[dict[str, Any]]:
     baseline = _load(baseline_file)
     current = _load(current_file)
 

@@ -127,6 +127,7 @@ jobs:
           .venv/bin/python --version
           .venv/bin/pip --version
 
+      # Threshold temporarily relaxed for NumPy 2.x regressions
       - name: Compare performance against main
         run: |
           set -xuo pipefail
