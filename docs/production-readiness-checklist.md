@@ -13,6 +13,15 @@ Core checks:
 - [ ] Тест має timeout і не флейкить у >1% прогонів.
 - [ ] Документація "how to run locally" та "explain failure modes" присутня.
 
+## Reproducibility Checklist
+
+- [ ] Для кожного модельного артефакту зафіксовано `data_version` (або hash) і `code_version`.
+- [ ] Training data snapshot/version збережений у registry та доступний для відтворення.
+- [ ] Git SHA/релізний тег тренувального коду закріплений у run metadata.
+- [ ] Всі випадкові seed-и та nondeterministic налаштування описані в run notes.
+- [ ] Dependency lockfile (requirements.lock/poetry.lock) оновлено і прикріплено до run.
+- [ ] Контрольні артефакти (feature manifests, checksums) збережені разом із моделлю.
+
 ## Операційні артефакти
 
 - [ ] Runbook-и для продакшену оновлені та зібрані в `docs/operational_handbook.md`, включно з новими сценаріями у [`docs/OPERATIONS.md`](OPERATIONS.md).

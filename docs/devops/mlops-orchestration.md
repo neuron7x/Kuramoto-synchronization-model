@@ -76,7 +76,9 @@ reproducible. Artifacts uploaded to GitHub include:
 - `mlops-validation-logs` – Pytest cache and diagnostics from the `validate`
   job.
 - `mlops-training-artifacts` – Model JSON, metrics, run context, any optional
-  dataset copy, and the registry snapshot.
+  dataset copy, and the registry snapshot. Model artifacts include declared
+  `data_version` and `code_version` fields to describe training data and code
+  lineage.
 - `mlops-docker-image` – Tarball of the built Docker image ready for promotion.
 - `kustomize-<cloud>-manifest` – Dry-run manifests for AWS, GCP, and Azure.
 
