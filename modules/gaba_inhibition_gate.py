@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 import torch.nn as nn
 
+from modules.types import MarketState
 _MS_TO_SECONDS = 1000.0  # Conversion factor
 
 
@@ -158,8 +159,8 @@ class GABAInhibitionGate(nn.Module):
 
     Inputs
     ------
-    market_state : Dict[str, torch.Tensor]
-        Required keys: 'vol', 'ret', 'vix', 'pos', 'rpe', 'delta_t_ms'.
+    market_state : MarketState
+        Required keys: 'volatility', 'return', 'vix', 'position', 'rpe', 'delta_t_ms'.
     action : torch.Tensor
         Proposed action vector (e.g., position deltas). Shape (N,) or scalar.
 
@@ -252,14 +253,15 @@ class GABAInhibitionGate(nn.Module):
     # --- public API --------------------------------------------------------
     @torch.no_grad()
     def forward(
-        self, market_state: Dict[str, torch.Tensor], action: torch.Tensor
+        self, market_state: MarketState, action: torch.Tensor
     ) -> Tuple[torch.Tensor, GateMetrics]:
         """Apply GABA inhibition gate to action.
 
         Parameters
         ----------
-        market_state : Dict[str, torch.Tensor]
-            Market state with keys: 'vix', 'vol', 'ret', 'pos', 'rpe', 'delta_t_ms'
+        market_state : MarketState
+            Market state with keys: 'vix', 'volatility', 'return', 'position', 'rpe',
+            'delta_t_ms'
         action : torch.Tensor
             Proposed action vector
 
@@ -276,28 +278,37 @@ class GABAInhibitionGate(nn.Module):
             If tensors have invalid values (NaN, Inf)
         """
         # Validate inputs
-        required_keys = ["vix", "vol", "ret", "pos", "rpe", "delta_t_ms"]
+        required_keys = [
+            "vix",
+            "volatility",
+            "return",
+            "position",
+            "rpe",
+            "delta_t_ms",
+        ]
         missing_keys = [k for k in required_keys if k not in market_state]
         if missing_keys:
             raise KeyError(f"Missing required keys in market_state: {missing_keys}")
 
-        # Validate market_state tensors for NaN/Inf
+        # Validate market_state values for NaN/Inf
+        tensors: Dict[str, torch.Tensor] = {}
         for k in required_keys:
-            t = market_state[k].to(self.device)
+            t = torch.as_tensor(market_state[k], device=self.device, dtype=torch.float32)
             if torch.isnan(t).any() or torch.isinf(t).any():
                 raise ValueError(f"{k} contains NaN or Inf values")
+            tensors[k] = t
 
         # Ensure device/shape
         action = action.to(self.device)
         if torch.isnan(action).any() or torch.isinf(action).any():
             raise ValueError("action contains NaN or Inf values")
 
-        vix = market_state["vix"].to(self.device).reshape(1)
-        vol = market_state["vol"].to(self.device).reshape(1)
-        ret = market_state["ret"].to(self.device).reshape(1)
-        rpe = market_state["rpe"].to(self.device).reshape(1)
-        pos = market_state["pos"].to(self.device).reshape(1)
-        delta_t_ms = market_state["delta_t_ms"].to(self.device).reshape(1)
+        vix = tensors["vix"].reshape(1)
+        vol = tensors["volatility"].reshape(1)
+        ret = tensors["return"].reshape(1)
+        rpe = tensors["rpe"].reshape(1)
+        pos = tensors["position"].reshape(1)
+        delta_t_ms = tensors["delta_t_ms"].reshape(1)
         dt_ms = self._clamp_dt(delta_t_ms)
 
         # 1) GABA release ~ threat proxy (volatility) with dual time constants

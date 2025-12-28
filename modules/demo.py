@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pprint import pprint
 
 import numpy as np
@@ -25,15 +26,23 @@ def generate_sample_series(length: int = 180) -> tuple[np.ndarray, np.ndarray]:
 def main() -> None:
     prices, returns = generate_sample_series()
     volatility = returns.std(ddof=1)
+    market_state = {
+        "symbol": "BTC-USD",
+        "timestamp": datetime.now(),
+        "price": float(prices[-1]),
+        "prices": prices,
+        "returns": returns,
+        "volatility": float(volatility),
+    }
 
     regime_analyzer = MarketRegimeAnalyzer()
-    regime_metrics = regime_analyzer.classify_regime(prices, returns)
+    regime_metrics = regime_analyzer.classify_regime(market_state)
 
     risk_manager = AdaptiveRiskManager(base_capital=1_000_000, risk_tolerance=0.02)
-    risk_metrics = risk_manager.calculate_risk_metrics(returns)
-    position_limit = risk_manager.update_position_limits("BTC-USD", volatility)
+    risk_metrics = risk_manager.calculate_risk_metrics(market_state)
+    position_limit = risk_manager.update_position_limits(market_state)
     max_position = risk_manager.calculate_position_size(
-        "BTC-USD", price=float(prices[-1]), volatility=volatility, confidence=0.7
+        market_state, confidence=0.7
     )
 
     position_sizer = DynamicPositionSizer(base_capital=1_000_000)
