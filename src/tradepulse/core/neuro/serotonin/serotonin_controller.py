@@ -123,7 +123,7 @@ class SerotoninStepResult:
             return fields[idx]
 
         raise KeyError(
-            f"Key {key!r} not found; valid keys are: hold, veto, cooldown, level, temperature_floor"
+            f"Key {key!r} not found; valid keys are: hold, veto, cooldown, level, temperature_floor, desensitization"
         )
 
     def _tuple_fields(self) -> tuple[bool, bool, float, float]:
