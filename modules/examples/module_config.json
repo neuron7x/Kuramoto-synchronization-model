@@ -1,0 +1,27 @@
+{
+  "adaptive_risk_manager": {
+    "risk_tolerance": 0.03,
+    "var_window": 180,
+    "volatility_window": 30,
+    "enable_tacl_integration": true
+  },
+  "market_regime_analyzer": {
+    "regime_window": 120,
+    "transition_threshold": 0.75,
+    "min_regime_duration": 12
+  },
+  "execution_analyzer": {
+    "slippage_threshold_bps": 12.5,
+    "latency_threshold_ms": 150.0
+  },
+  "alert_manager": {
+    "deduplication_window_seconds": 180,
+    "max_history_size": 5000,
+    "enable_aggregation": true
+  },
+  "system_health_dashboard": {
+    "check_interval_seconds": 15.0,
+    "unhealthy_threshold_errors": 5,
+    "degraded_threshold_latency_ms": 750.0
+  }
+}

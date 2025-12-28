@@ -20,6 +20,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from pydantic import BaseModel, Field
 
+from modules.config import AdaptiveRiskManagerConfig
+
 
 class RiskLevel(str, Enum):
     """Рівні ризику"""
@@ -93,6 +95,7 @@ class AdaptiveRiskManager:
         var_window: int = 252,
         volatility_window: int = 20,
         enable_tacl_integration: bool = True,
+        config: Optional[AdaptiveRiskManagerConfig] = None,
     ):
         """
         Ініціалізація менеджера ризиків
@@ -104,11 +107,18 @@ class AdaptiveRiskManager:
             volatility_window: Вікно для розрахунку волатильності
             enable_tacl_integration: Увімкнути інтеграцію з TACL
         """
+        resolved_config = config or AdaptiveRiskManagerConfig(
+            risk_tolerance=risk_tolerance,
+            var_window=var_window,
+            volatility_window=volatility_window,
+            enable_tacl_integration=enable_tacl_integration,
+        )
+
         self.base_capital = base_capital
-        self.risk_tolerance = risk_tolerance
-        self.var_window = var_window
-        self.volatility_window = volatility_window
-        self.enable_tacl_integration = enable_tacl_integration
+        self.risk_tolerance = resolved_config.risk_tolerance
+        self.var_window = resolved_config.var_window
+        self.volatility_window = resolved_config.volatility_window
+        self.enable_tacl_integration = resolved_config.enable_tacl_integration
 
         # Внутрішній стан
         self._position_limits: Dict[str, PositionLimit] = {}

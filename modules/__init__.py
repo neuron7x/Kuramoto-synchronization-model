@@ -6,20 +6,27 @@ import importlib.util
 
 __all__ = [
     "AdaptiveRiskManager",
+    "AdaptiveRiskManagerConfig",
     "MarketRegimeAnalyzer",
+    "MarketRegimeAnalyzerConfig",
     "DynamicPositionSizer",
     "AgentCoordinator",
     # New engineering modules
     "SignalStrategyRegistry",
     "PortfolioOptimizer",
     "AlertManager",
+    "AlertManagerConfig",
     "BacktestReportGenerator",
     "OrderValidator",
     "DataQualityMonitor",
     "PerformanceTracker",
     "StrategyScheduler",
     "ExecutionAnalyzer",
+    "ExecutionAnalyzerConfig",
     "SystemHealthDashboard",
+    "SystemHealthDashboardConfig",
+    "ModulesConfig",
+    "load_modules_config",
 ]
 
 # Optional GABA gate (requires torch)
@@ -38,6 +45,15 @@ from modules.adaptive_risk_manager import AdaptiveRiskManager
 from modules.agent_coordinator import AgentCoordinator
 from modules.alert_manager import AlertManager
 from modules.backtest_report_generator import BacktestReportGenerator
+from modules.config import (
+    AdaptiveRiskManagerConfig,
+    AlertManagerConfig,
+    ExecutionAnalyzerConfig,
+    MarketRegimeAnalyzerConfig,
+    ModulesConfig,
+    SystemHealthDashboardConfig,
+    load_modules_config,
+)
 from modules.data_quality_monitor import DataQualityMonitor
 from modules.dynamic_position_sizer import DynamicPositionSizer
 from modules.execution_analyzer import ExecutionAnalyzer

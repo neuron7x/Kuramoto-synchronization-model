@@ -157,6 +157,33 @@ coordinator = AgentCoordinator(
 )
 ```
 
+## Конфігурація модулів через JSON
+
+Для повторюваних середовищ можна винести параметри ініціалізації в
+JSON-конфіг. Приклад готового файлу: `modules/examples/module_config.json`.
+
+```python
+from modules import (
+    AdaptiveRiskManager,
+    AlertManager,
+    ExecutionAnalyzer,
+    MarketRegimeAnalyzer,
+    SystemHealthDashboard,
+    load_modules_config,
+)
+
+config = load_modules_config("modules/examples/module_config.json")
+
+risk_manager = AdaptiveRiskManager(
+    base_capital=1_000_000,
+    config=config.adaptive_risk_manager,
+)
+regime_analyzer = MarketRegimeAnalyzer(config=config.market_regime_analyzer)
+execution_analyzer = ExecutionAnalyzer(config=config.execution_analyzer)
+alert_manager = AlertManager(config=config.alert_manager)
+health_dashboard = SystemHealthDashboard(config=config.system_health_dashboard)
+```
+
 Опційно для GABA gate (потрібен `torch`):
 
 ```python

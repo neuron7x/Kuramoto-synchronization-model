@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from modules.config import ExecutionAnalyzerConfig
+
 
 class ExecutionSide(str, Enum):
     """Сторона виконання"""
@@ -144,6 +146,7 @@ class ExecutionAnalyzer:
         slippage_threshold_bps: float = 10.0,
         latency_threshold_ms: float = 100.0,
         market_data_provider: Optional[Any] = None,
+        config: Optional[ExecutionAnalyzerConfig] = None,
     ):
         """
         Ініціалізація аналізатора
@@ -153,8 +156,13 @@ class ExecutionAnalyzer:
             latency_threshold_ms: Поріг latency в мс
             market_data_provider: Провайдер ринкових даних
         """
-        self.slippage_threshold_bps = slippage_threshold_bps
-        self.latency_threshold_ms = latency_threshold_ms
+        resolved_config = config or ExecutionAnalyzerConfig(
+            slippage_threshold_bps=slippage_threshold_bps,
+            latency_threshold_ms=latency_threshold_ms,
+        )
+
+        self.slippage_threshold_bps = resolved_config.slippage_threshold_bps
+        self.latency_threshold_ms = resolved_config.latency_threshold_ms
         self.market_data_provider = market_data_provider
 
         # Історія виконань

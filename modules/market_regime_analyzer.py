@@ -18,6 +18,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from modules.config import MarketRegimeAnalyzerConfig
+
 
 class RegimeType(str, Enum):
     """Типи ринкових режимів"""
@@ -79,6 +81,7 @@ class MarketRegimeAnalyzer:
         regime_window: int = 100,
         transition_threshold: float = 0.7,
         min_regime_duration: int = 10,
+        config: Optional[MarketRegimeAnalyzerConfig] = None,
     ):
         """
         Ініціалізація аналізатора режимів
@@ -88,9 +91,15 @@ class MarketRegimeAnalyzer:
             transition_threshold: Поріг впевненості для зміни режиму
             min_regime_duration: Мінімальна тривалість режиму в барах
         """
-        self.regime_window = regime_window
-        self.transition_threshold = transition_threshold
-        self.min_regime_duration = min_regime_duration
+        resolved_config = config or MarketRegimeAnalyzerConfig(
+            regime_window=regime_window,
+            transition_threshold=transition_threshold,
+            min_regime_duration=min_regime_duration,
+        )
+
+        self.regime_window = resolved_config.regime_window
+        self.transition_threshold = resolved_config.transition_threshold
+        self.min_regime_duration = resolved_config.min_regime_duration
 
         # Внутрішній стан
         self._current_regime = RegimeType.UNKNOWN

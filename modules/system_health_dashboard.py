@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from modules.config import SystemHealthDashboardConfig
+
 
 class ComponentStatus(str, Enum):
     """Статус компонента"""
@@ -122,6 +124,7 @@ class SystemHealthDashboard:
         check_interval_seconds: float = 30.0,
         unhealthy_threshold_errors: int = 3,
         degraded_threshold_latency_ms: float = 500.0,
+        config: Optional[SystemHealthDashboardConfig] = None,
     ):
         """
         Ініціалізація dashboard
@@ -131,9 +134,19 @@ class SystemHealthDashboard:
             unhealthy_threshold_errors: Поріг помилок для unhealthy
             degraded_threshold_latency_ms: Поріг latency для degraded
         """
-        self.check_interval_seconds = check_interval_seconds
-        self.unhealthy_threshold_errors = unhealthy_threshold_errors
-        self.degraded_threshold_latency_ms = degraded_threshold_latency_ms
+        resolved_config = config or SystemHealthDashboardConfig(
+            check_interval_seconds=check_interval_seconds,
+            unhealthy_threshold_errors=unhealthy_threshold_errors,
+            degraded_threshold_latency_ms=degraded_threshold_latency_ms,
+        )
+
+        self.check_interval_seconds = resolved_config.check_interval_seconds
+        self.unhealthy_threshold_errors = (
+            resolved_config.unhealthy_threshold_errors
+        )
+        self.degraded_threshold_latency_ms = (
+            resolved_config.degraded_threshold_latency_ms
+        )
 
         # Компоненти
         self._components: Dict[str, ComponentHealth] = {}

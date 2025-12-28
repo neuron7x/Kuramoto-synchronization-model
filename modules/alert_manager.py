@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from modules.config import AlertManagerConfig
+
 
 class AlertSeverity(str, Enum):
     """Рівень критичності алерта"""
@@ -137,6 +139,7 @@ class AlertManager:
         deduplication_window_seconds: int = 300,
         max_history_size: int = 10000,
         enable_aggregation: bool = True,
+        config: Optional[AlertManagerConfig] = None,
     ):
         """
         Ініціалізація менеджера алертів
@@ -146,9 +149,17 @@ class AlertManager:
             max_history_size: Максимальний розмір історії
             enable_aggregation: Увімкнути агрегацію схожих алертів
         """
-        self.deduplication_window_seconds = deduplication_window_seconds
-        self.max_history_size = max_history_size
-        self.enable_aggregation = enable_aggregation
+        resolved_config = config or AlertManagerConfig(
+            deduplication_window_seconds=deduplication_window_seconds,
+            max_history_size=max_history_size,
+            enable_aggregation=enable_aggregation,
+        )
+
+        self.deduplication_window_seconds = (
+            resolved_config.deduplication_window_seconds
+        )
+        self.max_history_size = resolved_config.max_history_size
+        self.enable_aggregation = resolved_config.enable_aggregation
 
         # Активні алерти
         self._active_alerts: Dict[str, Alert] = {}
