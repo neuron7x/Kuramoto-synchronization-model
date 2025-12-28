@@ -123,7 +123,8 @@ class SerotoninStepResult:
             return fields[idx]
 
         raise KeyError(
-            f"Key {key!r} not found; valid keys are: hold, veto, cooldown, level, temperature_floor"
+            f"Key {key!r} not found; valid keys are: hold, veto, cooldown, level, "
+            "temperature_floor, desensitization"
         )
 
     def _tuple_fields(self) -> tuple[bool, bool, float, float]:
@@ -1302,7 +1303,10 @@ class SerotoninController:
             return output
 
         stress = float(observation["stress"])
-        drawdown = float(observation["drawdown"])
+        raw_drawdown = float(observation["drawdown"])
+        drawdown = raw_drawdown
+        if self._active_profile == "v24":
+            drawdown = -abs(raw_drawdown)
         novelty = float(observation["novelty"])
         market_vol = float(observation.get("market_vol", stress))
         free_energy = float(observation.get("free_energy", novelty))
@@ -1476,8 +1480,16 @@ class SerotoninController:
         with self._lock:
             target = path or self.config_path
             tmp_target = f"{target}.tmp"
+            config_payload = {
+                key: self.config[key] for key in SerotoninConfig.model_fields.keys()
+            }
+            normalized_config = SerotoninConfig.model_validate(config_payload)
+            envelope = {
+                "active_profile": "v24",
+                "serotonin_v24": normalized_config.model_dump(),
+            }
             with open(tmp_target, "w", encoding="utf-8") as f:
-                yaml.safe_dump(self.config, f)
+                yaml.safe_dump(envelope, f)
                 f.flush()
                 os.fsync(f.fileno())
             try:
@@ -1491,7 +1503,7 @@ class SerotoninController:
             timestamp = time()
             audit_target = audit_dir / f"serotonin_{int(timestamp)}.yaml"
             with open(audit_target, "w", encoding="utf-8") as audit_file:
-                yaml.safe_dump(self.config, audit_file)
+                yaml.safe_dump(envelope, audit_file)
                 audit_file.flush()
                 os.fsync(audit_file.fileno())
             if os.path.exists(tmp_target):
