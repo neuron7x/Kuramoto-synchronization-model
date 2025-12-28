@@ -1,0 +1,20 @@
+{
+  "tradepulse_api_requests_total": {
+    "type": "counter",
+    "monotonic": true,
+    "finite": true,
+    "min": 0.0
+  },
+  "tradepulse_api_request_latency_seconds": {
+    "type": "histogram",
+    "finite": true,
+    "min": 0.0,
+    "max": 10.0
+  },
+  "tradepulse_process_cpu_percent": {
+    "type": "gauge",
+    "finite": true,
+    "min": 0.0,
+    "max": 100.0
+  }
+}

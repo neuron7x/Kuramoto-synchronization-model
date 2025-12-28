@@ -27,6 +27,10 @@ _HIGH_CARDINALITY_LABELS = {
     "hash",
     "token",
     "uuid",
+    "order_id",
+    "raw_path",
+    "address",
+    "uid",
 }
 
 
@@ -39,6 +43,7 @@ class CodeMetric:
     description: str
     labels: tuple[str, ...]
     sources: tuple[str, ...]
+    bindings: tuple[str, ...] = ()
 
 
 def _call_name(node: ast.AST) -> str | None:
@@ -82,16 +87,47 @@ def _extract_description(node: ast.Call) -> str:
     return ""
 
 
+def _binding_names(target: ast.AST) -> tuple[str, ...]:
+    """Return possible binding identifiers for an assignment target."""
+
+    if isinstance(target, ast.Name):
+        return (target.id,)
+    if isinstance(target, ast.Attribute):
+        parts: list[str] = []
+        current: ast.AST | None = target
+        while isinstance(current, ast.Attribute):
+            parts.append(current.attr)
+            current = current.value
+        if isinstance(current, ast.Name):
+            parts.append(current.id)
+        parts = list(reversed(parts))
+        dotted = ".".join(parts)
+        if dotted.startswith("self."):
+            return (dotted, dotted[len("self.") :], parts[-1])
+        return (dotted,)
+    if isinstance(target, ast.Tuple):
+        names: list[str] = []
+        for element in target.elts:
+            names.extend(_binding_names(element))
+        return tuple(names)
+    return ()
+
+
 def discover_code_metrics(root: Path) -> dict[str, CodeMetric]:
     """Parse Python sources to discover Prometheus metric declarations."""
 
     metrics: dict[str, CodeMetric] = {}
     for path in root.rglob("*.py"):
+        parents: dict[ast.AST, ast.AST] = {}
         try:
             content = path.read_text(encoding="utf-8")
             tree = ast.parse(content)
         except (UnicodeDecodeError, SyntaxError, OSError):
             continue
+
+        for node in ast.walk(tree):
+            for child in ast.iter_child_nodes(node):
+                parents[child] = node
 
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
@@ -112,17 +148,32 @@ def discover_code_metrics(root: Path) -> dict[str, CodeMetric]:
             metric_type = name.lower()
             description = _extract_description(node)
             labels = _extract_labels(node)
+            bindings: tuple[str, ...] = ()
+
+            parent = parents.get(node)
+            if isinstance(parent, (ast.Assign, ast.AnnAssign)):
+                targets: list[ast.AST] = []
+                if isinstance(parent, ast.Assign):
+                    targets = list(parent.targets)
+                elif isinstance(parent, ast.AnnAssign) and parent.target is not None:
+                    targets = [parent.target]
+                binding_names: list[str] = []
+                for target in targets:
+                    binding_names.extend(_binding_names(target))
+                bindings = tuple(sorted(set(binding_names)))
 
             existing = metrics.get(metric_name)
             if existing:
                 merged_sources = tuple(sorted(set(existing.sources + (str(path),))))
                 merged_labels = existing.labels or labels
+                merged_bindings = tuple(sorted(set(existing.bindings + bindings)))
                 metrics[metric_name] = CodeMetric(
                     name=metric_name,
                     type=existing.type,
                     description=existing.description or description,
                     labels=merged_labels,
                     sources=merged_sources,
+                    bindings=merged_bindings,
                 )
             else:
                 metrics[metric_name] = CodeMetric(
@@ -131,6 +182,7 @@ def discover_code_metrics(root: Path) -> dict[str, CodeMetric]:
                     description=description,
                     labels=tuple(labels),
                     sources=(str(path),),
+                    bindings=bindings,
                 )
     return metrics
 
@@ -221,34 +273,221 @@ def _validate_naming(metric: MetricDefinition) -> list[str]:
     duration_pattern = re.compile(r"(duration|latency)")
     if duration_pattern.search(metric.name) and not metric.name.endswith("_seconds"):
         issues.append("duration/latency metrics should be expressed in seconds")
+    ratio_pattern = re.compile(r"(^|_)ratio($|_)")
+    if ratio_pattern.search(metric.name) and not metric.name.endswith("_ratio"):
+        issues.append("ratio metrics should end with _ratio")
     return issues
+
+
+_DEAD_METRIC_WHITELIST = frozenset(
+    {
+        # Metrics updated indirectly via helper methods or background samplers.
+        "tradepulse_api_requests_in_flight",
+        "tradepulse_model_inference_latency_quantiles_seconds",
+        "tradepulse_data_ingestion_latency_quantiles_seconds",
+        "tradepulse_order_submission_latency_quantiles_seconds",
+        "tradepulse_order_ack_latency_quantiles_seconds",
+        "tradepulse_order_fill_latency_quantiles_seconds",
+        "tradepulse_signal_to_fill_latency_quantiles_seconds",
+        "tradepulse_signal_generation_latency_quantiles_seconds",
+        "tradepulse_optimization_duration_seconds",
+        "tradepulse_optimization_iterations_total",
+    }
+)
+
+_UPDATE_METHODS = {
+    "counter": {"inc"},
+    "gauge": {"inc", "dec", "set"},
+    "histogram": {"observe"},
+    "summary": {"observe"},
+}
+
+
+def _attribute_chain(node: ast.AST | None) -> str | None:
+    parts: list[str] = []
+    current = node
+    while current is not None:
+        if isinstance(current, ast.Attribute):
+            parts.append(current.attr)
+            current = current.value
+            continue
+        if isinstance(current, ast.Call):
+            current = current.func
+            continue
+        if isinstance(current, ast.Name):
+            parts.append(current.id)
+            return ".".join(reversed(parts))
+        break
+    return None
+
+
+def _binding_index(code_metrics: Mapping[str, CodeMetric]) -> dict[str, tuple[str, str]]:
+    index: dict[str, tuple[str, str]] = {}
+    for metric in code_metrics.values():
+        for binding in metric.bindings:
+            index[binding] = (metric.name, metric.type)
+    return index
+
+
+def _match_binding(chain: str | None, index: Mapping[str, tuple[str, str]]) -> tuple[str, str] | None:
+    if chain is None:
+        return None
+    candidates = set()
+    candidates.add(chain)
+    if chain.startswith("self."):
+        candidates.add(chain[len("self.") :])
+    segments = chain.split(".")
+    for idx in range(len(segments), 0, -1):
+        candidates.add(".".join(segments[:idx]))
+    for candidate in candidates:
+        if candidate in index:
+            return index[candidate]
+    return None
+
+
+def find_dead_metrics(root: Path, code_metrics: Mapping[str, CodeMetric]) -> list[dict[str, object]]:
+    """Return metrics that are declared but never updated."""
+
+    index = _binding_index(code_metrics)
+    used: set[str] = set()
+    allowed_methods = {method for methods in _UPDATE_METHODS.values() for method in methods}
+
+    for path in root.rglob("*.py"):
+        try:
+            content = path.read_text(encoding="utf-8")
+            tree = ast.parse(content)
+        except (UnicodeDecodeError, SyntaxError, OSError):
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            target = node.func
+            if not isinstance(target, ast.Attribute):
+                continue
+            method = target.attr
+            if method not in allowed_methods:
+                continue
+            chain = _attribute_chain(target.value)
+            match = _match_binding(chain, index)
+            if match is None:
+                continue
+            metric_name, metric_type = match
+            if method not in _UPDATE_METHODS.get(metric_type, allowed_methods):
+                continue
+            used.add(metric_name)
+
+    dead: list[dict[str, object]] = []
+    for metric in code_metrics.values():
+        if metric.name in _DEAD_METRIC_WHITELIST:
+            continue
+        if metric.name not in used:
+            dead.append(
+                {
+                    "metric": metric.name,
+                    "sources": sorted(set(metric.sources)),
+                }
+            )
+    return dead
+
+
+def _issue(metric: str, code: str, message: str, sources: Sequence[str] | None) -> dict[str, object]:
+    return {
+        "metric": metric,
+        "code": code,
+        "message": message,
+        "sources": sorted(set(sources or ())),
+    }
 
 
 def structural_issues(
     catalog: Mapping[str, MetricDefinition], code_metrics: Mapping[str, CodeMetric]
-) -> dict[str, list[str]]:
-    issues: dict[str, list[str]] = {}
+) -> list[dict[str, object]]:
+    issues: list[dict[str, object]] = []
+    code_names = set(code_metrics)
+
     for name, metric in catalog.items():
-        metric_issues: list[str] = []
         code_metric = code_metrics.get(name)
-        if code_metric is None:
-            metric_issues.append("metric not found in code inventory")
-        else:
-            if metric.type != code_metric.type:
-                metric_issues.append(
-                    f"type mismatch: catalog={metric.type} code={code_metric.type}"
+        sources = code_metric.sources if code_metric else ()
+
+        if len(metric.description.strip()) <= 8:
+            issues.append(
+                _issue(
+                    name,
+                    "description_too_short",
+                    "metric description must be longer than 8 characters",
+                    sources,
                 )
-            if tuple(metric.labels) != tuple(code_metric.labels):
-                metric_issues.append(
-                    f"label mismatch: catalog={metric.labels} code={list(code_metric.labels)}"
-                )
-        metric_issues.extend(_validate_naming(metric))
-        denylisted = [label for label in metric.labels if label.lower() in _HIGH_CARDINALITY_LABELS]
+            )
+
+        type_mismatches = _validate_naming(metric)
+        for mismatch in type_mismatches:
+            issues.append(_issue(name, "naming", mismatch, sources))
+
+        denylisted = [
+            label for label in metric.labels if label.lower() in _HIGH_CARDINALITY_LABELS
+        ]
         if denylisted:
-            metric_issues.append(f"denylisted labels present: {', '.join(sorted(denylisted))}")
-        if metric_issues:
-            issues[name] = metric_issues
+            issues.append(
+                _issue(
+                    name,
+                    "denylisted_label",
+                    f"denylisted labels present: {', '.join(sorted(denylisted))}",
+                    sources,
+                )
+            )
+
+        if code_metric is None:
+            issues.append(
+                _issue(
+                    name,
+                    "missing_in_code",
+                    "metric not found in code inventory",
+                    (),
+                )
+            )
+            continue
+
+        if metric.type != code_metric.type:
+            issues.append(
+                _issue(
+                    name,
+                    "type_mismatch",
+                    f"type mismatch: catalog={metric.type} code={code_metric.type}",
+                    sources,
+                )
+            )
+
+        if tuple(metric.labels) != tuple(code_metric.labels):
+            issues.append(
+                _issue(
+                    name,
+                    "label_mismatch",
+                    f"label mismatch: catalog={metric.labels} code={list(code_metric.labels)}",
+                    sources,
+                )
+            )
+
+        code_names.discard(name)
+
+    for orphan in sorted(code_names):
+        issues.append(
+            _issue(
+                orphan,
+                "missing_in_catalog",
+                "metric declared in code is missing from catalog",
+                code_metrics[orphan].sources,
+            )
+        )
+
     return issues
+
+
+def summarise_catalog(catalog: Mapping[str, MetricDefinition]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for metric in catalog.values():
+        counts[metric.type] = counts.get(metric.type, 0) + 1
+    return counts
 
 
 def registry_smoke_test(definitions: Iterable[MetricDefinition]) -> list[str]:
