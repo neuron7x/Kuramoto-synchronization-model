@@ -1,0 +1,72 @@
+"""Run memory_profiler on a NeuroOptimizer loop."""
+
+from __future__ import annotations
+
+from pathlib import Path
+import importlib.util
+import sys
+
+import numpy as np
+
+try:
+    from memory_profiler import memory_usage
+except ImportError:  # pragma: no cover - optional dependency
+    memory_usage = None
+
+
+def _load_optimizer():
+    module_path = Path("src/tradepulse/core/neuro/neuro_optimizer.py")
+    spec = importlib.util.spec_from_file_location("neuro_optimizer", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Unable to load neuro_optimizer module")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.NeuroOptimizer, module.OptimizationConfig
+
+
+def _run_steps(steps: int = 200) -> None:
+    rng = np.random.default_rng(13)
+    NeuroOptimizer, OptimizationConfig = _load_optimizer()
+    optimizer = NeuroOptimizer(OptimizationConfig(dtype="float32"))
+    params = {
+        "dopamine": {"learning_rate": 0.01, "discount_gamma": 0.99},
+        "serotonin": {"learning_rate": 0.01},
+        "gaba": {"learning_rate": 0.01},
+        "na_ach": {"learning_rate": 0.01},
+    }
+    state = {
+        "dopamine_level": 0.55,
+        "serotonin_level": 0.35,
+        "gaba_inhibition": 0.45,
+        "na_arousal": 1.05,
+        "ach_attention": 0.75,
+    }
+
+    for _ in range(steps):
+        performance = float(rng.normal(loc=0.5, scale=0.1))
+        params, _ = optimizer.optimize(params, state, performance)
+
+
+def main() -> None:
+    if memory_usage is None:
+        raise SystemExit("memory_profiler is not installed")
+
+    out_dir = Path("reports")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "neuro_optimizer_memory_profile.txt"
+
+    samples = memory_usage((_run_steps,))
+    peak = max(samples) if samples else 0.0
+
+    with out_path.open("w", encoding="utf-8") as handle:
+        handle.write("Memory profiler samples (MB):\n")
+        handle.write("\n".join(str(sample) for sample in samples))
+        handle.write("\n")
+        handle.write(f"Peak: {peak:.3f} MB\n")
+
+    print(f"Wrote memory profile to {out_path}")
+
+
+if __name__ == "__main__":
+    main()
