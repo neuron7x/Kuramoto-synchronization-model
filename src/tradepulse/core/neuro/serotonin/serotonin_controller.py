@@ -1303,6 +1303,16 @@ class SerotoninController:
 
         stress = float(observation["stress"])
         drawdown = float(observation["drawdown"])
+        raw_drawdown = drawdown
+        if self._active_profile == "v24" and raw_drawdown > 0:
+            if not getattr(self, "_positive_drawdown_warned", False):
+                logging.getLogger(__name__).warning(
+                    "drawdown should be negative or zero (e.g., -0.05 for 5%% loss); "
+                    "received %.4f, coercing to negative",
+                    raw_drawdown,
+                )
+                self._positive_drawdown_warned = True
+        drawdown = -abs(raw_drawdown)
         novelty = float(observation["novelty"])
         market_vol = float(observation.get("market_vol", stress))
         free_energy = float(observation.get("free_energy", novelty))
