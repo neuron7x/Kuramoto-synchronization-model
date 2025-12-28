@@ -197,7 +197,7 @@ def _config_strategy(draw):
 
 
 @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
-@settings(seed=20240301, max_examples=25)
+@settings(max_examples=25)
 @given(cfg=_config_strategy())
 def test_dopamine_invariants_property(cfg: dict) -> None:
     invariants = [
