@@ -242,6 +242,13 @@ def test_reason_codes_flow_to_trace(serotonin_controller):
     assert isinstance(event["reason_codes"], list)
 
 
+def test_positive_drawdown_triggers_spike(serotonin_controller):
+    ctrl = serotonin_controller
+    out = ctrl.update(_obs(stress=0.2, drawdown=0.2, novelty=0.2))
+    assert out.action_gate == "HOLD_OR_REDUCE_ONLY"
+    assert "DRAWDOWN_SPIKE" in out.reason_codes
+
+
 def test_no_cyclic_imports(serotonin_module):
     assert "tests" not in serotonin_module.SerotoninController.__module__
 
