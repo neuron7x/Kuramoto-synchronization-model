@@ -30,7 +30,7 @@ cryptography==46.0.3
 deap==1.4.3
 exchange-calendars==4.11.1
 extra-streamlit-components==0.1.81
-fastapi==0.124.2
+fastapi==0.128.0
 filelock==3.20.1
 frozenlist==1.8.0
 fsspec==2025.12.0
@@ -99,7 +99,7 @@ psycopg-binary==3.2.11
 pyarrow==21.0.0
 pycares==4.11.0
 pycparser==2.23
-pydantic==2.12.4
+pydantic==2.12.5
 pydantic-core==2.41.5
 pydantic-settings==2.12.0
 pydeck==0.9.1
@@ -139,7 +139,7 @@ typing-inspect==0.9.0
 typing-inspection==0.4.2
 tzdata==2025.2
 urllib3==2.6.0
-uvicorn==0.37.0
+uvicorn==0.40.0
 watchdog==6.0.0
 websockets==15.0.1
 yarl==1.22.0
@@ -195,7 +195,7 @@ docutils==0.22.2
 exchange-calendars==4.11.1
 execnet==2.1.1
 extra-streamlit-components==0.1.81
-fastapi==0.124.2
+fastapi==0.128.0
 filelock==3.20.1
 flake8==7.1.1
 frozenlist==1.8.0
@@ -305,7 +305,7 @@ pyarrow==21.0.0
 pycares==4.11.0
 pycodestyle==2.12.1
 pycparser==2.23
-pydantic==2.12.4
+pydantic==2.12.5
 pydantic-core==2.41.5
 pydantic-settings==2.12.0
 pydeck==0.9.1
@@ -382,7 +382,7 @@ uc-micro-py==1.0.3
 unidecode==1.4.0
 uritemplate==4.2.0
 urllib3==2.6.0
-uvicorn==0.37.0
+uvicorn==0.40.0
 watchdog==6.0.0
 websockets==15.0.1
 wheel==0.45.1
@@ -426,7 +426,7 @@ cryptography==46.0.3
 deap==1.4.3
 exchange-calendars==4.11.1
 extra-streamlit-components==0.1.81
-fastapi==0.124.2
+fastapi==0.128.0
 filelock==3.20.1
 frozenlist==1.8.0
 fsspec==2025.12.0
@@ -480,7 +480,7 @@ psycopg-binary==3.2.11
 pyarrow==21.0.0
 pycares==4.11.0
 pycparser==2.23
-pydantic==2.12.4
+pydantic==2.12.5
 pydantic-core==2.41.5
 pydantic-settings==2.12.0
 pydeck==0.9.1
@@ -518,7 +518,7 @@ typing-inspect==0.9.0
 typing-inspection==0.4.2
 tzdata==2025.2
 urllib3==2.6.0
-uvicorn==0.37.0
+uvicorn==0.40.0
 watchdog==6.0.0
 websockets==15.0.1
 yarl==1.22.0
