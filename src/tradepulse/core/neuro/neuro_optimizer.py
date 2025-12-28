@@ -57,6 +57,10 @@ class OptimizationConfig:
         Maximum optimization iterations per session
     convergence_threshold : float
         Convergence threshold for early stopping
+    dtype : str
+        Floating point dtype for numerical buffers (e.g., "float32")
+    use_gpu : bool
+        Whether to attempt a CuPy-backed execution path (optional)
     enable_plasticity : bool
         Enable synaptic plasticity optimization
     plasticity_window : int
@@ -77,6 +81,8 @@ class OptimizationConfig:
     momentum: float = 0.9
     max_iterations: int = 100
     convergence_threshold: float = 0.001
+    dtype: str = "float32"
+    use_gpu: bool = False
     enable_plasticity: bool = True
     plasticity_window: int = 50
     regime_adaptation: bool = True
@@ -108,6 +114,11 @@ class OptimizationConfig:
 
         if not 0 <= self.momentum < 1:
             raise ValueError("Momentum must be in [0, 1)")
+
+        try:
+            np.dtype(self.dtype)
+        except TypeError as exc:
+            raise ValueError(f"Invalid dtype supplied: {self.dtype}") from exc
 
 
 @dataclass
@@ -171,10 +182,27 @@ class NeuroOptimizer:
 
         # Homeostatic setpoints
         self._setpoints = self._initialize_setpoints()
+        self._dtype = np.dtype(self.config.dtype)
+        self._xp = self._select_array_module()
 
         # Performance tracking
         self._performance_history: List[float] = []
         self._balance_history: List[BalanceMetrics] = []
+
+    def _select_array_module(self):
+        """Select numpy or an optional CuPy backend."""
+        if not self.config.use_gpu:
+            return np
+        try:
+            import cupy as cp
+
+            return cp
+        except ImportError:
+            return np
+
+    def _to_array(self, values: List[float]):
+        """Create a contiguous buffer with the configured dtype."""
+        return self._xp.asarray(values, dtype=self._dtype, order="C")
 
     def _initialize_setpoints(self) -> Dict[str, float]:
         """Initialize homeostatic setpoints for each neuromodulator.
@@ -262,39 +290,46 @@ class NeuroOptimizer:
             Computed balance metrics
         """
         # Extract state values with defaults
-        da_level = state.get('dopamine_level', 0.5)
-        sero_level = state.get('serotonin_level', 0.3)
-        gaba_inhib = state.get('gaba_inhibition', 0.4)
-        arousal = state.get('na_arousal', 1.0)
-        attention = state.get('ach_attention', 0.7)
+        da_level, sero_level, gaba_inhib, arousal, attention = self._to_array(
+            [
+                state.get('dopamine_level', 0.5),
+                state.get('serotonin_level', 0.3),
+                state.get('gaba_inhibition', 0.4),
+                state.get('na_arousal', 1.0),
+                state.get('ach_attention', 0.7),
+            ]
+        )
 
         # Calculate ratios
-        da_5ht_ratio = da_level / (sero_level + 1e-6)
+        da_5ht_ratio = da_level / (sero_level + self._dtype.type(1e-6))
 
         # Excitation-inhibition balance (higher dopamine = more excitation)
         excitation = da_level + arousal
         inhibition = gaba_inhib + sero_level
-        ei_balance = excitation / (inhibition + 1e-6)
+        ei_balance = excitation / (inhibition + self._dtype.type(1e-6))
 
         # Arousal-attention coherence (should be correlated)
-        aa_coherence = 1.0 - abs(arousal - attention) / 2.0
+        aa_coherence = (
+            self._dtype.type(1.0)
+            - self._xp.abs(arousal - attention) / self._dtype.type(2.0)
+        )
 
         # Calculate deviations from setpoints
-        da_5ht_dev = abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
-        ei_dev = abs(ei_balance - self._setpoints['excitation_inhibition']) / self._setpoints['excitation_inhibition']
+        da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
+        ei_dev = self._xp.abs(ei_balance - self._setpoints['excitation_inhibition']) / self._setpoints['excitation_inhibition']
 
         # Overall homeostatic deviation
-        homeostatic_dev = (da_5ht_dev + ei_dev) / 2.0
+        homeostatic_dev = (da_5ht_dev + ei_dev) / self._dtype.type(2.0)
 
         # Overall balance score (inverse of deviation)
-        balance_score = 1.0 / (1.0 + homeostatic_dev)
+        balance_score = self._dtype.type(1.0) / (self._dtype.type(1.0) + homeostatic_dev)
 
         return BalanceMetrics(
-            dopamine_serotonin_ratio=da_5ht_ratio,
-            gaba_excitation_balance=ei_balance,
-            arousal_attention_coherence=aa_coherence,
-            overall_balance_score=balance_score,
-            homeostatic_deviation=homeostatic_dev,
+            dopamine_serotonin_ratio=float(da_5ht_ratio),
+            gaba_excitation_balance=float(ei_balance),
+            arousal_attention_coherence=float(aa_coherence),
+            overall_balance_score=float(balance_score),
+            homeostatic_deviation=float(homeostatic_dev),
         )
 
     def _calculate_objective(
@@ -322,7 +357,9 @@ class NeuroOptimizer:
         # Normalize performance to [0, 1] with configurable Sharpe bounds
         # Typical Sharpe ranges: [-2, 3] but can be adjusted
         sharpe_min, sharpe_max = -2.0, 3.0
-        perf_normalized = np.clip((performance - sharpe_min) / (sharpe_max - sharpe_min), 0, 1)
+        perf_normalized = float(
+            np.clip((performance - sharpe_min) / (sharpe_max - sharpe_min), 0, 1)
+        )
 
         # Balance objective (already in [0, 1])
         balance_obj = balance.overall_balance_score
@@ -330,8 +367,11 @@ class NeuroOptimizer:
         # Stability objective (variance over recent history)
         if len(self._performance_history) > 10:
             recent_perf = self._performance_history[-10:]
-            stability = 1.0 - np.std(recent_perf) / (np.mean(recent_perf) + 1e-6)
-            stability = np.clip(stability, 0, 1)
+            recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
+            stability = self._dtype.type(1.0) - self._xp.std(recent_array) / (
+                self._xp.mean(recent_array) + self._dtype.type(1e-6)
+            )
+            stability = float(self._xp.clip(stability, 0, 1))
         else:
             stability = 0.5  # Neutral until we have history
 
