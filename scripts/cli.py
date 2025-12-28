@@ -51,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
         backup,
         bootstrap,
         build_core,
+        dependency_health,
         dev,
         fpma,
         lint,
@@ -72,6 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
     lint.build_parser(subparsers)
     proto.build_parser(subparsers)
     test_cmd.build_parser(subparsers)
+    dependency_health.build_parser(subparsers)
     fpma.build_parser(subparsers)
     live.build_parser(subparsers)
     nightly.build_parser(subparsers)
