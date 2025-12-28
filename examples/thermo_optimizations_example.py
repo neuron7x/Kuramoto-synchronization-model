@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 import networkx as nx
+import numpy as np
 
 from runtime.thermo_cache import ThermoCache, VectorizedOperations
 from runtime.thermo_controller import ThermoController
@@ -19,6 +20,8 @@ from runtime.thermo_performance import (
     timed,
     timing_context,
 )
+
+SEED = 42
 
 
 def create_sample_graph() -> nx.DiGraph:
@@ -107,8 +110,6 @@ def example_2_vectorized_operations():
     print("\n" + "=" * 60)
     print("Example 2: Vectorized Operations")
     print("=" * 60)
-
-    import numpy as np
 
     # Generate sample data
     n_samples = 100
@@ -297,8 +298,6 @@ def example_5_benchmarking():
 
     def compute_v3(n):
         """Vectorized implementation."""
-        import numpy as np
-
         return np.sum(np.arange(n) ** 2)
 
     print("\nBenchmarking 3 implementations...")
@@ -386,6 +385,7 @@ def example_6_integrated_usage():
 
 def main():
     """Run all examples."""
+    np.random.seed(SEED)
     print("\n" + "=" * 60)
     print("THERMODYNAMICS OPTIMIZATION EXAMPLES")
     print("=" * 60)

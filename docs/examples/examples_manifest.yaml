@@ -1,0 +1,172 @@
+examples:
+  - path: examples/agent_usage_demo.py
+    description: Agent system bandits, orchestration, scheduling, and strategy memory demo.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/architecture_integrator_demo.py
+    description: Architecture integrator lifecycle and health monitoring walkthrough.
+    seed: n/a
+    dependencies: []
+
+  - path: examples/automated_risk_testing_demo.py
+    description: Automated risk testing scenarios and validations.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/data_pipeline_demo.py
+    description: OHLCV pipeline validation and indicator enrichment.
+    seed: 42
+    dependencies:
+      - pandas==2.3.3
+
+  - path: examples/dopamine_td_backtest_example.py
+    description: Dopamine TD backtest with synthetic returns.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/ecs_motivation_integration.py
+    description: Emotion-Cognition System motivation integration demo.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/ecs_regulator_demo.py
+    description: ECS regulator monitoring with synthetic market data.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/energy_validation_example.py
+    description: Energy validator configuration and rule checks.
+    seed: n/a
+    dependencies: []
+
+  - path: examples/fractal_regulator_demo.py
+    description: Fractal regulator crisis detection scenarios.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/hpc_ai_v4_demo.py
+    description: HPC-AI v4 end-to-end integration demo.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/integrated_risk_management_example.py
+    description: Integrated risk management pipeline example.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/integration_snippet.py
+    description: Dopamine controller policy loop integration snippet.
+    seed: n/a
+    dependencies: []
+
+  - path: examples/live_trading_validation_demo.py
+    description: Live trading configuration validation checks.
+    seed: n/a
+    dependencies:
+      - pyyaml==6.0.3
+
+  - path: examples/module_interaction_orchestrator_demo.py
+    description: Orchestrated module interaction flows.
+    seed: n/a
+    dependencies: []
+
+  - path: examples/neuro_optimization_cycle.py
+    description: Full neuro-optimization calibration cycle demo.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/neuro_optimization_validation.py
+    description: Lightweight validation for neuro-optimization modules.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/neuro_orchestrator_demo.py
+    description: Neuro orchestration scenario assembly demo.
+    seed: n/a
+    dependencies: []
+
+  - path: examples/neuro_trade_pulse_backtest.py
+    description: NeuroTrade PRO backtest walkthrough.
+    seed:
+      - 42
+      - 17
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/neuro_trade_pulse_snapshot.py
+    description: Market regime snapshot generation.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/optimization_examples.py
+    description: Performance and caching optimization patterns.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/performance_demo.py
+    description: Performance optimization benchmarks.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/quick_start.py
+    description: Quickstart indicators and backtest walkthrough.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+
+  - path: examples/serotonin_observability_demo.py
+    description: Serotonin observability telemetry walkthrough.
+    seed: n/a
+    dependencies:
+      - pyyaml==6.0.3
+
+  - path: examples/serotonin_practical_integration.py
+    description: Serotonin controller practical integration scenarios.
+    seed: n/a
+    dependencies:
+      - pyyaml==6.0.3
+
+  - path: examples/serotonin_validation_demo.py
+    description: Serotonin validation signal checks.
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/simple_market_feed_demo.py
+    description: Simple market feed payload processing.
+    seed: n/a
+    dependencies: []
+
+  - path: examples/thermo_hpc_ai_integration.py
+    description: ThermoController HPC-AI integration loop.
+    seed: 42
+    dependencies:
+      - networkx==3.5
+
+  - path: examples/thermo_optimizations_example.py
+    description: Thermodynamics optimization and caching demos.
+    seed: 42
+    dependencies:
+      - networkx==3.5
+      - numpy==2.3.3

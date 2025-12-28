@@ -17,6 +17,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+# Deterministic benchmark data generation.
+SEED = 42
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -294,6 +297,7 @@ def feature_class_demo():
 
 def main():
     """Run all benchmarks."""
+    np.random.seed(SEED)
     print("\n")
     print("╔" + "=" * 68 + "╗")
     print("║" + " TradePulse Performance Optimization Demonstration ".center(68) + "║")

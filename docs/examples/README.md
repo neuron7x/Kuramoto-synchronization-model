@@ -21,6 +21,14 @@ These same quickstarts are used for CI smoke tests so compatibility with
 
 ---
 
+## Example Catalog (Seeds + Dependencies)
+
+All example scripts are indexed in [`docs/examples/examples_manifest.yaml`](examples_manifest.yaml).
+The manifest lists deterministic seeds and the pinned dependencies (from
+`requirements.lock`) required by each example.
+
+---
+
 ## Quick Examples
 
 ### 1. Basic Analysis
@@ -413,4 +421,4 @@ python example.py
 
 ---
 
-**Last Updated**: 2025-01-01
+**Last Updated**: 2025-12-28
