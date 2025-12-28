@@ -76,7 +76,7 @@ nvidia-cusparselt-cu12==0.7.1
 nvidia-nccl-cu12==2.27.5
 nvidia-nvjitlink-cu12==12.8.93
 nvidia-nvshmem-cu12==3.3.20
-nvidia-nvtx-cu12==12.8.90
+nvidia-nvtx-cu12==12.9.79
 omegaconf==2.3.0
 opentelemetry-api==1.38.0
 opentelemetry-exporter-otlp==1.38.0
@@ -267,7 +267,7 @@ nvidia-ml-py==13.580.82
 nvidia-nccl-cu12==2.27.5
 nvidia-nvjitlink-cu12==12.8.93
 nvidia-nvshmem-cu12==3.3.20
-nvidia-nvtx-cu12==12.8.90
+nvidia-nvtx-cu12==12.9.79
 omegaconf==2.3.0
 opentelemetry-api==1.38.0
 opentelemetry-exporter-otlp==1.38.0
