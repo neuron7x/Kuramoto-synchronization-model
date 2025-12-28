@@ -73,7 +73,7 @@ def _assert_flag(tree: ast.AST, expected: bool) -> bool:
             if target == "__CANONICAL__":
                 try:
                     value = ast.literal_eval(node.value)  # type: ignore[arg-type]
-                except Exception:
+                except (ValueError, SyntaxError, TypeError):
                     return False
                 return value is expected
     return False

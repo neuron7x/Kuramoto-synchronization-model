@@ -57,6 +57,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 __CANONICAL__ = True
+DEFAULT_ACTIVE_PROFILE: Literal["v24", "legacy"] = "v24"
 
 
 class _ConfigView(dict):
@@ -278,7 +279,7 @@ class SerotoninConfigEnvelope(BaseModel):
     The active_profile field selects which profile to use at runtime.
     """
 
-    active_profile: Literal["v24", "legacy"] = "v24"
+    active_profile: Literal["v24", "legacy"] = DEFAULT_ACTIVE_PROFILE
     serotonin_v24: Optional[SerotoninConfig] = None
     serotonin_legacy: Optional[SerotoninLegacyConfig] = None
 
@@ -533,7 +534,9 @@ class SerotoninController:
         if "active_profile" not in raw_cfg:
             raw_keys = set(raw_cfg.keys())
             if "serotonin_v24" in raw_cfg or "serotonin_legacy" in raw_cfg:
-                default_profile = "v24" if "serotonin_v24" in raw_cfg else "legacy"
+                default_profile = (
+                    DEFAULT_ACTIVE_PROFILE if "serotonin_v24" in raw_cfg else "legacy"
+                )
                 logging.getLogger(__name__).warning(
                     "No active_profile provided; defaulting to '%s' profile", default_profile
                 )
@@ -546,9 +549,13 @@ class SerotoninController:
                 raw_cfg = {"active_profile": "legacy", "serotonin_legacy": raw_cfg}
             else:
                 logging.getLogger(__name__).warning(
-                    "No active_profile provided; defaulting to v24 profile."
+                    "No active_profile provided; defaulting to %s profile.",
+                    DEFAULT_ACTIVE_PROFILE,
                 )
-                raw_cfg = {"active_profile": "v24", "serotonin_v24": raw_cfg}
+                raw_cfg = {
+                    "active_profile": DEFAULT_ACTIVE_PROFILE,
+                    "serotonin_v24": raw_cfg,
+                }
 
         allowed_root = {"active_profile", "serotonin_v24", "serotonin_legacy"}
         unknown_root = sorted(set(raw_cfg.keys()) - allowed_root)
