@@ -188,6 +188,56 @@ class TestSerotoninConfigEnvelope:
 class TestSerotoninConfigContract:
     """Tests for config contract loading and validation."""
 
+    def test_save_and_reload_config_roundtrip(self, tmp_path):
+        """Test saving and reloading config preserves schema without derived keys."""
+        config = {
+            "active_profile": "v24",
+            "serotonin_v24": {
+                "alpha": 0.5,
+                "beta": 0.3,
+                "gamma": 0.4,
+                "delta_rho": 0.2,
+                "k": 1.5,
+                "theta": 0.0,
+                "delta": 0.5,
+                "za_bias": 0.0,
+                "decay_rate": 0.01,
+                "cooldown_threshold": 0.7,
+                "desens_threshold_ticks": 3,
+                "desens_rate": 0.05,
+                "target_dd": 0.15,
+                "target_sharpe": 1.5,
+                "beta_temper": 0.5,
+                "phase_threshold": 0.7,
+                "phase_kappa": 2.0,
+                "burst_factor": 0.35,
+                "mod_t_max": 10.0,
+                "mod_t_half": 5.0,
+                "mod_k": 0.5,
+                "max_desens_counter": 10,
+                "desens_gain": 0.8,
+                "gate_veto": 0.9,
+                "phasic_veto": 1.0,
+                "temperature_floor_min": 0.1,
+                "temperature_floor_max": 0.6,
+                "hysteresis_margin": 0.05,
+            },
+        }
+        config_path = tmp_path / "serotonin.yaml"
+        config_path.write_text(yaml.safe_dump(config))
+
+        controller = SerotoninController(str(config_path))
+        controller.save_config_to_yaml()
+
+        saved = yaml.safe_load(config_path.read_text())
+        assert saved["active_profile"] == "v24"
+        assert "serotonin_v24" in saved
+        assert "floor_min" not in saved["serotonin_v24"]
+        assert "floor_max" not in saved["serotonin_v24"]
+
+        reloaded = SerotoninController(str(config_path))
+        assert reloaded.config["alpha"] == pytest.approx(0.5)
+
     def test_load_production_config(self):
         """Test loading the production serotonin.yaml config file."""
         config_path = Path(__file__).parents[4] / "configs" / "serotonin.yaml"

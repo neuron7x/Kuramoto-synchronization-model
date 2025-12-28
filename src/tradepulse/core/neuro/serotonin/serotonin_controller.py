@@ -524,7 +524,9 @@ class SerotoninController:
     """
 
     @staticmethod
-    def _load_config(path: Path) -> tuple[SerotoninConfig, Literal["v24", "legacy"]]:
+    def _load_config(
+        path: Path,
+    ) -> tuple[SerotoninConfigEnvelope, SerotoninConfig, Literal["v24", "legacy"]]:
         """Load and validate serotonin configuration from YAML.
 
         Supports multi-profile configs with active_profile selector.
@@ -568,7 +570,8 @@ class SerotoninController:
             envelope = SerotoninConfigEnvelope.model_validate(raw_cfg)
         except ValidationError as exc:
             raise ValueError(f"Invalid serotonin root configuration: {exc}") from exc
-        return envelope.get_active_config()
+        config_model, active_profile = envelope.get_active_config()
+        return envelope, config_model, active_profile
 
     def __init__(
         self,
@@ -587,7 +590,8 @@ class SerotoninController:
         """
         resolved_path = self._resolve_config_path(config_path)
         self.config_path = str(resolved_path)
-        config_model, active_profile = self._load_config(resolved_path)
+        envelope, config_model, active_profile = self._load_config(resolved_path)
+        self._config_envelope = envelope
         self._config_model = config_model
         self.config = _ConfigView(config_model.model_dump())
         self.config["floor_min"] = self.config.get(
@@ -1484,10 +1488,29 @@ class SerotoninController:
         """Persist the current configuration to disk."""
 
         with self._lock:
+            config_payload = {
+                key: self.config[key]
+                for key in SerotoninConfig.model_fields
+                if key in self.config
+            }
+            config_model = SerotoninConfig(**config_payload)
+            if (
+                self._active_profile == "legacy"
+                and self._config_envelope.serotonin_legacy is not None
+            ):
+                serialized = {
+                    "active_profile": "legacy",
+                    "serotonin_legacy": self._config_envelope.serotonin_legacy.model_dump(),
+                }
+            else:
+                serialized = {
+                    "active_profile": "v24",
+                    "serotonin_v24": config_model.model_dump(),
+                }
             target = path or self.config_path
             tmp_target = f"{target}.tmp"
             with open(tmp_target, "w", encoding="utf-8") as f:
-                yaml.safe_dump(self.config, f)
+                yaml.safe_dump(serialized, f)
                 f.flush()
                 os.fsync(f.fileno())
             try:
@@ -1501,7 +1524,7 @@ class SerotoninController:
             timestamp = time()
             audit_target = audit_dir / f"serotonin_{int(timestamp)}.yaml"
             with open(audit_target, "w", encoding="utf-8") as audit_file:
-                yaml.safe_dump(self.config, audit_file)
+                yaml.safe_dump(serialized, audit_file)
                 audit_file.flush()
                 os.fsync(audit_file.fileno())
             if os.path.exists(tmp_target):
