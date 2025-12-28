@@ -96,7 +96,7 @@ propcache==0.4.1
 protobuf==6.32.1
 psycopg==3.2.11
 psycopg-binary==3.2.11
-pyarrow==21.0.0
+pyarrow==22.0.0
 pycares==4.11.0
 pycparser==2.23
 pydantic==2.12.4
@@ -301,7 +301,7 @@ psycopg-binary==3.2.11
 py-cpuinfo==9.0.0
 py-serializable==2.1.0
 py-spy==0.4.1
-pyarrow==21.0.0
+pyarrow==22.0.0
 pycares==4.11.0
 pycodestyle==2.12.1
 pycparser==2.23
@@ -477,7 +477,7 @@ propcache==0.4.1
 protobuf==6.32.1
 psycopg==3.2.11
 psycopg-binary==3.2.11
-pyarrow==21.0.0
+pyarrow==22.0.0
 pycares==4.11.0
 pycparser==2.23
 pydantic==2.12.4
