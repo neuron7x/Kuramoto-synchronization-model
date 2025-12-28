@@ -19,7 +19,7 @@ def compare_benchmarks(baseline_file: str, current_file: str, threshold: float) 
     baseline = _load(baseline_file)
     current = _load(current_file)
 
-    regressions: List[Dict[str, Any]] = []
+    regressions: list[dict[str, Any]] = []
 
     current_benchmarks = {bench["name"]: bench for bench in current.get("benchmarks", [])}
     for base in baseline.get("benchmarks", []):

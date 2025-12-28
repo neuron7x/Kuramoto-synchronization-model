@@ -7,7 +7,6 @@ import yaml
 
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
-
 V24_TEMPLATE = {
     "alpha": 0.5,
     "beta": 0.3,

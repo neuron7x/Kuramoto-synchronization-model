@@ -2,24 +2,6 @@
 
 
 def test_serotonin_controller_mirror_aliases_canonical():
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        ControllerOutput as CanonControllerOutput,
-    )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninConfig as CanonConfig,
-    )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninConfigEnvelope as CanonEnvelope,
-    )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninController as CanonController,
-    )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninLegacyConfig as CanonLegacy,
-    )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
-        _generate_config_table as CanonConfigTable,
-    )
     from core.neuro.serotonin.serotonin_controller import (
         ControllerOutput as ShimControllerOutput,
     )
@@ -38,6 +20,24 @@ def test_serotonin_controller_mirror_aliases_canonical():
     from core.neuro.serotonin.serotonin_controller import (
         _generate_config_table as ShimConfigTable,
     )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        ControllerOutput as CanonControllerOutput,
+    )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninConfig as CanonConfig,
+    )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninConfigEnvelope as CanonEnvelope,
+    )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninController as CanonController,
+    )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        SerotoninLegacyConfig as CanonLegacy,
+    )
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        _generate_config_table as CanonConfigTable,
+    )
 
     assert ShimController is CanonController
     assert ShimConfig is CanonConfig
@@ -46,8 +46,8 @@ def test_serotonin_controller_mirror_aliases_canonical():
     assert ShimControllerOutput is CanonControllerOutput
     assert ShimConfigTable is CanonConfigTable
 
-    import tradepulse.core.neuro.serotonin.serotonin_controller as canonical_module
     import core.neuro.serotonin.serotonin_controller as shim_module
+    import tradepulse.core.neuro.serotonin.serotonin_controller as canonical_module
 
     assert getattr(canonical_module, "__CANONICAL__")
     assert getattr(shim_module, "__CANONICAL__") is False
