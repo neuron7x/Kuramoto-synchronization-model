@@ -96,6 +96,18 @@ class TestMarketRegimeAnalyzer:
         assert metrics.volatility >= 0
         assert 0 <= metrics.hurst_exponent <= 1
 
+    def test_classify_regime_invalid_data_defaults(self, caplog):
+        """Test regime classification handles invalid data"""
+        analyzer = MarketRegimeAnalyzer(min_regime_duration=5)
+
+        prices = np.array([np.nan, np.inf, 100.0])
+        with caplog.at_level("WARNING"):
+            metrics = analyzer.classify_regime(prices)
+
+        assert metrics.regime_type == RegimeType.UNKNOWN
+        assert metrics.volatility == 0.0
+        assert "Недостатньо валідних цін" in caplog.text
+
     def test_classify_regime_volatile(self):
         """Test regime classification for volatile market"""
         analyzer = MarketRegimeAnalyzer(min_regime_duration=5)

@@ -15,10 +15,13 @@ Features:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class RiskLevel(str, Enum):
@@ -128,9 +131,25 @@ class AdaptiveRiskManager:
 
         Returns:
             Кортеж (VaR, CVaR)
+
+        Behavior:
+            - Якщо дані короткі або містять NaN/inf, повертає (0.0, 0.0) та логування warning.
         """
+        returns = np.asarray(returns, dtype=float)
+        returns = returns[np.isfinite(returns)]
         if len(returns) < 10:
+            logger.warning(
+                "Недостатньо валідних повернень для VaR/CVaR: len=%s",
+                len(returns),
+            )
             return 0.0, 0.0
+
+        if not (0 < confidence_level < 1):
+            logger.warning(
+                "Некоректний confidence_level=%s, використовуємо 0.95",
+                confidence_level,
+            )
+            confidence_level = 0.95
 
         sorted_returns = np.sort(returns)
         index = int((1 - confidence_level) * len(sorted_returns))
@@ -149,7 +168,17 @@ class AdaptiveRiskManager:
 
         Returns:
             Стан ринку
+
+        Behavior:
+            - Якщо volatility NaN/inf або < 0, повертає NORMAL та логування warning.
         """
+        if not np.isfinite(volatility) or volatility < 0:
+            logger.warning(
+                "Некоректна волатильність для оцінки ринку: %s. Використовуємо 0.",
+                volatility,
+            )
+            volatility = 0.0
+
         # Нормалізована волатильність (річна)
         annual_vol = volatility * np.sqrt(252)
 
@@ -171,8 +200,17 @@ class AdaptiveRiskManager:
 
         Returns:
             Об'єкт RiskMetrics
+
+        Behavior:
+            - Якщо дані короткі або містять NaN/inf, повертає нульові метрики та логування warning.
         """
+        returns = np.asarray(returns, dtype=float)
+        returns = returns[np.isfinite(returns)]
         if len(returns) < 2:
+            logger.warning(
+                "Недостатньо валідних повернень для метрик ризику: len=%s",
+                len(returns),
+            )
             return RiskMetrics(
                 var_95=0.0,
                 cvar_95=0.0,
@@ -190,7 +228,7 @@ class AdaptiveRiskManager:
         var_99, cvar_99 = self.calculate_var_cvar(returns, 0.99)
 
         # Волатильність
-        volatility = np.std(returns, ddof=1)
+        volatility = np.std(returns, ddof=1) if len(returns) > 1 else 0.0
 
         # Sharpe Ratio
         mean_return = np.mean(returns)
@@ -206,7 +244,7 @@ class AdaptiveRiskManager:
         sortino_ratio = mean_return / downside_std if downside_std > 0 else 0.0
 
         # Maximum Drawdown
-        cumulative = np.cumprod(1 + returns)
+        cumulative = np.cumprod(1 + returns) if len(returns) > 0 else np.array([1.0])
         running_max = np.maximum.accumulate(cumulative)
         drawdown = (cumulative - running_max) / running_max
         max_drawdown = np.abs(np.min(drawdown))
@@ -239,7 +277,17 @@ class AdaptiveRiskManager:
 
         Returns:
             Оновлені ліміти позицій
+
+        Behavior:
+            - Якщо volatility NaN/inf або < 0, використовується 0 з логування warning.
         """
+        if not np.isfinite(volatility) or volatility < 0:
+            logger.warning(
+                "Некоректна волатильність для лімітів %s: %s. Використовуємо 0.",
+                symbol,
+                volatility,
+            )
+            volatility = 0.0
         if market_condition is None:
             market_condition = self.assess_market_condition(volatility)
 
@@ -287,7 +335,26 @@ class AdaptiveRiskManager:
 
         Returns:
             Розмір позиції в базовій валюті
+
+        Behavior:
+            - Якщо volatility NaN/inf або < 0, використовується 0 з логування warning.
+            - confidence обмежується до [0, 1] з логування warning.
         """
+        if not np.isfinite(volatility) or volatility < 0:
+            logger.warning(
+                "Некоректна волатильність для позиції %s: %s. Використовуємо 0.",
+                symbol,
+                volatility,
+            )
+            volatility = 0.0
+        if not np.isfinite(confidence) or confidence < 0 or confidence > 1:
+            logger.warning(
+                "Некоректна confidence=%s для %s. Обмежуємо в [0, 1].",
+                confidence,
+                symbol,
+            )
+            confidence = float(np.clip(confidence, 0.0, 1.0))
+
         # Оновлюємо ліміти якщо необхідно
         if symbol not in self._position_limits:
             self.update_position_limits(symbol, volatility)
@@ -378,7 +445,16 @@ class AdaptiveRiskManager:
 
         Args:
             returns: Масив нових повернень
+
+        Behavior:
+            - NaN/inf значення відкидаються з логування warning.
+            - Якщо після фільтрації даних немає, стан не оновлюється.
         """
+        returns = np.asarray(returns, dtype=float)
+        returns = returns[np.isfinite(returns)]
+        if len(returns) == 0:
+            logger.warning("Оновлення повернень пропущено: немає валідних даних.")
+            return
         self._returns_history.extend(returns.tolist())
 
         # Обмеження історії

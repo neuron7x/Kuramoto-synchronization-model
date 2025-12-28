@@ -3,6 +3,7 @@ Tests for Adaptive Risk Manager Module
 """
 
 import numpy as np
+import pytest
 
 from modules.adaptive_risk_manager import (
     AdaptiveRiskManager,
@@ -36,6 +37,18 @@ class TestAdaptiveRiskManager:
         assert cvar_95 > 0
         assert cvar_95 >= var_95  # CVaR should be >= VaR
 
+    def test_calculate_var_cvar_invalid_returns(self, caplog):
+        """Test VaR/CVaR with invalid data"""
+        manager = AdaptiveRiskManager(base_capital=100000.0)
+
+        returns = np.array([np.nan, np.inf, -np.inf])
+        with caplog.at_level("WARNING"):
+            var_95, cvar_95 = manager.calculate_var_cvar(returns, 0.95)
+
+        assert var_95 == 0.0
+        assert cvar_95 == 0.0
+        assert "Недостатньо валідних повернень" in caplog.text
+
     def test_assess_market_condition(self):
         """Test market condition assessment"""
         manager = AdaptiveRiskManager(base_capital=100000.0)
@@ -66,3 +79,15 @@ class TestAdaptiveRiskManager:
 
         assert size > 0
         assert size <= manager.base_capital * 0.2  # Max 20% per position
+
+    def test_calculate_risk_metrics_invalid_returns(self, caplog):
+        """Test risk metrics with invalid data"""
+        manager = AdaptiveRiskManager(base_capital=100000.0)
+
+        returns = np.array([np.nan, np.inf])
+        with caplog.at_level("WARNING"):
+            metrics = manager.calculate_risk_metrics(returns)
+
+        assert metrics.volatility == 0.0
+        assert metrics.sharpe_ratio == 0.0
+        assert "Недостатньо валідних повернень" in caplog.text

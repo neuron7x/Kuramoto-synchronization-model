@@ -55,6 +55,10 @@ class TestDynamicPositionSizer:
         kelly = sizer.calculate_kelly_size(0.6, 0.02, 0.0)
         assert kelly == 0.0
 
+        # NaN values
+        kelly = sizer.calculate_kelly_size(float("nan"), 0.02, 0.01)
+        assert kelly == 0.0
+
     def test_calculate_volatility_adjusted_size(self):
         """Test volatility-adjusted sizing"""
         sizer = DynamicPositionSizer(base_capital=100000.0, volatility_target=0.15)
@@ -68,6 +72,19 @@ class TestDynamicPositionSizer:
         size_high_vol = sizer.calculate_volatility_adjusted_size(0.03, base_size)
 
         assert size_low_vol > size_high_vol
+
+    def test_calculate_volatility_adjusted_size_invalid(self, caplog):
+        """Test volatility-adjusted sizing with invalid volatility"""
+        sizer = DynamicPositionSizer(base_capital=100000.0, volatility_target=0.15)
+
+        base_size = 10000.0
+        with caplog.at_level("WARNING"):
+            size_invalid = sizer.calculate_volatility_adjusted_size(
+                float("nan"), base_size
+            )
+
+        assert size_invalid == base_size
+        assert "Некоректна волатильність" in caplog.text
 
     def test_calculate_risk_parity_size(self):
         """Test risk parity sizing"""

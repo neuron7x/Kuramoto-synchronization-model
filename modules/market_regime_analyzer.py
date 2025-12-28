@@ -14,9 +14,12 @@ Features:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class RegimeType(str, Enum):
@@ -112,8 +115,17 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Експонента Херста
+
+        Behavior:
+            - Якщо дані короткі або містять NaN/inf, повертає 0.5 та логування warning.
         """
+        prices = np.asarray(prices, dtype=float)
+        prices = prices[np.isfinite(prices)]
         if len(prices) < 20:
+            logger.warning(
+                "Недостатньо валідних даних для Hurst exponent: len=%s",
+                len(prices),
+            )
             return 0.5
 
         # Використовуємо R/S аналіз
@@ -179,8 +191,17 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Кортеж (statistic, p-value)
+
+        Behavior:
+            - Якщо дані короткі або містять NaN/inf, повертає (0.0, 1.0) та логування warning.
         """
+        prices = np.asarray(prices, dtype=float)
+        prices = prices[np.isfinite(prices)]
         if len(prices) < 20:
+            logger.warning(
+                "Недостатньо валідних даних для ADF тесту: len=%s",
+                len(prices),
+            )
             return 0.0, 1.0
 
         # Обчислюємо перші різниці
@@ -191,6 +212,10 @@ class MarketRegimeAnalyzer:
         X = prices[:-2]
 
         if len(y) < 10:
+            logger.warning(
+                "Недостатньо валідних даних для ADF регресії: len=%s",
+                len(y),
+            )
             return 0.0, 1.0
 
         # OLS регресія
@@ -213,6 +238,7 @@ class MarketRegimeAnalyzer:
 
             return float(t_stat), float(p_value)
         except Exception:
+            logger.warning("Помилка ADF тесту, повертаємо дефолти.", exc_info=True)
             return 0.0, 1.0
 
     def calculate_trend_strength(
@@ -226,8 +252,17 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Кортеж (trend_value, trend_strength)
+
+        Behavior:
+            - Якщо дані короткі або містять NaN/inf, повертає (0.0, VERY_WEAK) та логування warning.
         """
+        prices = np.asarray(prices, dtype=float)
+        prices = prices[np.isfinite(prices)]
         if len(prices) < 10:
+            logger.warning(
+                "Недостатньо валідних даних для trend strength: len=%s",
+                len(prices),
+            )
             return 0.0, TrendStrength.VERY_WEAK
 
         # Лінійна регресія
@@ -241,7 +276,11 @@ class MarketRegimeAnalyzer:
         r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
         # Нормалізований нахил (щоденна зміна у відсотках)
-        daily_change_pct = (slope / np.mean(prices)) * 100
+        mean_price = np.mean(prices)
+        if mean_price == 0:
+            logger.warning("Середня ціна дорівнює 0, тренд вважаємо слабким.")
+            return 0.0, TrendStrength.VERY_WEAK
+        daily_change_pct = (slope / mean_price) * 100
 
         # Сила тренду - комбінація нахилу та R²
         trend_value = daily_change_pct * r_squared
@@ -273,8 +312,18 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Об'єкт RegimeMetrics
+
+        Behavior:
+            - Якщо дані короткі або містять NaN/inf, повертає UNKNOWN із нульовими метриками
+              та логування warning.
         """
+        prices = np.asarray(prices, dtype=float)
+        prices = prices[np.isfinite(prices)]
         if len(prices) < self.min_regime_duration:
+            logger.warning(
+                "Недостатньо валідних цін для класифікації режиму: len=%s",
+                len(prices),
+            )
             return RegimeMetrics(
                 regime_type=RegimeType.UNKNOWN,
                 trend_strength=TrendStrength.VERY_WEAK,
@@ -289,7 +338,15 @@ class MarketRegimeAnalyzer:
 
         # Обчислюємо returns якщо не надані
         if returns is None:
-            returns = np.diff(prices) / prices[:-1]
+            previous_prices = prices[:-1]
+            returns = np.diff(prices) / np.where(previous_prices != 0, previous_prices, np.nan)
+        returns = np.asarray(returns, dtype=float)
+        returns = returns[np.isfinite(returns)]
+        if len(returns) < 2:
+            logger.warning(
+                "Недостатньо валідних повернень, волатильність = 0.0. len=%s",
+                len(returns),
+            )
 
         # Статистичні метрики
         hurst = self.calculate_hurst_exponent(prices)

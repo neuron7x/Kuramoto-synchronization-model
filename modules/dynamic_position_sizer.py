@@ -14,9 +14,12 @@ Features:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Dict, Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class SizingMethod(str, Enum):
@@ -107,8 +110,24 @@ class DynamicPositionSizer:
 
         Returns:
             Рекомендована фракція капіталу
+
+        Behavior:
+            - Якщо параметри невалідні або NaN/inf, повертає 0.0 та логування warning.
         """
-        if avg_loss <= 0 or win_rate <= 0 or win_rate >= 1:
+        if (
+            not np.isfinite(win_rate)
+            or not np.isfinite(avg_win)
+            or not np.isfinite(avg_loss)
+            or avg_loss <= 0
+            or win_rate <= 0
+            or win_rate >= 1
+        ):
+            logger.warning(
+                "Некоректні параметри Kelly: win_rate=%s avg_win=%s avg_loss=%s",
+                win_rate,
+                avg_win,
+                avg_loss,
+            )
             return 0.0
 
         p = win_rate
@@ -139,8 +158,16 @@ class DynamicPositionSizer:
 
         Returns:
             Скоригований розмір
+
+        Behavior:
+            - Якщо volatility NaN/inf або <= 0, повертає base_size та логування warning.
         """
-        if volatility <= 0:
+        if not np.isfinite(volatility) or volatility <= 0:
+            logger.warning(
+                "Некоректна волатильність для volatility-adjusted: %s. "
+                "Повертаємо base_size.",
+                volatility,
+            )
             return base_size
 
         # Розрахунок adjustment factor
@@ -163,13 +190,31 @@ class DynamicPositionSizer:
 
         Returns:
             Розмір позиції
+
+        Behavior:
+            - Якщо volatility NaN/inf або <= 0, повертає max_position_pct та логування warning.
+            - Невалідні волатильності портфеля ігноруються.
         """
-        if not portfolio_volatilities or volatility <= 0:
+        if not np.isfinite(volatility) or volatility <= 0:
+            logger.warning(
+                "Некоректна волатильність для risk parity %s: %s. "
+                "Повертаємо max position.",
+                symbol,
+                volatility,
+            )
             return self.base_capital * self.max_position_pct
+        if not portfolio_volatilities:
+            return self.base_capital * self.max_position_pct
+
+        valid_portfolio = {
+            key: value
+            for key, value in portfolio_volatilities.items()
+            if np.isfinite(value) and value > 0
+        }
 
         # Інверсна волатільність
         inv_vol = 1.0 / volatility
-        total_inv_vol = sum(1.0 / v for v in portfolio_volatilities.values() if v > 0)
+        total_inv_vol = sum(1.0 / v for v in valid_portfolio.values())
 
         if total_inv_vol <= 0:
             return self.base_capital * self.max_position_pct
@@ -210,7 +255,21 @@ class DynamicPositionSizer:
 
         Returns:
             PositionSizeResult з деталями розрахунку
+
+        Behavior:
+            - confidence обмежується до [0, 1] з логування warning.
+            - volatility NaN/inf або <= 0 обробляється у volatility-adjusted методі з логування warning.
         """
+        if not np.isfinite(confidence) or confidence < 0 or confidence > 1:
+            logger.warning(
+                "Некоректна confidence=%s для %s. Обмежуємо в [0, 1].",
+                confidence,
+                symbol,
+            )
+            confidence = float(np.clip(confidence, 0.0, 1.0))
+        if not np.isfinite(price) or price <= 0:
+            logger.warning("Некоректна ціна для %s: %s.", symbol, price)
+
         # Базовий розмір
         base_size = self.base_capital * self.max_position_pct
 
@@ -295,7 +354,21 @@ class DynamicPositionSizer:
 
         Returns:
             PositionSizeResult
+
+        Behavior:
+            - confidence обмежується до [0, 1] з логування warning.
+            - volatility NaN/inf або <= 0 обробляється у volatility-adjusted методі з логування warning.
         """
+        if not np.isfinite(confidence) or confidence < 0 or confidence > 1:
+            logger.warning(
+                "Некоректна confidence=%s для %s. Обмежуємо в [0, 1].",
+                confidence,
+                symbol,
+            )
+            confidence = float(np.clip(confidence, 0.0, 1.0))
+        if not np.isfinite(price) or price <= 0:
+            logger.warning("Некоректна ціна для %s: %s.", symbol, price)
+
         if method is None:
             method = self.default_method
 
