@@ -104,6 +104,7 @@ lint-python:
 	python -m ruff check .
 	python -m flake8
 	python scripts/check_namespace_policy.py
+	python scripts/check_serotonin_namespace.py
 	python -m mypy --config-file=mypy.ini
 
 .PHONY: lint-go

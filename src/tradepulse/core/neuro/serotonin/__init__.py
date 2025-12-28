@@ -1,6 +1,6 @@
 """Legacy mirror for serotonin API; canonical lives in core.neuro.serotonin.*"""
 
-from core.neuro.serotonin import (  # noqa: F401
+from tradepulse.core.neuro.serotonin.serotonin_controller import (  # noqa: F401
     ControllerOutput,
     SerotoninConfig,
     SerotoninConfigEnvelope,
@@ -8,7 +8,7 @@ from core.neuro.serotonin import (  # noqa: F401
     SerotoninLegacyConfig,
     _generate_config_table,
 )
-from core.neuro.serotonin.observability import (  # noqa: F401
+from tradepulse.core.neuro.serotonin.observability import (  # noqa: F401
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
     SEROTONIN_SLOS,
