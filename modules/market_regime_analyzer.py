@@ -14,10 +14,15 @@ Features:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from modules.logging_utils import (
+    ModuleLoggingConfig,
+    configure_module_logger,
+    log_event,
+)
 
 class RegimeType(str, Enum):
     """Типи ринкових режимів"""
@@ -79,6 +84,7 @@ class MarketRegimeAnalyzer:
         regime_window: int = 100,
         transition_threshold: float = 0.7,
         min_regime_duration: int = 10,
+        logging_config: Optional[Union[ModuleLoggingConfig, Dict[str, object]]] = None,
     ):
         """
         Ініціалізація аналізатора режимів
@@ -91,6 +97,11 @@ class MarketRegimeAnalyzer:
         self.regime_window = regime_window
         self.transition_threshold = transition_threshold
         self.min_regime_duration = min_regime_duration
+
+        self._logging_config = logging_config or ModuleLoggingConfig()
+        self._logger = configure_module_logger(
+            f"{__name__}.{self.__class__.__name__}", self._logging_config
+        )
 
         # Внутрішній стан
         self._current_regime = RegimeType.UNKNOWN
@@ -275,6 +286,17 @@ class MarketRegimeAnalyzer:
             Об'єкт RegimeMetrics
         """
         if len(prices) < self.min_regime_duration:
+            log_event(
+                self._logger,
+                level=self._logger.level,
+                event="regime.classification.insufficient_data",
+                component="market_regime_analyzer",
+                fields={
+                    "prices_count": len(prices),
+                    "min_required": self.min_regime_duration,
+                },
+                base_fields=self._logging_config.base_fields,
+            )
             return RegimeMetrics(
                 regime_type=RegimeType.UNKNOWN,
                 trend_strength=TrendStrength.VERY_WEAK,
@@ -360,6 +382,18 @@ class MarketRegimeAnalyzer:
                     confidence=confidence,
                 )
                 self._transition_history.append(transition)
+                log_event(
+                    self._logger,
+                    level=self._logger.level,
+                    event="regime.transition",
+                    component="market_regime_analyzer",
+                    fields={
+                        "from_regime": transition.from_regime.value,
+                        "to_regime": transition.to_regime.value,
+                        "confidence": float(transition.confidence),
+                    },
+                    base_fields=self._logging_config.base_fields,
+                )
 
             self._current_regime = regime_type[0]
             self._regime_start_time = datetime.now()
@@ -367,6 +401,24 @@ class MarketRegimeAnalyzer:
 
         # Зберігаємо ймовірності
         self._regime_probabilities = regime_scores
+
+        log_event(
+            self._logger,
+            level=self._logger.level,
+            event="regime.classification.completed",
+            component="market_regime_analyzer",
+            fields={
+                "regime_type": regime_type[0].value,
+                "trend_strength": trend_strength.value,
+                "volatility": float(volatility),
+                "hurst_exponent": float(hurst),
+                "adf_statistic": float(adf_stat),
+                "adf_pvalue": float(adf_pval),
+                "confidence": float(confidence),
+                "duration_bars": self._regime_duration,
+            },
+            base_fields=self._logging_config.base_fields,
+        )
 
         return RegimeMetrics(
             regime_type=regime_type[0],

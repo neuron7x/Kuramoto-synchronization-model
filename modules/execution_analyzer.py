@@ -13,10 +13,15 @@ Features:
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
+from modules.logging_utils import (
+    ModuleLoggingConfig,
+    configure_module_logger,
+    log_event,
+)
 
 class ExecutionSide(str, Enum):
     """Сторона виконання"""
@@ -144,6 +149,7 @@ class ExecutionAnalyzer:
         slippage_threshold_bps: float = 10.0,
         latency_threshold_ms: float = 100.0,
         market_data_provider: Optional[Any] = None,
+        logging_config: Optional[Union[ModuleLoggingConfig, Dict[str, object]]] = None,
     ):
         """
         Ініціалізація аналізатора
@@ -156,6 +162,11 @@ class ExecutionAnalyzer:
         self.slippage_threshold_bps = slippage_threshold_bps
         self.latency_threshold_ms = latency_threshold_ms
         self.market_data_provider = market_data_provider
+
+        self._logging_config = logging_config or ModuleLoggingConfig()
+        self._logger = configure_module_logger(
+            f"{__name__}.{self.__class__.__name__}", self._logging_config
+        )
 
         # Історія виконань
         self._executions: List[ExecutionRecord] = []
@@ -184,6 +195,26 @@ class ExecutionAnalyzer:
         # Оновлення статистики
         self._update_venue_stats(execution, analysis)
         self._update_symbol_stats(execution, analysis)
+
+        log_event(
+            self._logger,
+            level=self._logger.level,
+            event="execution.recorded",
+            component="execution_analyzer",
+            fields={
+                "execution_id": execution.execution_id,
+                "order_id": execution.order_id,
+                "symbol": execution.symbol,
+                "side": execution.side.value,
+                "quantity": float(execution.quantity),
+                "expected_price": float(execution.expected_price),
+                "executed_price": float(execution.executed_price),
+                "venue": execution.venue,
+                "quality": analysis.quality.value,
+                "quality_score": float(analysis.quality_score),
+            },
+            base_fields=self._logging_config.base_fields,
+        )
 
         return analysis
 
@@ -240,6 +271,14 @@ class ExecutionAnalyzer:
             Агрегований аналіз
         """
         if not executions:
+            log_event(
+                self._logger,
+                level=self._logger.level,
+                event="execution.batch.empty",
+                component="execution_analyzer",
+                fields={"message": "No executions to analyze"},
+                base_fields=self._logging_config.base_fields,
+            )
             return {"error": "No executions to analyze"}
 
         analyses = [self.analyze_execution(e) for e in executions]
@@ -474,6 +513,14 @@ class ExecutionAnalyzer:
         ]
 
         if not daily_executions:
+            log_event(
+                self._logger,
+                level=self._logger.level,
+                event="execution.daily_report.empty",
+                component="execution_analyzer",
+                fields={"date": date.date().isoformat()},
+                base_fields=self._logging_config.base_fields,
+            )
             return {
                 "date": date.date().isoformat(),
                 "total_executions": 0,

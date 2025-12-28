@@ -15,11 +15,16 @@ Features:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from pydantic import BaseModel, Field
 
+from modules.logging_utils import (
+    ModuleLoggingConfig,
+    configure_module_logger,
+    log_event,
+)
 
 class RiskLevel(str, Enum):
     """Рівні ризику"""
@@ -93,6 +98,7 @@ class AdaptiveRiskManager:
         var_window: int = 252,
         volatility_window: int = 20,
         enable_tacl_integration: bool = True,
+        logging_config: Optional[Union[ModuleLoggingConfig, Dict[str, object]]] = None,
     ):
         """
         Ініціалізація менеджера ризиків
@@ -110,11 +116,17 @@ class AdaptiveRiskManager:
         self.volatility_window = volatility_window
         self.enable_tacl_integration = enable_tacl_integration
 
+        self._logging_config = logging_config or ModuleLoggingConfig()
+        self._logger = configure_module_logger(
+            f"{__name__}.{self.__class__.__name__}", self._logging_config
+        )
+
         # Внутрішній стан
         self._position_limits: Dict[str, PositionLimit] = {}
         self._returns_history: List[float] = []
         self._volatility_multiplier = 1.0
         self._current_market_condition = MarketCondition.NORMAL
+        self._last_market_condition = self._current_market_condition
 
     def calculate_var_cvar(
         self, returns: np.ndarray, confidence_level: float = 0.95
@@ -130,6 +142,17 @@ class AdaptiveRiskManager:
             Кортеж (VaR, CVaR)
         """
         if len(returns) < 10:
+            log_event(
+                self._logger,
+                level=self._logger.level,
+                event="risk.metrics.insufficient_data",
+                component="adaptive_risk_manager",
+                fields={
+                    "returns_count": len(returns),
+                    "min_required": 10,
+                },
+                base_fields=self._logging_config.base_fields,
+            )
             return 0.0, 0.0
 
         sorted_returns = np.sort(returns)
@@ -137,6 +160,20 @@ class AdaptiveRiskManager:
 
         var = -sorted_returns[index] if index < len(sorted_returns) else 0.0
         cvar = -sorted_returns[:index].mean() if index > 0 else var
+
+        log_event(
+            self._logger,
+            level=self._logger.level,
+            event="risk.metrics.var_cvar",
+            component="adaptive_risk_manager",
+            fields={
+                "confidence_level": confidence_level,
+                "var": float(var),
+                "cvar": float(cvar),
+                "returns_count": len(returns),
+            },
+            base_fields=self._logging_config.base_fields,
+        )
 
         return var, cvar
 
@@ -173,6 +210,17 @@ class AdaptiveRiskManager:
             Об'єкт RiskMetrics
         """
         if len(returns) < 2:
+            log_event(
+                self._logger,
+                level=self._logger.level,
+                event="risk.metrics.insufficient_data",
+                component="adaptive_risk_manager",
+                fields={
+                    "returns_count": len(returns),
+                    "min_required": 2,
+                },
+                base_fields=self._logging_config.base_fields,
+            )
             return RiskMetrics(
                 var_95=0.0,
                 cvar_95=0.0,
@@ -210,6 +258,24 @@ class AdaptiveRiskManager:
         running_max = np.maximum.accumulate(cumulative)
         drawdown = (cumulative - running_max) / running_max
         max_drawdown = np.abs(np.min(drawdown))
+
+        log_event(
+            self._logger,
+            level=self._logger.level,
+            event="risk.metrics.calculated",
+            component="adaptive_risk_manager",
+            fields={
+                "var_95": float(var_95),
+                "cvar_95": float(cvar_95),
+                "var_99": float(var_99),
+                "cvar_99": float(cvar_99),
+                "sharpe_ratio": float(sharpe_ratio),
+                "sortino_ratio": float(sortino_ratio),
+                "max_drawdown": float(max_drawdown),
+                "volatility": float(volatility),
+            },
+            base_fields=self._logging_config.base_fields,
+        )
 
         return RiskMetrics(
             var_95=var_95,
@@ -271,6 +337,22 @@ class AdaptiveRiskManager:
         )
 
         self._position_limits[symbol] = position_limit
+        log_event(
+            self._logger,
+            level=self._logger.level,
+            event="risk.position_limits.updated",
+            component="adaptive_risk_manager",
+            fields={
+                "symbol": symbol,
+                "market_condition": market_condition.value,
+                "annual_volatility": float(annual_vol),
+                "max_position_size": float(position_limit.max_position_size),
+                "max_leverage": float(position_limit.max_leverage),
+                "stop_loss_pct": float(position_limit.stop_loss_pct),
+                "take_profit_pct": float(position_limit.take_profit_pct or 0.0),
+            },
+            base_fields=self._logging_config.base_fields,
+        )
         return position_limit
 
     def calculate_position_size(
@@ -394,11 +476,38 @@ class AdaptiveRiskManager:
             # Оновлення стану ринку
             self._current_market_condition = self.assess_market_condition(volatility)
 
+            if self._current_market_condition != self._last_market_condition:
+                log_event(
+                    self._logger,
+                    level=self._logger.level,
+                    event="risk.market_condition.changed",
+                    component="adaptive_risk_manager",
+                    fields={
+                        "previous": self._last_market_condition.value,
+                        "current": self._current_market_condition.value,
+                        "volatility": float(volatility),
+                    },
+                    base_fields=self._logging_config.base_fields,
+                )
+                self._last_market_condition = self._current_market_condition
+
             # Динамічна адаптація мультиплікатора волатильності
             # При високій волатильності зменшуємо розмір позицій
             base_vol = 0.01  # 1% денна волатільність як базова
             self._volatility_multiplier = min(
                 1.5, max(0.5, base_vol / (volatility + 1e-8))
+            )
+
+            log_event(
+                self._logger,
+                level=self._logger.level,
+                event="risk.volatility_multiplier.updated",
+                component="adaptive_risk_manager",
+                fields={
+                    "volatility": float(volatility),
+                    "multiplier": float(self._volatility_multiplier),
+                },
+                base_fields=self._logging_config.base_fields,
             )
 
     def get_risk_summary(self) -> Dict:

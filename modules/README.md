@@ -157,6 +157,39 @@ coordinator = AgentCoordinator(
 )
 ```
 
+## Логування модулів
+
+Уніфікований формат логів для модулів використовує JSON-повідомлення з такими полями:
+
+| Поле | Опис |
+| --- | --- |
+| `timestamp` | ISO 8601 час у UTC. |
+| `level` | Рівень логування (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`). |
+| `event` | Короткий ідентифікатор події (`risk.metrics.calculated`, `regime.transition`, `execution.recorded`). |
+| `component` | Назва компонента (`adaptive_risk_manager`, `market_regime_analyzer`, `execution_analyzer`). |
+| `...` | Додаткові контекстні поля (ключ-значення). |
+
+### Керування рівнем логування через конфіг
+
+Модулі `AdaptiveRiskManager`, `MarketRegimeAnalyzer`, `ExecutionAnalyzer` приймають параметр
+`logging_config`, який дозволяє вмикати/вимикати логування та регулювати рівень:
+
+```python
+from modules import AdaptiveRiskManager
+from modules.logging_utils import ModuleLoggingConfig
+
+logging_config = ModuleLoggingConfig(
+    enabled=True,
+    level="INFO",
+    base_fields={"service": "tradepulse"},
+)
+
+risk_manager = AdaptiveRiskManager(
+    base_capital=1_000_000,
+    logging_config=logging_config,
+)
+```
+
 Опційно для GABA gate (потрібен `torch`):
 
 ```python
