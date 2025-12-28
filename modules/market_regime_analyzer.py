@@ -18,6 +18,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from modules.types import MarketState
 
 class RegimeType(str, Enum):
     """Типи ринкових режимів"""
@@ -98,6 +99,26 @@ class MarketRegimeAnalyzer:
         self._regime_duration = 0
         self._transition_history: List[RegimeTransition] = []
         self._regime_probabilities: Dict[RegimeType, float] = {}
+
+    def _validate_market_state_prices(self, market_state: MarketState) -> np.ndarray:
+        if "prices" not in market_state:
+            raise KeyError("market_state missing required key: 'prices'")
+        prices = np.asarray(market_state["prices"], dtype=float)
+        if prices.ndim != 1:
+            raise ValueError("market_state['prices'] must be a 1D array")
+        return prices
+
+    def _validate_market_state_returns(
+        self, market_state: MarketState, prices: np.ndarray
+    ) -> np.ndarray:
+        if "returns" in market_state and market_state["returns"] is not None:
+            returns = np.asarray(market_state["returns"], dtype=float)
+            if returns.ndim != 1:
+                raise ValueError("market_state['returns'] must be a 1D array")
+            return returns
+        if len(prices) < 2:
+            return np.array([], dtype=float)
+        return np.diff(prices) / prices[:-1]
 
     def calculate_hurst_exponent(self, prices: np.ndarray) -> float:
         """
@@ -261,19 +282,18 @@ class MarketRegimeAnalyzer:
 
         return trend_value, strength
 
-    def classify_regime(
-        self, prices: np.ndarray, returns: Optional[np.ndarray] = None
-    ) -> RegimeMetrics:
+    def classify_regime(self, market_state: MarketState) -> RegimeMetrics:
         """
         Класифікація поточного режиму
 
         Args:
-            prices: Масив цін
-            returns: Масив повернень (опційно)
+            market_state: Стандартизований стан ринку
 
         Returns:
             Об'єкт RegimeMetrics
         """
+        prices = self._validate_market_state_prices(market_state)
+        returns = self._validate_market_state_returns(market_state, prices)
         if len(prices) < self.min_regime_duration:
             return RegimeMetrics(
                 regime_type=RegimeType.UNKNOWN,
@@ -286,10 +306,6 @@ class MarketRegimeAnalyzer:
                 duration_bars=0,
                 timestamp=datetime.now(),
             )
-
-        # Обчислюємо returns якщо не надані
-        if returns is None:
-            returns = np.diff(prices) / prices[:-1]
 
         # Статистичні метрики
         hurst = self.calculate_hurst_exponent(prices)

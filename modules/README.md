@@ -45,10 +45,35 @@ pip install pandas
 pip install torch
 ```
 
+## Standard market_state формат
+
+Всі модулі, що працюють з ринковими даними, приймають єдиний формат
+`market_state`. Нижче наведено основні ключі, типи та одиниці:
+
+| Ключ | Тип | Одиниці | Потрібно для |
+| --- | --- | --- | --- |
+| `symbol` | `str` | - | `AdaptiveRiskManager` |
+| `timestamp` | `datetime` | ISO 8601 | Рекомендовано для трекінгу |
+| `price` | `float` | quote currency | `AdaptiveRiskManager` |
+| `prices` | `np.ndarray` | price series | `MarketRegimeAnalyzer` |
+| `returns` | `np.ndarray` | decimal per bar | `AdaptiveRiskManager`, `MarketRegimeAnalyzer` |
+| `volatility` | `float` | std dev per bar | `AdaptiveRiskManager` |
+| `return` | `float` | decimal | `GABAInhibitionGate` |
+| `vix` | `float` | index points | `GABAInhibitionGate` |
+| `position` | `float` | base units | `GABAInhibitionGate` |
+| `rpe` | `float` | unitless | `GABAInhibitionGate` |
+| `delta_t_ms` | `float` | milliseconds | `GABAInhibitionGate` |
+| `market_data_latency_ms` | `float` | milliseconds | `ExecutionAnalyzer` (опційно) |
+
+> Якщо `returns` або `volatility` не передані, деякі модулі можуть
+> обчислювати їх автоматично, але для стабільної роботи краще
+> надавати повний набір.
+
 ## Приклад використання (на основі `modules/demo.py`)
 
 ```python
 import numpy as np
+from datetime import datetime
 
 from modules import AdaptiveRiskManager, DynamicPositionSizer, MarketRegimeAnalyzer
 from modules.agent_coordinator import AgentCoordinator, AgentType, Priority
@@ -56,15 +81,23 @@ from modules.agent_coordinator import AgentCoordinator, AgentType, Priority
 prices = 100 + np.cumsum(np.random.normal(0, 1.5, 180))
 returns = np.diff(prices) / prices[:-1]
 volatility = returns.std(ddof=1)
+market_state = {
+    "symbol": "BTC-USD",
+    "timestamp": datetime.now(),
+    "price": float(prices[-1]),
+    "prices": prices,
+    "returns": returns,
+    "volatility": float(volatility),
+}
 
 regime_analyzer = MarketRegimeAnalyzer()
-regime_metrics = regime_analyzer.classify_regime(prices, returns)
+regime_metrics = regime_analyzer.classify_regime(market_state)
 
 risk_manager = AdaptiveRiskManager(base_capital=1_000_000, risk_tolerance=0.02)
-risk_metrics = risk_manager.calculate_risk_metrics(returns)
-position_limit = risk_manager.update_position_limits("BTC-USD", volatility)
+risk_metrics = risk_manager.calculate_risk_metrics(market_state)
+position_limit = risk_manager.update_position_limits(market_state)
 max_position = risk_manager.calculate_position_size(
-    "BTC-USD", price=float(prices[-1]), volatility=volatility, confidence=0.7
+    market_state, confidence=0.7
 )
 
 position_sizer = DynamicPositionSizer(base_capital=1_000_000)

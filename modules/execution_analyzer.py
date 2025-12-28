@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from modules.types import MarketState
 
 class ExecutionSide(str, Enum):
     """Сторона виконання"""
@@ -166,12 +167,27 @@ class ExecutionAnalyzer:
         # Статистика по символам
         self._symbol_stats: Dict[str, Dict[str, Any]] = {}
 
-    def record_execution(self, execution: ExecutionRecord) -> ExecutionAnalysis:
+    def _validate_market_state_latency(self, market_state: MarketState) -> float:
+        if "market_data_latency_ms" not in market_state:
+            raise KeyError(
+                "market_state missing required key: 'market_data_latency_ms'"
+            )
+        market_data_latency_ms = float(market_state["market_data_latency_ms"])
+        if market_data_latency_ms < 0:
+            raise ValueError("market_state['market_data_latency_ms'] must be >= 0")
+        return market_data_latency_ms
+
+    def record_execution(
+        self,
+        execution: ExecutionRecord,
+        market_state: Optional[MarketState] = None,
+    ) -> ExecutionAnalysis:
         """
         Запис та аналіз виконання
 
         Args:
             execution: Запис виконання
+            market_state: Стандартизований стан ринку (опційно)
 
         Returns:
             Аналіз виконання
@@ -179,7 +195,7 @@ class ExecutionAnalyzer:
         self._executions.append(execution)
 
         # Аналіз
-        analysis = self.analyze_execution(execution)
+        analysis = self.analyze_execution(execution, market_state=market_state)
 
         # Оновлення статистики
         self._update_venue_stats(execution, analysis)
@@ -187,12 +203,15 @@ class ExecutionAnalyzer:
 
         return analysis
 
-    def analyze_execution(self, execution: ExecutionRecord) -> ExecutionAnalysis:
+    def analyze_execution(
+        self, execution: ExecutionRecord, market_state: Optional[MarketState] = None
+    ) -> ExecutionAnalysis:
         """
         Аналіз окремого виконання
 
         Args:
             execution: Запис виконання
+            market_state: Стандартизований стан ринку (опційно)
 
         Returns:
             Аналіз виконання
@@ -201,7 +220,7 @@ class ExecutionAnalyzer:
         slippage = self._calculate_slippage(execution)
 
         # Latency
-        latency = self._calculate_latency(execution)
+        latency = self._calculate_latency(execution, market_state=market_state)
 
         # Якість
         quality_score = self._calculate_quality_score(slippage, latency)
@@ -532,14 +551,21 @@ class ExecutionAnalyzer:
             direction=direction,
         )
 
-    def _calculate_latency(self, execution: ExecutionRecord) -> LatencyMetrics:
+    def _calculate_latency(
+        self,
+        execution: ExecutionRecord,
+        market_state: Optional[MarketState] = None,
+    ) -> LatencyMetrics:
         """Розрахунок затримки"""
         order_to_execution_ms = (
             execution.execution_time - execution.order_created_at
         ).total_seconds() * 1000
 
         # Market data latency (якщо є в metadata)
-        market_data_latency_ms = execution.metadata.get("market_data_latency_ms", 0.0)
+        if market_state is not None:
+            market_data_latency_ms = self._validate_market_state_latency(market_state)
+        else:
+            market_data_latency_ms = execution.metadata.get("market_data_latency_ms", 0.0)
 
         total_latency_ms = order_to_execution_ms
 

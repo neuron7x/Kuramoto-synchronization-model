@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from pydantic import BaseModel, Field
 
+from modules.types import MarketState
 
 class RiskLevel(str, Enum):
     """Рівні ризику"""
@@ -116,6 +117,40 @@ class AdaptiveRiskManager:
         self._volatility_multiplier = 1.0
         self._current_market_condition = MarketCondition.NORMAL
 
+    def _validate_market_state_returns(self, market_state: MarketState) -> np.ndarray:
+        if "returns" not in market_state:
+            raise KeyError("market_state missing required key: 'returns'")
+        returns = np.asarray(market_state["returns"], dtype=float)
+        if returns.ndim != 1:
+            raise ValueError("market_state['returns'] must be a 1D array")
+        return returns
+
+    def _validate_market_state_symbol(self, market_state: MarketState) -> str:
+        symbol = market_state.get("symbol")
+        if not isinstance(symbol, str) or not symbol:
+            raise ValueError("market_state['symbol'] must be a non-empty string")
+        return symbol
+
+    def _validate_market_state_price(self, market_state: MarketState) -> float:
+        if "price" not in market_state:
+            raise KeyError("market_state missing required key: 'price'")
+        price = float(market_state["price"])
+        if price <= 0:
+            raise ValueError("market_state['price'] must be positive")
+        return price
+
+    def _validate_market_state_volatility(
+        self, market_state: MarketState, returns: np.ndarray
+    ) -> float:
+        if "volatility" in market_state and market_state["volatility"] is not None:
+            volatility = float(market_state["volatility"])
+            if volatility < 0:
+                raise ValueError("market_state['volatility'] must be non-negative")
+            return volatility
+        if len(returns) > 1:
+            return float(np.std(returns, ddof=1))
+        return 0.0
+
     def calculate_var_cvar(
         self, returns: np.ndarray, confidence_level: float = 0.95
     ) -> Tuple[float, float]:
@@ -162,7 +197,7 @@ class AdaptiveRiskManager:
         else:
             return MarketCondition.EXTREME
 
-    def calculate_risk_metrics(self, returns: np.ndarray) -> RiskMetrics:
+    def _calculate_risk_metrics_from_returns(self, returns: np.ndarray) -> RiskMetrics:
         """
         Розрахунок всіх метрик ризику
 
@@ -223,23 +258,37 @@ class AdaptiveRiskManager:
             timestamp=datetime.now(),
         )
 
+    def calculate_risk_metrics(self, market_state: MarketState) -> RiskMetrics:
+        """
+        Розрахунок всіх метрик ризику зі стандартного market_state.
+
+        Args:
+            market_state: Стандартизований стан ринку
+
+        Returns:
+            Об'єкт RiskMetrics
+        """
+        returns = self._validate_market_state_returns(market_state)
+        return self._calculate_risk_metrics_from_returns(returns)
+
     def update_position_limits(
         self,
-        symbol: str,
-        volatility: float,
+        market_state: MarketState,
         market_condition: Optional[MarketCondition] = None,
     ) -> PositionLimit:
         """
         Оновлення лімітів позицій на основі волатильності
 
         Args:
-            symbol: Символ інструменту
-            volatility: Поточна волатільність
+            market_state: Стандартизований стан ринку
             market_condition: Стан ринку (опційно)
 
         Returns:
             Оновлені ліміти позицій
         """
+        symbol = self._validate_market_state_symbol(market_state)
+        returns = self._validate_market_state_returns(market_state)
+        volatility = self._validate_market_state_volatility(market_state, returns)
         if market_condition is None:
             market_condition = self.assess_market_condition(volatility)
 
@@ -274,23 +323,25 @@ class AdaptiveRiskManager:
         return position_limit
 
     def calculate_position_size(
-        self, symbol: str, price: float, volatility: float, confidence: float = 1.0
+        self, market_state: MarketState, confidence: float = 1.0
     ) -> float:
         """
         Розрахунок розміру позиції
 
         Args:
-            symbol: Символ інструменту
-            price: Поточна ціна
-            volatility: Волатільність
+            market_state: Стандартизований стан ринку
             confidence: Рівень впевненості сигналу (0-1)
 
         Returns:
             Розмір позиції в базовій валюті
         """
+        symbol = self._validate_market_state_symbol(market_state)
+        price = self._validate_market_state_price(market_state)
+        returns = self._validate_market_state_returns(market_state)
+        volatility = self._validate_market_state_volatility(market_state, returns)
         # Оновлюємо ліміти якщо необхідно
         if symbol not in self._position_limits:
-            self.update_position_limits(symbol, volatility)
+            self.update_position_limits(market_state)
 
         limit = self._position_limits[symbol]
 
@@ -308,6 +359,16 @@ class AdaptiveRiskManager:
         )
 
         return max_allowed
+
+    def update_from_market_state(self, market_state: MarketState) -> None:
+        """
+        Оновлення внутрішнього стану на основі standard market_state.
+
+        Args:
+            market_state: Стандартизований стан ринку
+        """
+        returns = self._validate_market_state_returns(market_state)
+        self.update_from_returns(returns)
 
     def assess_portfolio_risk(
         self, positions: Dict[str, float], prices: Dict[str, float]
@@ -417,7 +478,7 @@ class AdaptiveRiskManager:
             }
 
         returns_array = np.array(self._returns_history)
-        metrics = self.calculate_risk_metrics(returns_array)
+        metrics = self._calculate_risk_metrics_from_returns(returns_array)
 
         return {
             "status": "active",

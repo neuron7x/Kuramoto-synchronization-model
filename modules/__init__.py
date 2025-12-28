@@ -9,6 +9,7 @@ __all__ = [
     "MarketRegimeAnalyzer",
     "DynamicPositionSizer",
     "AgentCoordinator",
+    "MarketState",
     # New engineering modules
     "SignalStrategyRegistry",
     "PortfolioOptimizer",
@@ -45,6 +46,7 @@ from modules.market_regime_analyzer import MarketRegimeAnalyzer
 from modules.order_validator import OrderValidator
 from modules.performance_tracker import PerformanceTracker
 from modules.portfolio_optimizer import PortfolioOptimizer
+from modules.types import MarketState
 
 # Import new engineering modules
 from modules.signal_strategy_registry import SignalStrategyRegistry
