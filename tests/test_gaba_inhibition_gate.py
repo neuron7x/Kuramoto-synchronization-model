@@ -1,9 +1,10 @@
 import math
 
 import pytest
-import torch
 
-from modules.gaba_inhibition_gate import (
+torch = pytest.importorskip("torch")
+
+from modules.gaba_inhibition_gate import (  # noqa: E402
     GABAInhibitionGate,
     GateMetrics,
     GateParams,
@@ -447,6 +448,34 @@ def test_forward_bounds_and_no_nan():
 
         if metrics.gaba_level > 0.1:
             assert gated.abs().item() <= action.abs().item() + 1e-6
+
+
+def test_scenario_bounds_for_varied_inputs():
+    """Scenarios with varied delta_t_ms/vix/pos/rpe stay within bounds."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.25])
+
+    scenarios = [
+        {"delta_t_ms": 0.5, "vix": 12.0, "pos": 0.1, "rpe": 0.3},
+        {"delta_t_ms": 15.0, "vix": 35.0, "pos": 1.5, "rpe": -0.4},
+        {"delta_t_ms": 120.0, "vix": 60.0, "pos": 3.0, "rpe": 0.8},
+        {"delta_t_ms": 250.0, "vix": 90.0, "pos": 0.0, "rpe": -0.9},
+        {"delta_t_ms": -40.0, "vix": 25.0, "pos": 2.2, "rpe": 0.1},
+    ]
+
+    for scenario in scenarios:
+        state = base_state(
+            vix=scenario["vix"],
+            pos=scenario["pos"],
+            rpe=scenario["rpe"],
+            dt_ms=scenario["delta_t_ms"],
+        )
+        gated, metrics = gate(state, action)
+
+        assert 0.0 <= metrics.inhibition <= gate.p.max_inhibition
+        assert gate.p.risk_min <= metrics.risk_weight <= gate.p.risk_max
+        assert torch.isfinite(gated).all()
 
 
 def test_delta_t_ms_extremes_use_clamped_decay():

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from importlib.util import find_spec
 from pprint import pprint
 
 import numpy as np
@@ -100,6 +101,30 @@ def main() -> None:
     print("\n=== Agent coordinator ===")
     print("Processed tasks:", processed_tasks)
     pprint(coordinator.get_system_health())
+
+    print("\n=== GABA inhibition gate (optional) ===")
+    if find_spec("torch") is None:
+        print("Torch не встановлено, GABA-модуль пропущено.")
+        return
+
+    import torch
+
+    from modules.gaba_inhibition_gate import GABAInhibitionGate
+
+    gate = GABAInhibitionGate(device="cpu")
+    market_state = {
+        "vix": torch.tensor(28.0),
+        "vol": torch.tensor(0.35),
+        "ret": torch.tensor(0.02),
+        "pos": torch.tensor(0.8),
+        "rpe": torch.tensor(0.15),
+        "delta_t_ms": torch.tensor(25.0),
+    }
+    action = torch.tensor([1.0])
+
+    gated_action, metrics = gate(market_state, action)
+    print(f"Gated action: {gated_action.item():.4f}")
+    pprint(metrics.__dict__)
 
 
 if __name__ == "__main__":
