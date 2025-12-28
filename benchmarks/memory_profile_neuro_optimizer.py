@@ -3,31 +3,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-import importlib.util
-import sys
 
 import numpy as np
 
+from benchmarks._neuro_optimizer_loader import load_optimizer
 try:
     from memory_profiler import memory_usage
 except ImportError:  # pragma: no cover - optional dependency
     memory_usage = None
 
 
-def _load_optimizer():
-    module_path = Path("src/tradepulse/core/neuro/neuro_optimizer.py")
-    spec = importlib.util.spec_from_file_location("neuro_optimizer", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("Unable to load neuro_optimizer module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module.NeuroOptimizer, module.OptimizationConfig
-
-
 def _run_steps(steps: int = 200) -> None:
     rng = np.random.default_rng(13)
-    NeuroOptimizer, OptimizationConfig = _load_optimizer()
+    NeuroOptimizer, OptimizationConfig = load_optimizer()
     optimizer = NeuroOptimizer(OptimizationConfig(dtype="float32"))
     params = {
         "dopamine": {"learning_rate": 0.01, "discount_gamma": 0.99},

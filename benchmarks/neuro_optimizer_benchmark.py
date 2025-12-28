@@ -6,10 +6,9 @@ import json
 import time
 from pathlib import Path
 
-import importlib.util
-import sys
-
 import numpy as np
+
+from benchmarks._neuro_optimizer_loader import load_optimizer
 
 try:
     from memory_profiler import memory_usage
@@ -17,20 +16,9 @@ except ImportError:  # pragma: no cover - optional dependency
     memory_usage = None
 
 
-def _load_optimizer():
-    module_path = Path("src/tradepulse/core/neuro/neuro_optimizer.py")
-    spec = importlib.util.spec_from_file_location("neuro_optimizer", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("Unable to load neuro_optimizer module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module.NeuroOptimizer, module.OptimizationConfig
-
-
 def _build_fixture(seed: int = 1337) -> tuple[object, dict, dict]:
     rng = np.random.default_rng(seed)
-    NeuroOptimizer, OptimizationConfig = _load_optimizer()
+    NeuroOptimizer, OptimizationConfig = load_optimizer()
     config = OptimizationConfig(dtype="float32", use_gpu=False)
     optimizer = NeuroOptimizer(config)
     params = {

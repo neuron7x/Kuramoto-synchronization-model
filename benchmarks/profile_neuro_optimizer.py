@@ -6,26 +6,13 @@ import cProfile
 import pstats
 from pathlib import Path
 
-import importlib.util
-import sys
-
 import numpy as np
 
-
-def _load_optimizer():
-    module_path = Path("src/tradepulse/core/neuro/neuro_optimizer.py")
-    spec = importlib.util.spec_from_file_location("neuro_optimizer", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("Unable to load neuro_optimizer module")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module.NeuroOptimizer, module.OptimizationConfig
-
+from benchmarks._neuro_optimizer_loader import load_optimizer
 
 def _run_profile(steps: int = 200) -> None:
     rng = np.random.default_rng(7)
-    NeuroOptimizer, OptimizationConfig = _load_optimizer()
+    NeuroOptimizer, OptimizationConfig = load_optimizer()
     optimizer = NeuroOptimizer(OptimizationConfig(dtype="float32"))
     params = {
         "dopamine": {"learning_rate": 0.01, "discount_gamma": 0.99},
