@@ -86,7 +86,7 @@ class DistributionDriftMonitor:
         else:
             statistic, pvalue = _ks_2samp_fallback(ref_values, cur_values)
 
-        drifted = pvalue < (1 - self._threshold)
+        drifted = pvalue < self._threshold
         return DriftAssessment(
             "ks", float(statistic), self._threshold, drifted, {"pvalue": float(pvalue)}
         )
