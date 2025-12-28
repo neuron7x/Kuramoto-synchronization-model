@@ -190,9 +190,29 @@ Access monitoring and observability:
 - **Use When**: Time sync issues or regular verification
 - **Owner**: Infrastructure Team
 
+**19. Inference Incident Runbook** [`runbook_inference_incident.md`](runbook_inference_incident.md)
+- **Purpose**: Inference service degradation response
+- **Use When**: Inference latency, error rate, or quality regressions
+- **Owner**: MLOps + SRE Team
+
+**20. Latency Degradation Runbook** [`runbook_latency_degradation.md`](runbook_latency_degradation.md)
+- **Purpose**: Critical path latency regression response
+- **Use When**: p95/p99 latency breaches across signal/order/inference
+- **Owner**: SRE Team
+
+**21. Model Rollback Runbook** [`runbook_model_rollback.md`](runbook_model_rollback.md)
+- **Purpose**: Standardized model rollback procedure
+- **Use When**: Model regression, drift response, or canary failure
+- **Owner**: MLOps Team
+
+**22. Data Drift Response Runbook** [`runbook_data_drift_response.md`](runbook_data_drift_response.md)
+- **Purpose**: Drift triage and remediation
+- **Use When**: Feature drift alerts or data quality regressions
+- **Owner**: Data + MLOps Team
+
 #### B. Testing and Resilience
 
-**19. Stress Playbooks** [`stress_playbooks.md`](stress_playbooks.md)
+**23. Stress Playbooks** [`stress_playbooks.md`](stress_playbooks.md)
 - **Purpose**: Stress testing and resilience validation
 - **Use When**: Planning chaos tests or market stress simulations
 - **Key Sections**:

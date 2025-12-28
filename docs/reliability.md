@@ -30,6 +30,8 @@ with sufficient safety margin to guarantee the SLA when measured over a rolling
 | Client API availability | Successful request ratio | ≥ 99.5% |
 | Strategy order latency | Time from order submit to broker acknowledgement | ≤ 400 ms for 95% of orders |
 | Market data freshness | Delay between exchange event and availability via API | ≤ 3 seconds 99% of the time |
+| Model inference availability | Successful inference ratio | ≥ 99.5% |
+| Model inference latency | p95 time to return model scores | ≤ 200 ms |
 
 Breaching an SLA triggers incident review with product and customer success and
 may require service credits per contractual terms.
@@ -50,6 +52,8 @@ tracked weekly and trended quarterly.
 | Data pipeline accuracy | Jobs with parity checks passing / total jobs | 99.95% | Rolling 30 days |
 | Trade pipeline latency | p95 signal → order → ack duration | ≤ 400 ms | 5-minute sliding windows |
 | Trade pipeline reliability | p99 signal → order → fill duration | ≤ 650 ms | 5-minute sliding windows |
+| Model inference availability | Successful inference ratio / total requests | 99.8% | Rolling 30 days |
+| Model inference latency | p95 inference time across online models | ≤ 150 ms | 5-minute sliding windows |
 
 Targets assume at least 1,000 valid events per window; otherwise the period is
 flagged for manual review.
@@ -94,6 +98,27 @@ hours for Red services or 7 days for Yellow services.
   50% consumption; escalate to broker account managers.
 - **Fill ratio** – Enforce tighter risk caps (−20%) and trigger liquidity
   provider outreach once consumption exceeds 60%.
+- **Model inference latency** – Enable cache-first scoring and shed shadow
+  traffic when burn exceeds 25%. Trigger rollback evaluation at 50%.
+- **Model inference availability** – Freeze promotions immediately and escalate
+  to MLOps for potential rollback and data drift triage.
+
+## Reliability and Chaos Scenarios
+
+Emergency drills must validate both reliability failures and chaos-style fault
+injection. Use these scenarios to keep response paths fresh and aligned with
+observability guardrails.
+
+| Scenario | Trigger | Expected Response | Reference |
+| -------- | ------- | ----------------- | --------- |
+| Inference latency spike | p95 inference latency > 150 ms for 10 minutes | Scale inference, enable cache-first mode, evaluate rollback | [`runbook_latency_degradation.md`](runbook_latency_degradation.md) |
+| Model quality regression | Quality degradation events > threshold | Pause promotions, run drift response, prepare rollback | [`runbook_data_drift_response.md`](runbook_data_drift_response.md) |
+| Exchange latency chaos | Injected network delay ≥ 2s | Degraded mode, throttle orders, verify guardrails | [`chaos_cost_controls.md`](chaos_cost_controls.md) |
+| Data feed gap | Missing or stale ingestion | Backfill and failover to backup feed | [`runbook_data_incident.md`](runbook_data_incident.md) |
+
+Reliability scenarios must also map to automated tests in
+[`docs/RELIABILITY_SCENARIOS.md`](RELIABILITY_SCENARIOS.md) and to chaos drills
+defined in [`docs/chaos_cost_controls.md`](chaos_cost_controls.md).
 
 ## Alerting and Escalation
 

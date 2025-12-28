@@ -80,6 +80,14 @@ decision trees for the checkpoints summarised above.
   secret rotation procedure with Vault automation hooks.
 - [`docs/runbook_secret_leak.md`](runbook_secret_leak.md) – Incident response
   plan for suspected credential exposure.
+- [`docs/runbook_inference_incident.md`](runbook_inference_incident.md) –
+  Inference service degradation response.
+- [`docs/runbook_latency_degradation.md`](runbook_latency_degradation.md) –
+  Latency regression response for critical paths.
+- [`docs/runbook_model_rollback.md`](runbook_model_rollback.md) – Standardized
+  model rollback procedure.
+- [`docs/runbook_data_drift_response.md`](runbook_data_drift_response.md) –
+  Data drift triage and remediation steps.
 - [`docs/incident_playbooks.md`](incident_playbooks.md) – Communication and
   escalation expectations for high-severity events.
 - [`docs/operational_handbook.md`](operational_handbook.md) – Governance context,
