@@ -1,16 +1,16 @@
+import warnings
+
 import numpy as np
-import pytest
 
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 
 
 def test_compute_phase_no_copy_warning():
     data = np.random.randn(256)
-    with pytest.warns(None) as caught:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         result = compute_phase(data)
     assert result.shape == data.shape
-    for warning in caught:
-        assert "copy" not in str(warning.message).lower()
 
 
 def test_kuramoto_order_fast_path():

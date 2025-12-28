@@ -576,6 +576,7 @@ class SerotoninController:
         logger: Optional[Callable[[str, float], None]] = None,
         *,
         min_risk_budget: float = 0.05,
+        enable_performance_tracking: bool | None = None,
     ):
         """Initialise the controller with a YAML configuration.
 
@@ -613,12 +614,17 @@ class SerotoninController:
         self._file_lock_path = Path(self.config_path).with_suffix(".lock")
         self._cooldown_start_time: Optional[float] = None
         self._hold_state: bool = False
+        self._hold: bool = False
+        self._cooldown: float = 0.0
 
         # Performance tracking
         self._step_count: int = 0
         self._total_cooldown_time: float = 0.0
         self._veto_count: int = 0
         self._last_step_time: Optional[float] = None
+        self._perf_tracking_enabled = bool(
+            True if enable_performance_tracking is None else enable_performance_tracking
+        )
         self._min_risk_budget = float(min_risk_budget)
         self._max_risk_budget = 1.0
         self._safety_monitor = SafetyMonitor(self._min_risk_budget, self._max_risk_budget)
@@ -743,9 +749,13 @@ class SerotoninController:
         if stress < 0:
             raise ValueError("stress must be non-negative")
         if self._active_profile == "v24" and raw_drawdown > 0:
-            raise ValueError(
-                "drawdown should be negative or zero (e.g., -0.05 for 5% loss)"
-            )
+            if not getattr(self, "_positive_drawdown_warned", False):
+                logging.getLogger(__name__).warning(
+                    "drawdown should be negative or zero (e.g., -0.05 for 5%% loss); "
+                    "received %.4f, coercing to negative",
+                    raw_drawdown,
+                )
+                self._positive_drawdown_warned = True
         drawdown = -abs(raw_drawdown)
         if novelty < 0:
             raise ValueError("novelty must be non-negative")
@@ -774,15 +784,26 @@ class SerotoninController:
                 # Entering cooldown
                 self._cooldown_start_time = current_time
                 self._hold_state = True
+                self._hold = True
+                self._cooldown = 0.0
             elif not hold and self._hold_state:
                 # Exiting cooldown
                 self._hold_state = False
                 self._cooldown_start_time = None
+                self._cooldown = float(self.config.get("desens_threshold_ticks", 0))
+            else:
+                self._hold = bool(self._hold_state)
 
             # Calculate cooldown duration
             cooldown_s = 0.0
             if self._hold_state and self._cooldown_start_time is not None:
                 cooldown_s = current_time - self._cooldown_start_time
+            elif not self._hold_state and self._cooldown > 0:
+                cooldown_s = self._cooldown
+            if not self._hold_state and self._cooldown > 0:
+                step_dt = float(dt) if dt is not None else 1.0
+                self._cooldown = max(0.0, self._cooldown - step_dt)
+            self._hold = bool(self._hold_state)
 
             # Track performance metrics
             self._step_count += 1
@@ -1123,6 +1144,12 @@ class SerotoninController:
                     return False
 
             return bool(veto)
+
+    @property
+    def hold(self) -> bool:
+        """Compatibility property combining hold state and cooldown window."""
+
+        return bool(self._hold_state or self._cooldown > 0)
 
     def apply_internal_shift(
         self,
@@ -1485,6 +1512,7 @@ class SerotoninController:
                 "phasic_level": float(self.phasic_level),
                 "gate_level": float(self.gate_level),
                 "temperature_floor": float(self.temperature_floor),
+                "cooldown": float(self._cooldown),
                 "alpha": float(self.config["alpha"]),
                 "beta": float(self.config["beta"]),
                 "gamma": float(self.config["gamma"]),
@@ -1564,6 +1592,8 @@ class SerotoninController:
                 state.get("temperature_floor", self.config["temperature_floor_min"])
             )
             self._hold_state = bool(state.get("hold_state", False))
+            self._cooldown = float(state.get("cooldown", 0.0))
+            self._hold = bool(self._hold_state)
 
             # Restore metadata if available
             metadata = state.get("_metadata", {})
@@ -1599,6 +1629,8 @@ class SerotoninController:
             self.temperature_floor = float(self.config["temperature_floor_min"])
             self._cooldown_start_time = None
             self._hold_state = False
+            self._hold = False
+            self._cooldown = 0.0
             self._step_count = 0
             self._total_cooldown_time = 0.0
             self._veto_count = 0
