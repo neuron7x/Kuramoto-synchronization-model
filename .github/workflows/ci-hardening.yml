@@ -125,7 +125,7 @@ jobs:
           if [ "$UNPINNED_ACTIONS" -gt 0 ]; then
             echo "⚠️  Found $UNPINNED_ACTIONS unpinned actions"
             echo "Recommendation: Pin actions to full SHA for security"
-            echo "Example: uses: actions/checkout@v5 -> uses: actions/checkout@<sha256>"
+            echo "Example: uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5"
           else
             echo "✅ All actions properly pinned"
           fi
