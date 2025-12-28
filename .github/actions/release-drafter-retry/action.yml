@@ -17,7 +17,7 @@ runs:
     - id: attempt1
       name: Release Drafter (attempt 1)
       continue-on-error: true
-      uses: release-drafter/release-drafter@v6
+      uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6
       with:
         config-name: ${{ inputs.config-name }}
       env:
@@ -30,7 +30,7 @@ runs:
       name: Release Drafter (attempt 2)
       if: steps.attempt1.outcome == 'failure'
       continue-on-error: true
-      uses: release-drafter/release-drafter@v6
+      uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6
       with:
         config-name: ${{ inputs.config-name }}
       env:
@@ -42,7 +42,7 @@ runs:
     - id: attempt3
       name: Release Drafter (attempt 3)
       if: steps.attempt2.outcome == 'failure'
-      uses: release-drafter/release-drafter@v6
+      uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6
       with:
         config-name: ${{ inputs.config-name }}
       env:
