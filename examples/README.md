@@ -17,6 +17,19 @@ python examples/quick_start.py
 - Simple backtesting workflow
 - Performance metrics analysis
 
+## Key Use-Case Quickstarts (requirements.lock compatible)
+
+The following scenarios are validated against `requirements.lock`. Each
+dependency listed is pinned there, and the same commands are executed as CI
+smoke tests.
+
+| Use-case | Quickstart | Dependencies (version lock) |
+| --- | --- | --- |
+| Market regime snapshot (core indicators) | `python examples/quick_start.py --seed 7 --num-points 400` | `numpy==2.3.3`, `pandas==2.3.3` |
+| Strategy backtest (NeuroTrade PRO) | `python examples/neuro_trade_pulse_backtest.py` | `numpy==2.3.3`, `pandas==2.3.3` |
+| Real-time style snapshot (signal generation) | `python examples/neuro_trade_pulse_snapshot.py` | `numpy==2.3.3`, `pandas==2.3.3` |
+| Integrated risk management pipeline | `python examples/integrated_risk_management_example.py` | `numpy==2.3.3` |
+
 ## Examples by Category
 
 ### 🎯 Backtesting & Strategies
