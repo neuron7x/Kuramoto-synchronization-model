@@ -26,7 +26,7 @@
 ### Minimal Working Example
 
 ```python
-from core.neuro.serotonin.serotonin_controller import SerotoninController
+from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 # Initialize controller
 controller = SerotoninController(config_path="configs/serotonin.yaml")
@@ -138,6 +138,10 @@ pip install prometheus-client>=0.23.1  # For Prometheus metrics
 ---
 
 ## Configuration
+
+> **Default profile:** `v24` is the default profile in `configs/serotonin.yaml`.
+> To preserve legacy behaviour, set `active_profile: legacy` and keep the
+> `serotonin_legacy` section populated.
 
 ### Basic Configuration File
 

@@ -2,49 +2,55 @@
 
 
 def test_serotonin_controller_mirror_aliases_canonical():
-    from core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         ControllerOutput as CanonControllerOutput,
     )
-    from core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninConfig as CanonConfig,
     )
-    from core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninConfigEnvelope as CanonEnvelope,
     )
-    from core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninController as CanonController,
     )
-    from core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         SerotoninLegacyConfig as CanonLegacy,
     )
-    from core.neuro.serotonin.serotonin_controller import (
+    from tradepulse.core.neuro.serotonin.serotonin_controller import (
         _generate_config_table as CanonConfigTable,
     )
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
-        ControllerOutput as MirrorControllerOutput,
+    from core.neuro.serotonin.serotonin_controller import (
+        ControllerOutput as ShimControllerOutput,
     )
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninConfig as MirrorConfig,
+    from core.neuro.serotonin.serotonin_controller import (
+        SerotoninConfig as ShimConfig,
     )
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninConfigEnvelope as MirrorEnvelope,
+    from core.neuro.serotonin.serotonin_controller import (
+        SerotoninConfigEnvelope as ShimEnvelope,
     )
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninController as MirrorController,
+    from core.neuro.serotonin.serotonin_controller import (
+        SerotoninController as ShimController,
     )
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
-        SerotoninLegacyConfig as MirrorLegacy,
+    from core.neuro.serotonin.serotonin_controller import (
+        SerotoninLegacyConfig as ShimLegacy,
     )
-    from src.tradepulse.core.neuro.serotonin.serotonin_controller import (
-        _generate_config_table as MirrorConfigTable,
+    from core.neuro.serotonin.serotonin_controller import (
+        _generate_config_table as ShimConfigTable,
     )
 
-    assert MirrorController is CanonController
-    assert MirrorConfig is CanonConfig
-    assert MirrorEnvelope is CanonEnvelope
-    assert MirrorLegacy is CanonLegacy
-    assert MirrorControllerOutput is CanonControllerOutput
-    assert MirrorConfigTable is CanonConfigTable
+    assert ShimController is CanonController
+    assert ShimConfig is CanonConfig
+    assert ShimEnvelope is CanonEnvelope
+    assert ShimLegacy is CanonLegacy
+    assert ShimControllerOutput is CanonControllerOutput
+    assert ShimConfigTable is CanonConfigTable
+
+    import tradepulse.core.neuro.serotonin.serotonin_controller as canonical_module
+    import core.neuro.serotonin.serotonin_controller as shim_module
+
+    assert getattr(canonical_module, "__CANONICAL__")
+    assert getattr(shim_module, "__CANONICAL__") is False
 
 
 def test_serotonin_observability_mirror_aliases_canonical():
