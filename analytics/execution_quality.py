@@ -35,6 +35,7 @@ class CancelReplaceSample:
     replace_ts: float
 
     def latency(self) -> float:
+        """Return cancel/replace latency in seconds."""
         return max(0.0, float(self.replace_ts) - float(self.cancel_ts))
 
 
@@ -116,7 +117,7 @@ def vwap_slippage(
     """VWAP slippage versus a benchmark price.
 
     Positive numbers represent slippage against the trader (higher paid for buys,
-    lower received for sells).
+    lower received for sells). Returned values are absolute price deltas.
     """
 
     trade_vwap = vwap(fills)
@@ -146,7 +147,10 @@ def fill_rate(
 def cancel_replace_latency(
     samples: Iterable[CancelReplaceSample | Mapping[str, float]],
 ) -> dict[str, float]:
-    """Aggregate latency statistics from cancel/replace samples."""
+    """Aggregate latency statistics from cancel/replace samples.
+
+    All latency values are returned in seconds.
+    """
 
     latencies: list[float] = []
     for sample in samples:

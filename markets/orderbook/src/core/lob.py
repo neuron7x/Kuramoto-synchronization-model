@@ -53,6 +53,7 @@ class Execution:
     queue_position: int
     impacted_price: float
     slippage: float
+    # slippage is an absolute price delta (same units as price/impacted_price).
 
 
 class ImpactModel(Protocol):
@@ -105,11 +106,14 @@ class SlippageModule(Protocol):
         queue_position: int,
         executed_qty: float,
     ) -> float:
-        """Return the slippage (adverse price move) for a single fill."""
+        """Return the slippage (adverse price move) for a single fill.
+
+        The returned slippage is an absolute price delta (same units as price).
+        """
 
 
 class PerUnitBpsSlippage:
-    """Linear bps slippage applied to the impacted price."""
+    """Linear slippage in basis points applied to the impacted price."""
 
     __slots__ = ("bps",)
 
@@ -133,7 +137,7 @@ class PerUnitBpsSlippage:
 class QueueAwareSlippage:
     """Simple queue position slippage model.
 
-    Later positions in the queue incur proportionally larger slippage.
+    Later positions in the queue incur proportionally larger slippage in bps.
     """
 
     __slots__ = ("penalty",)

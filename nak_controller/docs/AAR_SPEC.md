@@ -66,7 +66,7 @@ class Prediction:
     action_id: str          # Links to ActionEvent
     expected_pnl: float     # Expected profit/loss
     expected_latency_ms: float
-    expected_slippage: float
+    expected_slippage: float  # Fractional price move (e.g., 0.0005 = 5 bps)
     confidence: float       # Model confidence [0, 1]
     timestamp: float        # When prediction was made
 ```
@@ -79,7 +79,7 @@ class Outcome:
     action_id: str          # Links to ActionEvent
     actual_pnl: float       # Realized profit/loss
     actual_latency_ms: float
-    actual_slippage: float
+    actual_slippage: float  # Fractional price move (e.g., 0.0005 = 5 bps)
     success: bool           # Whether action completed
     timestamp: float        # When outcome was recorded
 ```

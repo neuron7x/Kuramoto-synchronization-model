@@ -105,6 +105,22 @@ def test_stress_scenario_validation() -> None:
         StressScenario(name="Test", shocks={})
 
 
+def test_var_es_units_align_with_currency_pnl() -> None:
+    returns = pd.DataFrame({"AssetA": [-0.01, -0.02, -0.03]})
+    exposures = {"AssetA": 100.0}
+    tester = PortfolioStressTester(
+        returns,
+        exposures,
+        portfolio_value=100.0,
+        min_history=3,
+    )
+
+    metrics = tester.compute_var_es(confidence_level=0.5, horizon_days=1)
+
+    assert metrics.var == pytest.approx(2.0)
+    assert metrics.expected_shortfall == pytest.approx(2.5)
+
+
 def test_historical_shocks_require_positive_portfolio_value() -> None:
     returns = _build_returns_frame()
     exposures = {"AssetA": 500_000.0}

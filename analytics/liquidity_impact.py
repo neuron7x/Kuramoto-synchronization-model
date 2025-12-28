@@ -49,7 +49,10 @@ class OrderBookLevel:
 
 @dataclass(frozen=True, slots=True)
 class LiquiditySnapshot:
-    """Immutable snapshot of the top of book liquidity."""
+    """Immutable snapshot of the top of book liquidity.
+
+    Volatility values are expressed as decimal fractions (e.g., 0.02 = 2%).
+    """
 
     mid_price: float
     bid_levels: Sequence[OrderBookLevel]
@@ -127,7 +130,10 @@ class LiquiditySnapshot:
 
 @dataclass(frozen=True, slots=True)
 class LiquidityImpactConfig:
-    """Configuration for the liquidity impact model."""
+    """Configuration for the liquidity impact model.
+
+    Fields with a ``_bps`` suffix are in basis points.
+    """
 
     shortfall_penalty_bps: float = 15.0
     impact_sensitivity: float = 0.05
@@ -153,7 +159,10 @@ class LiquidityImpactConfig:
 
 @dataclass(frozen=True, slots=True)
 class ExecutionParameters:
-    """Key tunables for an execution schedule."""
+    """Key tunables for an execution schedule.
+
+    ``limit_offset_bps`` is expressed in basis points.
+    """
 
     participation_rate: float
     slice_volume: float
@@ -170,7 +179,11 @@ class ExecutionParameters:
 
 @dataclass(frozen=True, slots=True)
 class ExecutionForecast:
-    """Output of the liquidity impact model for a single order."""
+    """Output of the liquidity impact model for a single order.
+
+    ``expected_slippage`` is an absolute price delta (same units as ``mid_price``),
+    while ``expected_slippage_bps`` converts that delta into basis points.
+    """
 
     side: SideLiteral
     quantity: float
@@ -240,6 +253,7 @@ class LiquidityImpactModel:
             * self._config.impact_sensitivity
             * (effective_participation**self._config.participation_exponent)
         )
+        # Volatility is a decimal fraction (e.g., 0.02 = 2%).
         realised_volatility = (
             volatility if volatility is not None else snapshot.volatility or 0.0
         )

@@ -28,6 +28,11 @@ class MetricsRecorder(ABC):
 
 @dataclass(slots=True)
 class MetricsSample:
+    """Snapshot of ingest metrics for an instrument.
+
+    Latency/freshness fields are stored in milliseconds.
+    """
+
     latency_ms: float | None = None
     freshness_ms: float | None = None
     gap_events: int = 0

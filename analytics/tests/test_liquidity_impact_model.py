@@ -149,3 +149,19 @@ def test_batch_forecast_returns_forecasts() -> None:
 
     assert [f.quantity for f in forecasts] == quantities
     assert all(math.isfinite(f.expected_slippage) for f in forecasts)
+
+
+def test_volatility_component_uses_fractional_units() -> None:
+    snapshot = build_snapshot()
+    model = LiquidityImpactModel()
+
+    forecast = model.forecast(
+        side="buy",
+        quantity=2.0,
+        participation_rate=0.1,
+        snapshot=snapshot,
+        volatility=0.02,  # 2% volatility
+    )
+
+    expected_component = snapshot.mid_price * model.config.volatility_sensitivity * 0.02
+    assert forecast.volatility_component == pytest.approx(expected_component)

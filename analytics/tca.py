@@ -52,7 +52,10 @@ def _normalise_side(side: SideLiteral) -> SideLiteral:
 
 @dataclass(frozen=True, slots=True)
 class FillDetail:
-    """Augmented fill sample with routing metadata."""
+    """Augmented fill sample with routing metadata.
+
+    ``timestamp`` is expressed in seconds.
+    """
 
     quantity: float
     price: float
@@ -77,7 +80,10 @@ class FillDetail:
 
 @dataclass(frozen=True, slots=True)
 class OrderLifecycle:
-    """Lifecycle timestamps for an order routed to market."""
+    """Lifecycle timestamps for an order routed to market.
+
+    Timestamps are expressed in seconds.
+    """
 
     order_id: str
     submitted_ts: float
@@ -106,7 +112,10 @@ class OrderLifecycle:
 
 @dataclass(frozen=True, slots=True)
 class MarketVolumeSample:
-    """Market-wide traded volume for a period."""
+    """Market-wide traded volume for a period.
+
+    ``timestamp`` is expressed in seconds.
+    """
 
     timestamp: float
     volume: float
@@ -118,7 +127,10 @@ class MarketVolumeSample:
 
 @dataclass(frozen=True, slots=True)
 class LiquiditySample:
-    """Displayed liquidity snapshot for a venue."""
+    """Displayed liquidity snapshot for a venue.
+
+    ``spread_bps`` is expressed in basis points.
+    """
 
     timestamp: float
     displayed_volume: float
@@ -133,7 +145,10 @@ class LiquiditySample:
 
 @dataclass(frozen=True, slots=True)
 class BenchmarkPriceSample:
-    """Benchmark price used for VWAP/POV comparisons."""
+    """Benchmark price used for VWAP/POV comparisons.
+
+    ``timestamp`` is expressed in seconds.
+    """
 
     timestamp: float
     price: float
@@ -148,7 +163,7 @@ class BenchmarkPriceSample:
 
 @dataclass(frozen=True, slots=True)
 class LatencyDistribution:
-    """Descriptive statistics for a latency dimension."""
+    """Descriptive statistics for a latency dimension in seconds."""
 
     count: float
     mean: float
@@ -168,7 +183,10 @@ class LatencyReport:
 
 @dataclass(frozen=True, slots=True)
 class SlippageReport:
-    """Slippage diagnostics relative to key benchmarks."""
+    """Slippage diagnostics relative to key benchmarks.
+
+    Slippage values are absolute price deltas (same units as prices).
+    """
 
     arrival_slippage: float
     vwap_slippage: float
@@ -178,7 +196,10 @@ class SlippageReport:
 
 @dataclass(frozen=True, slots=True)
 class LiquidityReport:
-    """Liquidity conditions experienced during execution."""
+    """Liquidity conditions experienced during execution.
+
+    ``median_spread_bps`` is expressed in basis points.
+    """
 
     average_displayed_volume: float
     coverage_ratio: float
@@ -221,7 +242,10 @@ class BrokerVenueBreakdown:
 
 @dataclass(frozen=True, slots=True)
 class PeriodicTCARecord:
-    """Periodic execution summary for reporting."""
+    """Periodic execution summary for reporting.
+
+    ``slippage`` is an absolute price delta (same units as prices).
+    """
 
     start_timestamp: float
     end_timestamp: float

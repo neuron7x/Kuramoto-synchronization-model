@@ -46,7 +46,8 @@ class Prediction:
         action_id: Links to the corresponding ActionEvent.
         expected_pnl: Expected profit/loss from the action.
         expected_latency_ms: Expected execution latency in milliseconds.
-        expected_slippage: Expected slippage (price deviation from expected).
+        expected_slippage: Expected slippage as a fractional price move
+            (e.g., 0.0005 = 5 bps).
         confidence: Model confidence in prediction [0, 1].
         timestamp: When the prediction was made.
     """
@@ -70,7 +71,8 @@ class Outcome:
         action_id: Links to the corresponding ActionEvent.
         actual_pnl: Realized profit/loss from the action.
         actual_latency_ms: Actual execution latency in milliseconds.
-        actual_slippage: Actual slippage observed.
+        actual_slippage: Actual slippage as a fractional price move
+            (e.g., 0.0005 = 5 bps).
         success: Whether the action completed successfully.
         timestamp: When the outcome was recorded.
     """

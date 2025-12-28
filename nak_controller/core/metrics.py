@@ -21,21 +21,30 @@ def dd_norm(drawdown: float, max_dd: float = 0.2) -> float:
 
 
 def vol_norm(volatility: float, max_vol: float = 1.0) -> float:
-    """Normalize realized volatility into [0, 1]."""
+    """Normalize realized volatility into [0, 1].
+
+    Volatility is expressed as a decimal fraction (e.g., 0.02 = 2%).
+    """
     if max_vol <= 0.0:
         raise ValueError("max_vol must be positive")
     return clip(volatility / max_vol, 0.0, 1.0)
 
 
 def lat_norm(latency_ms: float, p95_ms: float = 50.0) -> float:
-    """Normalize latency to [0, 1] based on a P95 target."""
+    """Normalize latency to [0, 1] based on a P95 target.
+
+    Latency is expressed in milliseconds.
+    """
     if p95_ms <= 0.0:
         raise ValueError("p95_ms must be positive")
     return clip(latency_ms / p95_ms, 0.0, 1.0)
 
 
 def slippage_norm(slippage: float, threshold: float = 0.001) -> float:
-    """Normalize slippage magnitude to [0, 1]."""
+    """Normalize slippage magnitude to [0, 1].
+
+    Slippage is expressed as a fractional price move (e.g., 0.0005 = 5 bps).
+    """
     if threshold <= 0.0:
         raise ValueError("threshold must be positive")
     return clip(abs(slippage) / threshold, 0.0, 1.0)

@@ -59,7 +59,8 @@ def test_impact_and_slippage_are_applied() -> None:
     assert len(trades) == 1
     trade = trades[0]
     assert trade.impacted_price == pytest.approx(100.0 * (1 + 0.01 * 1.0))
-    assert trade.slippage > 0.0
+    expected_slippage = trade.impacted_price * 10.0 * 1e-4
+    assert trade.slippage == pytest.approx(expected_slippage)
 
 
 def test_queue_imbalance_metric() -> None:

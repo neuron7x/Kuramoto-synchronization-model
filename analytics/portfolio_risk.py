@@ -24,7 +24,11 @@ import pandas as pd
 
 @dataclass(frozen=True, slots=True)
 class PortfolioRiskMetrics:
-    """Computed risk metrics for a specific confidence level and horizon."""
+    """Computed risk metrics for a specific confidence level and horizon.
+
+    ``var`` and ``expected_shortfall`` are expressed in portfolio currency units.
+    ``confidence_level`` is a decimal fraction (e.g., 0.99 for 99%).
+    """
 
     var: float
     expected_shortfall: float
@@ -52,7 +56,10 @@ class ScenarioContribution:
 
 @dataclass(frozen=True, slots=True)
 class StressScenario:
-    """Historical or hypothetical shock applied to asset returns."""
+    """Historical or hypothetical shock applied to asset returns.
+
+    Shock values are decimal return fractions (e.g., -0.05 = -5%).
+    """
 
     name: str
     shocks: Mapping[str, float]
@@ -99,7 +106,10 @@ class StressScenarioResult:
 
 @dataclass(frozen=True, slots=True)
 class VolatilityScenario:
-    """Volatility stress configuration."""
+    """Volatility stress configuration.
+
+    ``volatility_multiplier`` is unitless (e.g., 1.5 = +150%).
+    """
 
     name: str
     volatility_multiplier: float
@@ -165,7 +175,10 @@ class RiskLimitBreach:
 
 @dataclass(frozen=True, slots=True)
 class PortfolioStressReport:
-    """Aggregate results for a portfolio risk stress assessment."""
+    """Aggregate results for a portfolio risk stress assessment.
+
+    ``portfolio_value`` and VaR/ES values are expressed in portfolio currency.
+    """
 
     generated_at: datetime
     portfolio_value: float
@@ -320,6 +333,7 @@ class PortfolioStressTester:
     def compute_var_es(
         self, *, confidence_level: float, horizon_days: int
     ) -> PortfolioRiskMetrics:
+        """Compute VaR/ES in portfolio currency for a given confidence level."""
         if not (0.0 < confidence_level < 1.0):
             raise ValueError("confidence_level must be between 0 and 1")
         aggregated = self._aggregate_pnl(horizon_days)
