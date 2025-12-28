@@ -21,6 +21,11 @@
 | get-market-signal | GET | /v1/signals/{symbol} | signals:read | public; max-age=15; swr=30 | 180/min, 5000/hour, 40000/day | burst=12 / 60s | optional | required (ed25519 via X-TradePulse-Signature v1) | signal.published |
 | create-prediction | POST | /v1/predictions | predictions:write | no-store; max-age=0; swr=0 | 30/min, 500/hour, 3000/day | burst=5 / 60s | required (X-Idempotency-Key ttl=86400s) | required (ed25519 via X-TradePulse-Signature v1) | prediction.completed |
 
+## Contract catalog
+
+For contract-by-contract inputs/outputs, DTOs, and examples (including interface-layer contracts), see
+[`docs/api/contracts.md`](contracts.md).
+
 ## Smoke tests
 
 | Name | Description | Expected status | Route |
