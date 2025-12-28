@@ -81,7 +81,8 @@ TradePulse/
 │   │
 │   ├── requirements/                 📁 Requirements specifications
 │   │   ├── product_specification.md  ✅ Product specification (moved from root)
-│   │   └── requirements-specification.md ✅ Formal requirements
+│   │   ├── requirements-specification.md ✅ Formal requirements
+│   │   └── traceability_matrix.md    ✅ Requirement-to-implementation matrix
 │   │
 │   ├── releases/                     📁 Release documentation
 │   │   └── release-notes.md          ✅ Release notes (moved from root)
