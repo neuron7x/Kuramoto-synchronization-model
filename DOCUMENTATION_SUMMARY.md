@@ -132,6 +132,35 @@ TradePulse/
 | **Templates** | 12 | 100% | ✅ Excellent | Complete |
 | **Examples** | 8 | 70% | ⚠️ Fair | Needs Work |
 
+### Coverage Gaps (<90%) & Missing Artifacts
+
+The following categories require remediation based on coverage below 90%.
+
+#### Critical (P0) — Must Raise Immediately
+
+**docs/api/** — Coverage 80% (Owner: Platform Engineering + Developer Experience)
+- **Missing Artifacts:**
+  - `docs/api/authentication.md` — API auth flows, signatures, idempotency headers
+  - `docs/api/error_model.md` — error schema, retry semantics, error catalog
+  - `docs/api/rate_limits.md` — rate limits, throttling, quota reset behavior
+  - `docs/api/pagination.md` — cursor/offset patterns and examples
+- **Priority:** P0 (docs-critical)
+
+**docs/adr/** — Coverage 23% (Owner: Principal Architect)
+- **Missing Artifacts:**
+  - ADR-0004 through ADR-0013 (10 ADRs) — decision backlog per Formalization Index
+- **Priority:** P0 (docs-critical)
+
+#### High (P1)
+
+**docs/examples/** — Coverage 70% (Owner: Developer Experience)
+- **Missing Artifacts:**
+  - `docs/examples/quickstart_signal_fetch.md` — end-to-end signal retrieval
+  - `docs/examples/prediction_submission.md` — idempotent prediction flow
+  - `docs/examples/webhook_consumer.md` — webhook signature verification
+  - `docs/examples/sdk_integration.md` — SDK integration and retries
+- **Priority:** P1 (docs-enhancement)
+
 ### Document Type Distribution
 
 | Type | Count | Template Compliance | Review Status |

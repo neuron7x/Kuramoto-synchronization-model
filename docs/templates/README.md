@@ -28,8 +28,16 @@ the Documentation Governance and Standardisation playbooks.
 | `run_example.md` | Executable run books for CLI or notebook examples. | Developer Experience |
 | `sample_data.md` | Contracts for sample datasets used in docs and tests. | Data Engineering |
 | `api_contract.md` | Human-readable API contract aligned with protobuf/OpenAPI specs. | Integrations Team |
+| `api_authentication.md` | API authentication, signing, and idempotency guidance. | Platform Engineering |
+| `api_error_model.md` | Standard error envelope and retry guidance. | Platform Engineering |
+| `api_rate_limits.md` | Rate limit policies, headers, and quotas. | Platform Engineering |
+| `api_pagination.md` | Pagination strategies with request/response examples. | Platform Engineering |
 | `versioning_policy.md` | Versioning guarantees and branching policy. | Release Managers |
 | `compatibility_policy.md` | Backward/forward compatibility guardrails. | Platform Council |
+| `example_quickstart.md` | Quickstart walkthrough for first-success flows. | Developer Experience |
+| `example_prediction_submission.md` | Idempotent prediction submission walkthrough. | Developer Experience |
+| `example_webhook_consumer.md` | Webhook verification and handling example. | Developer Experience |
+| `example_sdk_integration.md` | SDK setup and integration example. | Developer Experience |
 
 To introduce a new template, add a file to this directory following the same
 pattern: metadata block, guidance `<details>` section, and the copy-paste ready
