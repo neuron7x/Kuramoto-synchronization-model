@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "title": "BacktestResult",
-  "description": "Result from a backtest run. Contains profit/loss, maximum drawdown, number of trades, and performance analytics.",
+  "description": "Result from a backtest run. Contains P&L, drawdown, trades, execution costs, and data quality metadata.",
   "properties": {
     "pnl": {
       "type": "number"
@@ -13,30 +13,79 @@
     "trades": {
       "type": "integer"
     },
-    "equity_curve": {},
+    "equity_curve": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
     "latency_steps": {
       "type": "integer"
     },
     "slippage_cost": {
       "type": "number"
     },
+    "commission_cost": {
+      "type": "number"
+    },
+    "spread_cost": {
+      "type": "number"
+    },
+    "financing_cost": {
+      "type": "number"
+    },
     "performance": {
-      "type": "object",
+      "type": ["object", "null"],
       "description": "Aggregated performance statistics (annualised where applicable).",
       "properties": {
         "sharpe_ratio": { "type": ["number", "null"] },
         "sortino_ratio": { "type": ["number", "null"] },
+        "probabilistic_sharpe_ratio": { "type": ["number", "null"] },
+        "sharpe_p_value": { "type": ["number", "null"] },
+        "certainty_equivalent": { "type": ["number", "null"] },
         "cagr": { "type": ["number", "null"] },
         "max_drawdown": { "type": ["number", "null"] },
         "expected_shortfall": { "type": ["number", "null"] },
         "turnover": { "type": ["number", "null"] },
-        "hit_ratio": { "type": ["number", "null"] }
+        "hit_ratio": { "type": ["number", "null"] },
+        "alpha": { "type": ["number", "null"] },
+        "beta": { "type": ["number", "null"] },
+        "information_ratio": { "type": ["number", "null"] },
+        "tracking_error": { "type": ["number", "null"] }
       },
       "additionalProperties": false
     },
     "report_path": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Filesystem path to the exported performance report"
+    },
+    "data_quality_report": {
+      "type": ["object", "null"],
+      "description": "Summary of data quality validation results.",
+      "properties": {
+        "is_valid": { "type": "boolean" },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "severity": { "type": "string" },
+              "details": { "type": ["object", "null"] }
+            },
+            "required": ["code", "message", "severity"],
+            "additionalProperties": false
+          }
+        },
+        "warnings_count": { "type": "integer" },
+        "errors_count": { "type": "integer" },
+        "critical_count": { "type": "integer" },
+        "validated_rows": { "type": "integer" },
+        "skipped": { "type": "boolean" }
+      },
+      "required": ["is_valid"],
+      "additionalProperties": false
     }
   },
   "required": [

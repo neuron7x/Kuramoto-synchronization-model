@@ -89,6 +89,28 @@ class ArtifactRecord(BaseModel):
         default_factory=dict,
         description="Optional structured metadata to help interpret the artifact.",
     )
+    data_version: str | None = Field(
+        default=None,
+        description="Version or hash of the dataset used to produce the artifact.",
+    )
+    code_version: str | None = Field(
+        default=None,
+        description="Source control revision that produced the artifact.",
+    )
+
+    @model_validator(mode="after")
+    def _ensure_model_provenance(self) -> "ArtifactRecord":
+        if self.kind == "model":
+            missing = []
+            if not self.data_version:
+                missing.append("data_version")
+            if not self.code_version:
+                missing.append("code_version")
+            if missing:
+                raise ValueError(
+                    "Model artifacts must include data_version and code_version."
+                )
+        return self
 
 
 class ExperimentRunRecord(BaseModel):

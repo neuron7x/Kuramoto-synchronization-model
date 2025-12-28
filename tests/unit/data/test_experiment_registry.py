@@ -36,7 +36,13 @@ def test_register_run_persists_payload(tmp_path: Path) -> None:
         fsync=False,
     )
 
-    artifact = ArtifactRecord(name="model", uri="s3://bucket/model.pt", kind="model")
+    artifact = ArtifactRecord(
+        name="model",
+        uri="s3://bucket/model.pt",
+        kind="model",
+        data_version="data-hash",
+        code_version="abc123",
+    )
     record = registry.register_run(
         "volatility-model",
         params={"lr": 0.01, "epochs": 20},
@@ -143,7 +149,15 @@ def test_reproducibility_manifest_matches_run(tmp_path: Path) -> None:
         "signal-model",
         params={"window": 30},
         metrics={"sharpe": 1.8},
-        artifacts=[{"name": "model", "uri": "./model.pkl", "kind": "model"}],
+        artifacts=[
+            {
+                "name": "model",
+                "uri": "./model.pkl",
+                "kind": "model",
+                "data_version": "dataset-v3",
+                "code_version": "rev-42",
+            }
+        ],
     )
 
     manifest = registry.reproducibility_manifest(
@@ -152,6 +166,8 @@ def test_reproducibility_manifest_matches_run(tmp_path: Path) -> None:
     assert manifest["run_id"] == record.run_id
     assert manifest["param_hash"] == record.param_hash
     assert manifest["artifacts"][0]["uri"] == "./model.pkl"
+    assert manifest["artifacts"][0]["data_version"] == "dataset-v3"
+    assert manifest["artifacts"][0]["code_version"] == "rev-42"
     assert manifest["metrics"]["sharpe"] == pytest.approx(1.8)
 
 

@@ -27,6 +27,8 @@ the Documentation Governance and Standardisation playbooks.
 | `onboarding.md` | Role-specific onboarding journeys. | People Operations |
 | `run_example.md` | Executable run books for CLI or notebook examples. | Developer Experience |
 | `sample_data.md` | Contracts for sample datasets used in docs and tests. | Data Engineering |
+| `dataset_card.md` | Dataset cards capturing lineage, quality, and usage notes. | Data Engineering |
+| `model_card.md` | Model cards documenting lineage, evaluation, and risks. | MLOps |
 | `api_contract.md` | Human-readable API contract aligned with protobuf/OpenAPI specs. | Integrations Team |
 | `api_authentication.md` | API authentication, signing, and idempotency guidance. | Platform Engineering |
 | `api_error_model.md` | Standard error envelope and retry guidance. | Platform Engineering |
