@@ -659,9 +659,11 @@ class SerotoninController:
 
         try:
             self._logger(name, float(value))
-        except Exception:
+        except Exception as exc:
             # Logging must not interfere with control flow.
-            pass
+            logging.getLogger(__name__).debug(
+                "SerotoninController logger failed for %s: %s", name, exc
+            )
 
     def _validate_and_derive(self) -> None:
         """Validate configuration keys and derive dependent quantities."""

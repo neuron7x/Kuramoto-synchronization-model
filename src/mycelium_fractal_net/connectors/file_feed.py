@@ -209,17 +209,11 @@ class FileFeedIngestor(BaseIngestor):
         if not value:
             return None
 
-        # Try integer first
-        try:
-            return int(value)
-        except ValueError:
-            pass
-
-        # Try float
-        try:
-            return float(value)
-        except ValueError:
-            pass
+        for caster in (int, float):
+            try:
+                return caster(value)
+            except ValueError:
+                continue
 
         # Check for boolean strings (true/false/yes/no)
         lower_value = value.lower()
@@ -277,8 +271,8 @@ class FileFeedIngestor(BaseIngestor):
                     dt = dt.replace(tzinfo=timezone.utc)
                 return dt.astimezone(timezone.utc)
 
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Failed to parse timestamp value %r: %s", value, exc)
 
         return None
 

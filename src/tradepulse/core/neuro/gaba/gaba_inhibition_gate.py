@@ -21,6 +21,7 @@ Performance Notes
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, Mapping, Optional
@@ -127,8 +128,10 @@ class GABAInhibitionGate:
     def _log(self, name: str, value: float) -> None:
         try:
             self._logger(name, float(value))
-        except Exception:  # pragma: no cover - defensive
-            pass
+        except Exception as exc:  # pragma: no cover - defensive
+            logging.getLogger(__name__).debug(
+                "GABAInhibitionGate logger failed for %s: %s", name, exc
+            )
 
     def _validate_config(self, raw: Mapping[str, object]) -> GABAConfig:
         required = {
