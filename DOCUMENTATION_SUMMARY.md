@@ -92,7 +92,7 @@ TradePulse/
 │   │   └── ...                       ✅ Architecture guides
 │   │
 │   ├── adr/                          📁 Architecture Decision Records
-│   │   ├── 0001-*.md                ✅ 3 published ADRs
+│   │   ├── 0001-*.md                ✅ 6 published ADRs
 │   │   └── template.md              ✅ ADR template
 │   │
 │   ├── contracts/                    📁 Interface contracts
@@ -124,7 +124,7 @@ TradePulse/
 | Category | Count | Coverage | Quality | Status |
 |----------|-------|----------|---------|--------|
 | **Requirements** | 13 | 100% | ✅ Excellent | Complete |
-| **Architecture (ADRs)** | 3/13 | 23% | ✅ Excellent | In Progress |
+| **Architecture (ADRs)** | 6/13 | 46% | ✅ Excellent | In Progress |
 | **Contracts** | 10 | 67% | ✅ Good | In Progress |
 | **User Guides** | 25 | 85% | ✅ Good | Active |
 | **API Documentation** | 15 | 80% | ⚠️ Fair | Needs Review |
@@ -166,7 +166,7 @@ The following categories require remediation based on coverage below 90%.
 
 | Type | Count | Template Compliance | Review Status |
 |------|-------|-------------------|---------------|
-| ADRs | 3 | 100% | ✅ Current |
+| ADRs | 6 | 100% | ✅ Current |
 | READMEs | 45 | 60% | ⚠️ 15 stale |
 | Runbooks | 12 | 100% | ✅ Current |
 | Playbooks | 8 | 100% | ✅ Current |
@@ -299,7 +299,7 @@ All documents properly indexed in MkDocs navigation.
 
 #### Initiative 1: Complete ADR Coverage
 **Owner:** Principal Architect  
-**Status:** 🔄 In Progress (23% complete)  
+**Status:** 🔄 In Progress (46% complete)  
 **Timeline:** Q4 2025 - Q2 2026
 
 **Objective:** Document all 13 architectural decisions with formal ADRs.
@@ -308,7 +308,10 @@ All documents properly indexed in MkDocs navigation.
 - ✅ ADR-0001: Fractal Indicator Composition
 - ✅ ADR-0002: Versioned Market Data Storage
 - ✅ ADR-0003: Automated Data Quality Framework
-- 📋 ADR-0004 through ADR-0013: Planned
+- ✅ ADR-0004: Contract-First Modular Architecture
+- ✅ ADR-0005: Multi-Exchange Adapter Framework
+- ✅ ADR-0006: TACL / Thermodynamic Control Layer
+- 📋 ADR-0007 through ADR-0013: Planned
 
 **Rationale:** Formal ADRs provide:
 - Clear decision lineage and rationale
@@ -444,7 +447,7 @@ All documents properly indexed in MkDocs navigation.
    - [ ] Add YAML front matter to 20 documents by 2025-12-20
 
 2. **Medium Priority (P1):**
-   - [ ] Complete ADR-0004 through ADR-0006 by 2026-01-31
+   - [ ] Complete ADR-0007 through ADR-0009 by 2026-01-31
    - [ ] Refresh API documentation by 2026-01-15
    - [ ] Reduce review lead time to 24h by 2026-01-31
 
@@ -462,7 +465,7 @@ All documents properly indexed in MkDocs navigation.
 - Established documentation governance framework
 - Created comprehensive template library
 - Launched formalization initiative
-- Published first 3 ADRs
+- Published first 6 ADRs
 
 **Decisions:**
 - Adopted MkDocs Material for documentation site
