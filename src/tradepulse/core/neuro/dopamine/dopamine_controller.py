@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
 
@@ -337,14 +338,18 @@ class DopamineController:
             return
         try:
             log_metric(name, float(value))
-        except Exception:  # pragma: no cover - safeguard against telemetry errors.
-            pass
+        except Exception as exc:  # pragma: no cover - safeguard against telemetry errors.
+            logging.getLogger(__name__).debug(
+                "DopamineController telemetry error for %s: %s", name, exc
+            )
 
     def _log(self, name: str, value: float) -> None:
         try:
             self._logger(name, float(value))
-        except Exception:  # pragma: no cover - defensive logging guard.
-            pass
+        except Exception as exc:  # pragma: no cover - defensive logging guard.
+            logging.getLogger(__name__).debug(
+                "DopamineController logger failed for %s: %s", name, exc
+            )
 
     @staticmethod
     def _ensure_finite(name: str, value: float) -> float:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from typing import Callable, Optional
 
 from .dopamine_controller import DopamineController
@@ -67,8 +68,10 @@ class ActionGate:
     def _log(self, name: str, value: float) -> None:
         try:
             self._logger(name, float(value))
-        except Exception:  # pragma: no cover - defensive
-            pass
+        except Exception as exc:  # pragma: no cover - defensive
+            logging.getLogger(__name__).debug(
+                "ActionGate logger failed for %s: %s", name, exc
+            )
 
     def evaluate(
         self,

@@ -14,6 +14,7 @@ NAACHNeuromodulator : Main neuromodulator class with update() interface
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 from typing import Callable, Dict, Mapping, Optional
 
@@ -103,8 +104,10 @@ class NAACHNeuromodulator:
     def _log(self, name: str, value: float) -> None:
         try:
             self._logger(name, float(value))
-        except Exception:  # pragma: no cover - defensive
-            pass
+        except Exception as exc:  # pragma: no cover - defensive
+            logging.getLogger(__name__).debug(
+                "NAACHNeuromodulator logger failed for %s: %s", name, exc
+            )
 
     def _validate_config(self, raw: Mapping[str, object]) -> NAACHConfig:
         required = {
