@@ -12,7 +12,8 @@ that monitoring environments can be reproduced in a deterministic manner.
 - `alerts.json` – declarative Prometheus alert rule groups with severity and
   ownership metadata.
 - `slo_policies.json` – Service Level Objective definitions with error budgets
-  and burn rate thresholds.
+  and burn rate thresholds. These targets must align with
+  [`docs/reliability.md`](../docs/reliability.md) and associated runbooks.
 - `dashboards/` – Grafana dashboard definitions stored as JSON. Each file must
   declare a stable `uid` and at least one panel.
   - `tradepulse-production-operations.json` – Comprehensive production monitoring
