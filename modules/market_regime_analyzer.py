@@ -112,6 +112,9 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Експонента Херста
+
+        Notes:
+            Якщо даних недостатньо, повертається нейтральне значення 0.5.
         """
         if len(prices) < 20:
             return 0.5
@@ -179,6 +182,10 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Кортеж (statistic, p-value)
+
+        Notes:
+            Якщо даних недостатньо або виникає чисельна помилка, повертаються
+            дефолтні значення (0.0, 1.0).
         """
         if len(prices) < 20:
             return 0.0, 1.0
@@ -212,7 +219,7 @@ class MarketRegimeAnalyzer:
             p_value = 0.05 if t_stat < critical_value else 0.5
 
             return float(t_stat), float(p_value)
-        except Exception:
+        except (np.linalg.LinAlgError, FloatingPointError):
             return 0.0, 1.0
 
     def calculate_trend_strength(
@@ -226,6 +233,9 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Кортеж (trend_value, trend_strength)
+
+        Notes:
+            Якщо даних недостатньо, повертається (0.0, VERY_WEAK).
         """
         if len(prices) < 10:
             return 0.0, TrendStrength.VERY_WEAK
@@ -273,6 +283,10 @@ class MarketRegimeAnalyzer:
 
         Returns:
             Об'єкт RegimeMetrics
+
+        Notes:
+            Якщо даних замало, повертається RegimeMetrics з UNKNOWN режимом
+            замість підняття виключення.
         """
         if len(prices) < self.min_regime_duration:
             return RegimeMetrics(

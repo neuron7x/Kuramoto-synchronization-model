@@ -19,6 +19,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+from modules.errors import InsufficientDataError, InvalidInputError
+
 
 class OptimizationMethod(str, Enum):
     """Методи оптимізації"""
@@ -136,7 +138,21 @@ class PortfolioOptimizer:
 
         Returns:
             Результат оптимізації
+
+        Raises:
+            InsufficientDataError: якщо returns порожній або містить недостатньо даних.
+            InvalidInputError: якщо expected_returns не узгоджується з кількістю активів.
         """
+        if returns.empty or returns.shape[0] < 2:
+            raise InsufficientDataError(
+                "Returns data must contain at least two rows for optimization."
+            )
+
+        if expected_returns is not None and len(expected_returns) != returns.shape[1]:
+            raise InvalidInputError(
+                "expected_returns must match the number of assets in returns."
+            )
+
         # Розрахунок ковариаційної матриці
         self._covariance_matrix = returns.cov().values * self.annualization_factor
 
@@ -250,7 +266,7 @@ class PortfolioOptimizer:
                 weights = weights / weights_sum
             else:
                 weights = self._minimum_variance()
-        except Exception:
+        except np.linalg.LinAlgError:
             weights = self._minimum_variance()
 
         return weights
@@ -333,7 +349,7 @@ class PortfolioOptimizer:
 
             # Оптимальні ваги
             weights = np.dot(cov_inv, lambda1 * ones + lambda2 * self._expected_returns)
-        except Exception:
+        except np.linalg.LinAlgError:
             weights = self._minimum_variance()
 
         return weights
@@ -406,7 +422,15 @@ class PortfolioOptimizer:
 
         Returns:
             DataFrame з точками ефективної границі
+
+        Raises:
+            InsufficientDataError: якщо returns порожній або містить недостатньо даних.
         """
+        if returns.empty or returns.shape[0] < 2:
+            raise InsufficientDataError(
+                "Returns data must contain at least two rows for efficient frontier."
+            )
+
         # Розрахунок ковариаційної матриці
         self._covariance_matrix = returns.cov().values * self.annualization_factor
         self._expected_returns = returns.mean().values * self.annualization_factor
@@ -441,7 +465,7 @@ class PortfolioOptimizer:
                         "sharpe_ratio": sharpe,
                     }
                 )
-            except Exception:
+            except np.linalg.LinAlgError:
                 continue
 
         return pd.DataFrame(frontier_points)
@@ -460,6 +484,10 @@ class PortfolioOptimizer:
 
         Returns:
             Словник з метриками
+
+        Notes:
+            Якщо відсутні відповідні символи у returns, повертається словник
+            з ключем "error" замість виключення.
         """
         # Ваги з алокації
         weights = np.array([a.weight for a in allocation.allocations])

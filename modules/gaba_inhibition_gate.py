@@ -13,6 +13,8 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 import torch.nn as nn
 
+from modules.errors import ConfigurationError, InsufficientDataError, InvalidInputError
+
 _MS_TO_SECONDS = 1000.0  # Conversion factor
 
 
@@ -63,53 +65,53 @@ class GateParams:
         """Validate parameter ranges to avoid unstable simulations."""
 
         if self.dt_ms <= 0:
-            raise ValueError("dt_ms must be positive")
+            raise InvalidInputError("dt_ms must be positive")
         if self.tau_gaba_a_ms <= 0 or self.tau_gaba_b_ms <= 0:
-            raise ValueError("GABA time constants must be positive")
+            raise InvalidInputError("GABA time constants must be positive")
         if self.gamma_hz <= 0 or self.theta_hz <= 0:
-            raise ValueError("Oscillation frequencies must be positive")
+            raise InvalidInputError("Oscillation frequencies must be positive")
         if self.k_inhibit < 0:
-            raise ValueError("k_inhibit must be non-negative")
+            raise InvalidInputError("k_inhibit must be non-negative")
         if self.stdp_a_plus < 0 or self.stdp_a_minus < 0:
-            raise ValueError("STDP coefficients must be non-negative")
+            raise InvalidInputError("STDP coefficients must be non-negative")
         if self.stdp_tau_plus_ms <= 0 or self.stdp_tau_minus_ms <= 0:
-            raise ValueError("STDP time constants must be positive")
+            raise InvalidInputError("STDP time constants must be positive")
         if self.ltp_strength < 0 or self.ltd_strength < 0:
-            raise ValueError("Plasticity strengths must be non-negative")
+            raise InvalidInputError("Plasticity strengths must be non-negative")
         if not (self.risk_min <= self.risk_max):
-            raise ValueError("risk_min must be <= risk_max")
+            raise InvalidInputError("risk_min must be <= risk_max")
         if self.vix_norm <= 0:
-            raise ValueError("vix_norm must be positive")
+            raise InvalidInputError("vix_norm must be positive")
         if self.vix_clip_max <= 0:
-            raise ValueError("vix_clip_max must be positive")
+            raise InvalidInputError("vix_clip_max must be positive")
         if self.gaba_drive_scale < 0:
-            raise ValueError("gaba_drive_scale must be non-negative")
+            raise InvalidInputError("gaba_drive_scale must be non-negative")
         if self.gaba_slow_weight < 0:
-            raise ValueError("gaba_slow_weight must be non-negative")
+            raise InvalidInputError("gaba_slow_weight must be non-negative")
         if self.gaba_max_level <= 0:
-            raise ValueError("gaba_max_level must be positive")
+            raise InvalidInputError("gaba_max_level must be positive")
         if self.firing_proxy_max <= 0:
-            raise ValueError("firing_proxy_max must be positive")
+            raise InvalidInputError("firing_proxy_max must be positive")
         if self.gamma_cycle_amplitude < 0 or self.theta_cycle_amplitude < 0:
-            raise ValueError("Cycle amplitudes must be non-negative")
+            raise InvalidInputError("Cycle amplitudes must be non-negative")
         if not (0 < self.max_inhibition < 1):
-            raise ValueError("max_inhibition must be in (0, 1)")
+            raise InvalidInputError("max_inhibition must be in (0, 1)")
         if self.hedge_fast_boost < 0 or self.hedge_slow_boost < 0:
-            raise ValueError("hedge boost factors must be non-negative")
+            raise InvalidInputError("hedge boost factors must be non-negative")
         if self.hedge_risk_damp < 0:
-            raise ValueError("hedge_risk_damp must be non-negative")
+            raise InvalidInputError("hedge_risk_damp must be non-negative")
         if self.risk_decay_tau_ms <= 0:
-            raise ValueError("risk_decay_tau_ms must be positive")
+            raise InvalidInputError("risk_decay_tau_ms must be positive")
         if self.min_dt_ms <= 0:
-            raise ValueError("min_dt_ms must be positive")
+            raise InvalidInputError("min_dt_ms must be positive")
         if self.max_dt_ms <= 0:
-            raise ValueError("max_dt_ms must be positive")
+            raise InvalidInputError("max_dt_ms must be positive")
         if self.min_dt_ms > self.max_dt_ms:
-            raise ValueError("min_dt_ms must be <= max_dt_ms")
+            raise InvalidInputError("min_dt_ms must be <= max_dt_ms")
         if self.rpe_sensitivity < 0:
-            raise ValueError("rpe_sensitivity must be non-negative")
+            raise InvalidInputError("rpe_sensitivity must be non-negative")
         if self.position_sensitivity < 0:
-            raise ValueError("position_sensitivity must be non-negative")
+            raise InvalidInputError("position_sensitivity must be non-negative")
 
     def as_dict(self) -> Dict[str, Any]:
         """Return a configuration dictionary for serialization."""
@@ -270,27 +272,29 @@ class GABAInhibitionGate(nn.Module):
 
         Raises
         ------
-        KeyError
-            If required keys missing from market_state
-        ValueError
-            If tensors have invalid values (NaN, Inf)
+        InsufficientDataError
+            If required keys are missing from market_state.
+        InvalidInputError
+            If tensors have invalid values (NaN, Inf).
         """
         # Validate inputs
         required_keys = ["vix", "vol", "ret", "pos", "rpe", "delta_t_ms"]
         missing_keys = [k for k in required_keys if k not in market_state]
         if missing_keys:
-            raise KeyError(f"Missing required keys in market_state: {missing_keys}")
+            raise InsufficientDataError(
+                f"Missing required keys in market_state: {missing_keys}"
+            )
 
         # Validate market_state tensors for NaN/Inf
         for k in required_keys:
             t = market_state[k].to(self.device)
             if torch.isnan(t).any() or torch.isinf(t).any():
-                raise ValueError(f"{k} contains NaN or Inf values")
+                raise InvalidInputError(f"{k} contains NaN or Inf values")
 
         # Ensure device/shape
         action = action.to(self.device)
         if torch.isnan(action).any() or torch.isinf(action).any():
-            raise ValueError("action contains NaN or Inf values")
+            raise InvalidInputError("action contains NaN or Inf values")
 
         vix = market_state["vix"].to(self.device).reshape(1)
         vol = market_state["vol"].to(self.device).reshape(1)
@@ -428,9 +432,14 @@ class GABAInhibitionGate(nn.Module):
         strength : float, optional
             Hedge strength multiplier in [0, 2], by default 1.0
             Higher values increase GABAergic inhibition.
+
+        Raises
+        ------
+        InvalidInputError
+            If strength is outside the allowed range.
         """
         if not 0.0 <= strength <= 2.0:
-            raise ValueError(f"strength must be in [0, 2], got {strength}")
+            raise InvalidInputError(f"strength must be in [0, 2], got {strength}")
 
         boost = torch.tensor(strength, device=self.device)
         boosted_fast = torch.clamp(
@@ -460,10 +469,15 @@ class GABAInhibitionGate(nn.Module):
             Complete parameter bundle to install.
         **overrides : Any
             Individual parameter overrides merged with existing configuration.
+
+        Raises
+        ------
+        ConfigurationError
+            If both params and overrides are provided.
         """
 
         if params is not None and overrides:
-            raise ValueError("Specify either params or overrides, not both")
+            raise ConfigurationError("Specify either params or overrides, not both")
 
         if params is not None:
             self.p = params

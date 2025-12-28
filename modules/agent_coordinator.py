@@ -16,6 +16,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from modules.errors import ConfigurationError, ProcessingError
+
 
 class AgentType(str, Enum):
     """Типи агентів"""
@@ -165,9 +167,12 @@ class AgentCoordinator:
 
         Returns:
             AgentMetadata
+
+        Raises:
+            ConfigurationError: якщо агент з таким ID вже зареєстрований.
         """
         if agent_id in self._agents:
-            raise ValueError(f"Agent {agent_id} already registered")
+            raise ConfigurationError(f"Agent {agent_id} already registered")
 
         metadata = AgentMetadata(
             agent_id=agent_id,
@@ -230,9 +235,12 @@ class AgentCoordinator:
 
         Returns:
             Ідентифікатор задачі
+
+        Raises:
+            ConfigurationError: якщо агент не зареєстрований.
         """
         if agent_id not in self._agents:
-            raise ValueError(f"Agent {agent_id} not registered")
+            raise ConfigurationError(f"Agent {agent_id} not registered")
 
         # Генерація task ID
         self._task_id_counter += 1
@@ -310,7 +318,7 @@ class AgentCoordinator:
 
                 processed.append(task.task_id)
 
-            except Exception as e:
+            except ProcessingError as e:
                 task.error = str(e)
                 self._agents[task.agent_id].status = AgentStatus.ERROR
                 self._agents[task.agent_id].error_count += 1

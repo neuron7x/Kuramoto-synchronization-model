@@ -15,6 +15,8 @@ from datetime import datetime, time
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
+from modules.errors import InvalidInputError, ProcessingError
+
 
 class OrderType(str, Enum):
     """Тип ордера"""
@@ -193,6 +195,10 @@ class OrderValidator:
 
         Returns:
             Результат валідації
+
+        Notes:
+            Кастомні валідатори мають піднімати InvalidInputError або
+            ProcessingError для перетворення на попередження.
         """
         errors: List[ValidationError] = []
         warnings: List[ValidationWarning] = []
@@ -235,7 +241,7 @@ class OrderValidator:
             try:
                 custom_errors = validator(order)
                 errors.extend(custom_errors)
-            except Exception as e:
+            except (InvalidInputError, ProcessingError) as e:
                 warnings.append(
                     ValidationWarning(
                         code="CUSTOM_VALIDATOR_ERROR",

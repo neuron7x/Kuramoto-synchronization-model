@@ -214,6 +214,10 @@ class DataQualityMonitor:
 
         Returns:
             Кортеж (метрики, список проблем)
+
+        Notes:
+            Якщо DataFrame порожній, модуль повертає нульові метрики та
+            критичну проблему якості даних замість виключення.
         """
         issues = []
 
@@ -667,7 +671,12 @@ class DataQualityMonitor:
                     (staleness - self.config.stale_data_seconds)
                     / (self.config.critical_stale_seconds - self.config.stale_data_seconds)
                 )
-        except Exception:
+        except (
+            TypeError,
+            OverflowError,
+            pd.errors.OutOfBoundsDatetime,
+            pd.errors.ParserError,
+        ):
             return 1.0
 
     def _calculate_validity(

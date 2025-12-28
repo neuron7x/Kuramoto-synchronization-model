@@ -18,6 +18,8 @@ from typing import Any, Callable, Dict, List, Optional, Set, Type
 import numpy as np
 import pandas as pd
 
+from modules.errors import ConfigurationError, InvalidInputError, ProcessingError
+
 
 class StrategyStatus(str, Enum):
     """Статус стратегії"""
@@ -156,17 +158,21 @@ class SignalStrategyRegistry:
 
         Returns:
             True якщо успішно зареєстровано
+
+        Raises:
+            ConfigurationError: якщо стратегія з такою назвою вже існує.
+            InvalidInputError: якщо стратегія не проходить валідацію.
         """
         strategy_name = metadata.name
 
         if strategy_name in self._strategies:
-            raise ValueError(f"Strategy '{strategy_name}' is already registered")
+            raise ConfigurationError(f"Strategy '{strategy_name}' is already registered")
 
         # Валідація стратегії
         if self.strict_validation:
             validation = self._validate_strategy_class(strategy_class)
             if not validation.is_valid:
-                raise ValueError(
+                raise InvalidInputError(
                     f"Strategy validation failed: {', '.join(validation.errors)}"
                 )
 
@@ -217,6 +223,9 @@ class SignalStrategyRegistry:
 
         Returns:
             Екземпляр стратегії або None
+
+        Raises:
+            ProcessingError: якщо стратегія тимчасово призупинена.
         """
         if strategy_name not in self._strategies:
             return None
@@ -224,7 +233,7 @@ class SignalStrategyRegistry:
         # Перевірка статусу
         metadata = self._metadata[strategy_name]
         if metadata.status == StrategyStatus.SUSPENDED:
-            raise RuntimeError(f"Strategy '{strategy_name}' is suspended")
+            raise ProcessingError(f"Strategy '{strategy_name}' is suspended")
 
         # Створення екземпляра
         factory = self._factories[strategy_name]
@@ -320,6 +329,10 @@ class SignalStrategyRegistry:
 
         Returns:
             Результат валідації
+
+        Notes:
+            Якщо генерація сигналів викликає InvalidInputError або ProcessingError,
+            повідомлення додаються до списку помилок без повторного підняття.
         """
         errors = []
         warnings = []
@@ -352,7 +365,7 @@ class SignalStrategyRegistry:
                 signals = strategy.generate_signals(data)
                 if signals.empty:
                     warnings.append("Strategy generated no signals")
-        except Exception as e:
+        except (InvalidInputError, ProcessingError) as e:
             errors.append(f"Signal generation failed: {str(e)}")
 
         return StrategyValidationResult(
@@ -392,7 +405,7 @@ class SignalStrategyRegistry:
             try:
                 if not validator(strategy_class):
                     warnings.append(f"Custom validator failed: {validator.__name__}")
-            except Exception as e:
+            except (InvalidInputError, ProcessingError) as e:
                 warnings.append(f"Validator error: {str(e)}")
 
         return StrategyValidationResult(
@@ -455,7 +468,7 @@ class MomentumStrategy(StrategyInterface):
     def generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:
         """Генерація сигналів на основі перетину MA"""
         if "close" not in data.columns:
-            raise ValueError("Data must contain 'close' column")
+            raise InvalidInputError("Data must contain 'close' column")
 
         prices = data["close"].astype(float)
 
@@ -512,7 +525,7 @@ class MeanReversionStrategy(StrategyInterface):
     def generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:
         """Генерація сигналів на основі Bollinger Bands"""
         if "close" not in data.columns:
-            raise ValueError("Data must contain 'close' column")
+            raise InvalidInputError("Data must contain 'close' column")
 
         prices = data["close"].astype(float)
 

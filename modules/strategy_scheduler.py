@@ -17,6 +17,8 @@ from datetime import datetime, time, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from modules.errors import ProcessingError
+
 
 class ScheduleType(str, Enum):
     """Тип розкладу"""
@@ -474,7 +476,12 @@ class StrategyScheduler:
         return stats
 
     def _execute_task(self, task: ScheduledTask) -> Optional[TaskExecution]:
-        """Виконання задачі"""
+        """Виконання задачі.
+
+        Notes:
+            Обробники задач повинні піднімати ProcessingError; такі помилки
+            фіксуються у TaskExecution без повторного підняття.
+        """
         self._execution_counter += 1
         execution_id = f"exec_{self._execution_counter}"
 
@@ -496,7 +503,7 @@ class StrategyScheduler:
             execution.status = TaskStatus.COMPLETED
             task.status = TaskStatus.PENDING
 
-        except Exception as e:
+        except ProcessingError as e:
             execution.error = str(e)
             execution.status = TaskStatus.FAILED
             task.status = TaskStatus.FAILED

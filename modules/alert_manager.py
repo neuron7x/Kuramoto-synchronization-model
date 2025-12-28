@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from modules.errors import NotificationError, ProcessingError
+
 
 class AlertSeverity(str, Enum):
     """Рівень критичності алерта"""
@@ -379,6 +381,10 @@ class AlertManager:
 
         Returns:
             Список створених алертів
+
+        Notes:
+            Умови правил повинні піднімати ProcessingError при помилках оцінки;
+            такі помилки логуються без переривання обробки інших правил.
         """
         created_alerts = []
 
@@ -414,7 +420,7 @@ class AlertManager:
                     rule.last_triggered = datetime.now()
                     created_alerts.append(alert)
 
-            except Exception as e:
+            except ProcessingError as e:
                 # Логування помилки без переривання
                 print(f"Error evaluating rule {rule.rule_id}: {e}")
 
@@ -442,6 +448,9 @@ class AlertManager:
         Args:
             channel: Канал
             handler: Функція-обробник
+
+        Notes:
+            Обробник має піднімати NotificationError у разі помилки доставки.
         """
         self._notification_handlers[channel] = handler
 
@@ -601,7 +610,7 @@ class AlertManager:
         for subscriber in self._subscribers:
             try:
                 subscriber(alert)
-            except Exception as e:
+            except NotificationError as e:
                 print(f"Error notifying subscriber: {e}")
 
     def _send_notifications(self, alert: Alert) -> None:
@@ -628,7 +637,7 @@ class AlertManager:
             if handler:
                 try:
                     handler(alert)
-                except Exception as e:
+                except NotificationError as e:
                     print(f"Error sending notification via {channel.value}: {e}")
 
     def get_summary(self) -> Dict:

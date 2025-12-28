@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from modules.errors import InvalidInputError, NotificationError, ProcessingError
+
 
 class ComponentStatus(str, Enum):
     """Статус компонента"""
@@ -263,6 +265,10 @@ class SystemHealthDashboard:
 
         Returns:
             Словник результатів
+
+        Notes:
+            Health-check функції повинні піднімати InvalidInputError або
+            ProcessingError при помилках перевірки.
         """
         results = {}
 
@@ -277,7 +283,7 @@ class SystemHealthDashboard:
                 # Оновлення статусу компонента
                 self._update_from_health_check(component_id, result)
 
-            except Exception as e:
+            except (InvalidInputError, ProcessingError) as e:
                 # Помилка під час перевірки
                 result = HealthCheck(
                     check_name=f"{component_id}_check",
@@ -603,7 +609,7 @@ class SystemHealthDashboard:
         for subscriber in self._subscribers:
             try:
                 subscriber(component)
-            except Exception as e:
+            except NotificationError as e:
                 print(f"Error notifying subscriber: {e}")
 
     def _generate_recommendations(self, component: ComponentHealth) -> List[str]:
