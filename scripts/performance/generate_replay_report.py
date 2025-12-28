@@ -8,12 +8,15 @@ reports with charts and regression analysis.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+ROOT = Path(__file__).resolve().parents[2]
+SAFE_PATH_RE = re.compile(r"[A-Za-z0-9_./-]+")
 
 from tests.performance.multi_exchange_replay import (
     PerformanceBudget,
@@ -89,6 +92,43 @@ def get_git_info() -> dict[str, str]:
     return {"commit": commit, "branch": branch}
 
 
+def _validate_repo_dir(value: str, *, must_exist: bool) -> Path:
+    if not SAFE_PATH_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "Paths may only contain letters, numbers, and ./_- characters."
+        )
+    path = Path(value).expanduser().resolve()
+    try:
+        path.relative_to(ROOT)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Path must be inside repository root ({ROOT})."
+        ) from exc
+    if must_exist and not path.exists():
+        raise argparse.ArgumentTypeError(f"Directory does not exist: {path}")
+    if path.exists() and not path.is_dir():
+        raise argparse.ArgumentTypeError(f"Expected directory path, got: {path}")
+    return path
+
+
+def _validate_recordings_dir(value: str) -> Path:
+    return _validate_repo_dir(value, must_exist=True)
+
+
+def _validate_output_dir(value: str) -> Path:
+    return _validate_repo_dir(value, must_exist=False)
+
+
+def _validate_non_negative_float(value: str) -> float:
+    try:
+        parsed = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"Expected a number, got {value!r}") from exc
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("Value must be zero or positive.")
+    return parsed
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -96,49 +136,49 @@ def main() -> int:
     )
     parser.add_argument(
         "--recordings-dir",
-        type=Path,
+        type=_validate_recordings_dir,
         default=Path("tests/fixtures/recordings"),
         help="Directory containing replay recordings",
     )
     parser.add_argument(
         "--output-dir",
-        type=Path,
+        type=_validate_output_dir,
         default=Path(".ci_artifacts/multi-exchange-replay"),
         help="Directory to write output artifacts",
     )
     parser.add_argument(
         "--latency-median-ms",
-        type=float,
+        type=_validate_non_negative_float,
         default=60.0,
         help="Latency median budget in milliseconds",
     )
     parser.add_argument(
         "--latency-p95-ms",
-        type=float,
+        type=_validate_non_negative_float,
         default=100.0,
         help="Latency P95 budget in milliseconds",
     )
     parser.add_argument(
         "--latency-max-ms",
-        type=float,
+        type=_validate_non_negative_float,
         default=200.0,
         help="Latency max budget in milliseconds",
     )
     parser.add_argument(
         "--throughput-min-tps",
-        type=float,
+        type=_validate_non_negative_float,
         default=5.0,
         help="Minimum throughput in ticks per second",
     )
     parser.add_argument(
         "--slippage-median-bps",
-        type=float,
+        type=_validate_non_negative_float,
         default=5.0,
         help="Slippage median budget in basis points",
     )
     parser.add_argument(
         "--slippage-p95-bps",
-        type=float,
+        type=_validate_non_negative_float,
         default=15.0,
         help="Slippage P95 budget in basis points",
     )
@@ -160,6 +200,21 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+
+    args.recordings_dir = _validate_recordings_dir(str(args.recordings_dir))
+    args.output_dir = _validate_output_dir(str(args.output_dir))
+    args.latency_median_ms = _validate_non_negative_float(str(args.latency_median_ms))
+    args.latency_p95_ms = _validate_non_negative_float(str(args.latency_p95_ms))
+    args.latency_max_ms = _validate_non_negative_float(str(args.latency_max_ms))
+    args.throughput_min_tps = _validate_non_negative_float(
+        str(args.throughput_min_tps)
+    )
+    args.slippage_median_bps = _validate_non_negative_float(
+        str(args.slippage_median_bps)
+    )
+    args.slippage_p95_bps = _validate_non_negative_float(
+        str(args.slippage_p95_bps)
+    )
 
     # Ensure output directory exists
     args.output_dir.mkdir(parents=True, exist_ok=True)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -13,10 +14,49 @@ from typing import List, Sequence
 
 DEFAULT_REQUIREMENTS = ("requirements.txt",)
 DEFAULT_DEV_REQUIREMENTS = ("requirements-dev.txt",)
+SAFE_PATH_RE = re.compile(r"[A-Za-z0-9_./+-]+")
+SAFE_EXTRA_ARG_RE = re.compile(
+    r"-{1,2}[A-Za-z0-9][A-Za-z0-9_.-]*(?:=[A-Za-z0-9_./:+-]+)?"
+)
 
 
 class DependencyAuditError(RuntimeError):
     """Raised when pip-audit cannot be executed successfully."""
+
+
+def _validate_requirement_path(value: str) -> str:
+    if not SAFE_PATH_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "Requirement paths may only contain letters, numbers, and ./_-+ characters."
+        )
+    return value
+
+
+def _validate_pip_audit_bin(value: str) -> str:
+    if not SAFE_PATH_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "pip-audit executable may only contain letters, numbers, and ./_-+ characters."
+        )
+    return value
+
+
+def _validate_extra_arg(value: str) -> str:
+    if not SAFE_EXTRA_ARG_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "Extra arguments must be flag-style values like --option or --option=value."
+        )
+    return value
+
+
+def _validate_write_json_path(value: str) -> Path:
+    if not SAFE_PATH_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "JSON output path may only contain letters, numbers, and ./_-+ characters."
+        )
+    path = Path(value)
+    if path.suffix.lower() != ".json":
+        raise argparse.ArgumentTypeError("JSON output path must end with .json.")
+    return path
 
 
 def _resolve_requirements(paths: Sequence[str | Path]) -> List[Path]:
@@ -187,6 +227,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="append",
         dest="requirements",
         default=list(DEFAULT_REQUIREMENTS),
+        type=_validate_requirement_path,
         help="Requirement file(s) to audit. Defaults to requirements.txt",
     )
     parser.add_argument(
@@ -202,11 +243,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--pip-audit-bin",
         default="pip-audit",
+        type=_validate_pip_audit_bin,
         help="Custom pip-audit executable to invoke (defaults to 'pip-audit').",
     )
     parser.add_argument(
         "--write-json",
-        type=Path,
+        type=_validate_write_json_path,
         help="Optional path to persist the aggregated vulnerability report as JSON.",
     )
     parser.add_argument(
@@ -214,6 +256,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         dest="extra_args",
         action="append",
         default=[],
+        type=_validate_extra_arg,
         help="Additional raw arguments forwarded to pip-audit.",
     )
     parser.add_argument(
@@ -225,17 +268,24 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
-    requirements: list[str | Path] = list(args.requirements)
+    requirements = [_validate_requirement_path(str(req)) for req in args.requirements]
+    pip_audit_bin = _validate_pip_audit_bin(str(args.pip_audit_bin))
+    extra_args = [_validate_extra_arg(str(arg)) for arg in args.extra_args]
+    write_json = (
+        _validate_write_json_path(str(args.write_json)) if args.write_json else None
+    )
+
+    requirements = list(requirements)
     if args.include_dev and DEFAULT_DEV_REQUIREMENTS[0] not in requirements:
-        requirements.extend(DEFAULT_DEV_REQUIREMENTS)
+        requirements.append(_validate_requirement_path(DEFAULT_DEV_REQUIREMENTS[0]))
 
     try:
         resolved = _resolve_requirements(requirements)
         result = _run_pip_audit(
-            pip_audit_bin=args.pip_audit_bin,
+            pip_audit_bin=pip_audit_bin,
             requirements=resolved,
             include_transitive=args.include_transitive,
-            extra_args=args.extra_args,
+            extra_args=extra_args,
         )
         findings = _parse_vulnerabilities(result.stdout)
     except DependencyAuditError as exc:  # pragma: no cover - CLI surface
@@ -244,8 +294,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     _print_summary(findings)
 
-    if args.write_json:
-        _write_report(findings, args.write_json)
+    if write_json:
+        _write_report(findings, write_json)
 
     if args.fail_on == "none":
         return 0

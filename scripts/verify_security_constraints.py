@@ -15,6 +15,7 @@ Exit codes:
 """
 
 import argparse
+import importlib.metadata
 import subprocess
 import sys
 from pathlib import Path
@@ -68,17 +69,14 @@ def parse_constraints(constraints_file: Path) -> Dict[str, str]:
 def get_installed_packages() -> Dict[str, str]:
     """Get all installed packages and their versions."""
     try:
-        result = subprocess.run(
-            ["pip", "list", "--format=json"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        import json
-
-        packages = json.loads(result.stdout)
-        return {pkg["name"]: pkg["version"] for pkg in packages}
-    except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+        packages: dict[str, str] = {}
+        for distribution in importlib.metadata.distributions():
+            name = distribution.metadata.get("Name")
+            if not name:
+                continue
+            packages[name] = distribution.version
+        return packages
+    except Exception as e:
         print(f"ERROR: Failed to get installed packages: {e}")
         sys.exit(2)
 
