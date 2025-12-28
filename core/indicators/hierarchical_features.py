@@ -65,7 +65,7 @@ def _shannon_entropy(series: np.ndarray, bins: int = _ENTROPY_BIN_COUNT) -> floa
     if not np.any(mask):
         return 0.0
 
-    finite = values[mask].astype(np.float32, copy=False)
+    finite = values[mask].astype(np.float32)
     max_abs = float(np.max(np.abs(finite)))
     if not max_abs or not np.isfinite(max_abs):
         return 0.0
@@ -82,8 +82,8 @@ def _shannon_entropy(series: np.ndarray, bins: int = _ENTROPY_BIN_COUNT) -> floa
     scaled = (finite + 1.0) * scale
     np.clip(scaled, 0.0, clip, out=scaled)
 
-    indices = scaled.astype(np.int32, copy=False)
-    counts = np.bincount(indices, minlength=bins).astype(np.float32, copy=False)
+    indices = scaled.astype(np.int32)
+    counts = np.bincount(indices, minlength=bins).astype(np.float32)
     total = float(np.add.reduce(counts, dtype=np.float32))
     if total <= 0.0:
         return 0.0
@@ -222,7 +222,7 @@ def compute_hierarchical_features(
                     )
                     agg_cos[unique_bins] += cos_sums
                     agg_sin[unique_bins] += sin_sums
-                    agg_counts[unique_bins] += counts.astype(np.int32, copy=False)
+                    agg_counts[unique_bins] += counts.astype(np.int32)
 
         hurst_scratch = hurst_scratch_buffer[: close_src.size]
         hurst_tau = hurst_tau_buffer[: _DEFAULT_LAGS.size]
@@ -257,10 +257,10 @@ def compute_hierarchical_features(
         phase_coherence = 0.0
     else:
         magnitude = np.hypot(
-            agg_cos.astype(np.float64, copy=False),
-            agg_sin.astype(np.float64, copy=False),
+            agg_cos.astype(np.float64),
+            agg_sin.astype(np.float64),
         )
-        counts = agg_counts.astype(np.float64, copy=False)
+        counts = agg_counts.astype(np.float64)
         coherence = np.divide(
             magnitude,
             counts,

@@ -170,7 +170,7 @@ def _compute_tau_numpy(
         tau.fill(0.0)
         return tau
 
-    lags_int = lags.astype(np.int64, copy=False)
+    lags_int = lags.astype(np.int64)
     valid_mask = lags_int < n
 
     # Below this threshold a direct differencing kernel is faster and uses
@@ -242,14 +242,14 @@ def _compute_tau_cuda(
 ) -> np.ndarray:  # pragma: no cover - requires GPU
     if not _cuda_available():
         raise RuntimeError("CUDA backend is unavailable")
-    lags_i32 = lags.astype(np.int32, copy=False)
+    lags_i32 = lags.astype(np.int32)
     counts = (x.size - lags_i32).astype(np.int32)
     counts[counts < 0] = 0
     total = int(np.sum(counts, dtype=np.int64))
     if total <= 0:
         return np.zeros(lags_i32.size, dtype=float)
 
-    device_x = cuda.to_device(x.astype(np.float32, copy=False))
+    device_x = cuda.to_device(x.astype(np.float32))
     device_lags = cuda.to_device(lags_i32)
     device_counts = cuda.to_device(counts)
     sums = cuda.to_device(np.zeros(lags_i32.size, dtype=np.float32))
@@ -267,8 +267,8 @@ def _compute_tau_cuda(
     )
     cuda.synchronize()
 
-    host_sums = sums.copy_to_host().astype(float, copy=False)
-    host_sums_sq = sums_sq.copy_to_host().astype(float, copy=False)
+    host_sums = sums.copy_to_host().astype(float)
+    host_sums_sq = sums_sq.copy_to_host().astype(float)
     tau = np.empty(lags_i32.size, dtype=float)
     for idx in range(lags_i32.size):
         count = int(counts[idx])
@@ -369,7 +369,7 @@ def hurst_exponent(
         selected_backend = _resolve_backend(backend, x.size, lags.size)
         global _LAST_HURST_BACKEND
 
-        lags_int = lags.astype(np.int32, copy=False)
+        lags_int = lags.astype(np.int32)
         try:
             if selected_backend == "cuda":
                 tau = _compute_tau_cuda(

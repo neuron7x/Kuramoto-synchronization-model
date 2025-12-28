@@ -23,7 +23,7 @@ def _to_numpy(
     if array is None:
         return np.array([], dtype=float)
     if isinstance(array, np.ndarray):
-        return array.astype(float, copy=False)
+        return array.astype(float)
     return np.asarray(list(array), dtype=float)
 
 

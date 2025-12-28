@@ -82,7 +82,7 @@ class TrainingBatch:
             if isinstance(value, np.ndarray) and np.issubdtype(
                 value.dtype, np.floating
             ):
-                return value.astype(dtype, copy=False)
+                return value.astype(dtype)
             if isinstance(value, (list, tuple)):
                 array = np.asarray(value)
                 if np.issubdtype(array.dtype, np.floating):
@@ -168,7 +168,7 @@ class MixedPrecisionContext:
             return array
         if not np.issubdtype(array.dtype, np.floating):
             return array
-        return array.astype(self.target_dtype, copy=False)
+        return array.astype(self.target_dtype)
 
 
 def _determine_precision_dtype(config: TrainingConfig) -> np.dtype | None:

@@ -383,7 +383,7 @@ class DataPipeline:
         frame = frame.sort_values(timestamp_col).reset_index(drop=True)
         for column in schema.value_columns:
             if column.dtype and column.name in frame.columns:
-                frame[column.name] = frame[column.name].astype(column.dtype, copy=False)
+                frame[column.name] = frame[column.name].astype(column.dtype)
         validated = validate_timeseries_frame(frame.copy(), schema)
         timestamp_col = schema.timestamp_column
         return validated.sort_values(timestamp_col).reset_index(drop=True)

@@ -141,6 +141,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.lock ]; then pip install -c constraints/security.txt -r requirements.lock; fi
           if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
+          pip install -c constraints/security.txt detect-secrets
 
       - name: Run metrics validation
         run: python scripts/validate_metrics.py
@@ -156,7 +157,7 @@ jobs:
         run: |
           set -euo pipefail
           scan_output="$(mktemp)"
-          .venv/bin/detect-secrets scan core backtest execution src application >"$scan_output"
+          detect-secrets scan core backtest execution src application >"$scan_output"
           python - <<'PY' "$scan_output"
           import json
           import sys

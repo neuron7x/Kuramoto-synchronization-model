@@ -68,7 +68,7 @@ class DyadicPMCascade:
 
         weights = weights / float(weights.mean())
         intervals = np.maximum(self.base_dt * weights[:n], 1.0)
-        return intervals.astype(float, copy=False)
+        return intervals.astype(float)
 
     def adjust_heavy_tail(self, delta: float) -> None:
         """Adapt the heavy-tail coefficient while respecting bounds."""
@@ -137,4 +137,4 @@ def pink_noise(
     shaped = spectrum * amplitudes
     signal = np.fft.irfft(shaped, n=n).real
     signal = (signal - signal.mean()) / (signal.std() + 1e-8)
-    return signal.astype(float, copy=False)
+    return signal.astype(float)

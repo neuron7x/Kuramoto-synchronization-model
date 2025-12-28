@@ -250,14 +250,19 @@ def compute_phase(
         else nullcontext()
     )
     with context_manager:
-        dtype = np.float32 if use_float32 else float
-        x = np.asarray(x, dtype=dtype)
+        dtype = np.float32 if use_float32 else np.float64
+        target_dtype = np.dtype(dtype)
+
+        def _ensure_dtype(arr: np.ndarray) -> np.ndarray:
+            return arr if arr.dtype == target_dtype else arr.astype(target_dtype)
+
+        x = np.asarray(x, dtype=target_dtype)
         target = None
         if out is not None:
             target = np.asarray(out)
             if target.shape != x.shape:
                 raise ValueError("out array must match input shape")
-            if target.dtype != np.dtype(dtype):
+            if target.dtype != target_dtype:
                 raise ValueError("out array dtype must match requested precision")
         if x.ndim != 1:
             raise ValueError("compute_phase expects 1D array")
@@ -276,18 +281,18 @@ def compute_phase(
             if n == 0:
                 return np.empty(0, dtype=dtype)
 
-            real = np.asarray(x, dtype=dtype)
+            real = np.asarray(x, dtype=target_dtype)
             spectrum = _scipy_fft.rfft(real)
             spectrum *= -1j
             spectrum[0] = 0
             if n % 2 == 0 and spectrum.size > 1:
                 spectrum[-1] = 0
             imag = _scipy_fft.irfft(spectrum, n)
-            imag = np.asarray(imag, dtype=dtype, copy=False)
+            imag = np.asarray(imag, dtype=target_dtype)
         elif hilbert is not None:
             a = hilbert(x)
-            real = np.asarray(a.real, dtype=dtype, copy=False)
-            imag = np.asarray(a.imag, dtype=dtype, copy=False)
+            real = np.asarray(a.real, dtype=target_dtype)
+            imag = np.asarray(a.imag, dtype=target_dtype)
         else:
             # Analytic signal via real FFT-based Hilbert transform. Using rfft/irfft
             # halves the amount of spectral data we have to touch compared to the
@@ -297,7 +302,7 @@ def compute_phase(
             if n == 0:
                 return np.empty(0, dtype=dtype)
 
-            working = x.astype(float, copy=False)
+            working = x.astype(float)
             spectrum = np.fft.fft(working)
             h = np.zeros(n, dtype=float)
             if n % 2 == 0:
@@ -307,13 +312,13 @@ def compute_phase(
                 h[0] = 1.0
                 h[1 : (n + 1) // 2] = 2.0
             analytic = np.fft.ifft(spectrum * h)
-            real = analytic.real.astype(dtype, copy=False)
-            imag = analytic.imag.astype(dtype, copy=False)
+            real = _ensure_dtype(analytic.real)
+            imag = _ensure_dtype(analytic.imag)
         if target is not None:
             np.arctan2(imag, real, out=target)
             return target
         phases = np.arctan2(imag, real)
-        return phases.astype(dtype, copy=False)
+        return _ensure_dtype(phases)
 
 
 def kuramoto_order(

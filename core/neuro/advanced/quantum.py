@@ -53,7 +53,7 @@ def _normalise(vector: np.ndarray) -> np.ndarray:
         if basis.size:
             basis[0] = 1.0
         return basis
-    return (vector / norm).astype(float, copy=False)
+    return (vector / norm).astype(float)
 
 
 def to_density_matrix(vector: Iterable[float]) -> np.ndarray:

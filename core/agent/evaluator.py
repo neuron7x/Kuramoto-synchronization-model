@@ -40,7 +40,7 @@ def _default_dataset_preparer(data: Any) -> Any:
     if isinstance(data, np.ndarray):
         if data.ndim != 1:
             raise ValueError("Price array must be one-dimensional")
-        return pd.DataFrame({"close": data.astype(float, copy=False)})
+        return pd.DataFrame({"close": data.astype(float)})
 
     if isinstance(data, (str, bytes)):
         raise TypeError("Unsupported dataset type for strategy evaluation")

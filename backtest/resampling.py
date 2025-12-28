@@ -27,7 +27,7 @@ def _as_array(
     if values is None:
         return np.array([], dtype=float)
     if isinstance(values, np.ndarray):
-        return values.astype(float, copy=False)
+        return values.astype(float)
     return np.asarray(list(values), dtype=float)
 
 
@@ -61,7 +61,7 @@ def _compute_returns(
     with np.errstate(divide="ignore", invalid="ignore"):
         returns = (equity_curve - previous) / previous
     returns = returns[np.isfinite(returns)]
-    return returns.astype(float, copy=False)
+    return returns.astype(float)
 
 
 def _equity_from_returns(
