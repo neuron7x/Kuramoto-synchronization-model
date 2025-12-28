@@ -15,7 +15,7 @@ from typing import Mapping
 from fastapi.testclient import TestClient
 try:
     from prometheus_client.parser import text_string_to_metric_families
-except Exception:  # pragma: no cover - fallback for older prometheus_client versions
+except ImportError:  # pragma: no cover - fallback for older prometheus_client versions
     text_string_to_metric_families = None
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -146,7 +146,7 @@ def _validate_regression_baselines(root: Path) -> list[str]:
         return []
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except (OSError, json.JSONDecodeError) as exc:
         return [f"failed to parse baselines.json: {exc}"]
 
     errors: list[str] = []
@@ -316,7 +316,7 @@ def run_expectations(
     expectations_path = root / "observability" / "metrics_expectations.json"
     try:
         expectations = json.loads(expectations_path.read_text(encoding="utf-8"))
-    except Exception as exc:  # pragma: no cover - defensive
+    except (OSError, json.JSONDecodeError) as exc:  # pragma: no cover - defensive
         write_artifact(
             ARTIFACT_DIR / "expectations.json",
             {"issues": [{"code": "load_error", "message": str(exc), "metric": None}]},
