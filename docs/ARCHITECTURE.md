@@ -26,26 +26,25 @@ Each pillar maintains an explicit backlog and architectural runway captured in t
 
 | Service / Package | Language & Runtime | Deployment Model | Upstream Dependencies | External Interfaces |
 | --- | --- | --- | --- | --- |
-| `ingestion-orchestrator` | Go 1.22 | Kubernetes (stateful set) | Schema registry, Redpanda, feature store writer | Kafka topics, REST admin API |
-| `feature-store-writer` | Rust (tokio) | Kubernetes (deployment) | Object store (S3 compatible), Postgres metadata DB | gRPC (`features.v1.Writer`), metrics exporter |
-| `simulation-scheduler` | Python 3.11 (FastAPI) | Kubernetes (deployment + Keda) | Redis queue, feature store, experiment tracker | REST control plane, gRPC event stream |
-| `execution-gateway` | Go 1.22 | Bare metal + sidecar proxies | Order book cache, policy service, market adapters | FIX 4.4, REST broker APIs, WebSocket status feed |
-| `policy-engine` | Python 3.11 (async worker) | Kubernetes (deployment) | Redis, governance DB | gRPC (`governance.v1.Policy`), audit log sink |
-| `telemetry-collector` | Rust (axum) | Kubernetes (daemon set) | Prometheus, Loki, OpenTelemetry collector | OTLP gRPC, JSON logging sink |
-| `ui-hub` | Next.js 14 (Node 20) | Vercel / container image | gRPC-web gateway, metrics API | HTTPS, WebSocket notifications |
+| `tradepulse-api` | Python 3.11 (FastAPI) | Kubernetes deployment (`deploy/tradepulse-deployment.yaml`, `deploy/kustomize/base`) | OAuth2 issuer + JWKS, audit secret store, mTLS trust bundle | HTTPS/REST (`:8000`), Prometheus metrics (`:8001`) |
+| `admin` | Python 3.11 (FastAPI admin control) | Helm chart (`deploy/helm/tradepulse/charts/admin`) | Cluster admin secrets, audit logging policies | HTTP admin API (`:8000`) |
+| `sandbox` | Python 3.11 (sandbox harness) | Helm chart + HPA (`deploy/helm/tradepulse/charts/sandbox`) | Optional OpenTelemetry endpoint | HTTP API (`:8080`), health/ready probes |
+| `observability-stack` | OpenTelemetry Collector + Prometheus + Grafana | Helm chart (`deploy/helm/tradepulse/charts/observability`) | Service monitors, metrics/log pipelines | OTLP ingest, dashboards & alerting |
 
-Cross-cutting concerns such as authentication, tracing headers, and protobuf compatibility are validated through
-continuous integration pipelines defined in [`docs/github_actions_automation.md`](github_actions_automation.md).
+Cross-cutting concerns such as authentication, tracing headers, and deployment safety are validated through
+the GitHub Actions workflows in `.github/workflows/` (notably `ci.yml`, `pr-release-gate.yml`,
+`publish-image.yml`, and `helm.yml`) alongside the guidance in
+[`docs/github_actions_automation.md`](github_actions_automation.md).
 
 ## Module Boundaries and Contracts
 
 | Module | Contract Surface | Allowed Dependencies | Versioning & Gates |
 | --- | --- | --- | --- |
-| `core/` | Pydantic DTOs + JSON Schemas in [`schemas/events/`](../schemas/events/) and stable function signatures exported via [`core/`](../core/) | None (foundation) | SemVer (`core.api.v1`); breaking changes require major bump + compatibility shims |
+| `core/` | Domain models, feature pipelines, compliance primitives, and shared DTOs with schemas in [`schemas/events/`](../schemas/events/) | None (foundation) | SemVer (`core.api.v1`); breaking changes require major bump + compatibility shims |
 | `backtest/` | Simulation driver interfaces in [`interfaces/backtest.py`](../interfaces/backtest.py) and workflow harnesses in [`backtest/`](../backtest/) | `core/` | SemVer (`backtest.api.v1`); runs behind CI contract tests |
-| `execution/` | Adapter/request contracts in [`interfaces/execution/`](../interfaces/execution/) and adapter bases in [`execution/adapters/`](../execution/adapters/) | `core/` | SemVer (`execution.api.v1`); FIX/REST adapters must stay backward compatible |
-| `runtime/` | Orchestrator CLI + gRPC/web contracts in [`interfaces/live_runner.py`](../interfaces/live_runner.py) | `core/`, `execution/` | SemVer (`runtime.api.v1`); release gates run integration + property suites |
-| `observability/` | OTLP/Prom exporters and log schemas in [`observability/`](../observability/) | `core/` (telemetry types only) | SemVer (`observability.telemetry.v1`); trace/metric shape changes require dual approval |
+| `execution/` | Order lifecycle orchestration, adapters, OMS/routing, and risk control surfaces defined in [`interfaces/execution/`](../interfaces/execution/) | `core/` | SemVer (`execution.api.v1`); adapter contracts must stay backward compatible |
+| `runtime/` | Runtime safety controls (kill switch, thermo control, recovery) and live runner interfaces in [`interfaces/live_runner.py`](../interfaces/live_runner.py) | `core/`, `execution/` | SemVer (`runtime.api.v1`); release gates run integration + property suites |
+| `observability/` | Metrics/logging/tracing, release gate telemetry, and dashboards in [`observability/`](../observability/) | `core/` (telemetry types only) | SemVer (`observability.telemetry.v1`); trace/metric shape changes require dual approval |
 | `ui/dashboard/` | gRPC-web/GraphQL DTOs derived from [`schemas/openapi/tradepulse-online-inference-v1.json`](../schemas/openapi/tradepulse-online-inference-v1.json) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
 | `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
 

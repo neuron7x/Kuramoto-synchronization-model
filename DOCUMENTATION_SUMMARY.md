@@ -92,7 +92,7 @@ TradePulse/
 │   │   └── ...                       ✅ Architecture guides
 │   │
 │   ├── adr/                          📁 Architecture Decision Records
-│   │   ├── 0001-*.md                ✅ 6 published ADRs
+│   │   ├── 0001-*.md                ✅ 9 published ADRs
 │   │   └── template.md              ✅ ADR template
 │   │
 │   ├── contracts/                    📁 Interface contracts
@@ -124,7 +124,7 @@ TradePulse/
 | Category | Count | Coverage | Quality | Status |
 |----------|-------|----------|---------|--------|
 | **Requirements** | 13 | 100% | ✅ Excellent | Complete |
-| **Architecture (ADRs)** | 6/13 | 46% | ✅ Excellent | In Progress |
+| **Architecture (ADRs)** | 9/13 | 69% | ✅ Excellent | In Progress |
 | **Contracts** | 10 | 67% | ✅ Good | In Progress |
 | **User Guides** | 25 | 85% | ✅ Good | Active |
 | **API Documentation** | 15 | 80% | ⚠️ Fair | Needs Review |
@@ -132,6 +132,18 @@ TradePulse/
 | **Operational** | 20 | 90% | ✅ Good | Active |
 | **Templates** | 12 | 100% | ✅ Excellent | Complete |
 | **Examples** | 8 | 70% | ⚠️ Fair | Needs Work |
+
+### Published ADRs (linked)
+
+- [ADR 0001: Fractal Indicator Composition Architecture](docs/adr/0001-fractal-indicator-composition-architecture.md)
+- [ADR 0001: Security, Compliance, and Documentation Automation](docs/adr/0001-security-compliance-automation.md)
+- [ADR 0002: Versioned Market Data Storage](docs/adr/0002-versioned-market-data-storage.md)
+- [ADR 0002: Serotonin Controller - Hysteretic Hold Logic with SRE Observability](docs/adr/0002-serotonin-controller-architecture.md)
+- [ADR 0003: Automated Data Quality Framework](docs/adr/0003-automated-data-quality-framework.md)
+- [ADR 0003: Principal System Architect Security Framework](docs/adr/0003-principal-architect-security-framework.md)
+- [ADR 0004: Contract-First Modular Architecture](docs/adr/0004-contract-first-modular-architecture.md)
+- [ADR 0005: Multi-Exchange Adapter Framework](docs/adr/0005-multi-exchange-adapter-framework.md)
+- [ADR 0006: TACL / Thermodynamic Control Layer](docs/adr/0006-tacl-thermo-control-layer.md)
 
 ### Coverage Gaps (<90%) & Missing Artifacts
 
@@ -147,9 +159,9 @@ The following categories require remediation based on coverage below 90%.
   - `docs/api/pagination.md` — cursor/offset patterns and examples
 - **Priority:** P0 (docs-critical)
 
-**docs/adr/** — Coverage 23% (Owner: Principal Architect)
+**docs/adr/** — Coverage 69% (Owner: Principal Architect)
 - **Missing Artifacts:**
-  - ADR-0004 through ADR-0013 (10 ADRs) — decision backlog per Formalization Index
+  - ADR-0007 through ADR-0013 (7 ADRs) — decision backlog per Formalization Index
 - **Priority:** P0 (docs-critical)
 
 #### High (P1)
@@ -166,7 +178,7 @@ The following categories require remediation based on coverage below 90%.
 
 | Type | Count | Template Compliance | Review Status |
 |------|-------|-------------------|---------------|
-| ADRs | 6 | 100% | ✅ Current |
+| ADRs | 9 | 100% | ✅ Current |
 | READMEs | 45 | 60% | ⚠️ 15 stale |
 | Runbooks | 12 | 100% | ✅ Current |
 | Playbooks | 8 | 100% | ✅ Current |
@@ -299,15 +311,18 @@ All documents properly indexed in MkDocs navigation.
 
 #### Initiative 1: Complete ADR Coverage
 **Owner:** Principal Architect  
-**Status:** 🔄 In Progress (46% complete)  
+**Status:** 🔄 In Progress (69% complete)  
 **Timeline:** Q4 2025 - Q2 2026
 
 **Objective:** Document all 13 architectural decisions with formal ADRs.
 
 **Progress:**
 - ✅ ADR-0001: Fractal Indicator Composition
+- ✅ ADR-0001: Security, Compliance, and Documentation Automation
 - ✅ ADR-0002: Versioned Market Data Storage
+- ✅ ADR-0002: Serotonin Controller - Hysteretic Hold Logic with SRE Observability
 - ✅ ADR-0003: Automated Data Quality Framework
+- ✅ ADR-0003: Principal System Architect Security Framework
 - ✅ ADR-0004: Contract-First Modular Architecture
 - ✅ ADR-0005: Multi-Exchange Adapter Framework
 - ✅ ADR-0006: TACL / Thermodynamic Control Layer
