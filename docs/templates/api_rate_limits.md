@@ -1,7 +1,7 @@
 ---
 owner: platform@tradepulse.example
 review_cadence: quarterly
-last_reviewed: 2025-02-14
+last_reviewed: 2025-12-28
 links:
   - docs/api/overview.md
   - docs/documentation_standardisation_playbook.md

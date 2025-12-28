@@ -43,3 +43,12 @@ To introduce a new template, add a file to this directory following the same
 pattern: metadata block, guidance `<details>` section, and the copy-paste ready
 skeleton. Update this catalogue table and cross-link from the documentation
 standardisation playbook.
+
+## Verification Scripts
+
+The following scripts power documentation quality checks referenced in the
+governance and metrics playbooks:
+
+| Script | Purpose | Location |
+| ------ | ------- | -------- |
+| `check_freshness.py` | Identify stale documents based on `review_cadence` and `last_reviewed`. | `scripts/docs/check_freshness.py` |

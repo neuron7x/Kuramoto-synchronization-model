@@ -1,11 +1,11 @@
 ---
-owner: [your-email@tradepulse]
-review_cadence: [quarterly|monthly|as-needed]
-last_reviewed: [YYYY-MM-DD]
-status: [draft|review|active|deprecated]
-version: [X.Y.Z]
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-28
+status: active
+version: 1.0.0
 links:
-  - [related-document.md]
+  - docs/documentation_standardisation_playbook.md
 ---
 
 # [Document Title]
