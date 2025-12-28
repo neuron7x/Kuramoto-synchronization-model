@@ -251,18 +251,18 @@ def compute_phase(
     )
     with context_manager:
         dtype = np.float32 if use_float32 else np.float64
-        dtype_obj = np.dtype(dtype)
+        target_dtype = np.dtype(dtype)
 
         def _ensure_dtype(arr: np.ndarray) -> np.ndarray:
-            return arr if arr.dtype == dtype_obj else arr.astype(dtype_obj)
+            return arr if arr.dtype == target_dtype else arr.astype(target_dtype)
 
-        x = np.asarray(x, dtype=dtype_obj)
+        x = np.asarray(x, dtype=target_dtype)
         target = None
         if out is not None:
             target = np.asarray(out)
             if target.shape != x.shape:
                 raise ValueError("out array must match input shape")
-            if target.dtype != dtype_obj:
+            if target.dtype != target_dtype:
                 raise ValueError("out array dtype must match requested precision")
         if x.ndim != 1:
             raise ValueError("compute_phase expects 1D array")
@@ -281,18 +281,18 @@ def compute_phase(
             if n == 0:
                 return np.empty(0, dtype=dtype)
 
-            real = np.asarray(x, dtype=dtype_obj)
+            real = np.asarray(x, dtype=target_dtype)
             spectrum = _scipy_fft.rfft(real)
             spectrum *= -1j
             spectrum[0] = 0
             if n % 2 == 0 and spectrum.size > 1:
                 spectrum[-1] = 0
             imag = _scipy_fft.irfft(spectrum, n)
-            imag = np.asarray(imag, dtype=dtype_obj)
+            imag = np.asarray(imag, dtype=target_dtype)
         elif hilbert is not None:
             a = hilbert(x)
-            real = np.asarray(a.real, dtype=dtype_obj)
-            imag = np.asarray(a.imag, dtype=dtype_obj)
+            real = np.asarray(a.real, dtype=target_dtype)
+            imag = np.asarray(a.imag, dtype=target_dtype)
         else:
             # Analytic signal via real FFT-based Hilbert transform. Using rfft/irfft
             # halves the amount of spectral data we have to touch compared to the

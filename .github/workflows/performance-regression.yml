@@ -127,7 +127,9 @@ jobs:
           .venv/bin/python --version
           .venv/bin/pip --version
 
-      # Threshold temporarily relaxed for NumPy 2.x regressions
+      # Threshold temporarily relaxed for NumPy 2.x regressions while copy=False
+      # deprecations are addressed in indicator pipelines. Revert to 0.20 once
+      # benchmark parity with pre-NumPy 2.x builds is restored.
       - name: Compare performance against main
         run: |
           set -xuo pipefail
