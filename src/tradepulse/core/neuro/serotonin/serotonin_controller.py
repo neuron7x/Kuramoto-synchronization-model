@@ -161,7 +161,7 @@ class SerotoninConfig(BaseModel):
         None, ge=0.0, le=1.0, description="Tonic decay rate per decision step"
     )
     cooldown_threshold: float = Field(
-        ..., ge=0.0, le=1.0, description="Serotonin signal threshold for veto"
+        ..., gt=0.0, le=1.0, description="Serotonin signal threshold for veto"
     )
     desens_threshold_ticks: int = Field(
         ..., ge=0, description="Ticks above threshold before desensitisation"
@@ -319,6 +319,15 @@ class SerotoninConfigEnvelope(BaseModel):
                 / max(self.serotonin_legacy.desensitization_rate, 0.01)
             )
             bounded_max_desens = min(max(int(raw_max_desens), 1), 10000)
+            hysteresis_margin = float(self.serotonin_legacy.hysteresis)
+            if hysteresis_margin < 0.01 or hysteresis_margin > 0.15:
+                clamped_margin = min(max(hysteresis_margin, 0.01), 0.15)
+                logging.getLogger(__name__).warning(
+                    "Clamping legacy hysteresis margin %.4f to %.4f for v24 compatibility",
+                    hysteresis_margin,
+                    clamped_margin,
+                )
+                hysteresis_margin = clamped_margin
             v24_config = SerotoninConfig(
                 alpha=self.serotonin_legacy.stress_gain * 0.5,
                 beta=self.serotonin_legacy.tonic_beta,
@@ -347,7 +356,7 @@ class SerotoninConfigEnvelope(BaseModel):
                 phasic_veto=1.0,
                 temperature_floor_min=self.serotonin_legacy.floor_min,
                 temperature_floor_max=self.serotonin_legacy.floor_max,
-                hysteresis_margin=self.serotonin_legacy.hysteresis,
+                hysteresis_margin=hysteresis_margin,
             )
             return v24_config, "legacy"
         else:
@@ -413,6 +422,8 @@ class SafetyMonitor:
             except (TypeError, ValueError):
                 return False, "INVALID_INPUT"
             if not math.isfinite(as_float):
+                return False, "INVALID_INPUT"
+            if key in ("stress", "novelty") and as_float < 0:
                 return False, "INVALID_INPUT"
         return True, None
 
@@ -689,6 +700,8 @@ class SerotoninController:
             )
         if not (0.0 < cfg["decay_rate"] <= 1.0):
             raise ValueError("decay_rate must be within (0, 1]")
+        if cfg["cooldown_threshold"] <= 0.0:
+            raise ValueError("cooldown_threshold must be greater than 0")
         floor_min = cfg["temperature_floor_min"]
         floor_max = cfg["temperature_floor_max"]
         if floor_min > floor_max:
