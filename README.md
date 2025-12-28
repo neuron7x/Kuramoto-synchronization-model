@@ -813,6 +813,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 - [📡 API Reference](docs/api.md) — Complete API documentation
 - [📊 Indicator Library](docs/indicators.md) — Available indicators and usage
 - [🚀 Deployment Guide](DEPLOYMENT.md) — Production rollouts
+- [🧭 Requirements Traceability Matrix](docs/requirements/traceability_matrix.md) — Requirement-to-implementation mapping
 
 ### Security & Operations
 

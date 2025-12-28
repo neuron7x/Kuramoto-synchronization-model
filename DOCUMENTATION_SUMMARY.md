@@ -50,7 +50,7 @@ TradePulse maintains **enterprise-grade documentation** across multiple categori
 
 1. **Formalization:** Complete ADR coverage for all architectural decisions
 2. **Argumentation:** Strengthen rationale and justification in key documents
-3. **Traceability:** Full requirement-to-implementation mapping
+3. **Traceability:** Full requirement-to-implementation mapping ([traceability_matrix.md](docs/requirements/traceability_matrix.md))
 4. **Consistency:** 100% template adoption across document types
 5. **Freshness:** Achieve 90%+ review compliance within cadence
 
