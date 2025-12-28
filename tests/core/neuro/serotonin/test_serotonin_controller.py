@@ -265,12 +265,13 @@ def test_check_cooldown_guard_can_block(monkeypatch, serotonin_controller):
     assert block_calls and block_calls[0][0] == "serotonin_cooldown"
 
 
-def test_step_validates_inputs(serotonin_controller):
+def test_step_validates_inputs(serotonin_controller, caplog):
     ctrl = serotonin_controller
     with pytest.raises(ValueError):
         ctrl.step(stress=-0.1, drawdown=-0.01, novelty=0.2)
-    with pytest.raises(ValueError):
+    with caplog.at_level("WARNING"):
         ctrl.step(stress=0.1, drawdown=0.01, novelty=0.2)
+        assert any("coercing to negative" in record.message for record in caplog.records)
     with pytest.raises(ValueError):
         ctrl.step(stress=0.1, drawdown=-0.01, novelty=-0.2)
 
