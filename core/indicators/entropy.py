@@ -223,7 +223,7 @@ def entropy(
             for counts, weight in results:
                 if weight <= 0:
                     continue
-                total_counts += counts.astype(np.int64, copy=False)
+                total_counts += counts.astype(np.int64)
                 total_weight += weight
 
             if total_weight <= 0:
@@ -369,7 +369,7 @@ def _entropy_chunk_worker(
     if scale is not None:
         chunk = chunk / scale
     counts, _ = np.histogram(chunk, bins=bins, range=hist_range, density=False)
-    counts = counts.astype(np.int64, copy=False)
+    counts = counts.astype(np.int64)
     total = int(counts.sum(dtype=np.int64))
     return counts, total
 

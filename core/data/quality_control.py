@@ -630,7 +630,7 @@ def validate_and_quarantine(
     working = frame.drop_duplicates(subset=timestamp_col, keep="first").copy()
     for column in config.value_columns:
         if column.dtype:
-            working[column.name] = working[column.name].astype(column.dtype, copy=False)
+            working[column.name] = working[column.name].astype(column.dtype)
     validated = validate_timeseries_frame(working, config)
 
     buckets = quarantine_anomalies(

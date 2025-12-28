@@ -176,7 +176,7 @@ def _rolling_sum(
 
     if use_cuda and array.dtype in _CUDA_FLOAT_DTYPES:
         try:  # pragma: no cover - requires CUDA runtime
-            device_values = cuda.to_device(array.astype(array.dtype, copy=False))
+            device_values = cuda.to_device(array.astype(array.dtype))
             device_out = cuda.device_array_like(device_values)
             threads = 256
             blocks = (array.size + threads - 1) // threads
@@ -482,7 +482,7 @@ class HurstIndicator:
         series = _as_float_array(prices)
         if series.size == 0:
             return np.empty(0, dtype=float)
-        series = _fill_missing(series).astype(np.float64, copy=False)
+        series = _fill_missing(series).astype(np.float64)
 
         use_numba = (
             _numba_available()
@@ -500,7 +500,7 @@ class HurstIndicator:
                     int(max_lag_cap),
                     int(min_samples),
                 )
-                return accelerated.astype(float, copy=False)
+                return accelerated.astype(float)
             except Exception:  # pragma: no cover - defensive fallback
                 use_numba = False
 

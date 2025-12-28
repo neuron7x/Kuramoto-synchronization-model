@@ -397,7 +397,7 @@ def _build_node_distribution(
     return NodeDistribution(
         support=support_arr,
         probabilities=weight_arr,
-        positions=np.array(positions, dtype=float, copy=False),
+        positions=np.asarray(positions, dtype=float),
     )
 
 

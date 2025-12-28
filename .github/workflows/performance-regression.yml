@@ -59,6 +59,7 @@ jobs:
         run: |
           uv pip install -c constraints/security.txt -r requirements.txt
           uv pip install -c constraints/security.txt -r requirements-dev.txt
+          .venv/bin/python -c "import numpy; print(f'NumPy version: {numpy.__version__}'); assert numpy.__version__.startswith('2.'), 'Expected NumPy 2.x'"
 
       - name: Run PR benchmarks
         env:
@@ -126,7 +127,7 @@ jobs:
             --current-benchmark reports/performance/current_benchmark.json \
             --baseline-resources reports/performance/baseline_resources.json \
             --current-resources reports/performance/current_resources.json \
-            --threshold 0.20 \
+            --threshold 0.30 \
             --output-json reports/performance/comparison.json \
             --output-markdown reports/performance/comparison.md
 

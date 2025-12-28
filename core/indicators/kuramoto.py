@@ -250,8 +250,10 @@ def compute_phase(
         else nullcontext()
     )
     with context_manager:
-        dtype = np.float32 if use_float32 else float
-        x = np.asarray(x, dtype=dtype)
+        dtype = np.float32 if use_float32 else np.float64
+        x = np.asarray(x)
+        if x.dtype != np.dtype(dtype):
+            x = x.astype(dtype)
         target = None
         if out is not None:
             target = np.asarray(out)
@@ -283,11 +285,11 @@ def compute_phase(
             if n % 2 == 0 and spectrum.size > 1:
                 spectrum[-1] = 0
             imag = _scipy_fft.irfft(spectrum, n)
-            imag = np.asarray(imag, dtype=dtype, copy=False)
+            imag = np.asarray(imag, dtype=dtype)
         elif hilbert is not None:
             a = hilbert(x)
-            real = np.asarray(a.real, dtype=dtype, copy=False)
-            imag = np.asarray(a.imag, dtype=dtype, copy=False)
+            real = np.asarray(a.real, dtype=dtype)
+            imag = np.asarray(a.imag, dtype=dtype)
         else:
             # Analytic signal via real FFT-based Hilbert transform. Using rfft/irfft
             # halves the amount of spectral data we have to touch compared to the
@@ -297,7 +299,7 @@ def compute_phase(
             if n == 0:
                 return np.empty(0, dtype=dtype)
 
-            working = x.astype(float, copy=False)
+            working = x.astype(float)
             spectrum = np.fft.fft(working)
             h = np.zeros(n, dtype=float)
             if n % 2 == 0:
@@ -307,13 +309,19 @@ def compute_phase(
                 h[0] = 1.0
                 h[1 : (n + 1) // 2] = 2.0
             analytic = np.fft.ifft(spectrum * h)
-            real = analytic.real.astype(dtype, copy=False)
-            imag = analytic.imag.astype(dtype, copy=False)
+            real = analytic.real
+            imag = analytic.imag
+            if real.dtype != np.dtype(dtype):
+                real = real.astype(dtype)
+            if imag.dtype != np.dtype(dtype):
+                imag = imag.astype(dtype)
         if target is not None:
             np.arctan2(imag, real, out=target)
             return target
         phases = np.arctan2(imag, real)
-        return phases.astype(dtype, copy=False)
+        if phases.dtype != np.dtype(dtype):
+            phases = phases.astype(dtype)
+        return phases
 
 
 def kuramoto_order(
@@ -383,10 +391,12 @@ def kuramoto_order(
     mask = np.isfinite(phases_fp32)
     # Compute trigonometric projections in float64 to avoid drift when
     # aggregating perfectly de-synchronised samples (e.g. phases at 0 and π).
-    cos_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
-    sin_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
-    np.cos(phases_fp32, out=cos_vals, where=mask)
-    np.sin(phases_fp32, out=sin_vals, where=mask)
+    cos_vals = np.empty(phases_fp32.shape, dtype=np.float64)
+    sin_vals = np.empty(phases_fp32.shape, dtype=np.float64)
+    cos_vals[mask] = np.cos(phases_fp32[mask])
+    sin_vals[mask] = np.sin(phases_fp32[mask])
+    cos_vals[~mask] = 0.0
+    sin_vals[~mask] = 0.0
 
     float32_eps = np.finfo(np.float32).eps
 

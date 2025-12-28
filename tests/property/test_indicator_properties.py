@@ -138,7 +138,7 @@ def _kuramoto_reference(phases: np.ndarray) -> float | np.ndarray:
     )
     clipped = np.clip(values, 0.0, 1.0)
     clipped = np.where(clipped < dtype.type(1e-12), dtype.type(0.0), clipped)
-    return clipped.astype(float, copy=False)
+    return clipped.astype(float)
 
 
 def _hurst_reference(ts: np.ndarray, min_lag: int, max_lag: int) -> float:
@@ -154,7 +154,7 @@ def _hurst_reference(ts: np.ndarray, min_lag: int, max_lag: int) -> float:
 
     for idx, lag in enumerate(lags):
         diff = series[lag:] - series[:-lag]
-        segment = diff.astype(dtype, copy=False)
+        segment = diff.astype(dtype)
         count = dtype.type(segment.size)
         if count == 0:
             tau[idx] = dtype.type(0.0)
