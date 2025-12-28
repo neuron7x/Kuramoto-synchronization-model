@@ -8,6 +8,7 @@ from . import (  # noqa: F401
     backup,
     bootstrap,
     build_core,
+    dependency_health,
     dev,
     fpma,
     lint,
