@@ -59,7 +59,15 @@ jobs:
         run: |
           uv pip install -c constraints/security.txt -r requirements.txt
           uv pip install -c constraints/security.txt -r requirements-dev.txt
-          .venv/bin/python -c "import numpy; print(f'NumPy version: {numpy.__version__}'); assert numpy.__version__.startswith('2.'), 'Expected NumPy 2.x'"
+          .venv/bin/python - <<'PY'
+          from packaging.version import Version
+          import numpy as np
+
+          version = Version(np.__version__)
+          print(f"NumPy version: {version}")
+          if version.major != 2:
+              raise SystemExit("Expected NumPy 2.x")
+          PY
 
       - name: Run PR benchmarks
         env:

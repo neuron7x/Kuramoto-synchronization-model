@@ -251,15 +251,16 @@ def compute_phase(
     )
     with context_manager:
         dtype = np.float32 if use_float32 else np.float64
+        dtype_obj = np.dtype(dtype)
         x = np.asarray(x)
-        if x.dtype != np.dtype(dtype):
-            x = x.astype(dtype)
+        if x.dtype != dtype_obj:
+            x = x.astype(dtype_obj)
         target = None
         if out is not None:
             target = np.asarray(out)
             if target.shape != x.shape:
                 raise ValueError("out array must match input shape")
-            if target.dtype != np.dtype(dtype):
+            if target.dtype != dtype_obj:
                 raise ValueError("out array dtype must match requested precision")
         if x.ndim != 1:
             raise ValueError("compute_phase expects 1D array")
@@ -278,18 +279,18 @@ def compute_phase(
             if n == 0:
                 return np.empty(0, dtype=dtype)
 
-            real = np.asarray(x, dtype=dtype)
+            real = np.asarray(x, dtype=dtype_obj)
             spectrum = _scipy_fft.rfft(real)
             spectrum *= -1j
             spectrum[0] = 0
             if n % 2 == 0 and spectrum.size > 1:
                 spectrum[-1] = 0
             imag = _scipy_fft.irfft(spectrum, n)
-            imag = np.asarray(imag, dtype=dtype)
+            imag = np.asarray(imag, dtype=dtype_obj)
         elif hilbert is not None:
             a = hilbert(x)
-            real = np.asarray(a.real, dtype=dtype)
-            imag = np.asarray(a.imag, dtype=dtype)
+            real = np.asarray(a.real, dtype=dtype_obj)
+            imag = np.asarray(a.imag, dtype=dtype_obj)
         else:
             # Analytic signal via real FFT-based Hilbert transform. Using rfft/irfft
             # halves the amount of spectral data we have to touch compared to the
@@ -311,16 +312,16 @@ def compute_phase(
             analytic = np.fft.ifft(spectrum * h)
             real = analytic.real
             imag = analytic.imag
-            if real.dtype != np.dtype(dtype):
-                real = real.astype(dtype)
-            if imag.dtype != np.dtype(dtype):
-                imag = imag.astype(dtype)
+            if real.dtype != dtype_obj:
+                real = real.astype(dtype_obj)
+            if imag.dtype != dtype_obj:
+                imag = imag.astype(dtype_obj)
         if target is not None:
             np.arctan2(imag, real, out=target)
             return target
         phases = np.arctan2(imag, real)
-        if phases.dtype != np.dtype(dtype):
-            phases = phases.astype(dtype)
+        if phases.dtype != dtype_obj:
+            phases = phases.astype(dtype_obj)
         return phases
 
 
