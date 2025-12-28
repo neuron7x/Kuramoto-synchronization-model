@@ -312,8 +312,6 @@ def compute_phase(
                 h[0] = 1.0
                 h[1 : (n + 1) // 2] = 2.0
             analytic = np.fft.ifft(spectrum * h)
-            real = analytic.real
-            imag = analytic.imag
             real = _ensure_dtype(analytic.real)
             imag = _ensure_dtype(analytic.imag)
         if target is not None:
