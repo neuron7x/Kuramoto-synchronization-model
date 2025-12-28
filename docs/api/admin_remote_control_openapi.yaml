@@ -6,6 +6,8 @@ info:
   description: >-
     Administrative endpoints that allow authenticated operators to inspect,
     engage, and reset the TradePulse risk kill-switch.
+  x-owner: Platform Engineering (platform@tradepulse.example)
+  x-last_reviewed: 2025-12-28
 servers:
   - url: https://risk.tradepulse.example.com
 paths:
