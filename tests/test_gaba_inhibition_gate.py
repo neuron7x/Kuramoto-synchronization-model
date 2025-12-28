@@ -1,3 +1,5 @@
+import math
+
 import pytest
 import torch
 
@@ -331,6 +333,19 @@ def test_gate_params_validation():
         GateParams(max_inhibition=1.5)
 
 
+def test_gate_params_range_validation():
+    """Range-based parameter constraints should be enforced."""
+
+    with pytest.raises(ValueError, match="risk_min must be <= risk_max"):
+        GateParams(risk_min=1.2, risk_max=1.1)
+
+    with pytest.raises(ValueError, match="min_dt_ms must be <= max_dt_ms"):
+        GateParams(min_dt_ms=10.0, max_dt_ms=1.0)
+
+    with pytest.raises(ValueError, match="min_dt_ms must be positive"):
+        GateParams(min_dt_ms=0.0)
+
+
 def test_gate_params_from_dict_partial():
     """from_dict should ignore unknown keys while applying overrides."""
 
@@ -386,6 +401,75 @@ def test_dynamic_dt_modulates_decay():
     decay_large = gate.decay_fast.clone()
 
     assert decay_large.item() < decay_small.item()
+
+
+def test_clamp_dt_respects_bounds_and_abs():
+    """Clamp should enforce dt bounds and treat negative deltas as positive."""
+
+    gate = GABAInhibitionGate()
+    dt_values = torch.tensor([-1e-6, gate.p.min_dt_ms / 10.0, gate.p.max_dt_ms * 10.0])
+    clamped = gate._clamp_dt(dt_values)
+
+    assert pytest.approx(clamped[0].item(), rel=1e-6) == gate.p.min_dt_ms
+    assert pytest.approx(clamped[1].item(), rel=1e-6) == gate.p.min_dt_ms
+    assert pytest.approx(clamped[2].item(), rel=1e-6) == gate.p.max_dt_ms
+
+
+def test_forward_bounds_and_no_nan():
+    """Forward pass should keep outputs within bounds and free of NaN/Inf."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([2.0])
+    market_states = [
+        base_state(vix=10.0, vol=0.05, ret=0.01, dt_ms=gate.p.min_dt_ms),
+        base_state(vix=80.0, vol=1.0, ret=0.3, dt_ms=gate.p.max_dt_ms),
+        base_state(vix=40.0, vol=0.3, ret=-0.2, dt_ms=50.0),
+    ]
+
+    for state in market_states:
+        gated, metrics = gate(state, action)
+
+        assert 0.0 <= metrics.inhibition <= gate.p.max_inhibition
+        assert gate.p.risk_min <= metrics.risk_weight <= gate.p.risk_max
+        assert torch.isfinite(gated).all()
+        assert all(
+            math.isfinite(value)
+            for value in (
+                metrics.inhibition,
+                metrics.gaba_level,
+                metrics.risk_weight,
+                metrics.cycle_multiplier,
+                metrics.stdp_delta,
+                metrics.ltp_ltd_delta,
+                metrics.adaptive_delta,
+            )
+        )
+
+        if metrics.gaba_level > 0.1:
+            assert gated.abs().item() <= action.abs().item() + 1e-6
+
+
+def test_delta_t_ms_extremes_use_clamped_decay():
+    """Min/max delta_t_ms should clamp integration and update decay factors."""
+
+    gate = GABAInhibitionGate()
+    action = torch.tensor([1.0])
+
+    gate.reset_state()
+    gate(base_state(dt_ms=1e-9, vix=60.0), action)
+    expected_min = gate._compute_decay(
+        torch.tensor(gate.p.min_dt_ms, device=gate.device),
+        gate.p.tau_gaba_a_ms,
+    )
+    assert torch.allclose(gate.decay_fast, expected_min)
+
+    gate.reset_state()
+    gate(base_state(dt_ms=1e9, vix=60.0), action)
+    expected_max = gate._compute_decay(
+        torch.tensor(gate.p.max_dt_ms, device=gate.device),
+        gate.p.tau_gaba_a_ms,
+    )
+    assert torch.allclose(gate.decay_fast, expected_max)
 
 
 def test_risk_weight_relaxes_to_baseline():
