@@ -88,6 +88,8 @@ class NakConfig(BaseModel):
     activity_mult: ActivityMult
     band_expand: BandExpand
     noise_sigma: float
+    adaptation_iterations: int = 1
+    integration_alpha: float = 1.0
 
     @field_validator("L_max")
     @classmethod
@@ -153,6 +155,20 @@ class NakConfig(BaseModel):
     def _validate_noise(cls, value: float) -> float:
         if value < 0.0:
             raise ValueError("noise_sigma must be non-negative")
+        return value
+
+    @field_validator("adaptation_iterations")
+    @classmethod
+    def _validate_adaptation_iterations(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("adaptation_iterations must be at least 1")
+        return value
+
+    @field_validator("integration_alpha")
+    @classmethod
+    def _validate_integration_alpha(cls, value: float) -> float:
+        if not 0.0 < value <= 1.0:
+            raise ValueError("integration_alpha must be in the interval (0, 1]")
         return value
 
     @model_validator(mode="after")

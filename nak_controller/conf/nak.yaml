@@ -60,3 +60,5 @@ nak:
     RED: 1.50
 
   noise_sigma: 0.01
+  adaptation_iterations: 3
+  integration_alpha: 0.7

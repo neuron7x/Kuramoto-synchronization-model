@@ -106,6 +106,8 @@ class NaKController:
         self._rng = np.random.default_rng(self._seed)
         self._states: Dict[str, StrategyState] = {}
         self._logger = logging.getLogger("runtime.telemetry.nak")
+        self._adaptation_iterations = cfg.adaptation_iterations
+        self._integration_alpha = cfg.integration_alpha
 
     @property
     def states(self) -> Mapping[str, StrategyState]:
@@ -149,52 +151,67 @@ class NaKController:
         HT = serotonin(float(global_view.get("portfolio_dd", 0.0)), params.ht_dd_gain)
         ACh = acetylcholine(float(global_view.get("exposure", 0.0)), params.eta_ACh)
 
-        update_load(state, params, local, NA, rng=self._rng)
-        update_energy(state, params, local, NA=NA, DA=DA, da_unexp=unexpected_reward)
-        compute_EI(state, params, local)
+        error = 0.0
+        integrator = state.I
+        rate_raw = state.last_risk
+        rate_local = state.last_risk
+        rate_after_mode = state.last_risk
+        limited_rate = state.last_risk
+        activity = 1.0
+        band_expansion = 1.0
+        mode = "GREEN"
+        risk_multiplier = params.risk_GREEN
+        activity_multiplier = params.act_GREEN
 
-        mode = choose_mode(
-            float(global_view.get("global_vol", 0.0)),
-            float(global_view.get("portfolio_dd", 0.0)),
-            vol_amber=params.vol_amber,
-            vol_red=params.vol_red,
-            dd_amber=params.dd_amber,
-            dd_red=params.dd_red,
-        )
-        band_expansion = band_expand_for_mode(
-            mode,
-            band_GREEN=params.band_GREEN,
-            band_AMBER=params.band_AMBER,
-            band_RED=params.band_RED,
-        )
-        error, integrator, rate_raw = pi_control(
-            state, params, band_expand=band_expansion
-        )
+        for _ in range(self._adaptation_iterations):
+            update_load(state, params, local, NA, rng=self._rng)
+            update_energy(
+                state, params, local, NA=NA, DA=DA, da_unexp=unexpected_reward
+            )
+            compute_EI(state, params, local)
 
-        rate_local = modulate_risk_da(
-            rate_raw, DA, params.da_gain, r_min=params.r_min, r_max=params.r_max
-        )
-        risk_multiplier = {
-            "GREEN": params.risk_GREEN,
-            "AMBER": params.risk_AMBER,
-            "RED": params.risk_RED,
-        }[mode]
-        activity_multiplier = {
-            "GREEN": params.act_GREEN,
-            "AMBER": params.act_AMBER,
-            "RED": params.act_RED,
-        }[mode]
+            mode = choose_mode(
+                float(global_view.get("global_vol", 0.0)),
+                float(global_view.get("portfolio_dd", 0.0)),
+                vol_amber=params.vol_amber,
+                vol_red=params.vol_red,
+                dd_amber=params.dd_amber,
+                dd_red=params.dd_red,
+            )
+            band_expansion = band_expand_for_mode(
+                mode,
+                band_GREEN=params.band_GREEN,
+                band_AMBER=params.band_AMBER,
+                band_RED=params.band_RED,
+            )
+            error, integrator, rate_raw = pi_control(
+                state, params, band_expand=band_expansion
+            )
 
-        rate_after_mode = rate_local * risk_multiplier
-        limited_rate = rate_limit(
-            state.last_risk,
-            rate_after_mode,
-            limit=params.delta_r_limit,
-            lo=params.r_min,
-            hi=params.r_max,
-        )
+            rate_local = modulate_risk_da(
+                rate_raw, DA, params.da_gain, r_min=params.r_min, r_max=params.r_max
+            )
+            risk_multiplier = {
+                "GREEN": params.risk_GREEN,
+                "AMBER": params.risk_AMBER,
+                "RED": params.risk_RED,
+            }[mode]
+            activity_multiplier = {
+                "GREEN": params.act_GREEN,
+                "AMBER": params.act_AMBER,
+                "RED": params.act_RED,
+            }[mode]
 
-        activity = modulate_activity_ach(activity_multiplier, ACh)
+            rate_after_mode = rate_local * risk_multiplier
+            limited_rate = rate_limit(
+                state.last_risk,
+                rate_after_mode,
+                limit=params.delta_r_limit,
+                lo=params.r_min,
+                hi=params.r_max,
+            )
+
+            activity = modulate_activity_ach(activity_multiplier, ACh)
 
         engagement = state.EI
         freq = max(params.f_min, min(params.f_max, engagement * activity))
@@ -209,6 +226,24 @@ class NaKController:
 
         risk_factor = limited_rate if not suspended else params.r_min
         max_position_factor = risk_factor
+
+        if not suspended and self._integration_alpha < 1.0:
+            integrated = (
+                (1.0 - self._integration_alpha) * state.last_risk
+                + self._integration_alpha * risk_factor
+            )
+            risk_factor = min(params.r_max, max(params.r_min, integrated))
+            max_position_factor = risk_factor
+            prior_cooldown = float(state.last.get("cooldown_ms", cooldown_ms))
+            cooldown_ms = int(
+                max(
+                    1.0,
+                    round(
+                        (1.0 - self._integration_alpha) * prior_cooldown
+                        + self._integration_alpha * cooldown_ms
+                    ),
+                )
+            )
 
         if not params.r_min <= risk_factor <= params.r_max:
             raise RuntimeError(
@@ -239,6 +274,9 @@ class NaKController:
             "activity": activity,
             "band_exp": band_expansion,
             "f_freq": freq,
+            "cooldown_ms": cooldown_ms,
+            "adaptation_iterations": self._adaptation_iterations,
+            "integration_alpha": self._integration_alpha,
         }
 
         if self._logger.isEnabledFor(logging.INFO):
