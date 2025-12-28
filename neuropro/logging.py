@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class Logger:
@@ -24,7 +27,12 @@ class Logger:
             self.run = self.mlflow.start_run()
             if params:
                 self.mlflow.log_params(params)
-        except Exception:
+        except Exception as exc:
+            logger.info(
+                "module=%s mlflow unavailable error=%s",
+                __name__,
+                exc,
+            )
             self.mlflow = None
         try:
             import wandb  # type: ignore
@@ -35,41 +43,76 @@ class Logger:
                     project=os.getenv("WANDB_PROJECT", "neurotrade_v12"),
                     config=params or {},
                 )
-        except Exception:
+        except Exception as exc:
+            logger.info(
+                "module=%s wandb unavailable error=%s",
+                __name__,
+                exc,
+            )
             self.wandb = None
 
     def log_metric(self, key: str, value: float, step: int | None = None) -> None:
         try:
             if self.mlflow and self.run:
                 self.mlflow.log_metric(key, float(value), step=step or 0)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s mlflow log_metric failed key=%s value=%s error=%s",
+                __name__,
+                key,
+                value,
+                exc,
+            )
         try:
             if self.wandb:
                 self.wandb.log({key: float(value)})
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s wandb log_metric failed key=%s value=%s error=%s",
+                __name__,
+                key,
+                value,
+                exc,
+            )
 
     def log_artifact(self, path: str) -> None:
         try:
             if self.mlflow and self.run:
                 self.mlflow.log_artifact(path)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s mlflow log_artifact failed path=%s error=%s",
+                __name__,
+                path,
+                exc,
+            )
         try:
             if self.wandb:
                 self.wandb.save(path)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s wandb save failed path=%s error=%s",
+                __name__,
+                path,
+                exc,
+            )
 
     def end(self) -> None:
         try:
             if self.mlflow and self.run:
                 self.mlflow.end_run()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s mlflow end_run failed error=%s",
+                __name__,
+                exc,
+            )
         try:
             if self.wandb:
                 self.wandb.finish()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s wandb finish failed error=%s",
+                __name__,
+                exc,
+            )

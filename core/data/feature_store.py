@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import math
 import os
 import shutil
@@ -24,6 +25,8 @@ from pandas.api import types as pd_types
 
 if not hasattr(pd, "_pandas_datetime_CAPI"):  # pragma: no cover - runtime shim
     pd._pandas_datetime_CAPI = None
+
+logger = logging.getLogger(__name__)
 
 from core.utils.dataframe_io import (
     purge_dataframe_artifacts,
@@ -153,8 +156,13 @@ def _serialize_frame(frame: pd.DataFrame) -> bytes:
         if callable(formatter):
             try:
                 return formatter()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "module=%s failed to encode frame value=%r error=%s",
+                    __name__,
+                    value,
+                    exc,
+                )
         return value
 
     columns = list(frame.columns)
@@ -916,8 +924,13 @@ class OnlineFeatureStore:
             if callable(iso_formatter):
                 try:
                     return iso_formatter()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug(
+                        "module=%s failed to encode snapshot value=%r error=%s",
+                        __name__,
+                        value,
+                        exc,
+                    )
             return value
 
         data = [

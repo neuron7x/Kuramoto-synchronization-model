@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from time import perf_counter
@@ -11,6 +12,7 @@ from typing import Callable, Iterable, Mapping, MutableMapping
 from core.utils.metrics import get_metrics_collector
 
 UTC = timezone.utc
+logger = logging.getLogger(__name__)
 
 
 def _infer_row_count(payload: object) -> int | None:
@@ -23,8 +25,13 @@ def _infer_row_count(payload: object) -> int | None:
     if isinstance(shape, tuple) and shape:
         try:
             return int(shape[0])
-        except (TypeError, ValueError):
-            pass
+        except (TypeError, ValueError) as exc:
+            logger.debug(
+                "module=%s failed to infer row count from shape=%s error=%s",
+                __name__,
+                shape,
+                exc,
+            )
 
     if isinstance(payload, (list, tuple, set, frozenset, dict)):
         return int(len(payload))

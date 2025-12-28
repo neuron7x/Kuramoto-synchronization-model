@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 from typing import Dict, Iterable, Literal, Mapping, Optional, Tuple
 
@@ -83,6 +84,8 @@ _DEFAULT_STATE = {
     "config": {},
 }
 
+logger = logging.getLogger(__name__)
+
 
 class _State:
     def __init__(self, path: str | Path | None):
@@ -95,12 +98,24 @@ class _State:
                 # non-destructive update
                 for k, v in loaded.items():
                     self.s[k] = v
-            except Exception:
+            except Exception as exc:
+                logger.warning(
+                    "module=%s failed to load state path=%s error=%s",
+                    __name__,
+                    self.path,
+                    exc,
+                )
                 backup = self.path.with_suffix(".corrupt.json")
                 try:
                     self.path.replace(backup)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "module=%s failed to backup corrupt state path=%s backup=%s error=%s",
+                        __name__,
+                        self.path,
+                        backup,
+                        exc,
+                    )
 
     def flush(self) -> None:
         tmp = self.path.with_suffix(".tmp")

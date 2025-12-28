@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import dataclasses
+import logging
 import math
 import os
 import sys
@@ -19,6 +20,7 @@ except ModuleNotFoundError:  # pragma: no cover - handled gracefully in runtime
 from multiprocessing import get_all_start_methods, get_context
 from multiprocessing.context import BaseContext
 
+logger = logging.getLogger(__name__)
 
 @dataclasses.dataclass(frozen=True)
 class SandboxLimits:
@@ -162,7 +164,12 @@ def _sandbox_worker(
         if limits.memory_bytes is not None:
             try:
                 import tracemalloc
-            except Exception:  # pragma: no cover - tracemalloc unavailable
+            except Exception as exc:  # pragma: no cover - tracemalloc unavailable
+                logger.info(
+                    "module=%s tracemalloc unavailable error=%s",
+                    __name__,
+                    exc,
+                )
                 tracer = None
             else:
                 tracemalloc.start()
@@ -184,8 +191,12 @@ def _sandbox_worker(
         if tracer is not None:
             try:
                 tracer.stop()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "module=%s failed to stop tracemalloc error=%s",
+                    __name__,
+                    exc,
+                )
         conn.send({"status": "error", "error": exc, "message": str(exc)})
     finally:
         conn.close()
@@ -200,8 +211,12 @@ def _resolve_context(start_method: str | None) -> BaseContext:
     if not _running_without_main_file() and "spawn" in available_methods:
         try:
             return get_context("spawn")
-        except ValueError:  # pragma: no cover - defensive fallback
-            pass
+        except ValueError as exc:  # pragma: no cover - defensive fallback
+            logger.warning(
+                "module=%s failed to get spawn context error=%s",
+                __name__,
+                exc,
+            )
 
     try:
         ctx = get_context()

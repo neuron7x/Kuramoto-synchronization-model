@@ -10,6 +10,7 @@ The benchmark is designed to be:
 - Human-readable (clear metric names and units)
 """
 
+import logging
 import os
 import platform
 import subprocess
@@ -24,6 +25,8 @@ except ImportError:
     # Allow import in tests/CI without full backtest module
     walk_forward = None
 
+logger = logging.getLogger(__name__)
+
 
 def get_git_commit_hash() -> str:
     """Get current git commit hash."""
@@ -36,8 +39,13 @@ def get_git_commit_hash() -> str:
         )
         if result.returncode == 0:
             return result.stdout.strip()
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning(
+            "module=%s git commit lookup failed cmd=%s error=%s",
+            __name__,
+            ["git", "rev-parse", "--short", "HEAD"],
+            exc,
+        )
     return "unknown"
 
 

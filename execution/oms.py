@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
+import logging
 import time
 from collections import deque
 from concurrent.futures import TimeoutError as FuturesTimeoutError
@@ -24,6 +25,7 @@ from .order_ledger import OrderLedger
 from .order_lifecycle import OrderEvent, OrderLifecycle
 
 DEFAULT_LEDGER_PATH = Path("observability/audit/order-ledger.jsonl")
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -476,21 +478,39 @@ class OrderManagementSystem:
                             symbol: self.risk.current_position(symbol)
                             for symbol in [order.symbol]
                         }
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.warning(
+                            "module=%s failed to read current_position symbol=%s correlation_id=%s error=%s",
+                            __name__,
+                            order.symbol,
+                            correlation_id,
+                            exc,
+                        )
 
                 if hasattr(self.risk, "_gross_notional"):
                     try:
                         gross_exposure = self.risk._gross_notional
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.warning(
+                            "module=%s failed to read gross_notional symbol=%s correlation_id=%s error=%s",
+                            __name__,
+                            order.symbol,
+                            correlation_id,
+                            exc,
+                        )
 
                 if hasattr(self.risk, "_balance"):
                     try:
                         equity = self.risk._balance
                         peak_equity = getattr(self.risk, "_peak_equity", equity)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.warning(
+                            "module=%s failed to read balance symbol=%s correlation_id=%s error=%s",
+                            __name__,
+                            order.symbol,
+                            correlation_id,
+                            exc,
+                        )
 
                 portfolio_state = {
                     "positions": positions,

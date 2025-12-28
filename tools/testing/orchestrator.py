@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -242,8 +245,13 @@ class TestOrchestrator:
                                 if "passed" in part and i > 0:
                                     try:
                                         category.passed = int(parts[i - 1])
-                                    except (ValueError, IndexError):
-                                        pass
+                                    except (ValueError, IndexError) as exc:
+                                        logger.debug(
+                                            "module=%s failed to parse pytest summary line=%s error=%s",
+                                            __name__,
+                                            line.strip(),
+                                            exc,
+                                        )
 
         except subprocess.TimeoutExpired:
             category.executed = True

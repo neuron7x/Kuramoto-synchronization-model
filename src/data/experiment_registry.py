@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import uuid
@@ -18,6 +19,8 @@ __all__ = [
     "ExperimentRunRecord",
     "HyperparameterAuditEntry",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
@@ -371,8 +374,15 @@ class ExperimentRegistry:
             except StopIteration:
                 try:
                     experiment_dir.rmdir()
-                except OSError:
-                    pass
+                except OSError as exc:
+                    logger.warning(
+                        "module=%s failed to remove empty experiment dir=%s run_id=%s experiment=%s error=%s",
+                        __name__,
+                        experiment_dir,
+                        run_id,
+                        experiment_name,
+                        exc,
+                    )
 
     def _path_for_run(self, experiment_name: str, run_id: str) -> Path:
         experiment_name = _validate_path_component(

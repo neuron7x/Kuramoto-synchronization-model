@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import io
 import json
+import logging
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -20,6 +21,8 @@ __all__ = [
     "write_dataframe",
     "reset_dataframe_io_backends",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class MissingParquetDependencyError(RuntimeError):
@@ -135,8 +138,13 @@ def _json_backend() -> _Backend:
         if hasattr(value, "item"):
             try:
                 return value.item()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "module=%s failed to encode json value=%r error=%s",
+                    __name__,
+                    value,
+                    exc,
+                )
         return value
 
     def _write(frame: pd.DataFrame, path: Path, index: bool) -> None:
@@ -162,8 +170,12 @@ def _available_backends() -> list[_Backend]:
         backends.append(_pyarrow_backend())
     try:
         backends.append(_polars_backend())
-    except MissingParquetDependencyError:
-        pass
+    except MissingParquetDependencyError as exc:
+        logger.info(
+            "module=%s polars parquet backend unavailable error=%s",
+            __name__,
+            exc,
+        )
     backends.append(_json_backend())
     return backends
 

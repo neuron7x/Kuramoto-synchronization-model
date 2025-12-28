@@ -204,8 +204,12 @@ class ReplayPipeline:
 
             ReplayPipeline._canonical_module = canonical
             return canonical
-        except ImportError:
-            pass
+        except ImportError as exc:
+            logger.info(
+                "module=%s canonical import unavailable error=%s",
+                __name__,
+                exc,
+            )
 
         # Load directly from file
         script_dir = Path(__file__).parent.parent.parent
@@ -231,8 +235,12 @@ class ReplayPipeline:
 
             ReplayPipeline._pipeline_result_module = pipeline_result
             return pipeline_result
-        except ImportError:
-            pass
+        except ImportError as exc:
+            logger.info(
+                "module=%s pipeline_result import unavailable error=%s",
+                __name__,
+                exc,
+            )
 
         # Load directly from file
         script_dir = Path(__file__).parent.parent.parent

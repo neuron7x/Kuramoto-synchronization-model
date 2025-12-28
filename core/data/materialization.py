@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, MutableMapping, Protocol, Sequence
 
 import pandas as pd
 
 from core.data.feature_store import OnlineFeatureStore
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -90,8 +93,13 @@ class StreamMaterializer:
         if hasattr(value, "item"):
             try:
                 return value.item()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "module=%s failed to encode value=%r error=%s",
+                    __name__,
+                    value,
+                    exc,
+                )
         return value
 
     def _stable_split_payload(self, frame: pd.DataFrame) -> str:

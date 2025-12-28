@@ -17,6 +17,8 @@ import yaml
 if not hasattr(pd, "_pandas_datetime_CAPI"):  # pragma: no cover - import-time guard
     pd._pandas_datetime_CAPI = None
 
+logger = logging.getLogger(__name__)
+
 from observability.audit.trail import (
     get_access_audit_trail,
     get_system_audit_trail,
@@ -321,8 +323,13 @@ def scrub_response(response):
 
             data = cleanse(data)
             response["body"]["string"] = json.dumps(data).encode()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s failed to scrub response content_type=%s error=%s",
+                __name__,
+                ctype,
+                exc,
+            )
     return response
 
 

@@ -1616,8 +1616,12 @@ def create_app(
             if sample is None:
                 try:
                     ProcessCollector(registry=metrics_registry)
-                except ValueError:
-                    pass
+                except ValueError as exc:
+                    logging.getLogger(__name__).warning(
+                        "module=%s process collector registration failed error=%s",
+                        __name__,
+                        exc,
+                    )
 
     metrics_module = __import__("core.utils.metrics", fromlist=["MetricsCollector"])
     metrics_collector = get_metrics_collector(metrics_registry)
@@ -2458,8 +2462,11 @@ def create_app(
             await websocket.send_json(snapshot)
             while True:
                 await websocket.receive_text()
-        except WebSocketDisconnect:
-            pass
+        except WebSocketDisconnect as exc:
+            logging.getLogger("tradepulse.api.websocket").info(
+                "WebSocket client disconnected",
+                extra={"module": __name__, "error": str(exc)},
+            )
         except Exception:  # pragma: no cover - defensive
             logging.getLogger("tradepulse.api.websocket").exception(
                 "Unexpected error while streaming realtime updates",

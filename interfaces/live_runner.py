@@ -361,8 +361,16 @@ class LiveTradingRunner:
         if self._secret_manager is not None:
             try:
                 return self._secret_manager.get_resolver(adapter_key)
-            except SecretManagerError:
-                pass
+            except SecretManagerError as exc:
+                LOGGER.warning(
+                    "Secret manager resolver failed",
+                    extra={
+                        "event": "live_runner.secret_manager",
+                        "adapter": adapter_key,
+                        "module": __name__,
+                        "error": str(exc),
+                    },
+                )
         resolver = self._inline_secret_backends.get(adapter_key)
         if resolver is None:
             raise RuntimeError(f"No secret backend registered for adapter '{adapter}'")

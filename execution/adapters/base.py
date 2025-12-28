@@ -538,8 +538,16 @@ class RESTWebSocketConnector(ExecutionConnector, ABC):
                 )
                 try:
                     await asyncio.wait_for(asyncio.sleep(delay), timeout=delay)
-                except asyncio.TimeoutError:
-                    pass
+                except asyncio.TimeoutError as exc:
+                    self._logger.warning(
+                        "WebSocket backoff sleep timed out",
+                        extra={
+                            "module": __name__,
+                            "attempt": attempt,
+                            "delay": delay,
+                            "error": str(exc),
+                        },
+                    )
         self._logger.debug("WebSocket loop exiting")
 
 

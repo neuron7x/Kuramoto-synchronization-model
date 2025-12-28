@@ -851,8 +851,15 @@ class _MetricsEmitter:
                 self.g_regime.labels(self.label).set(value)
             elif name == "k":
                 self.g_k.labels(self.label).set(value)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s gauge update failed label=%s name=%s value=%s error=%s",
+                __name__,
+                self.label,
+                name,
+                value,
+                exc,
+            )
 
     def _worker(self) -> None:
         while True:
@@ -861,8 +868,13 @@ class _MetricsEmitter:
             try:
                 name, value = self.q.get()
                 self._set_gauge(name, value)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.exception(
+                    "module=%s async gauge worker failed label=%s error=%s",
+                    __name__,
+                    self.label,
+                    exc,
+                )
 
     def emit(self, epr: float, flux: float, regime: float, K: int) -> None:
         if not self.enabled:
@@ -1075,8 +1087,15 @@ def _classify_regime_simple(epr: float, flux: float, pe: float) -> str:
             return "directional"
         if epr > 0.1:
             return "turbulent"
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning(
+            "module=%s regime classification failed epr=%s flux=%s pe=%s error=%s",
+            __name__,
+            epr,
+            flux,
+            pe,
+            exc,
+        )
     return "mixed"
 
 

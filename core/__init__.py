@@ -8,8 +8,11 @@ reside here.
 
 from __future__ import annotations
 
+import logging
 import sys
 from importlib import import_module
+
+logger = logging.getLogger(__name__)
 
 
 def __getattr__(name: str):
@@ -27,5 +30,9 @@ try:  # pragma: no cover - best effort mapping
     _sero_mod = import_module("tradepulse.core.neuro.serotonin.serotonin_controller")
     sys.modules["core.neuro.serotonin"] = import_module("tradepulse.core.neuro.serotonin")
     sys.modules["core.neuro.serotonin.serotonin_controller"] = _sero_mod
-except ImportError:
-    pass
+except ImportError as exc:
+    logger.info(
+        "module=%s serotonin alias unavailable error=%s",
+        __name__,
+        exc,
+    )

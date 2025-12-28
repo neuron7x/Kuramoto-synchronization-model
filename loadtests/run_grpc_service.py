@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import signal
 import time
@@ -10,6 +11,7 @@ from pathlib import Path
 from loadtests.grpc_service import serve
 from loadtests.scenario import MarketScenario
 
+logger = logging.getLogger(__name__)
 
 def main() -> None:
     address = os.environ.get("LOADTEST_GRPC_ADDRESS", "127.0.0.1:50051")
@@ -37,8 +39,13 @@ def main() -> None:
             if received:
                 break
             time.sleep(0.5)
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt as exc:
+        logger.info(
+            "module=%s loadtest server interrupted address=%s error=%s",
+            __name__,
+            address,
+            exc,
+        )
     finally:
         server.stop(grace=0)
         server.wait_for_termination(timeout=5)

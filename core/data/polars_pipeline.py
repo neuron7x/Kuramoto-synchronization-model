@@ -140,8 +140,13 @@ def _resolve_partitioned_sources(
 def _normalize_polars_dtype(dtype: Any, module: Any) -> Any:
     try:
         return module.datatypes.py_type_to_dtype(dtype)
-    except (TypeError, ValueError):
-        pass
+    except (TypeError, ValueError) as exc:
+        _logger.warning(
+            "module=%s polars dtype normalization failed dtype=%r error=%s",
+            __name__,
+            dtype,
+            exc,
+        )
 
     if isinstance(dtype, np.dtype):
         return _normalize_polars_dtype(dtype.type, module)

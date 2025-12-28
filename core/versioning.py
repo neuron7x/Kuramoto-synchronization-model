@@ -192,24 +192,37 @@ def get_package_version() -> str:
         from importlib.metadata import version
 
         return version("tradepulse")
-    except Exception:
-        pass
+    except Exception as exc:
+        LOGGER.warning(
+            "module=%s failed to read package version via importlib.metadata error=%s",
+            __name__,
+            exc,
+        )
 
     # Try pkg_resources
     try:
         import pkg_resources
 
         return pkg_resources.get_distribution("tradepulse").version
-    except Exception:
-        pass
+    except Exception as exc:
+        LOGGER.warning(
+            "module=%s failed to read package version via pkg_resources error=%s",
+            __name__,
+            exc,
+        )
 
     # Try reading VERSION file
     version_file = Path(__file__).parent.parent / "VERSION"
     if version_file.exists():
         try:
             return version_file.read_text().strip()
-        except Exception:
-            pass
+        except Exception as exc:
+            LOGGER.warning(
+                "module=%s failed to read version file path=%s error=%s",
+                __name__,
+                version_file,
+                exc,
+            )
 
     return DEFAULT_VERSION
 

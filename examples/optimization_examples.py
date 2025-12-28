@@ -316,8 +316,13 @@ class IndicatorCache:
         # Переміщуємо в кінець deque (most recently used)
         try:
             self._access_order.remove(key)
-        except ValueError:
-            pass
+        except ValueError as exc:
+            logger.debug(
+                "module=%s cache key not in access order key=%s error=%s",
+                __name__,
+                key,
+                exc,
+            )
         self._access_order.append(key)
 
     def _evict_lru(self):

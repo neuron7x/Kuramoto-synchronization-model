@@ -202,8 +202,13 @@ class HTTPBackoffController:
                 if retry_after:
                     try:
                         delay = max(delay, float(retry_after))
-                    except ValueError:
-                        pass
+                    except ValueError as exc:
+                        _LOG.warning(
+                            "module=%s invalid Retry-After header value=%s error=%s",
+                            __name__,
+                            retry_after,
+                            exc,
+                        )
             self._backoff_until = self._clock() + delay
         self._sleep(delay)
 
@@ -450,8 +455,13 @@ def is_rate_limited(response: httpx.Response) -> bool:
         try:
             if float(remaining) <= 0:
                 return True
-        except ValueError:
-            pass
+        except ValueError as exc:
+            _LOG.warning(
+                "module=%s invalid rate limit remaining header value=%s error=%s",
+                __name__,
+                remaining,
+                exc,
+            )
     if "retry-after" in headers:
         return True
     return False

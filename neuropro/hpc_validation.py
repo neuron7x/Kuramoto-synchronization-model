@@ -9,11 +9,14 @@ Provides tools for:
 """
 
 from dataclasses import dataclass
+import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -111,8 +114,14 @@ def calibrate_perturbation_scale(
             try:
                 pwpe = model.get_pwpe(batch_data)
                 pwpes.append(pwpe)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "module=%s pwpe evaluation failed eps=%s step=%s error=%s",
+                    __name__,
+                    eps,
+                    i,
+                    exc,
+                )
 
         if pwpes:
             std_pwpe = np.std(pwpes)
@@ -175,8 +184,14 @@ def validate_hpc_ai(
             td_errors.append(td_error)
 
             prev_pwpe = pwpe.item()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s validation step failed step=%s prev_pwpe=%s error=%s",
+                __name__,
+                i,
+                prev_pwpe,
+                exc,
+            )
 
     # Compute metrics
     mean_pwpe = np.mean(pwpes) if pwpes else 0.0
@@ -259,8 +274,15 @@ def simple_backtest(
                 position = 0
                 entry_price = 0
 
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s backtest step failed index=%s prev_pwpe=%s action=%s error=%s",
+                __name__,
+                i,
+                prev_pwpe,
+                action if "action" in locals() else None,
+                exc,
+            )
 
     # Close any open position
     if position > 0:

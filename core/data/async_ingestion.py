@@ -831,8 +831,14 @@ async def merge_streams(*streams: AsyncIterator[Ticker]) -> AsyncIterator[Ticker
         finally:
             try:
                 await asyncio.shield(queue.put((index, None)))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "Async stream shutdown notification failed",
+                    stream=symbol,
+                    index=index,
+                    error=str(exc),
+                    exc_info=exc,
+                )
             aclose = getattr(stream, "aclose", None)
             if callable(aclose):
                 with suppress(Exception):

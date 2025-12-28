@@ -13,6 +13,7 @@ TradePulse's geometric indicators. Features include:
 - Configuration persistence
 """
 import json
+import logging
 import os
 from datetime import datetime
 from io import StringIO
@@ -28,6 +29,8 @@ from core.indicators.hurst import hurst_exponent
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 from core.indicators.ricci import build_price_graph, mean_ricci
 
+logger = logging.getLogger(__name__)
+
 # Load environment variables
 try:
     from dotenv import load_dotenv
@@ -36,8 +39,13 @@ try:
     env_path = Path(__file__).parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
-except ImportError:
-    pass  # dotenv is optional
+except ImportError as exc:
+    logger.info(
+        "module=%s dotenv unavailable env_path=%s error=%s",
+        __name__,
+        env_path,
+        exc,
+    )
 
 
 # Authentication configuration from environment variables

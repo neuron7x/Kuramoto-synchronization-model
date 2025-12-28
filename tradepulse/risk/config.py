@@ -8,12 +8,15 @@ supporting YAML/JSON configuration files and environment variable overrides.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "RiskEngineConfig",
@@ -297,8 +300,14 @@ def _load_env_overrides(prefix: str) -> dict[str, Any]:
         if value is not None:
             try:
                 overrides[config_key] = converter(value)
-            except (ValueError, TypeError):
-                pass  # Skip invalid values
+            except (ValueError, TypeError) as exc:
+                logger.warning(
+                    "module=%s invalid risk config env_var=%s value=%s error=%s",
+                    __name__,
+                    env_var,
+                    value,
+                    exc,
+                )
 
     return overrides
 

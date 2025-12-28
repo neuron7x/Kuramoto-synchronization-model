@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import networkx as nx
+import pytest
 
 from runtime.misanthropic_agent import MisanthropicAgent
 from runtime.thermo_controller import ThermoController
@@ -35,9 +36,5 @@ def test_bind_agent_rejects_duplicates() -> None:
     agent = MisanthropicAgent(write_metrics=False)
     controller.bind_agent("misanthropic", agent)
 
-    try:
+    with pytest.raises(ValueError):
         controller.bind_agent("misanthropic", agent)
-    except ValueError:
-        pass
-    else:  # pragma: no cover - defensive
-        raise AssertionError("duplicate registration should raise")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import random
 import time
@@ -17,6 +18,8 @@ from application.microservices.contracts import (
     ServiceLevelAgreement,
 )
 from observability.tracing import Status, StatusCode, get_tracer
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -130,8 +133,13 @@ class Microservice:
                 if callable(setter):
                     try:
                         setter(dict(attributes))
-                    except Exception:  # pragma: no cover - defensive
-                        pass
+                    except Exception as exc:  # pragma: no cover - defensive
+                        logger.warning(
+                            "module=%s span attribute update failed operation=%s error=%s",
+                            __name__,
+                            operation,
+                            exc,
+                        )
             try:
                 yield span
             except Exception as exc:
@@ -140,15 +148,25 @@ class Microservice:
                 if callable(recorder):
                     try:
                         recorder(exc)
-                    except Exception:  # pragma: no cover - defensive
-                        pass
+                    except Exception as exc:  # pragma: no cover - defensive
+                        logger.warning(
+                            "module=%s span record_exception failed operation=%s error=%s",
+                            __name__,
+                            operation,
+                            exc,
+                        )
                 if Status and StatusCode:
                     setter = getattr(span, "set_status", None)
                     if callable(setter):
                         try:  # pragma: no cover - depends on otel install
                             setter(Status(StatusCode.ERROR, str(exc)))
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.warning(
+                                "module=%s span status update failed operation=%s error=%s",
+                                __name__,
+                                operation,
+                                exc,
+                            )
                 raise
             else:
                 success = True
@@ -157,8 +175,13 @@ class Microservice:
                     if callable(setter):
                         try:  # pragma: no cover - depends on otel install
                             setter(Status(StatusCode.OK))
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.warning(
+                                "module=%s span status update failed operation=%s error=%s",
+                                __name__,
+                                operation,
+                                exc,
+                            )
             finally:
                 duration = time.perf_counter() - start
                 self._record_operation_metrics(

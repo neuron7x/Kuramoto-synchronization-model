@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
+import logging
 from typing import Deque, List
 
 import numpy as np
@@ -17,6 +18,8 @@ from .policy import Policy
 from .quantile import QuantileModels
 from .regime import RegimeModel
 from .risk import Guardrails
+
+logger = logging.getLogger(__name__)
 
 
 class BacktesterCAL:
@@ -126,8 +129,14 @@ class BacktesterCAL:
                     covered += 1.0
                 cov = covered / (i + 1)
                 self.logger.log_metric("coverage", cov, step=i)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "module=%s coverage update failed index=%s row=%s error=%s",
+                    __name__,
+                    i,
+                    row,
+                    exc,
+                )
             self.logger.log_metric("alpha_eff", self.cqr.alpha, step=i)
 
             notional_frac = min(1.0, abs(1.0 - pos))
@@ -193,16 +202,27 @@ class BacktesterCAL:
                 try:
                     y_true = float(df[y_col].iloc[idx])
                     self.cqr.update_online(L_pred_hist[idx], U_pred_hist[idx], y_true)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "module=%s online update failed index=%s y_col=%s error=%s",
+                        __name__,
+                        idx,
+                        y_col,
+                        exc,
+                    )
 
         res = pd.DataFrame(rows)
         if save_csv and not res.empty:
             try:
                 res.to_csv(save_csv, index=False)
                 self.logger.log_artifact(save_csv)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "module=%s failed to persist backtest results path=%s error=%s",
+                    __name__,
+                    save_csv,
+                    exc,
+                )
         r = res["pnl"].values if not res.empty else np.array([])
         self.logger.log_metric("sharpe", sharpe(r))
         self.logger.log_metric("cvar95", cvar(r, 0.95))

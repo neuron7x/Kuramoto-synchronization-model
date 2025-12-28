@@ -212,14 +212,24 @@ class FileFeedIngestor(BaseIngestor):
         # Try integer first
         try:
             return int(value)
-        except ValueError:
-            pass
+        except ValueError as exc:
+            logger.debug(
+                "module=%s int coercion failed value=%r error=%s",
+                __name__,
+                value,
+                exc,
+            )
 
         # Try float
         try:
             return float(value)
-        except ValueError:
-            pass
+        except ValueError as exc:
+            logger.debug(
+                "module=%s float coercion failed value=%r error=%s",
+                __name__,
+                value,
+                exc,
+            )
 
         # Check for boolean strings (true/false/yes/no)
         lower_value = value.lower()
@@ -277,8 +287,13 @@ class FileFeedIngestor(BaseIngestor):
                     dt = dt.replace(tzinfo=timezone.utc)
                 return dt.astimezone(timezone.utc)
 
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "module=%s failed to parse timestamp value=%r error=%s",
+                __name__,
+                value,
+                exc,
+            )
 
         return None
 
