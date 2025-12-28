@@ -1,7 +1,7 @@
 ---
 owner: docs@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-02-14
+last_reviewed: 2025-12-28
 links:
   - docs/documentation_standardisation_playbook.md
 ---
@@ -60,4 +60,5 @@ sequenceDiagram
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
+| 2025-12-28 | Docs Guild | Reviewed template metadata and refreshed module alignment notes. |
 | YYYY-MM-DD | name | Initial draft |

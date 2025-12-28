@@ -1,7 +1,7 @@
 ---
 owner: docs@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-03-21
+last_reviewed: 2025-12-28
 links:
   - DOCUMENTATION_SUMMARY.md
   - docs/documentation_governance.md
@@ -107,4 +107,5 @@ incident ticket referencing the appropriate runbook (e.g., `docs/incident_playbo
 
 | Date | Change | Author |
 | ---- | ------ | ------ |
+| 2025-12-28 | Reviewed KPI definitions and refreshed metadata alignment with core/execution/runtime/observability modules. | Docs Guild |
 | 2025-03-21 | Initial publication of the Documentation Quality Metrics Handbook. | Docs Guild |

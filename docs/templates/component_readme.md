@@ -1,7 +1,7 @@
 ---
 owner: docs@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-02-14
+last_reviewed: 2025-12-28
 links:
   - docs/documentation_standardisation_playbook.md
 ---
@@ -62,4 +62,5 @@ measurable objectives (SLOs, throughput targets, etc.).
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
+| 2025-12-28 | Docs Guild | Reviewed template metadata and validated module alignment references. |
 | YYYY-MM-DD | name | Created README |

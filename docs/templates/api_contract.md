@@ -1,7 +1,7 @@
 ---
 owner: integrations@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-02-14
+last_reviewed: 2025-12-28
 links:
   - docs/integration-api.md
   - docs/documentation_standardisation_playbook.md
@@ -75,4 +75,5 @@ Authorization: Bearer <token>
 
 | Date | Version | Author | Notes |
 | ---- | ------- | ------ | ----- |
+| 2025-12-28 | v1.1 | Docs Guild | Reviewed template metadata and refreshed module alignment references. |
 | YYYY-MM-DD | vX.Y | name | Initial draft |

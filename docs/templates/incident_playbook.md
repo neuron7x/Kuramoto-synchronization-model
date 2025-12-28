@@ -1,7 +1,7 @@
 ---
 owner: sre@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-02-14
+last_reviewed: 2025-12-28
 links:
   - docs/incident_playbooks.md
   - docs/documentation_standardisation_playbook.md
@@ -67,4 +67,5 @@ links:
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
+| 2025-12-28 | Docs Guild | Reviewed template metadata and validated module alignment references. |
 | YYYY-MM-DD | name | Initial draft |

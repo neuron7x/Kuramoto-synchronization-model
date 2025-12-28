@@ -1,7 +1,7 @@
 ---
 owner: platform@tradepulse
 review_cadence: semiannual
-last_reviewed: 2025-02-14
+last_reviewed: 2025-12-28
 links:
   - docs/versioning.md
   - docs/documentation_standardisation_playbook.md
