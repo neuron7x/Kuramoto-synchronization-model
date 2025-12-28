@@ -1595,8 +1595,11 @@ def create_app(
     metrics_disabled = os.getenv("TRADEPULSE_DISABLE_METRICS") == "1"
     metrics_registry = None
     try:  # Lazy import to avoid hard dependency during tests without prometheus_client
-        from prometheus_client import CollectorRegistry, REGISTRY as prometheus_registry
         from prometheus_client import (
+            REGISTRY as prometheus_registry,
+        )
+        from prometheus_client import (
+            CollectorRegistry,
             ProcessCollector,
         )
     except Exception:  # pragma: no cover - optional dependency
