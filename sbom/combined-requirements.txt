@@ -90,7 +90,7 @@ optuna==3.6.2
 packaging==25.0
 pandas==2.3.3
 pandera==0.26.1
-pillow==11.3.0
+pillow==12.0.0
 prometheus-client==0.23.1
 propcache==0.4.1
 protobuf==6.32.1
@@ -285,7 +285,7 @@ pandas==2.3.3
 pandera==0.26.1
 patchelf==0.17.2.4
 pathspec==0.12.1
-pillow==11.3.0
+pillow==12.0.0
 pip-api==0.0.34
 pip-audit==2.9.0
 pip-requirements-parser==32.0.1
@@ -471,7 +471,7 @@ optuna==3.6.2
 packaging==25.0
 pandas==2.3.3
 pandera==0.26.1
-pillow==11.3.0
+pillow==12.0.0
 prometheus-client==0.23.1
 propcache==0.4.1
 protobuf==6.32.1
