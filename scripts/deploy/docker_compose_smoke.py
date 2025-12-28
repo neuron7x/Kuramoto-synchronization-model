@@ -12,8 +12,10 @@ import sys
 import time
 from pathlib import Path
 from typing import Iterable
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlparse
+
+import requests
+from requests import Response
 
 DEFAULT_SERVICE_TIMEOUT = 480.0
 DEFAULT_HTTP_TIMEOUT = 30.0
@@ -132,19 +134,30 @@ def _resolve_port(
     return port
 
 
+def _validate_http_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError(f"Unsupported URL scheme for {url!r}")
+
+
+def _request_url(url: str, timeout: float, *, headers: dict[str, str] | None = None) -> Response:
+    _validate_http_url(url)
+    request_timeout = (timeout, timeout)
+    response = requests.get(url, headers=headers, timeout=request_timeout)
+    response.raise_for_status()
+    return response
+
+
 def _fetch_json(url: str, timeout: float) -> dict[str, object]:
     """Fetch JSON from URL. URL is controlled and validated by caller (localhost health checks)."""
-    request = Request(url, headers={"Accept": "application/json"})
-    with urlopen(request, timeout=timeout) as response:  # nosec B310 - URL is controlled, only used for localhost health checks
-        payload = response.read()
-    return json.loads(payload.decode("utf-8"))
+    response = _request_url(url, timeout, headers={"Accept": "application/json"})
+    return response.json()
 
 
 def _fetch_text(url: str, timeout: float) -> str:
     """Fetch text from URL. URL is controlled and validated by caller (localhost health checks)."""
-    request = Request(url)
-    with urlopen(request, timeout=timeout) as response:  # nosec B310 - URL is controlled, only used for localhost health checks
-        return response.read().decode("utf-8")
+    response = _request_url(url, timeout)
+    return response.text
 
 
 def _write_artifact(path: Path, payload: str) -> None:
@@ -224,7 +237,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 
         try:
             health_payload = _fetch_json(args.health_url, timeout=args.http_timeout)
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except (requests.Timeout, requests.RequestException, ValueError) as exc:
             raise RuntimeError(
                 f"Failed to fetch service health from {args.health_url}: {exc}"
             ) from exc
@@ -239,7 +252,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
                 args.prometheus_runtime_url, timeout=args.http_timeout
             )
             prom_up = _fetch_json(args.prometheus_up_url, timeout=args.http_timeout)
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except (requests.Timeout, requests.RequestException, ValueError) as exc:
             raise RuntimeError(f"Failed to query Prometheus: {exc}") from exc
 
         _write_artifact(

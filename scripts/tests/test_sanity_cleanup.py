@@ -4,6 +4,7 @@ from __future__ import annotations
 
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
 import json
+import tempfile
 from pathlib import Path
 
 from scripts.sanity_cleanup import models, runner, utils
@@ -69,15 +70,15 @@ class TestModels:
     def test_task_context_dataclass(self) -> None:
         """Test TaskContext dataclass creation."""
         opts = models.CleanupOptions()
-        # Using Path literal for test validation, not creating actual temp files
-        test_path = Path("/tmp/test")  # nosec B108 - test fixture path, not creating temp files
-        context = models.TaskContext(
-            root=test_path,
-            options=opts,
-        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            test_path = Path(temp_dir)
+            context = models.TaskContext(
+                root=test_path,
+                options=opts,
+            )
 
-        assert context.root == test_path  # nosec B108 - comparing test fixture paths
-        assert context.options is opts
+            assert context.root == test_path
+            assert context.options is opts
 
 
 class TestUtils:
