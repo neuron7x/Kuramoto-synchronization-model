@@ -1,7 +1,7 @@
 # Architecture Decision Records (ADRs)
 
 **Owner:** Principal System Architect
-**Last Updated:** 2025-11-18
+**Last Updated:** 2025-12-08
 
 ## About ADRs
 
@@ -25,6 +25,9 @@ All new ADRs should follow the template: [`template.md`](template.md)
 | [0001](0001-fractal-indicator-composition-architecture.md) | Fractal Indicator Composition Architecture | 2025-11-18 | ✅ Accepted | REQ-001 |
 | [0002](0002-versioned-market-data-storage.md) | Versioned Market Data Storage | 2025-11-18 | ✅ Accepted | SEC-001 |
 | [0003](0003-automated-data-quality-framework.md) | Automated Data Quality Framework | 2025-11-18 | ✅ Accepted | REQ-002 |
+| [0004](0004-contract-first-modular-architecture.md) | Contract-First Modular Architecture | 2025-12-08 | ✅ Accepted | N/A |
+| [0005](0005-multi-exchange-adapter-framework.md) | Multi-Exchange Adapter Framework | 2025-12-08 | ✅ Accepted | N/A |
+| [0006](0006-tacl-thermo-control-layer.md) | TACL / Thermodynamic Control Layer | 2025-12-08 | ✅ Accepted | N/A |
 
 ### Legacy ADRs
 
@@ -40,16 +43,13 @@ These ADRs existed before the formalization effort:
 
 | ADR | Title | Requirement | Target Date |
 |-----|-------|-------------|-------------|
-| 0004 | Time Series Synchronization and Resampling | REQ-003 | Q4 2025 |
-| 0005 | Incremental Backtest Execution | REQ-004 | Q4 2025 |
-| 0006 | Fault-Tolerant Order Execution | REQ-005 | Q4 2025 |
-| 0007 | Deterministic Backtesting Framework | SEC-002 | Q1 2026 |
-| 0008 | Pre-Trade Risk Management | SEC-003 | Q1 2026 |
-| 0009 | Secrets Management and Encryption | SEC-004 | Q1 2026 |
-| 0010 | Compliance and Audit Logging | SEC-005 | Q1 2026 |
-| 0011 | Observability Architecture | NFR-001 | Q1 2026 |
-| 0012 | Performance Optimization Strategy | NFR-002 | Q1 2026 |
-| 0013 | Horizontal Scalability Design | NFR-003 | Q2 2026 |
+| 0007 | Time Series Synchronization and Resampling | REQ-003 | Q4 2025 |
+| 0008 | Incremental Backtest Execution | REQ-004 | Q4 2025 |
+| 0009 | Fault-Tolerant Order Execution | REQ-005 | Q4 2025 |
+| 0010 | Deterministic Backtesting Framework | SEC-002 | Q1 2026 |
+| 0011 | Pre-Trade Risk Management | SEC-003 | Q1 2026 |
+| 0012 | Secrets Management and Encryption | SEC-004 | Q1 2026 |
+| 0013 | Compliance and Audit Logging | SEC-005 | Q1 2026 |
 
 ## ADR Workflow
 
