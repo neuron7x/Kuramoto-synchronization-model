@@ -10,6 +10,7 @@ The benchmark is designed to be:
 - Human-readable (clear metric names and units)
 """
 
+import logging
 import os
 import platform
 import subprocess
@@ -36,8 +37,10 @@ def get_git_commit_hash() -> str:
         )
         if result.returncode == 0:
             return result.stdout.strip()
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "Failed to read git commit hash for benchmark: %s", exc
+        )
     return "unknown"
 
 
