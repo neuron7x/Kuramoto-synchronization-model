@@ -391,12 +391,10 @@ def kuramoto_order(
     mask = np.isfinite(phases_fp32)
     # Compute trigonometric projections in float64 to avoid drift when
     # aggregating perfectly de-synchronised samples (e.g. phases at 0 and π).
-    cos_vals = np.empty(phases_fp32.shape, dtype=np.float64)
-    sin_vals = np.empty(phases_fp32.shape, dtype=np.float64)
-    cos_vals[mask] = np.cos(phases_fp32[mask])
-    sin_vals[mask] = np.sin(phases_fp32[mask])
-    cos_vals[~mask] = 0.0
-    sin_vals[~mask] = 0.0
+    cos_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
+    sin_vals = np.zeros(phases_fp32.shape, dtype=np.float64)
+    np.cos(phases_fp32, out=cos_vals, where=mask)
+    np.sin(phases_fp32, out=sin_vals, where=mask)
 
     float32_eps = np.finfo(np.float32).eps
 
