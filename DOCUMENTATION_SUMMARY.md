@@ -1,7 +1,7 @@
 ---
 owner: docs@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-12-08
+last_reviewed: 2025-12-28
 status: active
 version: 1.0.0
 links:
@@ -15,9 +15,9 @@ links:
 
 **Purpose:** This document provides a comprehensive overview of the TradePulse documentation ecosystem, tracking coverage, quality metrics, and enhancement initiatives. It serves as the central registry for documentation health and improvement efforts.
 
-**Last Updated:** 2025-12-08  
+**Last Updated:** 2025-12-28  
 **Status:** 🟢 Active  
-**Next Review:** 2026-03-08
+**Next Review:** 2026-03-28
 
 ---
 
@@ -529,6 +529,18 @@ All documents properly indexed in MkDocs navigation.
 
 ## Change Log
 
+### Version 1.0.1 (2025-12-28)
+**Status:** Active Maintenance
+
+**Added:**
+- Examples manifest with deterministic seed + pinned dependency mapping (`docs/examples/examples_manifest.yaml`)
+- CI smoke validation for example inventory + dependency pins
+- Example catalog links in `docs/examples/README.md` and `examples/README.md`
+
+**Context:**
+Ensures the examples corpus is complete, reproducible, and aligned with
+`requirements.lock` while keeping CI smoke coverage for quickstarts.
+
 ### Version 1.0.0 (2025-12-08)
 **Status:** Initial Release
 
@@ -587,8 +599,8 @@ The creation of this document addresses a critical gap in the documentation gove
 
 ---
 
-**Last Updated:** 2025-12-08  
-**Next Review:** 2026-03-08  
+**Last Updated:** 2025-12-28  
+**Next Review:** 2026-03-28  
 **Status:** 🟢 Active
 
 *This document is maintained by the Documentation Steward and reviewed quarterly by the Architecture Review Board.*

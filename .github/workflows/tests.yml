@@ -833,6 +833,9 @@ PY
           python -m pip install --upgrade pip
           if [ -f requirements.lock ]; then pip install -c constraints/security.txt -r requirements.lock; fi
 
+      - name: Validate examples manifest
+        run: python scripts/ci/check_examples_manifest.py
+
       - name: Run example quickstarts
         env:
           PYTHONPATH: .

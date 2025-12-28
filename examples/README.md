@@ -30,6 +30,12 @@ smoke tests.
 | Real-time style snapshot (signal generation) | `python examples/neuro_trade_pulse_snapshot.py` | `numpy==2.3.3`, `pandas==2.3.3` |
 | Integrated risk management pipeline | `python examples/integrated_risk_management_example.py` | `numpy==2.3.3` |
 
+## Example Catalog (Seeds + Dependencies)
+
+Every script in `examples/` is tracked in
+[`docs/examples/examples_manifest.yaml`](../docs/examples/examples_manifest.yaml),
+including deterministic seeds and pinned dependency versions.
+
 ## Examples by Category
 
 ### 🎯 Backtesting & Strategies

@@ -15,6 +15,8 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 import numpy as np
 
+SEED = 42
+
 logger = logging.getLogger(__name__)
 
 
@@ -758,6 +760,7 @@ def process_orders():
 
 
 if __name__ == "__main__":
+    np.random.seed(SEED)
     print("=== TradePulse Optimization Examples ===\n")
 
     print("1. Streaming Event Replay")

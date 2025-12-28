@@ -20,6 +20,9 @@ except ImportError:
     print("✗ NumPy not available - install with: pip install numpy")
     sys.exit(1)
 
+SEED = 42
+np.random.seed(SEED)
+
 # Import modules directly (bypassing package __init__.py)
 import importlib.util
 
