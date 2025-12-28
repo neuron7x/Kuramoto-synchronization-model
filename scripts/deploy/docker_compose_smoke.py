@@ -6,11 +6,13 @@ import argparse
 import contextlib
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import Iterable
 from urllib.parse import urlparse
 
@@ -26,6 +28,65 @@ DEFAULT_LOGSTASH_PORT = 5044
 DEFAULT_KIBANA_PORT = 5601
 PROMETHEUS_RUNTIME_TEMPLATE = "http://localhost:{port}/api/v1/status/runtimeinfo"
 PROMETHEUS_UP_TEMPLATE = "http://localhost:{port}/api/v1/query?query=up"
+SAFE_PATH_RE = re.compile(r"[A-Za-z0-9_./-]+")
+SAFE_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}")
+
+
+def _validate_path(value: str, *, expected_file: bool) -> Path:
+    if not SAFE_PATH_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "Paths may only contain letters, numbers, and ./_- characters."
+        )
+    path = Path(value).expanduser().resolve()
+    if expected_file:
+        if not path.exists():
+            raise argparse.ArgumentTypeError(f"File does not exist: {path}")
+        if not path.is_file():
+            raise argparse.ArgumentTypeError(f"Expected file path, got: {path}")
+    else:
+        if path.exists() and not path.is_dir():
+            raise argparse.ArgumentTypeError(f"Expected directory path, got: {path}")
+    return path
+
+
+def _validate_compose_file(value: str) -> Path:
+    path = _validate_path(value, expected_file=True)
+    if path.suffix.lower() not in {".yml", ".yaml"}:
+        raise argparse.ArgumentTypeError(
+            "Compose file must have a .yml or .yaml extension."
+        )
+    return path
+
+
+def _validate_name(value: str, *, label: str) -> str:
+    if not SAFE_NAME_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            f"{label} must use letters, numbers, '.', '-', or '_' and be 1-64 characters long."
+        )
+    return value
+
+
+def _validate_url(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme != "http":
+        raise argparse.ArgumentTypeError("Only http:// URLs are supported.")
+    if parsed.hostname not in {"localhost", "127.0.0.1"}:
+        raise argparse.ArgumentTypeError("URL host must be localhost or 127.0.0.1.")
+    if parsed.port is None or not (1 <= parsed.port <= 65535):
+        raise argparse.ArgumentTypeError("URL must include a valid port number.")
+    if not parsed.path.startswith("/"):
+        raise argparse.ArgumentTypeError("URL path must be absolute.")
+    return value
+
+
+def _validate_positive_float(value: str) -> float:
+    try:
+        parsed = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"Expected a number, got {value!r}") from exc
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("Value must be greater than zero.")
+    return parsed
 
 
 def _run(
@@ -296,16 +357,19 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--compose-file",
         default="docker-compose.yml",
+        type=_validate_compose_file,
         help="Path to the docker-compose file.",
     )
     parser.add_argument(
         "--project-name",
         default="tradepulse-smoke",
+        type=lambda value: _validate_name(value, label="Project name"),
         help="Docker compose project name used to isolate resources.",
     )
     parser.add_argument(
         "--service-name",
         default="tradepulse",
+        type=lambda value: _validate_name(value, label="Service name"),
         help="Primary service to wait for before executing health checks.",
     )
 
@@ -321,37 +385,42 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--health-url",
         default=default_health,
+        type=_validate_url,
         help="HTTP URL used to validate API health. Can be overridden by TRADEPULSE_HTTP_PORT env var or --health-url.",
     )
     parser.add_argument(
         "--metrics-url",
         default=default_metrics,
+        type=_validate_url,
         help="HTTP URL used to download API metrics for diagnostics. Can be overridden by TRADEPULSE_HTTP_PORT env var or --metrics-url.",
     )
     parser.add_argument(
         "--prometheus-runtime-url",
         default=PROMETHEUS_RUNTIME_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT),
+        type=_validate_url,
         help="Prometheus runtime endpoint for environment diagnostics.",
     )
     parser.add_argument(
         "--prometheus-up-url",
         default=PROMETHEUS_UP_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT),
+        type=_validate_url,
         help="Prometheus query endpoint to verify scraped targets.",
     )
     parser.add_argument(
         "--artifact-dir",
         default="artifacts/deploy-smoke",
+        type=lambda value: _validate_path(value, expected_file=False),
         help="Directory where smoke test artifacts will be stored.",
     )
     parser.add_argument(
         "--timeout",
-        type=float,
+        type=_validate_positive_float,
         default=DEFAULT_SERVICE_TIMEOUT,
         help="Maximum number of seconds to wait for the service health check to succeed.",
     )
     parser.add_argument(
         "--http-timeout",
-        type=float,
+        type=_validate_positive_float,
         default=DEFAULT_HTTP_TIMEOUT,
         help="Timeout in seconds for individual HTTP calls.",
     )
@@ -361,6 +430,16 @@ def build_argument_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_argument_parser()
     args = parser.parse_args(argv)
+    args.compose_file = _validate_compose_file(str(args.compose_file))
+    args.project_name = _validate_name(str(args.project_name), label="Project name")
+    args.service_name = _validate_name(str(args.service_name), label="Service name")
+    args.health_url = _validate_url(str(args.health_url))
+    args.metrics_url = _validate_url(str(args.metrics_url))
+    args.prometheus_runtime_url = _validate_url(str(args.prometheus_runtime_url))
+    args.prometheus_up_url = _validate_url(str(args.prometheus_up_url))
+    args.artifact_dir = _validate_path(str(args.artifact_dir), expected_file=False)
+    args.timeout = _validate_positive_float(str(args.timeout))
+    args.http_timeout = _validate_positive_float(str(args.http_timeout))
     try:
         run_smoke_test(args)
     except Exception as exc:  # pragma: no cover - surfaces failure context

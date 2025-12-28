@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Iterable, List, Sequence
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ROOT / "docs" / "responsible_ai_program.md"
 OUTPUT_DIR = ROOT / "stakeholders"
+SAFE_PATH_RE = re.compile(r"[A-Za-z0-9_./-]+")
 
 
 @dataclass
@@ -191,6 +193,59 @@ COMMUNICATION_PLAN = [
 
 def load_source_lines(path: Path) -> List[str]:
     return path.read_text(encoding="utf-8").splitlines()
+
+
+def _validate_repo_path(
+    value: str,
+    *,
+    must_exist: bool,
+    expect_file: bool,
+    allowed_suffixes: tuple[str, ...] | None = None,
+) -> Path:
+    if not SAFE_PATH_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "Paths may only contain letters, numbers, and ./_- characters."
+        )
+    path = Path(value).expanduser().resolve()
+    try:
+        path.relative_to(ROOT)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Path must be inside repository root ({ROOT})."
+        ) from exc
+    if must_exist and not path.exists():
+        raise argparse.ArgumentTypeError(f"Path does not exist: {path}")
+    if expect_file and path.exists() and not path.is_file():
+        raise argparse.ArgumentTypeError(f"Expected file path, got: {path}")
+    if not expect_file and path.exists() and not path.is_dir():
+        raise argparse.ArgumentTypeError(f"Expected directory path, got: {path}")
+    if allowed_suffixes and path.suffix.lower() not in allowed_suffixes:
+        raise argparse.ArgumentTypeError(
+            f"Expected file suffix in {allowed_suffixes}, got {path.suffix or '<none>'}."
+        )
+    return path
+
+
+def _validate_source_path(value: str) -> Path:
+    return _validate_repo_path(
+        value,
+        must_exist=True,
+        expect_file=True,
+        allowed_suffixes=(".md",),
+    )
+
+
+def _validate_output_dir(value: str) -> Path:
+    return _validate_repo_path(value, must_exist=False, expect_file=False)
+
+
+def _validate_manifest_path(value: str) -> Path:
+    return _validate_repo_path(
+        value,
+        must_exist=False,
+        expect_file=True,
+        allowed_suffixes=(".json",),
+    )
 
 
 def build_section_index(lines: Sequence[str]) -> List[str]:
@@ -667,27 +722,27 @@ def main() -> None:
     )
     parser.add_argument(
         "--source",
-        type=Path,
+        type=_validate_source_path,
         default=DEFAULT_SOURCE,
         help="Path to the RLHF/RLAIF strategy markdown file",
     )
     parser.add_argument(
         "--output-dir",
-        type=Path,
+        type=_validate_output_dir,
         default=OUTPUT_DIR,
         help="Directory to store generated CSV artifacts",
     )
     parser.add_argument(
         "--manifest",
-        type=Path,
+        type=_validate_manifest_path,
         default=OUTPUT_DIR / "manifest.json",
         help="Path to write manifest with checksums",
     )
     args = parser.parse_args()
 
-    source_path = args.source
-    output_dir = args.output_dir
-    manifest_path = args.manifest
+    source_path = _validate_source_path(str(args.source))
+    output_dir = _validate_output_dir(str(args.output_dir))
+    manifest_path = _validate_manifest_path(str(args.manifest))
 
     lines = load_source_lines(source_path)
     section_index = build_section_index(lines)
