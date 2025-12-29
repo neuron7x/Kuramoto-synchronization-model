@@ -176,6 +176,39 @@ class TestNeuroOptimizer:
         assert isinstance(balance, BalanceMetrics)
         _assert_balance_invariants(balance)
 
+    def test_sanitize_state_clips_and_warns(self, opt_config, sample_state):
+        """Ensure out-of-range state values are clipped with warnings."""
+        optimizer = NeuroOptimizer(opt_config)
+        extreme_state = dict(
+            sample_state,
+            dopamine_level=1.5,
+            serotonin_level=-0.2,
+            gaba_inhibition=2.5,
+            na_arousal=3.0,
+            ach_attention=-1.0,
+        )
+
+        with pytest.warns(UserWarning):
+            sanitized = optimizer._sanitize_state(extreme_state)
+
+        assert sanitized["dopamine_level"] == 1.0
+        assert sanitized["serotonin_level"] == 0.0
+        assert sanitized["gaba_inhibition"] == 1.0
+        assert sanitized["na_arousal"] == 2.0
+        assert sanitized["ach_attention"] == 0.0
+
+    def test_sanitize_state_preserves_in_range(self, opt_config, sample_state):
+        """Ensure in-range state values are preserved."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        sanitized = optimizer._sanitize_state(sample_state)
+
+        assert sanitized["dopamine_level"] == sample_state["dopamine_level"]
+        assert sanitized["serotonin_level"] == sample_state["serotonin_level"]
+        assert sanitized["gaba_inhibition"] == sample_state["gaba_inhibition"]
+        assert sanitized["na_arousal"] == sample_state["na_arousal"]
+        assert sanitized["ach_attention"] == sample_state["ach_attention"]
+
     @pytest.mark.parametrize(
         "state",
         [

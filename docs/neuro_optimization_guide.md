@@ -39,6 +39,19 @@ TradePulse models four key neuromodulator systems:
 3. **GABA**: Inhibition, impulse control, risk management
 4. **NA/ACh**: Arousal, attention, volatility sensitivity
 
+#### State Field Ranges
+
+The optimizer expects neuromodulator state fields to stay within the following
+physiological ranges. Values outside these bounds are clipped during optimization.
+
+| State field | Expected range | Meaning |
+| --- | --- | --- |
+| `dopamine_level` | `[0.0, 1.0]` | Reward/exploration signal strength; higher values promote risk-taking and action. |
+| `serotonin_level` | `[0.0, 1.0]` | Stress/hold signal; higher values bias toward conservative decisions. |
+| `gaba_inhibition` | `[0.0, 1.0]` | Inhibitory control over impulses; higher values dampen excitation. |
+| `na_arousal` | `[0.0, 2.0]` | Arousal/alertness response to volatility; higher values indicate heightened arousal. |
+| `ach_attention` | `[0.0, 1.0]` | Attention/focus modulation; higher values increase selectivity and focus. |
+
 #### Homeostasis
 
 The system maintains homeostatic balance by monitoring:

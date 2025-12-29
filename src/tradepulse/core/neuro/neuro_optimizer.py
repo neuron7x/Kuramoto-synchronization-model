@@ -22,6 +22,7 @@ BalanceMetrics : Neuromodulator balance health metrics
 from __future__ import annotations
 
 from dataclasses import dataclass
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -164,6 +165,13 @@ class NeuroOptimizer:
     DRIFT_WINDOW = 10
     DRIFT_MEAN_THRESHOLD = 0.05
     DRIFT_MEDIAN_THRESHOLD = 0.05
+    STATE_RANGES = {
+        'dopamine_level': (0.0, 1.0),
+        'serotonin_level': (0.0, 1.0),
+        'gaba_inhibition': (0.0, 1.0),
+        'na_arousal': (0.0, 2.0),
+        'ach_attention': (0.0, 1.0),
+    }
 
     def __init__(
         self,
@@ -250,12 +258,16 @@ class NeuroOptimizer:
         Tuple[Dict[str, Any], BalanceMetrics]
             Updated parameters and balance metrics
         """
+        sanitized_state = self._sanitize_state(current_state)
+
         # Calculate balance metrics
-        balance = self._calculate_balance_metrics(current_state)
+        balance = self._calculate_balance_metrics(sanitized_state)
         self._balance_history.append(balance)
 
         # Calculate composite objective
-        objective = self._calculate_objective(performance_score, balance, current_state)
+        objective = self._calculate_objective(
+            performance_score, balance, sanitized_state
+        )
         self._performance_history.append(objective)
         self._update_learning_rate(objective)
 
@@ -266,7 +278,7 @@ class NeuroOptimizer:
 
         # Calculate gradients (approximated via finite differences)
         gradients = self._estimate_gradients(
-            current_params, current_state, performance_score
+            current_params, sanitized_state, performance_score
         )
 
         # Apply updates with momentum
@@ -279,6 +291,46 @@ class NeuroOptimizer:
         self._iteration += 1
 
         return updated_params, balance
+
+    def _sanitize_state(self, state: Dict[str, float]) -> Dict[str, float]:
+        """Validate and clip neuromodulator state values.
+
+        Ensures state values remain within expected physiological bounds. Values
+        outside the configured ranges are clipped and emit a warning.
+        """
+        sanitized = dict(state)
+
+        for key, (min_val, max_val) in self.STATE_RANGES.items():
+            raw_value = state.get(key, self._setpoints[key])
+            try:
+                value = float(raw_value)
+            except (TypeError, ValueError):
+                warnings.warn(
+                    f"State value for {key} is not numeric; using setpoint.",
+                    UserWarning,
+                )
+                value = float(self._setpoints[key])
+
+            if not np.isfinite(value):
+                warnings.warn(
+                    f"State value for {key} is not finite; using setpoint.",
+                    UserWarning,
+                )
+                value = float(self._setpoints[key])
+
+            if value < min_val or value > max_val:
+                warnings.warn(
+                    (
+                        f"State value out of range for {key}: {value:.4f} "
+                        f"not in [{min_val}, {max_val}]. Clipping."
+                    ),
+                    UserWarning,
+                )
+                value = float(self._xp.clip(value, min_val, max_val))
+
+            sanitized[key] = value
+
+        return sanitized
 
     def _snapshot_params(self, params: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
         """Capture a numeric-only snapshot of parameters for drift tracking."""
