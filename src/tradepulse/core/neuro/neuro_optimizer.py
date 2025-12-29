@@ -695,12 +695,17 @@ class NeuroOptimizer:
         balance : BalanceMetrics
             Current balance metrics
         """
-        self._logger('neuro_opt.objective', objective)
-        self._logger('neuro_opt.balance_score', balance.overall_balance_score)
-        self._logger('neuro_opt.homeostatic_dev', balance.homeostatic_deviation)
-        self._logger('neuro_opt.da_5ht_ratio', balance.dopamine_serotonin_ratio)
-        self._logger('neuro_opt.ei_balance', balance.gaba_excitation_balance)
-        self._logger('neuro_opt.aa_coherence', balance.arousal_attention_coherence)
+        prefix = "neuro_opt"
+        metrics = {
+            "objective": objective,
+            "balance_score": balance.overall_balance_score,
+            "homeostatic_dev": balance.homeostatic_deviation,
+            "da_5ht_ratio": balance.dopamine_serotonin_ratio,
+            "ei_balance": balance.gaba_excitation_balance,
+            "aa_coherence": balance.arousal_attention_coherence,
+        }
+        for name, value in metrics.items():
+            self._logger(f"{prefix}.{name}", value)
 
     def get_optimization_report(self) -> Dict[str, Any]:
         """Generate optimization status report.
