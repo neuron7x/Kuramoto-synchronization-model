@@ -429,13 +429,15 @@ class NeuroOptimizer:
                 # Use exact module name matching to avoid substring issues
                 balance = self._balance_history[-1] if self._balance_history else None
                 if balance:
-                    # Push parameters toward homeostatic setpoints
-                    if module == 'dopamine' and balance.dopamine_serotonin_ratio < self._setpoints['da_5ht_ratio']:
-                        grad = 1.0  # Increase dopamine params
-                    elif module == 'serotonin' and balance.dopamine_serotonin_ratio > self._setpoints['da_5ht_ratio']:
-                        grad = 1.0  # Increase serotonin params
+                    # Push parameters toward homeostatic setpoints.
+                    # Scale gradient magnitude by deviation from the setpoint.
+                    deviation = balance.dopamine_serotonin_ratio - self._setpoints['da_5ht_ratio']
+                    if module == 'dopamine':
+                        grad = -deviation  # Increase dopamine when ratio is below setpoint
+                    elif module == 'serotonin':
+                        grad = deviation  # Increase serotonin when ratio is above setpoint
                     else:
-                        grad = 0.0  # No change needed
+                        grad = 0.0
                 else:
                     grad = 0.0
 
