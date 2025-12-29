@@ -199,6 +199,40 @@ class TestNeuroOptimizer:
         assert isinstance(objective, float)
         assert 0 <= objective <= 1
 
+    def test_calculate_objective_stability_negative_mean(self, sample_state):
+        """Test stability calculation with low/negative mean performance."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+        )
+        optimizer = NeuroOptimizer(config)
+        optimizer._performance_history = [
+            -0.011,
+            -0.010,
+            -0.012,
+            -0.009,
+            -0.0105,
+            -0.0102,
+            -0.0098,
+            -0.0101,
+            -0.0107,
+            -0.0099,
+            -0.0103,
+        ]
+
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        stability_1 = optimizer._calculate_objective(-0.01, balance, sample_state)
+        optimizer._performance_history.append(-0.0104)
+        stability_2 = optimizer._calculate_objective(-0.01, balance, sample_state)
+
+        assert np.isfinite(stability_1)
+        assert np.isfinite(stability_2)
+        assert 0 <= stability_1 <= 1
+        assert 0 <= stability_2 <= 1
+        assert abs(stability_2 - stability_1) < 0.2
+
     def test_optimize_updates_state(self, opt_config, sample_params, sample_state):
         """Test that optimize() updates optimizer state."""
         optimizer = NeuroOptimizer(opt_config)
