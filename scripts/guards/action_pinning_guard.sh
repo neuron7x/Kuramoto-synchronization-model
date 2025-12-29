@@ -43,7 +43,7 @@ for workflow in "$WORKFLOW_DIR"/*.yml; do
         if ! [[ "$action" =~ @[a-f0-9]{40}($|[[:space:]]) ]]; then
             UNPINNED_ACTIONS+=("$workflow:$line_no - $action")
         fi
-    done < <(grep -n "uses:" "$workflow" || true)
+    done < <(grep -nE '^[[:space:]-]*uses:' "$workflow" || true)
 done
 
 # Report findings
