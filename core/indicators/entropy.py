@@ -92,7 +92,37 @@ def entropy(
     max_workers: int | None = None,
     backend: Literal["cpu", "gpu", "auto", "cupy", "numba"] = "cpu",
 ) -> float:
-    """Calculate Shannon entropy of a data series.
+    """Calculate Shannon entropy of a data series for uncertainty quantification.
+
+    Mathematical Definition:
+        For a discrete probability distribution P = {p₁, p₂, ..., pₙ} where
+        pᵢ ≥ 0 and ∑ᵢ pᵢ = 1, the Shannon entropy is:
+
+            H(P) = -∑ᵢ₌₁ⁿ pᵢ · log(pᵢ)    [nats, using natural logarithm]
+
+        Or equivalently in bits (using log₂):
+            H(P) = -∑ᵢ₌₁ⁿ pᵢ · log₂(pᵢ)  [bits]
+
+    Implementation:
+        1. Normalize input x(t) to interval [-1, 1] for numerical stability:
+           x̃(t) = x(t) / max|x(t)|
+        
+        2. Discretize into B bins via histogram to approximate probability mass:
+           pᵢ = count(bin i) / N,  where N = total count
+        
+        3. Compute entropy (with 0·log(0) := 0 convention):
+           H = -∑ᵢ₌₁ᴮ pᵢ · log(pᵢ)
+
+    Physical Interpretation:
+        H = 0:        Zero entropy (deterministic/constant signal)
+        H = log(B):   Maximum entropy (uniform distribution over B bins)
+        0 < H < log(B): Partial structure
+
+    In Financial Context:
+        - High H → High market uncertainty/randomness (chaotic regime)
+        - Low H → Low uncertainty/predictability (trending regime)
+        - ΔH > 0 → Increasing chaos (regime transition signal)
+        - ΔH < 0 → Decreasing chaos (consolidation signal)
 
     Entropy quantifies the uncertainty or randomness in the data distribution.
     The series is normalized and binned, then Shannon entropy is computed as:
@@ -103,8 +133,11 @@ def entropy(
 
     Args:
         series: 1D array of numeric data (typically prices or returns)
-        bins: Number of bins for histogram discretization (default: 30)
-        use_float32: Use float32 precision to reduce memory usage (default: False)
+        bins: Number of bins for histogram discretization (default: 30).
+            More bins → finer resolution but requires more data.
+            Rule of thumb: bins ≈ N^(1/3) for N samples (Scott's rule).
+        use_float32: Use float32 precision to reduce memory usage (default: False).
+            Recommended for GPU processing or very large arrays.
         chunk_size: Process data in chunks for large arrays (default: None, no chunking).
                    If specified, computes entropy by averaging over chunks.
         parallel: Parallelization strategy for chunked execution. ``"process"``
@@ -114,11 +147,22 @@ def entropy(
                    executor.
         backend: Computation backend. ``"cpu"`` runs on NumPy, ``"gpu"``/``"auto"``
                  pick the best available accelerator (CuPy first, then
-                 :mod:`numba.cuda`).
+                 :mod:`numba.cuda`). Auto mode requires data ≥ 512KB for GPU.
 
     Returns:
-        Shannon entropy value. Higher values indicate more randomness/chaos.
+        Shannon entropy value H ≥ 0 in nats (natural logarithm base).
+        Higher values indicate more randomness/chaos.
         Returns 0.0 for empty or invalid input.
+
+    Numerical Stability:
+        - Data scaled to [-1, 1] prevents overflow/underflow
+        - Non-finite values (NaN, ±∞) filtered before computation
+        - Zero probability bins excluded (0·log(0) = 0 convention)
+        - Chunked processing prevents memory overflow on large arrays
+
+    Complexity:
+        Time: O(N) for histogram + O(B) for entropy summation = O(N + B)
+        Space: O(B) for histogram bins (constant w.r.t. N)
 
     Example:
         >>> prices = np.array([100, 101, 102, 101, 100, 99, 100, 101])
@@ -135,6 +179,12 @@ def entropy(
         - Invalid values (NaN, inf) are filtered out
         - Returns 0.0 if no valid data remains after filtering
         - Chunked processing computes weighted average entropy across chunks
+
+    References:
+        - Shannon, C. E. (1948). A mathematical theory of communication.
+          Bell System Technical Journal, 27(3), 379-423.
+        - Cover, T. M., & Thomas, J. A. (2006). Elements of Information Theory.
+          Wiley, 2nd edition.
     """
     context_manager = (
         _logger.operation(
@@ -422,7 +472,33 @@ def _run_entropy_async(
 
 
 def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) -> float:
-    """Calculate delta entropy (change in entropy over time).
+    """Calculate delta entropy (temporal rate of change in uncertainty).
+
+    Mathematical Definition:
+        Delta entropy ΔH quantifies the temporal derivative of market uncertainty
+        by comparing Shannon entropy between two consecutive time windows:
+
+            ΔH(t) = H(t₂) - H(t₁)
+
+        where:
+        - t₁ = [t - 2τ, t - τ] is the earlier window
+        - t₂ = [t - τ, t] is the recent window
+        - τ = window size
+
+        For a time series x(t), we compute:
+            H(t₁) = -∑ᵢ p₁,ᵢ · log(p₁,ᵢ)  [entropy of first window]
+            H(t₂) = -∑ᵢ p₂,ᵢ · log(p₂,ᵢ)  [entropy of second window]
+            ΔH = H(t₂) - H(t₁)
+
+    Physical Interpretation:
+        ΔH > 0: Increasing entropy → market becoming more chaotic/uncertain
+        ΔH = 0: Constant entropy → stable regime
+        ΔH < 0: Decreasing entropy → market becoming more structured/predictable
+
+    Applications in Regime Detection:
+        - |ΔH| > threshold: Regime transition signal
+        - ΔH ≫ 0 with low H(t₁): Trending → Random walk transition
+        - ΔH ≪ 0 with high H(t₁): Random walk → Trending transition
 
     Delta entropy (ΔH) measures the rate of change in market uncertainty by
     comparing entropy between two consecutive time windows:
@@ -434,15 +510,27 @@ def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) ->
 
     Args:
         series: 1D array of numeric data (typically prices)
-        window: Size of each time window for entropy calculation (default: 100)
+        window: Size of each time window for entropy calculation (default: 100).
+            Requires at least 2*window data points.
         bins_range: (min_bins, max_bins) for adaptive histogram binning.
                    Actual bins = clip(window // 3, min_bins, max_bins)
                    Default: (10, 50)
+                   Rationale: Larger windows support finer binning.
 
     Returns:
-        Delta entropy value. Positive values indicate increasing uncertainty,
-        negative values indicate decreasing uncertainty. Returns 0.0 if
-        insufficient data (need at least 2 * window points).
+        Delta entropy value ΔH (can be positive, negative, or zero).
+        Positive values indicate increasing uncertainty (↑ chaos),
+        negative values indicate decreasing uncertainty (↑ structure).
+        Returns 0.0 if insufficient data (need at least 2 * window points).
+
+    Numerical Stability:
+        - Adaptive bin selection prevents over/under-discretization
+        - Each window entropy computed independently
+        - Difference computed in full precision (no premature rounding)
+
+    Complexity:
+        Time: O(2N) = O(N) where N = window size
+        Space: O(B) for histogram bins
 
     Example:
         >>> prices = np.linspace(100, 110, 300)  # Trending market
@@ -454,8 +542,15 @@ def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) ->
 
     Note:
         - Requires at least 2 * window data points
-        - Bins are adaptively chosen based on window size
-        - Useful for detecting regime transitions
+        - Bins are adaptively chosen based on window size: B ∈ [B_min, B_max]
+        - Useful for detecting regime transitions and structural breaks
+        - Sign of ΔH indicates direction of uncertainty change
+
+    References:
+        - Pincus, S. M. (1991). Approximate entropy as a measure of system
+          complexity. Proceedings of the National Academy of Sciences, 88(6).
+        - Richman, J. S., & Moorman, J. R. (2000). Physiological time-series
+          analysis using approximate entropy and sample entropy. AJP Heart, 278.
     """
     x = np.asarray(series, dtype=float)
     if x.size < 2 * window:
