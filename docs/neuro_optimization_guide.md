@@ -55,6 +55,31 @@ Optimization balances three objectives:
 2. **Balance** (35%): Homeostatic stability
 3. **Stability** (20%): Consistency over time
 
+##### Metric Scales and Objective Influence
+
+The optimizer combines metrics that are normalized onto comparable scales before weighting:
+
+- **Performance scale**: Sharpe ratio is normalized from **[-2, 3] → [0, 1]** with clipping.
+  - Below -2 maps to **0**, above 3 maps to **1**.
+- **Balance scale**: `overall_balance_score` is already in **[0, 1]** (higher is better).
+- **Stability scale**: Derived from recent objective history as
+  `1 - std(recent) / (abs(mean) + ε)`, clipped to **[0, 1]**.
+  - Until enough history accumulates, stability defaults to **0.5**.
+
+The composite objective is a **linear combination** of these normalized metrics:
+
+```
+objective = (performance_weight * performance_norm
+             + balance_weight * balance_score
+             + stability_weight * stability_score)
+```
+
+Changing weights shifts the optimizer's focus:
+
+- Increasing **performance_weight** prioritizes high Sharpe results (faster response to alpha).
+- Increasing **balance_weight** biases toward homeostatic stability (lower stress/overdrive).
+- Increasing **stability_weight** penalizes volatile objective trajectories (smoother learning).
+
 ## Architecture
 
 ```

@@ -349,6 +349,17 @@ class NeuroOptimizer:
     ) -> float:
         """Calculate multi-objective optimization target.
 
+        Metric scales and weighting
+        ----------------------------
+        - Performance is normalized from a Sharpe ratio range of [-2, 3] into [0, 1]
+          with clipping. Values below -2 map to 0, above 3 map to 1.
+        - Balance is the homeostatic balance score already in [0, 1] (higher is better).
+        - Stability is derived from the inverse coefficient of variation over recent
+          objective history, clipped to [0, 1]. Before enough history exists, a
+          neutral value of 0.5 is used.
+        The final objective is a linear combination of these scaled metrics using
+        the configured weights (performance_weight, balance_weight, stability_weight).
+
         Parameters
         ----------
         performance : float

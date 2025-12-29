@@ -209,6 +209,70 @@ class TestNeuroOptimizer:
         assert isinstance(objective, float)
         assert 0 <= objective <= 1
 
+    def test_objective_monotonic_with_weights(self, sample_state):
+        """Ensure objective changes monotonically with weight shifts."""
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.4,
+            homeostatic_deviation=0.2,
+        )
+        performance = 2.5  # Normalized higher than balance score
+
+        low_perf_weight = OptimizationConfig(
+            balance_weight=0.7,
+            performance_weight=0.3,
+            stability_weight=0.0,
+        )
+        high_perf_weight = OptimizationConfig(
+            balance_weight=0.3,
+            performance_weight=0.7,
+            stability_weight=0.0,
+        )
+
+        low_optimizer = NeuroOptimizer(low_perf_weight)
+        high_optimizer = NeuroOptimizer(high_perf_weight)
+
+        objective_low = low_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+        objective_high = high_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+
+        assert objective_high > objective_low
+
+        balance_heavy = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.9,
+            homeostatic_deviation=0.05,
+        )
+        low_balance_weight = OptimizationConfig(
+            balance_weight=0.2,
+            performance_weight=0.8,
+            stability_weight=0.0,
+        )
+        high_balance_weight = OptimizationConfig(
+            balance_weight=0.8,
+            performance_weight=0.2,
+            stability_weight=0.0,
+        )
+
+        low_balance_optimizer = NeuroOptimizer(low_balance_weight)
+        high_balance_optimizer = NeuroOptimizer(high_balance_weight)
+
+        objective_low_balance = low_balance_optimizer._calculate_objective(
+            -1.5, balance_heavy, sample_state
+        )
+        objective_high_balance = high_balance_optimizer._calculate_objective(
+            -1.5, balance_heavy, sample_state
+        )
+
+        assert objective_high_balance > objective_low_balance
+
     def test_calculate_objective_stability_negative_mean(self, sample_state):
         """Test stability calculation with low/negative mean performance."""
         config = OptimizationConfig(
