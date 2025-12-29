@@ -63,7 +63,9 @@ The optimizer combines metrics that are normalized onto comparable scales before
   - Below -2 maps to **0**, above 3 maps to **1**.
 - **Balance scale**: `overall_balance_score` is already in **[0, 1]** (higher is better).
 - **Stability scale**: Derived from recent objective history as
-  `1 - std(recent) / (abs(mean) + ε)`, clipped to **[0, 1]**.
+  `1 - std(recent) / max(abs(mean), ε)`, clipped to **[0, 1]**.
+  - `abs(mean)` makes negative and positive averages comparable in magnitude.
+  - `ε` prevents division by zero or near-zero means from exploding the ratio.
   - Until enough history accumulates, stability defaults to **0.5**.
 
 The composite objective is a **linear combination** of these normalized metrics:
@@ -306,7 +308,9 @@ Stability is computed from recent performance as:
 stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
 ```
 
-The value is clipped to `[0, 1]` to avoid spikes when the mean is negative or near zero.
+`abs` normalizes negative/positive means by magnitude, while `epsilon` prevents division by
+zero when the mean collapses toward zero. The value is clipped to `[0, 1]` to avoid spikes
+when the mean is negative or near zero.
 
 ### API Reference
 
