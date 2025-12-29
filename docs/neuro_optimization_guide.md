@@ -245,6 +245,16 @@ The `NeuroOptimizer` coordinates all neuromodulators to maintain homeostatic bal
 - **Health Monitoring**: Real-time assessment of system health
 - **Convergence Detection**: Automatic detection of optimization convergence
 
+### Stability Objective
+
+Stability is computed from recent performance as:
+
+```
+stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
+```
+
+The value is clipped to `[0, 1]` to avoid spikes when the mean is negative or near zero.
+
 ### API Reference
 
 #### OptimizationConfig
