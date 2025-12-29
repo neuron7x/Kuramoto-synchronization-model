@@ -39,6 +39,7 @@ def test_missing_description_triggers_issue() -> None:
     )
 
     assert any(issue["code"] == "description_too_short" for issue in issues)
+    assert any(issue["metric_name"] == catalog_metric.name for issue in issues)
 
 
 def test_denylisted_label_detected() -> None:

@@ -385,6 +385,7 @@ def find_dead_metrics(root: Path, code_metrics: Mapping[str, CodeMetric]) -> lis
             dead.append(
                 {
                     "metric": metric.name,
+                    "metric_name": metric.name,
                     "sources": sorted(set(metric.sources)),
                 }
             )
@@ -394,6 +395,7 @@ def find_dead_metrics(root: Path, code_metrics: Mapping[str, CodeMetric]) -> lis
 def _issue(metric: str, code: str, message: str, sources: Sequence[str] | None) -> dict[str, object]:
     return {
         "metric": metric,
+        "metric_name": metric,
         "code": code,
         "message": message,
         "sources": sorted(set(sources or ())),
