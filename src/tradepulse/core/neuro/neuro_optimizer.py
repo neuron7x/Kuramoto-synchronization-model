@@ -21,7 +21,7 @@ BalanceMetrics : Neuromodulator balance health metrics
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -75,6 +75,8 @@ class OptimizationConfig:
         Acceptable dopamine/serotonin ratio range for health checks
     ei_balance_range : Tuple[float, float]
         Acceptable excitation/inhibition balance range for health checks
+    param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
+        Optional parameter bounds by module and parameter name
     """
 
     balance_weight: float = 0.35
@@ -98,6 +100,7 @@ class OptimizationConfig:
     regime_adaptation: bool = True
     da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
     ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Validate configuration."""
@@ -132,6 +135,7 @@ class OptimizationConfig:
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
+        self._validate_param_bounds()
 
         try:
             np.dtype(self.dtype)
@@ -148,6 +152,27 @@ class OptimizationConfig:
         low, high = value_range
         if low <= 0 or high <= 0 or low >= high:
             raise ValueError(f"{name} must be positive with low < high")
+
+    def _validate_param_bounds(self) -> None:
+        if not isinstance(self.param_bounds, dict):
+            raise ValueError("param_bounds must be a dict")
+        for module, module_bounds in self.param_bounds.items():
+            if not isinstance(module_bounds, dict):
+                raise ValueError(f"param_bounds[{module!r}] must be a dict")
+            for param_name, bounds in module_bounds.items():
+                if (
+                    not isinstance(bounds, tuple)
+                    or len(bounds) != 2
+                    or not all(isinstance(value, (int, float)) for value in bounds)
+                ):
+                    raise ValueError(
+                        f"param_bounds[{module!r}][{param_name!r}] must be a tuple of two numbers"
+                    )
+                low, high = bounds
+                if low >= high:
+                    raise ValueError(
+                        f"param_bounds[{module!r}][{param_name!r}] must have low < high"
+                    )
 
 
 @dataclass
@@ -609,6 +634,11 @@ class NeuroOptimizer:
                 new_value = float(
                     self._xp.clip(new_value, param_value * 0.8, param_value * 1.2)
                 )
+
+                # Apply config bounds for safety (if provided)
+                bounds = self.config.param_bounds.get(module, {}).get(param_name)
+                if bounds is not None:
+                    new_value = float(self._xp.clip(new_value, bounds[0], bounds[1]))
 
                 updated[module][param_name] = new_value
 

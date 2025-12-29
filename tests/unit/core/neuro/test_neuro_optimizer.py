@@ -914,6 +914,28 @@ class TestNeuroOptimizer:
         updated_lr = updated['dopamine']['learning_rate']
         assert updated_lr <= original_lr * 1.2
 
+    def test_apply_updates_respects_param_bounds(self):
+        """Ensure param_bounds clamps updated values."""
+        config = OptimizationConfig(
+            max_gradient_norm=1.0,
+            momentum=0.0,
+            param_bounds={
+                'dopamine': {
+                    'learning_rate': (0.55, 0.65),
+                }
+            },
+        )
+        optimizer = NeuroOptimizer(config)
+        params = {'dopamine': {'learning_rate': 0.6}}
+
+        high_gradients = {'dopamine': {'learning_rate': 0.5}}
+        high_updated = optimizer._apply_updates(params, high_gradients)
+        assert high_updated['dopamine']['learning_rate'] == pytest.approx(0.65)
+
+        low_gradients = {'dopamine': {'learning_rate': -0.5}}
+        low_updated = optimizer._apply_updates(params, low_gradients)
+        assert low_updated['dopamine']['learning_rate'] == pytest.approx(0.55)
+
     def test_get_optimization_report_no_data(self, opt_config):
         """Test optimization report with no data."""
         optimizer = NeuroOptimizer(opt_config)

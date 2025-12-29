@@ -79,7 +79,8 @@ maximize F = w_p * P + w_b * B + w_s * S
 Subject to:
 
 - **Parameter bounds**: each neuromodulator parameter remains within its validated
-  lower/upper limits.
+  lower/upper limits. Bounds are configured per module/parameter via
+  `OptimizationConfig.param_bounds` and applied after each update.
 - **Homeostatic invariants**: dopamine/serotonin ratio, excitation/inhibition balance,
   and arousal-attention coherence remain within physiological bounds.
 
@@ -447,6 +448,7 @@ class OptimizationConfig:
     enable_plasticity: bool = True     # Enable plasticity
     plasticity_window: int = 50        # Plasticity window
     regime_adaptation: bool = True     # Regime adaptation
+    param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
 
 #### BalanceMetrics
