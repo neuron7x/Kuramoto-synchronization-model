@@ -68,6 +68,13 @@ The optimizer combines metrics that are normalized onto comparable scales before
   - `ε` prevents division by zero or near-zero means from exploding the ratio.
   - Until enough history accumulates, stability defaults to **0.5**.
 
+**Mathematical note on normalization and bounds**
+
+- **Arousal-attention coherence** is computed as:
+  `aa_coherence = 1 - |na_arousal - ach_attention| / 2`.
+- The raw value is explicitly **clipped to [0, 1]** to keep the metric bounded,
+  even for extreme arousal/attention inputs.
+
 The composite objective is a **linear combination** of these normalized metrics:
 
 ```
