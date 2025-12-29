@@ -74,8 +74,20 @@ Subject to:
 
 The optimizer combines metrics that are normalized onto comparable scales before weighting:
 
-- **Performance scale**: Sharpe ratio is normalized from **[-2, 3] → [0, 1]** with clipping.
-  - Below -2 maps to **0**, above 3 maps to **1**.
+- **Performance scale**: Sharpe ratio is normalized from
+  **[performance_min, performance_max] → [0, 1]** with clipping.
+  - Below `performance_min` maps to **0**, above `performance_max` maps to **1**.
+  - Defaults: `performance_min = -2`, `performance_max = 3`.
+
+Formally, the normalization is:
+
+```
+performance_norm = clip(
+    (performance - performance_min) / (performance_max - performance_min),
+    0,
+    1
+)
+```
 - **Balance scale**: `overall_balance_score` is already in **[0, 1]** (higher is better).
 - **Stability scale**: Derived from recent objective history as
   `1 - std(recent) / max(abs(mean), ε)`, clipped to **[0, 1]**.
@@ -413,6 +425,8 @@ class OptimizationConfig:
     balance_weight: float = 0.35       # Weight for balance objective
     performance_weight: float = 0.45   # Weight for performance
     stability_weight: float = 0.20     # Weight for stability
+    performance_min: float = -2.0      # Min performance for normalization
+    performance_max: float = 3.0       # Max performance for normalization
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations
