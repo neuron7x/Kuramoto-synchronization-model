@@ -35,9 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -c constraints/security.txt -r requirements.txt
-          uv pip install -c constraints/security.txt -r requirements-dev.txt
-          uv pip install locust==2.23.1
+          uv pip install -c constraints/security.txt -r requirements.lock
+          uv pip install -c constraints/security.txt -r requirements-dev.lock
+          uv pip install -c constraints/security.txt locust==2.23.1
 
       - name: Start FastAPI service
         run: |

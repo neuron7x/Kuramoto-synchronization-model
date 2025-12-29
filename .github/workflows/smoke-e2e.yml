@@ -31,7 +31,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Prepare smoke directories
         run: |

@@ -67,8 +67,8 @@ jobs:
         if: steps.venv-cache-reliability.outputs.cache-hit != 'true'
         run: |
           source .venv/bin/activate
-          pip install -c constraints/security.txt -r requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
       
       - name: Run reliability smoke tests
         run: |

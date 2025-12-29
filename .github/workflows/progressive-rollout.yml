@@ -110,7 +110,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements-dev.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
       - name: Static analysis & unit tests
         run: |
           set -euxo pipefail
@@ -177,7 +178,7 @@ jobs:
         run: |
           set -euxo pipefail
           python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
       - name: Configure cloud credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:

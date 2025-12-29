@@ -45,8 +45,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock
-          pip install -r requirements-dev.lock
+          pip install -c constraints/security.txt -r requirements.lock
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Run policy unit tests
         run: |
@@ -71,8 +71,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock
-          pip install -r requirements-dev.lock
+          pip install -c constraints/security.txt -r requirements.lock
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Run policy property tests
         run: |
@@ -97,7 +97,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Run red-team smoke test (10 cases)
         run: |

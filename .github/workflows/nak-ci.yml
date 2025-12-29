@@ -46,8 +46,9 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install -e ./nak_controller
-          pip install pytest pytest-cov mypy ruff black bandit
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
+          pip install -c constraints/security.txt -e ./nak_controller
       - name: Validate NaK configuration
         run: |
           python - <<'PY' > yaml-validation.log

@@ -59,7 +59,7 @@ jobs:
       - name: Install cibuildwheel
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "cibuildwheel>=2.16"
+          python -m pip install -c constraints/security.txt "cibuildwheel>=2.16"
 
       - name: Build wheels
         env:
@@ -94,7 +94,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install auditwheel
+          python -m pip install -c constraints/security.txt auditwheel
           for whl in wheelhouse/*.whl; do
             if [[ "$whl" == *manylinux* || "$whl" == *musllinux* ]]; then
               auditwheel show "$whl"
@@ -105,7 +105,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install delocate
+          python -m pip install -c constraints/security.txt delocate
           for whl in wheelhouse/*.whl; do
             delocate-listdeps "$whl"
             delocate-wheel --check-archs universal2 "$whl"

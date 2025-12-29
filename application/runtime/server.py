@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import ssl
 from typing import Any, Dict, Optional
 
@@ -18,6 +19,15 @@ from application.runtime.init_control_platform import initialize_control_platfor
 from application.security.tls import build_api_server_ssl_context
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def enforce_prod_server_flags(config: uvicorn.Config) -> None:
+    """Ensure production runs never enable uvicorn reload."""
+
+    env = os.getenv("TRADEPULSE_ENV", "").lower()
+    if env in {"prod", "production"} and getattr(config, "reload", False):
+        msg = "Uvicorn reload is not allowed in production deployments"
+        raise RuntimeError(msg)
 
 
 def _build_cli_parser() -> argparse.ArgumentParser:
@@ -170,6 +180,7 @@ def run(
         raise RuntimeError(msg)
 
     config = uvicorn.Config(**config_kwargs)
+    enforce_prod_server_flags(config)
     config.load()
 
     scheme = "http"
