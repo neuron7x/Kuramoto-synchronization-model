@@ -43,8 +43,8 @@ TradePulse models four key neuromodulator systems:
 
 The system maintains homeostatic balance by monitoring:
 
-- **DA/5-HT Ratio**: Dopamine to serotonin ratio (target: ~1.67)
-- **E/I Balance**: Excitation to inhibition ratio (target: ~1.5)
+- **DA/5-HT Ratio**: Dopamine to serotonin ratio (target: ~1.67, acceptable range: **[1.0, 3.0]**)
+- **E/I Balance**: Excitation to inhibition ratio (target: ~1.5, acceptable range: **[1.0, 2.5]**)
 - **Arousal-Attention Coherence**: Correlation between arousal and attention
 
 #### Multi-Objective Optimization

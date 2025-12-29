@@ -67,6 +67,10 @@ class OptimizationConfig:
         Window for plasticity calculations
     regime_adaptation : bool
         Enable market regime-based adaptation
+    da_5ht_ratio_range : Tuple[float, float]
+        Acceptable dopamine/serotonin ratio range for health checks
+    ei_balance_range : Tuple[float, float]
+        Acceptable excitation/inhibition balance range for health checks
     """
 
     balance_weight: float = 0.35
@@ -86,6 +90,8 @@ class OptimizationConfig:
     enable_plasticity: bool = True
     plasticity_window: int = 50
     regime_adaptation: bool = True
+    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
+    ei_balance_range: Tuple[float, float] = (1.0, 2.5)
 
     def __post_init__(self) -> None:
         """Validate configuration."""
@@ -115,10 +121,24 @@ class OptimizationConfig:
         if not 0 <= self.momentum < 1:
             raise ValueError("Momentum must be in [0, 1)")
 
+        self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
+        self._validate_range(self.ei_balance_range, 'ei_balance_range')
+
         try:
             np.dtype(self.dtype)
         except TypeError as exc:
             raise ValueError(f"Invalid dtype supplied: {self.dtype}") from exc
+
+    @staticmethod
+    def _validate_range(value_range: Tuple[float, float], name: str) -> None:
+        if (
+            len(value_range) != 2
+            or not all(isinstance(value, (int, float)) for value in value_range)
+        ):
+            raise ValueError(f"{name} must be a tuple of two numbers")
+        low, high = value_range
+        if low <= 0 or high <= 0 or low >= high:
+            raise ValueError(f"{name} must be positive with low < high")
 
 
 @dataclass
@@ -767,16 +787,19 @@ class NeuroOptimizer:
             'max_median_delta': 0.0,
         }
 
+        da_ratio_min, da_ratio_max = self.config.da_5ht_ratio_range
+        ei_min, ei_max = self.config.ei_balance_range
+
         # Check DA/5-HT ratio
-        if balance.dopamine_serotonin_ratio < 1.0:
+        if balance.dopamine_serotonin_ratio < da_ratio_min:
             issues.append('Low dopamine/serotonin ratio - system may be over-stressed')
-        elif balance.dopamine_serotonin_ratio > 3.0:
+        elif balance.dopamine_serotonin_ratio > da_ratio_max:
             issues.append('High dopamine/serotonin ratio - excessive risk-taking')
 
         # Check E/I balance
-        if balance.gaba_excitation_balance < 1.0:
+        if balance.gaba_excitation_balance < ei_min:
             issues.append('Excessive inhibition - may miss opportunities')
-        elif balance.gaba_excitation_balance > 2.5:
+        elif balance.gaba_excitation_balance > ei_max:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence

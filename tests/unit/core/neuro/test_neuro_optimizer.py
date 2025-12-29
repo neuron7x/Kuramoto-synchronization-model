@@ -907,6 +907,31 @@ class TestNeuroOptimizer:
         assert health['status'] in ['warning', 'acceptable']
         assert len(health['issues']) > 0
 
+    def test_assess_health_respects_configured_ranges(self):
+        """Ensure health checks use configured ratio ranges."""
+        config = OptimizationConfig(
+            da_5ht_ratio_range=(1.2, 2.2),
+            ei_balance_range=(0.8, 1.4),
+        )
+        optimizer = NeuroOptimizer(config)
+
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=2.3,
+            gaba_excitation_balance=0.7,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.2,
+        )
+
+        health = optimizer._assess_health(balance)
+
+        assert any(
+            'High dopamine/serotonin ratio' in issue for issue in health['issues']
+        )
+        assert any(
+            'Excessive inhibition' in issue for issue in health['issues']
+        )
+
     def test_reset(self, opt_config, sample_params, sample_state):
         """Test optimizer reset."""
         optimizer = NeuroOptimizer(opt_config)
