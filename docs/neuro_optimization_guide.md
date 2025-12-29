@@ -461,6 +461,25 @@ class BalanceMetrics:
     homeostatic_deviation: float      # Deviation from setpoint
 ```
 
+#### NeuroState
+
+```python
+class NeuroState(TypedDict, total=False):
+    """Typed state payload for neuromodulator readings."""
+
+    dopamine_level: float
+    serotonin_level: float
+    gaba_inhibition: float
+    na_arousal: float
+    ach_attention: float
+```
+
+`NeuroOptimizer` validates this state payload at runtime:
+
+- Unknown keys raise a `ValueError`.
+- Non-numeric values raise a `TypeError`.
+- Missing keys are allowed and fall back to defaults.
+
 #### NeuroOptimizer
 
 ```python
@@ -475,7 +494,7 @@ class NeuroOptimizer:
     def optimize(
         self,
         current_params: Dict[str, Any],
-        current_state: Dict[str, float],
+        current_state: NeuroState,
         performance_score: float,
     ) -> Tuple[Dict[str, Any], BalanceMetrics]:
         """Execute optimization iteration.
@@ -497,6 +516,7 @@ class NeuroOptimizer:
 from tradepulse.core.neuro.neuro_optimizer import (
     NeuroOptimizer,
     OptimizationConfig,
+    NeuroState,
 )
 
 # Configure optimizer
@@ -512,13 +532,17 @@ optimizer = NeuroOptimizer(config)
 # Optimization loop
 for iteration in range(100):
     # Get current neuromodulator state
-    current_state = {
+    current_state: NeuroState = {
         'dopamine_level': dopamine_controller.level,
         'serotonin_level': serotonin_controller.level,
         'gaba_inhibition': gaba_gate.inhibition,
         'na_arousal': na_ach_controller.arousal,
         'ach_attention': na_ach_controller.attention,
     }
+
+    # Invalid state keys or non-numeric values will raise immediately:
+    # bad_state = {"dopamine_level": "high", "unknown_key": 1.0}
+    # optimizer.optimize(current_params, bad_state, performance_score=sharpe_ratio)
     
     # Optimize
     updated_params, balance = optimizer.optimize(

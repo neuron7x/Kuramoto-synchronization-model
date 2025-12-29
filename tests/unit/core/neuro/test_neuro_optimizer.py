@@ -179,6 +179,26 @@ class TestNeuroOptimizer:
         assert isinstance(balance, BalanceMetrics)
         _assert_balance_invariants(balance)
 
+    def test_state_validation_rejects_unknown_keys(
+        self, opt_config, sample_params, sample_state
+    ):
+        """Ensure unknown state keys raise an error."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        bad_state = dict(sample_state, unknown_key=1.0)
+
+        with pytest.raises(ValueError, match="Unknown state keys"):
+            optimizer.optimize(sample_params, bad_state, performance_score=1.0)
+
+    def test_state_validation_rejects_non_numeric_values(self, opt_config, sample_state):
+        """Ensure non-numeric state values raise an error."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        bad_state = dict(sample_state, dopamine_level="high")
+
+        with pytest.raises(TypeError, match="must be a number"):
+            optimizer._calculate_balance_metrics(bad_state)
+
     def test_balance_score_monotonic_with_homeostatic_dev(self, opt_config):
         """Ensure balance score decreases as homeostatic deviation increases."""
         optimizer = NeuroOptimizer(opt_config)

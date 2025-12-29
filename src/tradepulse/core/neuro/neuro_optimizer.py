@@ -22,9 +22,19 @@ BalanceMetrics : Neuromodulator balance health metrics
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 
 import numpy as np
+
+
+class NeuroState(TypedDict, total=False):
+    """Typed state payload for neuromodulator readings."""
+
+    dopamine_level: float
+    serotonin_level: float
+    gaba_inhibition: float
+    na_arousal: float
+    ach_attention: float
 
 
 @dataclass
@@ -193,6 +203,15 @@ class NeuroOptimizer:
     DRIFT_WINDOW = 10
     DRIFT_MEAN_THRESHOLD = 0.05
     DRIFT_MEDIAN_THRESHOLD = 0.05
+    _STATE_KEYS = frozenset(
+        {
+            'dopamine_level',
+            'serotonin_level',
+            'gaba_inhibition',
+            'na_arousal',
+            'ach_attention',
+        }
+    )
 
     def __init__(
         self,
@@ -260,7 +279,7 @@ class NeuroOptimizer:
     def optimize(
         self,
         current_params: Dict[str, Any],
-        current_state: Dict[str, float],
+        current_state: NeuroState,
         performance_score: float,
     ) -> Tuple[Dict[str, Any], BalanceMetrics]:
         """Execute optimization iteration.
@@ -325,7 +344,7 @@ class NeuroOptimizer:
         return snapshot
 
     def _calculate_balance_metrics(
-        self, state: Dict[str, float]
+        self, state: NeuroState
     ) -> BalanceMetrics:
         """Calculate neuromodulator balance metrics.
 
@@ -339,6 +358,8 @@ class NeuroOptimizer:
         BalanceMetrics
             Computed balance metrics
         """
+        self._validate_state(state)
+
         # Extract state values with defaults
         da_level, sero_level, gaba_inhib, arousal, attention = self._to_array(
             [
@@ -351,12 +372,16 @@ class NeuroOptimizer:
         )
 
         # Calculate ratios
-        da_5ht_ratio = da_level / (sero_level + self._dtype.type(1e-6))
+        da_5ht_ratio_raw = da_level / (sero_level + self._dtype.type(1e-6))
+        da_ratio_min, da_ratio_max = self.config.da_5ht_ratio_range
+        da_5ht_ratio = self._xp.clip(da_5ht_ratio_raw, da_ratio_min, da_ratio_max)
 
         # Excitation-inhibition balance (higher dopamine = more excitation)
         excitation = da_level + arousal
         inhibition = gaba_inhib + sero_level
-        ei_balance = excitation / (inhibition + self._dtype.type(1e-6))
+        ei_balance_raw = excitation / (inhibition + self._dtype.type(1e-6))
+        ei_min, ei_max = self.config.ei_balance_range
+        ei_balance = self._xp.clip(ei_balance_raw, ei_min, ei_max)
 
         # Arousal-attention coherence (should be correlated)
         aa_coherence = (
@@ -366,8 +391,12 @@ class NeuroOptimizer:
         aa_coherence = self._xp.clip(aa_coherence, 0.0, 1.0)
 
         # Calculate deviations from setpoints
-        da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
-        ei_dev = self._xp.abs(ei_balance - self._setpoints['excitation_inhibition']) / self._setpoints['excitation_inhibition']
+        da_5ht_dev = self._xp.abs(
+            da_5ht_ratio_raw - self._setpoints['da_5ht_ratio']
+        ) / self._setpoints['da_5ht_ratio']
+        ei_dev = self._xp.abs(
+            ei_balance_raw - self._setpoints['excitation_inhibition']
+        ) / self._setpoints['excitation_inhibition']
 
         # Overall homeostatic deviation.
         # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
@@ -395,7 +424,7 @@ class NeuroOptimizer:
         self,
         performance: float,
         balance: BalanceMetrics,
-        state: Dict[str, float],
+        state: NeuroState,
     ) -> float:
         """Calculate multi-objective optimization target.
 
@@ -464,7 +493,7 @@ class NeuroOptimizer:
     def _estimate_gradients(
         self,
         params: Dict[str, Any],
-        state: Dict[str, float],
+        state: NeuroState,
         performance: float,
     ) -> Dict[str, Dict[str, float]]:
         """Estimate gradients using finite differences.
@@ -487,6 +516,7 @@ class NeuroOptimizer:
         Dict[str, Dict[str, float]]
             Estimated gradients for each parameter
         """
+        self._validate_state(state)
         gradients = {}
         epsilon = self._dtype.type(1e-6)
 
@@ -613,6 +643,21 @@ class NeuroOptimizer:
                 updated[module][param_name] = new_value
 
         return updated
+
+    def _validate_state(self, state: NeuroState) -> None:
+        """Validate the typed neuromodulator state payload."""
+        if not isinstance(state, dict):
+            raise TypeError("state must be a dict-like mapping of neuromodulator values")
+
+        unknown_keys = set(state) - self._STATE_KEYS
+        if unknown_keys:
+            raise ValueError(
+                "Unknown state keys: " + ", ".join(sorted(unknown_keys))
+            )
+
+        for key, value in state.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float, np.floating)):
+                raise TypeError(f"State value for '{key}' must be a number")
 
     def _update_learning_rate(self, objective: float) -> None:
         """Adapt learning rate based on progress and stability."""
