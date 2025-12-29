@@ -19,6 +19,7 @@ import pandas as pd
 
 from core.data.validation import validate_ohlcv
 from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 
 
 def sample_df(n: int = 1500, seed: int | None = None) -> pd.DataFrame:
@@ -37,7 +38,7 @@ def sample_df(n: int = 1500, seed: int | None = None) -> pd.DataFrame:
         DataFrame with 'close' prices and 'volume' indexed by datetime
     """
     if seed is not None:
-        np.random.seed(seed)
+        seed_numpy(seed)
 
     idx = pd.date_range("2024-01-01", periods=n, freq="1min")
     r1 = np.cumsum(np.random.normal(0, 0.6, n // 3))
@@ -143,7 +144,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="TradePulse Quick Start - Market Analysis Demo",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
 Examples:
     # Use synthetic data
     python examples/quick_start.py
@@ -152,7 +153,7 @@ Examples:
     python examples/quick_start.py --csv data/prices.csv --price-col close
 
     # Reproducible analysis with seed
-    python examples/quick_start.py --seed 42
+    python examples/quick_start.py --seed {DEFAULT_SEED}
         """,
     )
     parser.add_argument(
@@ -170,7 +171,7 @@ Examples:
     parser.add_argument(
         "--seed",
         type=int,
-        default=None,
+        default=DEFAULT_SEED,
         help="Random seed for reproducible synthetic data generation",
     )
     parser.add_argument(

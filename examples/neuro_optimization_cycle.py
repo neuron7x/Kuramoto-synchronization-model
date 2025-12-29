@@ -23,12 +23,14 @@ from pathlib import Path
 from typing import Any, Dict
 
 import numpy as np
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 
-# Deterministic simulation seed for reproducible runs.
-SEED = 42
 # Add src to path for standalone execution
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
+
+# Deterministic simulation seed for reproducible runs.
+SEED = DEFAULT_SEED
 
 # Import optimization modules
 try:
@@ -301,7 +303,7 @@ def print_metrics(metrics: Dict[str, Any], indent: int = 2) -> None:
 
 def main():
     """Run complete optimization cycle demonstration."""
-    np.random.seed(SEED)
+    seed_numpy(SEED)
     print("\n" + "╔" + "=" * 78 + "╗")
     print("║" + " " * 78 + "║")
     print("║" + "Neuro-Optimization Cycle Demonstration".center(78) + "║")

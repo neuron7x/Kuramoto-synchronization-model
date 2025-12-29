@@ -14,7 +14,9 @@ This example shows how to use the various components of the agent system:
 import numpy as np
 import pandas as pd
 
-SEED = 42
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
+
+SEED = DEFAULT_SEED
 
 # Note: This is a demonstration script showing the API usage.
 # In production, ensure all dependencies are installed.
@@ -303,7 +305,7 @@ def demo_pi_agent():
 
 def main():
     """Run all demonstrations."""
-    np.random.seed(SEED)
+    seed_numpy(SEED)
     print("\n")
     print("╔" + "=" * 58 + "╗")
     print("║" + " " * 58 + "║")

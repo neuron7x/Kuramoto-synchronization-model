@@ -23,6 +23,7 @@ sys.path.insert(0, str(src_path))
 import importlib.util  # noqa: E402
 
 import numpy as np  # noqa: E402
+from core.utils.determinism import seed_numpy  # noqa: E402
 
 
 def load_module(name, path):
@@ -418,5 +419,5 @@ def main():
 
 
 if __name__ == "__main__":
-    np.random.seed(42)  # For reproducibility
+    seed_numpy()  # For reproducibility
     main()

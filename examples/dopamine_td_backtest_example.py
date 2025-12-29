@@ -9,12 +9,13 @@ learning algorithm for generating trading signals and running backtests.
 import numpy as np
 
 from backtest import DopamineTDParams, run_dopamine_backtest
+from core.utils.determinism import seed_numpy
 
 
 def main():
     """Run example dopamine TD backtest."""
     # Generate synthetic price data (random walk)
-    np.random.seed(42)
+    seed_numpy()
     returns = np.random.normal(0, 0.001, 10_000)
     prices = 100.0 * np.cumprod(1 + returns)
 

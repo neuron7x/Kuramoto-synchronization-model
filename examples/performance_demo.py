@@ -17,9 +17,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# Deterministic benchmark data generation.
-SEED = 42
-
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -27,7 +24,11 @@ from core.data.preprocess import normalize_df, scale_series
 from core.indicators.entropy import EntropyFeature, entropy
 from core.indicators.hurst import HurstFeature, hurst_exponent
 from core.indicators.ricci import MeanRicciFeature, build_price_graph, mean_ricci
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 from core.utils.logging import configure_logging, get_logger
+
+# Deterministic benchmark data generation.
+SEED = DEFAULT_SEED
 
 # Configure logging
 configure_logging(level="INFO", use_json=False)
@@ -297,7 +298,7 @@ def feature_class_demo():
 
 def main():
     """Run all benchmarks."""
-    np.random.seed(SEED)
+    seed_numpy(SEED)
     print("\n")
     print("╔" + "=" * 68 + "╗")
     print("║" + " TradePulse Performance Optimization Demonstration ".center(68) + "║")

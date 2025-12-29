@@ -7,10 +7,11 @@ import numpy as np
 import pandas as pd
 
 from core.neuro.ecs_regulator import ECSInspiredRegulator
+from core.utils.determinism import DEFAULT_SEED
 
 
 def simulate_market_data(
-    n_steps: int, seed: int = 42
+    n_steps: int, seed: int = DEFAULT_SEED
 ) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Simulate market returns, drawdowns, and phase data.
 
@@ -104,7 +105,7 @@ def main():
 
     # Configuration
     n_steps = int(os.getenv("ECS_DEMO_STEPS", "200"))
-    seed = 42
+    seed = DEFAULT_SEED
     output_dir = Path(os.getenv("ECS_DEMO_OUTPUT_DIR", "/tmp"))
     output_dir.mkdir(parents=True, exist_ok=True)
 

@@ -198,6 +198,20 @@ Comprehensive benchmarks validate production readiness:
 - **Time**: <10ms to converge
 - **Variance**: 0.005 at convergence
 
+## Optimization Requirements
+
+To keep neuro-optimization runs reproducible and verifiable, adopt the following
+requirements:
+
+1. **Single-source seed**: Use the shared seed constant (`core.utils.determinism.DEFAULT_SEED`)
+   when fixing randomness in `benchmarks/` and `examples/`. This ensures all
+   reproducible demos and benchmark fixtures align with a single authoritative seed.
+2. **Seeded objective trajectories**: Optimization runs must be deterministic under a
+   fixed seed. Tests validate that two sequences initialized with the same seed yield
+   identical objective trajectories within a small tolerance.
+3. **Seed reporting**: Log or persist the seed alongside optimization metadata so
+   trajectories and parameter updates can be replayed exactly.
+
 ### Score Improvement
 - **Initial**: 0.480
 - **Final**: 0.705 (after 50 iterations)

@@ -13,6 +13,7 @@ from neuropro.hpc_validation import (
     simple_backtest,
     validate_hpc_ai,
 )
+from core.utils.determinism import DEFAULT_SEED
 
 
 def main():
@@ -26,7 +27,7 @@ def main():
     print("Step 1: Generating Synthetic Market Data")
     print("-" * 80)
     data = generate_synthetic_data(
-        n_days=1000, initial_price=100.0, volatility=0.5, seed=42
+        n_days=1000, initial_price=100.0, volatility=0.5, seed=DEFAULT_SEED
     )
     print(f"Generated {len(data)} days of synthetic OHLCV data")
     print(f"Price range: ${data['close'].min():.2f} - ${data['close'].max():.2f}")

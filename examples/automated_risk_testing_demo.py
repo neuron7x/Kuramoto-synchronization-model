@@ -12,6 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 # Load risk_core first
 risk_core_spec = importlib.util.spec_from_file_location(
     "risk_core",
@@ -47,7 +48,7 @@ def demo_basic_risk_validation():
     print("=" * 80)
 
     # Generate sample returns
-    np.random.seed(42)
+    seed_numpy(DEFAULT_SEED)
     returns = np.random.normal(0.0005, 0.015, 252)
 
     print(f"\nGenerated {len(returns)} daily returns")
@@ -82,11 +83,15 @@ def demo_market_stress_testing():
     print("=" * 80)
 
     # Initialize tester
-    tester = AutomatedRiskTester(es_limit=0.03, var_alpha=0.975, f_max=1.0, seed=42)
+    tester = AutomatedRiskTester(
+        es_limit=0.03, var_alpha=0.975, f_max=1.0, seed=DEFAULT_SEED
+    )
 
     # Generate market stress scenarios
     print("\nGenerating market stress scenarios...")
-    market_scenarios = generate_market_stress_scenarios(num_days=252, seed=42)
+    market_scenarios = generate_market_stress_scenarios(
+        num_days=252, seed=DEFAULT_SEED
+    )
 
     print(f"Generated {len(market_scenarios)} market stress scenarios:")
     for scenario in market_scenarios:
@@ -125,13 +130,15 @@ def demo_crisis_scenarios():
     print("=" * 80)
 
     # Initialize tester
-    tester = AutomatedRiskTester(es_limit=0.05, seed=42)
+    tester = AutomatedRiskTester(es_limit=0.05, seed=DEFAULT_SEED)
 
     # Generate crisis scenarios
     print("\nGenerating crisis scenarios...")
-    crisis_scenarios = generate_liquidity_crisis_scenarios(num_days=252, seed=42)
+    crisis_scenarios = generate_liquidity_crisis_scenarios(
+        num_days=252, seed=DEFAULT_SEED
+    )
     flash_scenarios = generate_flash_crash_scenarios(
-        num_days=252, crash_magnitude=0.15, seed=42
+        num_days=252, crash_magnitude=0.15, seed=DEFAULT_SEED
     )
 
     all_crisis_scenarios = crisis_scenarios + flash_scenarios
@@ -170,7 +177,7 @@ def demo_monte_carlo_simulation():
     print("=" * 80)
 
     # Initialize tester
-    tester = AutomatedRiskTester(es_limit=0.03, seed=42)
+    tester = AutomatedRiskTester(es_limit=0.03, seed=DEFAULT_SEED)
 
     # Configure Monte Carlo
     config = MonteCarloConfig(
@@ -179,7 +186,7 @@ def demo_monte_carlo_simulation():
         mu=0.0005,  # 0.05% daily return
         sigma=0.015,  # 1.5% daily volatility
         alpha=0.975,
-        seed=42,
+        seed=DEFAULT_SEED,
     )
 
     print("\nMonte Carlo Configuration:")
@@ -233,15 +240,19 @@ def demo_comprehensive_report():
     print("=" * 80)
 
     # Initialize tester
-    tester = AutomatedRiskTester(es_limit=0.03, var_alpha=0.975, seed=42)
+    tester = AutomatedRiskTester(es_limit=0.03, var_alpha=0.975, seed=DEFAULT_SEED)
 
     # Add all types of scenarios
     print("\nBuilding comprehensive test suite...")
 
-    market_scenarios = generate_market_stress_scenarios(num_days=252, seed=42)
-    crisis_scenarios = generate_liquidity_crisis_scenarios(num_days=252, seed=42)
+    market_scenarios = generate_market_stress_scenarios(
+        num_days=252, seed=DEFAULT_SEED
+    )
+    crisis_scenarios = generate_liquidity_crisis_scenarios(
+        num_days=252, seed=DEFAULT_SEED
+    )
     flash_scenarios = generate_flash_crash_scenarios(
-        num_days=252, crash_magnitude=0.12, seed=42
+        num_days=252, crash_magnitude=0.12, seed=DEFAULT_SEED
     )
 
     all_scenarios = market_scenarios + crisis_scenarios + flash_scenarios

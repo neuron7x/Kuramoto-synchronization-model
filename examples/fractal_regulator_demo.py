@@ -13,6 +13,7 @@ import numpy as np
 
 # Direct import to avoid module dependencies
 from core.neuro.fractal_regulator import EEPFractalRegulator
+from core.utils.determinism import DEFAULT_SEED
 
 
 def demo_basic_usage():
@@ -21,7 +22,7 @@ def demo_basic_usage():
     print("DEMO 1: Basic Usage")
     print("=" * 60)
 
-    regulator = EEPFractalRegulator(window_size=50, seed=42)
+    regulator = EEPFractalRegulator(window_size=50, seed=DEFAULT_SEED)
 
     # Simulate a few market signals
     signals = [0.1, -0.05, 0.15, 0.02, -0.08]
@@ -42,9 +43,11 @@ def demo_crisis_detection():
     print("DEMO 2: Crisis Detection")
     print("=" * 60)
 
-    regulator = EEPFractalRegulator(window_size=100, crisis_threshold=0.4, seed=42)
+    regulator = EEPFractalRegulator(
+        window_size=100, crisis_threshold=0.4, seed=DEFAULT_SEED
+    )
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(DEFAULT_SEED)
 
     # Phase 1: Stable market
     print("\nPhase 1: Stable Market (σ=0.01)")
@@ -73,8 +76,8 @@ def demo_trade_cycle_simulation():
     print("DEMO 3: Trade Cycle Simulation")
     print("=" * 60)
 
-    regulator = EEPFractalRegulator(window_size=100, seed=42)
-    rng = np.random.default_rng(42)
+    regulator = EEPFractalRegulator(window_size=100, seed=DEFAULT_SEED)
+    rng = np.random.default_rng(DEFAULT_SEED)
 
     # Create market-like returns: stable → crisis → recovery
     stable = rng.normal(0, 0.01, 50)
@@ -108,7 +111,7 @@ def demo_parameter_sensitivity():
     print("DEMO 4: Parameter Sensitivity")
     print("=" * 60)
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(DEFAULT_SEED)
     signals = rng.normal(0, 1.0, 100)
 
     thresholds = [0.2, 0.3, 0.4, 0.5]
@@ -116,7 +119,7 @@ def demo_parameter_sensitivity():
     print("\nTesting different crisis thresholds:")
     for threshold in thresholds:
         regulator = EEPFractalRegulator(
-            window_size=100, crisis_threshold=threshold, seed=42
+            window_size=100, crisis_threshold=threshold, seed=DEFAULT_SEED
         )
 
         results = regulator.simulate_trade_cycle(signals)
@@ -159,7 +162,7 @@ def demo_integration_pattern():
 
     # Simulate usage
     monitor = MarketHealthMonitor()
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(DEFAULT_SEED)
 
     print("\nMonitoring market returns...")
     returns = np.concatenate(
