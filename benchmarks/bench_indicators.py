@@ -13,7 +13,7 @@ import pytest
 from core.indicators.entropy import entropy
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 from core.indicators.ricci import build_price_graph, mean_ricci
-from core.utils.determinism import seed_numpy
+from utils.seed import set_global_seed
 
 
 class TestKuramotoBenchmarks:
@@ -63,7 +63,7 @@ class TestKuramotoBenchmarks:
     def test_kuramoto_order_2d(self, benchmark):
         """Benchmark Kuramoto order for 2D phase matrix."""
         # 50 oscillators x 200 timesteps
-        seed_numpy()  # Fixed seed for reproducible benchmarks
+        set_global_seed()  # Fixed seed for reproducible benchmarks
         phases = np.random.uniform(-np.pi, np.pi, (50, 200))
         result = benchmark(kuramoto_order, phases)
         assert isinstance(result, np.ndarray)
@@ -81,7 +81,7 @@ class TestRicciBenchmarks:
     @pytest.fixture
     def volatile_prices(self) -> np.ndarray:
         """Volatile price series."""
-        seed_numpy()  # Fixed seed for reproducible benchmarks
+        set_global_seed()  # Fixed seed for reproducible benchmarks
         trend = 100 * np.exp(np.linspace(0, 0.1, 500))
         noise = np.random.normal(0, 2, 500)
         return trend + noise
@@ -118,13 +118,13 @@ class TestEntropyBenchmarks:
     @pytest.fixture
     def random_returns(self) -> np.ndarray:
         """Random return series."""
-        seed_numpy()  # Fixed seed for reproducible benchmarks
+        set_global_seed()  # Fixed seed for reproducible benchmarks
         return np.random.normal(0, 0.02, 1000)
 
     @pytest.fixture
     def structured_returns(self) -> np.ndarray:
         """Structured return series with autocorrelation."""
-        seed_numpy()  # Fixed seed for reproducible benchmarks
+        set_global_seed()  # Fixed seed for reproducible benchmarks
         noise = np.random.normal(0, 0.01, 1000)
         # Add autocorrelation
         structured = np.zeros(1000)
@@ -166,7 +166,7 @@ class TestEndToEndBenchmarks:
 
         def compute_indicators():
             # Simulate typical workflow
-            seed_numpy()  # Fixed seed for reproducible benchmarks
+            set_global_seed()  # Fixed seed for reproducible benchmarks
             prices = 100 * np.exp(np.cumsum(np.random.normal(0.0001, 0.02, 500)))
 
             # Phase analysis

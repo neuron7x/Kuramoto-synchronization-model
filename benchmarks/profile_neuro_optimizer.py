@@ -13,8 +13,10 @@ from benchmarks._neuro_optimizer_loader import (
     load_optimizer,
     load_validation,
 )
+from utils.seed import set_global_seed
 
 def _run_profile(steps: int = 200) -> None:
+    set_global_seed(7)
     rng = np.random.default_rng(7)
     NeuroOptimizer, OptimizationConfig = load_optimizer()
     validate_neuro_invariants = load_validation()

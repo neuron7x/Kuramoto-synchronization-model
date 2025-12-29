@@ -11,6 +11,7 @@ from benchmarks._neuro_optimizer_loader import (
     load_optimizer,
     load_validation,
 )
+from utils.seed import set_global_seed
 try:
     from memory_profiler import memory_usage
 except ImportError:  # pragma: no cover - optional dependency
@@ -18,6 +19,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 
 def _run_steps(steps: int = 200) -> None:
+    set_global_seed(13)
     rng = np.random.default_rng(13)
     NeuroOptimizer, OptimizationConfig = load_optimizer()
     validate_neuro_invariants = load_validation()

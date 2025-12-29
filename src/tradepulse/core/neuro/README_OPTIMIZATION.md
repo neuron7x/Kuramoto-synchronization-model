@@ -91,6 +91,10 @@ Run the validation script to verify functionality:
 python examples/neuro_optimization_validation.py
 ```
 
+For reproducible results in benchmarks and validation runs, initialize a single
+global seed (for example via `utils.seed.set_global_seed(DEFAULT_SEED)`) before
+any NumPy-driven sampling.
+
 ## Architecture
 
 ```
