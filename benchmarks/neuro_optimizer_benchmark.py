@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from benchmarks._neuro_optimizer_loader import load_optimizer
+from core.utils.determinism import DEFAULT_SEED
 
 try:
     from memory_profiler import memory_usage
@@ -16,7 +17,7 @@ except ImportError:  # pragma: no cover - optional dependency
     memory_usage = None
 
 
-def _build_fixture(seed: int = 1337) -> tuple[object, dict, dict]:
+def _build_fixture(seed: int = DEFAULT_SEED) -> tuple[object, dict, dict]:
     rng = np.random.default_rng(seed)
     NeuroOptimizer, OptimizationConfig = load_optimizer()
     config = OptimizationConfig(dtype="float32", use_gpu=False)
@@ -39,7 +40,7 @@ def _build_fixture(seed: int = 1337) -> tuple[object, dict, dict]:
 
 def _run_steps(steps: int = 200) -> dict:
     optimizer, params, state = _build_fixture()
-    rng = np.random.default_rng(2024)
+    rng = np.random.default_rng(DEFAULT_SEED)
 
     start = time.perf_counter()
     for _ in range(steps):

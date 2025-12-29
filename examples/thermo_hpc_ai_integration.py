@@ -8,6 +8,7 @@ for thermodynamic-aware adaptive trading.
 import networkx as nx
 
 from neuropro.hpc_validation import generate_synthetic_data
+from core.utils.determinism import DEFAULT_SEED
 from runtime.thermo_controller import ThermoController
 
 
@@ -84,7 +85,7 @@ def main():
     # Step 3: Generate market data
     print("Step 3: Generating Market Data")
     print("-" * 80)
-    market_data = generate_synthetic_data(n_days=500, seed=42)
+    market_data = generate_synthetic_data(n_days=500, seed=DEFAULT_SEED)
     print(f"Generated {len(market_data)} days of market data")
     print(
         f"Price range: ${market_data['close'].min():.2f} - ${market_data['close'].max():.2f}"

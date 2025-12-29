@@ -11,6 +11,7 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 from runtime.thermo_cache import ThermoCache, VectorizedOperations
 from runtime.thermo_controller import ThermoController
 from runtime.thermo_memory_manager import OptimizedTelemetryManager
@@ -21,7 +22,7 @@ from runtime.thermo_performance import (
     timing_context,
 )
 
-SEED = 42
+SEED = DEFAULT_SEED
 
 
 def create_sample_graph() -> nx.DiGraph:
@@ -385,7 +386,7 @@ def example_6_integrated_usage():
 
 def main():
     """Run all examples."""
-    np.random.seed(SEED)
+    seed_numpy(SEED)
     print("\n" + "=" * 60)
     print("THERMODYNAMICS OPTIMIZATION EXAMPLES")
     print("=" * 60)

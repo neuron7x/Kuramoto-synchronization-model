@@ -11,6 +11,7 @@ from tradepulse.core.neuro.adaptive_calibrator import (
     AdaptiveCalibrator,
     CalibrationMetrics,
 )
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 
 
 @pytest.fixture
@@ -328,6 +329,38 @@ class TestAdaptiveCalibrator:
         assert calibrator2.state.best_score == calibrator1.state.best_score
         assert calibrator2.state.temperature == calibrator1.state.temperature
         assert len(calibrator2.state.metrics_history) == len(calibrator1.state.metrics_history)
+
+    def test_objective_trajectory_is_deterministic_with_seed(self, initial_params):
+        """Ensure identical seeds yield identical objective trajectories."""
+
+        def run_sequence(seed: int) -> list[float]:
+            seed_numpy(seed)
+            rng = np.random.default_rng(seed)
+            calibrator = AdaptiveCalibrator(initial_params)
+            objectives: list[float] = []
+
+            for step in range(12):
+                metrics = CalibrationMetrics(
+                    sharpe_ratio=1.2 + rng.normal(0, 0.1),
+                    max_drawdown=0.08 + abs(rng.normal(0, 0.01)),
+                    win_rate=0.6 + rng.normal(0, 0.02),
+                    avg_hold_time=25.0 + rng.normal(0, 1.0),
+                    dopamine_stability=0.3 + abs(rng.normal(0, 0.05)),
+                    serotonin_stress=0.25 + abs(rng.normal(0, 0.05)),
+                    gaba_inhibition_rate=0.35 + abs(rng.normal(0, 0.03)),
+                    na_ach_arousal=1.0 + rng.normal(0, 0.05),
+                    total_trades=100 + step,
+                    timestamp=float(step),
+                )
+                calibrator.step(metrics)
+                objectives.append(calibrator.state.best_score)
+
+            return objectives
+
+        trajectory_a = run_sequence(DEFAULT_SEED)
+        trajectory_b = run_sequence(DEFAULT_SEED)
+
+        np.testing.assert_allclose(trajectory_a, trajectory_b, rtol=1e-7, atol=1e-9)
 
 
 @pytest.mark.integration

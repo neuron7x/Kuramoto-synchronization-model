@@ -14,6 +14,7 @@ import importlib.util
 
 import numpy as np
 
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
 # Load ECS regulator
 spec_ecs = importlib.util.spec_from_file_location(
     "core.neuro.ecs_regulator",
@@ -26,7 +27,7 @@ spec_ecs.loader.exec_module(ecs_module)
 ECSInspiredRegulator = ecs_module.ECSInspiredRegulator
 
 
-def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
+def simulate_integrated_trading(n_steps: int = 100, seed: int = DEFAULT_SEED):
     """Simulate trading with ECS + Motivation integration."""
 
     print("=" * 70)
@@ -52,7 +53,7 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
 
     # Simulate market data
     print(f"Simulating {n_steps} trading steps...")
-    np.random.seed(seed)
+    seed_numpy(seed)
 
     # Generate realistic market conditions
     market_returns = []
@@ -289,7 +290,7 @@ def simulate_integrated_trading(n_steps: int = 100, seed: int = 42):
 
 def main():
     """Run integration demo."""
-    simulate_integrated_trading(n_steps=100, seed=42)
+    simulate_integrated_trading(n_steps=100, seed=DEFAULT_SEED)
 
 
 if __name__ == "__main__":

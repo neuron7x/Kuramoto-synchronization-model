@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 
 from strategies.neuro_trade_pulse import NeuroTradePulseConfig, NeuroTradePulseStrategy
+from core.utils.determinism import DEFAULT_SEED
 
 
-def sample_df(n=1500, seed=42) -> pd.DataFrame:
+def sample_df(n=1500, seed=DEFAULT_SEED) -> pd.DataFrame:
     rng = np.random.default_rng(seed=seed)
     idx = pd.date_range("2024-01-01", periods=n, freq="5min")
     price = 100 + np.cumsum(rng.normal(0, 0.6, n))

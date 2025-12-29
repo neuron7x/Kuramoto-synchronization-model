@@ -14,11 +14,12 @@ from modules.adaptive_risk_manager import AdaptiveRiskManager
 from modules.agent_coordinator import AgentCoordinator, AgentType, Priority
 from modules.dynamic_position_sizer import DynamicPositionSizer, SizingMethod
 from modules.market_regime_analyzer import MarketRegimeAnalyzer
+from core.utils.determinism import seed_numpy
 
 
 def generate_market_data(n_bars=200, trend=0.0005, volatility=0.015):
     """Generate synthetic market data"""
-    np.random.seed(42)
+    seed_numpy()
 
     # Price series
     returns = np.random.normal(trend, volatility, n_bars)
