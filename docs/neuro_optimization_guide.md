@@ -55,6 +55,21 @@ Optimization balances three objectives:
 2. **Balance** (35%): Homeostatic stability
 3. **Stability** (20%): Consistency over time
 
+#### Formal Objective
+
+The cross-neuromodulator optimizer solves the following constrained objective:
+
+```
+maximize F = w_p * P + w_b * B + w_s * S
+```
+
+Subject to:
+
+- **Parameter bounds**: each neuromodulator parameter remains within its validated
+  lower/upper limits.
+- **Homeostatic invariants**: dopamine/serotonin ratio, excitation/inhibition balance,
+  and arousal-attention coherence remain within physiological bounds.
+
 ##### Metric Scales and Objective Influence
 
 The optimizer combines metrics that are normalized onto comparable scales before weighting:

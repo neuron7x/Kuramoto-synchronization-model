@@ -331,6 +331,54 @@ class TestNeuroOptimizer:
         assert isinstance(objective, float)
         assert 0 <= objective <= 1
 
+    def test_objective_monotonic_with_weight_increase_fixed_components(self, sample_state):
+        """Objective should increase as weight shifts to higher-valued component."""
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.2,
+            homeostatic_deviation=0.2,
+        )
+        performance = 3.0  # Normalizes to 1.0 (P)
+
+        low_perf_weight = OptimizationConfig(
+            balance_weight=0.6,
+            performance_weight=0.2,
+            stability_weight=0.2,
+        )
+        mid_perf_weight = OptimizationConfig(
+            balance_weight=0.4,
+            performance_weight=0.4,
+            stability_weight=0.2,
+        )
+        high_perf_weight = OptimizationConfig(
+            balance_weight=0.2,
+            performance_weight=0.6,
+            stability_weight=0.2,
+        )
+
+        low_optimizer = NeuroOptimizer(low_perf_weight)
+        mid_optimizer = NeuroOptimizer(mid_perf_weight)
+        high_optimizer = NeuroOptimizer(high_perf_weight)
+
+        flat_history = [0.0, 10.0, 0.0, 10.0, 0.0, 10.0, 0.0, 10.0, 0.0, 10.0, 0.0]
+        low_optimizer._performance_history = flat_history
+        mid_optimizer._performance_history = flat_history
+        high_optimizer._performance_history = flat_history
+
+        objective_low = low_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+        objective_mid = mid_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+        objective_high = high_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+
+        assert objective_low < objective_mid < objective_high
+
     def test_objective_monotonic_with_weights(self, sample_state):
         """Ensure objective changes monotonically with weight shifts."""
         balance = BalanceMetrics(
