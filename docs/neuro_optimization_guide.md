@@ -245,6 +245,34 @@ The `NeuroOptimizer` coordinates all neuromodulators to maintain homeostatic bal
 - **Health Monitoring**: Real-time assessment of system health
 - **Convergence Detection**: Automatic detection of optimization convergence
 
+### Proportional Gradient Heuristic
+
+The optimizer uses proportional deviations from setpoints to estimate gradients.
+For any state value \(x\) with setpoint \(s\), the relative deviation is:
+
+```
+dev(x, s) = (x - s) / (s + epsilon)
+```
+
+For dopamine/serotonin, the DA/5-HT ratio deviation directly drives proportional updates:
+
+```
+ratio_dev = (da_5ht_ratio - da_5ht_setpoint) / (da_5ht_setpoint + epsilon)
+dopamine_grad  = -ratio_dev
+serotonin_grad =  ratio_dev
+```
+
+Other modules follow the same proportional rule:
+
+```
+gaba_grad     = -dev(gaba_inhibition, gaba_setpoint)
+arousal_grad  = -dev(na_arousal, arousal_setpoint)
+attention_grad = -dev(ach_attention, attention_setpoint)
+```
+
+Negative gradients indicate the parameter should decrease, positive gradients
+indicate it should increase, and larger deviations produce larger |gradients|.
+
 ### Stability Objective
 
 Stability is computed from recent performance as:

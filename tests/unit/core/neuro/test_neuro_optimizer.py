@@ -373,6 +373,40 @@ class TestNeuroOptimizer:
 
         assert large_mag > small_mag
 
+    def test_estimate_gradients_scales_with_deviation_gaba(
+        self,
+        opt_config,
+        sample_params,
+        sample_state,
+    ):
+        """Test GABA gradients scale with deviation magnitude."""
+        optimizer = NeuroOptimizer(opt_config)
+        setpoint = optimizer._setpoints['gaba_inhibition']
+
+        optimizer._balance_history.append(
+            optimizer._calculate_balance_metrics(sample_state)
+        )
+
+        small_state = dict(sample_state, gaba_inhibition=setpoint + 0.02)
+        large_state = dict(sample_state, gaba_inhibition=setpoint + 0.2)
+
+        small_gradients = optimizer._estimate_gradients(
+            sample_params,
+            small_state,
+            performance=1.0,
+        )
+
+        large_gradients = optimizer._estimate_gradients(
+            sample_params,
+            large_state,
+            performance=1.0,
+        )
+
+        small_mag = abs(small_gradients['gaba']['k_inhibit'])
+        large_mag = abs(large_gradients['gaba']['k_inhibit'])
+
+        assert large_mag > small_mag
+
     def test_apply_updates_with_momentum(self, opt_config, sample_params):
         """Test parameter updates with momentum."""
         optimizer = NeuroOptimizer(opt_config)
