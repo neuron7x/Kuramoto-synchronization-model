@@ -39,6 +39,10 @@ class OptimizationConfig:
         Weight for performance objective (0-1)
     stability_weight : float
         Weight for stability objective (0-1)
+    performance_min : float
+        Minimum performance value for normalization
+    performance_max : float
+        Maximum performance value for normalization
     learning_rate : float
         Base learning rate for parameter updates
     learning_rate_floor : float
@@ -76,6 +80,8 @@ class OptimizationConfig:
     balance_weight: float = 0.35
     performance_weight: float = 0.45
     stability_weight: float = 0.20
+    performance_min: float = -2.0
+    performance_max: float = 3.0
     learning_rate: float = 0.01
     learning_rate_floor: float = 0.001
     adaptive_decay: float = 0.6
@@ -99,6 +105,9 @@ class OptimizationConfig:
             self.balance_weight + self.performance_weight + self.stability_weight, 1.0
         ):
             raise ValueError("Objective weights must sum to 1.0")
+
+        if self.performance_min >= self.performance_max:
+            raise ValueError("performance_min must be less than performance_max")
 
         if not 0 < self.learning_rate < 1:
             raise ValueError("Learning rate must be in (0, 1)")
@@ -417,7 +426,7 @@ class NeuroOptimizer:
         """
         # Normalize performance to [0, 1] with configurable Sharpe bounds
         # Typical Sharpe ranges: [-2, 3] but can be adjusted
-        sharpe_min, sharpe_max = -2.0, 3.0
+        sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
         perf_normalized = float(
             self._xp.clip(
                 (performance - sharpe_min) / (sharpe_max - sharpe_min),

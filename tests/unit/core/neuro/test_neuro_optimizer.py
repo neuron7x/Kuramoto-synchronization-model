@@ -358,6 +358,63 @@ class TestNeuroOptimizer:
         assert isinstance(objective, float)
         assert 0 <= objective <= 1
 
+    def test_calculate_objective_clamps_performance(self, sample_state):
+        """Ensure performance normalization clamps outside configured bounds."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=1.0,
+            stability_weight=0.0,
+            performance_min=-1.0,
+            performance_max=1.0,
+        )
+        optimizer = NeuroOptimizer(config)
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        low_objective = optimizer._calculate_objective(-5.0, balance, sample_state)
+        mid_objective = optimizer._calculate_objective(0.0, balance, sample_state)
+        high_objective = optimizer._calculate_objective(5.0, balance, sample_state)
+
+        assert low_objective == pytest.approx(0.0)
+        assert mid_objective == pytest.approx(0.5)
+        assert high_objective == pytest.approx(1.0)
+
+    def test_calculate_objective_respects_performance_range(self, sample_state):
+        """Ensure performance range changes normalization sensitivity."""
+        narrow_config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=1.0,
+            stability_weight=0.0,
+            performance_min=0.0,
+            performance_max=2.0,
+        )
+        wide_config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=1.0,
+            stability_weight=0.0,
+            performance_min=-2.0,
+            performance_max=4.0,
+        )
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.4,
+            homeostatic_deviation=0.2,
+        )
+
+        narrow_optimizer = NeuroOptimizer(narrow_config)
+        wide_optimizer = NeuroOptimizer(wide_config)
+
+        performance = 1.5
+        narrow_objective = narrow_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+        wide_objective = wide_optimizer._calculate_objective(
+            performance, balance, sample_state
+        )
+
+        assert narrow_objective > wide_objective
+
     def test_objective_monotonic_with_weight_increase_fixed_components(self, sample_state):
         """Objective should increase as weight shifts to higher-valued component."""
         balance = BalanceMetrics(
