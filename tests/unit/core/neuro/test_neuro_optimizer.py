@@ -533,6 +533,22 @@ class TestNeuroOptimizer:
         assert np.isfinite(stability)
         assert 0 <= stability <= 1
 
+    def test_calculate_objective_stability_constant_performance(self, sample_state):
+        """Stability should be 1.0 when performance variance is zero."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+        )
+        optimizer = NeuroOptimizer(config)
+        optimizer._performance_history = [0.05] * 11
+
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        stability = optimizer._calculate_objective(0.05, balance, sample_state)
+
+        assert stability == pytest.approx(1.0)
+
     def test_optimize_updates_state(self, opt_config, sample_params, sample_state):
         """Test that optimize() updates optimizer state."""
         optimizer = NeuroOptimizer(opt_config)
