@@ -435,6 +435,25 @@ class NeuroOptimizer:
             Estimated gradients for each parameter
         """
         gradients = {}
+        balance = self._balance_history[-1] if self._balance_history else None
+        ratio_setpoint = self._setpoints['da_5ht_ratio']
+        ratio_deviation = 0.0
+
+        if balance:
+            ratio_deviation = (
+                balance.dopamine_serotonin_ratio - ratio_setpoint
+            ) / (ratio_setpoint + self._dtype.type(1e-6))
+
+        def relative_deviation(state_key: str) -> float:
+            setpoint = self._setpoints[state_key]
+            value = state.get(state_key, setpoint)
+            return float(
+                (value - setpoint) / (setpoint + self._dtype.type(1e-6))
+            )
+
+        gaba_dev = relative_deviation('gaba_inhibition')
+        arousal_dev = relative_deviation('na_arousal')
+        attention_dev = relative_deviation('ach_attention')
 
         # For each neuromodulator
         for module in ['dopamine', 'serotonin', 'gaba', 'na_ach']:
@@ -448,22 +467,20 @@ class NeuroOptimizer:
                 if not isinstance(param_value, (int, float)):
                     continue
 
-                # Estimate gradient based on homeostatic deviation
-                # This encourages parameters that restore balance
-                # Use exact module name matching to avoid substring issues
-                balance = self._balance_history[-1] if self._balance_history else None
-                if balance:
-                    # Push parameters toward homeostatic setpoints.
-                    # Scale gradient magnitude by deviation from the setpoint.
-                    deviation = balance.dopamine_serotonin_ratio - self._setpoints['da_5ht_ratio']
-                    if module == 'dopamine':
-                        grad = -deviation  # Increase dopamine when ratio is below setpoint
-                    elif module == 'serotonin':
-                        grad = deviation  # Increase serotonin when ratio is above setpoint
-                    else:
-                        grad = 0.0
+                # Estimate gradient based on proportional deviation from setpoints.
+                if module == 'dopamine':
+                    grad = -ratio_deviation
+                elif module == 'serotonin':
+                    grad = ratio_deviation
+                elif module == 'gaba':
+                    grad = -gaba_dev
                 else:
-                    grad = 0.0
+                    if 'arousal' in param_name:
+                        grad = -arousal_dev
+                    elif 'attention' in param_name:
+                        grad = -attention_dev
+                    else:
+                        grad = -0.5 * (arousal_dev + attention_dev)
 
                 gradients[module][param_name] = grad * self._current_lr
 
