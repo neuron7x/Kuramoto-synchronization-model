@@ -23,6 +23,7 @@ sys.path.insert(
 )
 
 from dopamine.dopamine_controller import DopamineController
+from utils.seed import set_global_seed
 
 
 def benchmark_step(
@@ -98,6 +99,7 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+    set_global_seed()
 
     # Load config
     if args.profile == "normal":

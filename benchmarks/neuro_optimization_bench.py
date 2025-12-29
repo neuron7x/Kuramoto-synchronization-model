@@ -23,7 +23,7 @@ sys.path.insert(0, str(src_path))
 import importlib.util  # noqa: E402
 
 import numpy as np  # noqa: E402
-from core.utils.determinism import seed_numpy  # noqa: E402
+from utils.seed import set_global_seed  # noqa: E402
 from benchmarks._neuro_optimizer_loader import (  # noqa: E402
     compute_stability_score,
     load_validation,
@@ -454,5 +454,5 @@ def main():
 
 
 if __name__ == "__main__":
-    seed_numpy()  # For reproducibility
+    set_global_seed()  # For reproducibility
     main()

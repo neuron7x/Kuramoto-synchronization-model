@@ -14,6 +14,7 @@ from benchmarks._neuro_optimizer_loader import (
     load_validation,
 )
 from core.utils.determinism import DEFAULT_SEED
+from utils.seed import set_global_seed
 
 try:
     from memory_profiler import memory_usage
@@ -81,6 +82,7 @@ def _measure_peak_memory(steps: int = 200) -> float | None:
 
 
 def main() -> None:
+    set_global_seed(DEFAULT_SEED)
     results = _run_steps()
     peak_mem = _measure_peak_memory()
     if peak_mem is not None:

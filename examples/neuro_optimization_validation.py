@@ -20,10 +20,11 @@ except ImportError:
     print("✗ NumPy not available - install with: pip install numpy")
     sys.exit(1)
 
-from core.utils.determinism import DEFAULT_SEED, seed_numpy
+from core.utils.determinism import DEFAULT_SEED
+from utils.seed import set_global_seed
 
 SEED = DEFAULT_SEED
-seed_numpy(SEED)
+set_global_seed(SEED)
 
 # Import modules directly (bypassing package __init__.py)
 import importlib.util
