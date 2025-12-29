@@ -61,6 +61,16 @@ def sample_state():
     }
 
 
+def _make_balance_with_ratio(ratio: float) -> BalanceMetrics:
+    return BalanceMetrics(
+        dopamine_serotonin_ratio=ratio,
+        gaba_excitation_balance=1.5,
+        arousal_attention_coherence=1.0,
+        overall_balance_score=0.7,
+        homeostatic_deviation=0.1,
+    )
+
+
 class TestOptimizationConfig:
     """Tests for OptimizationConfig dataclass."""
 
@@ -304,6 +314,64 @@ class TestNeuroOptimizer:
 
         assert isinstance(gradients, dict)
         assert 'dopamine' in gradients or 'serotonin' in gradients
+
+    def test_estimate_gradients_scales_with_deviation_dopamine(
+        self,
+        opt_config,
+        sample_params,
+        sample_state,
+    ):
+        """Test dopamine gradients scale with deviation magnitude."""
+        optimizer = NeuroOptimizer(opt_config)
+        setpoint = optimizer._setpoints['da_5ht_ratio']
+
+        optimizer._balance_history.append(_make_balance_with_ratio(setpoint - 0.05))
+        small_gradients = optimizer._estimate_gradients(
+            sample_params,
+            sample_state,
+            performance=1.0,
+        )
+
+        optimizer._balance_history.append(_make_balance_with_ratio(setpoint - 0.2))
+        large_gradients = optimizer._estimate_gradients(
+            sample_params,
+            sample_state,
+            performance=1.0,
+        )
+
+        small_mag = abs(small_gradients['dopamine']['learning_rate'])
+        large_mag = abs(large_gradients['dopamine']['learning_rate'])
+
+        assert large_mag > small_mag
+
+    def test_estimate_gradients_scales_with_deviation_serotonin(
+        self,
+        opt_config,
+        sample_params,
+        sample_state,
+    ):
+        """Test serotonin gradients scale with deviation magnitude."""
+        optimizer = NeuroOptimizer(opt_config)
+        setpoint = optimizer._setpoints['da_5ht_ratio']
+
+        optimizer._balance_history.append(_make_balance_with_ratio(setpoint + 0.05))
+        small_gradients = optimizer._estimate_gradients(
+            sample_params,
+            sample_state,
+            performance=1.0,
+        )
+
+        optimizer._balance_history.append(_make_balance_with_ratio(setpoint + 0.2))
+        large_gradients = optimizer._estimate_gradients(
+            sample_params,
+            sample_state,
+            performance=1.0,
+        )
+
+        small_mag = abs(small_gradients['serotonin']['stress_threshold'])
+        large_mag = abs(large_gradients['serotonin']['stress_threshold'])
+
+        assert large_mag > small_mag
 
     def test_apply_updates_with_momentum(self, opt_config, sample_params):
         """Test parameter updates with momentum."""

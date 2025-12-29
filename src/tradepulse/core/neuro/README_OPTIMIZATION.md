@@ -137,7 +137,7 @@ Trading System
 
 1. Calculate balance metrics (DA/5-HT, E/I, arousal-attention)
 2. Compute multi-objective function (performance + balance + stability)
-3. Estimate gradients toward homeostatic setpoints
+3. Estimate gradients toward homeostatic setpoints, scaling magnitude by deviation
 4. Apply momentum-based parameter updates
 5. Monitor health and convergence
 
