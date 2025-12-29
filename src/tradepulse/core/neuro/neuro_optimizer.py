@@ -340,13 +340,15 @@ class NeuroOptimizer:
         da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
         ei_dev = self._xp.abs(ei_balance - self._setpoints['excitation_inhibition']) / self._setpoints['excitation_inhibition']
 
-        # Overall homeostatic deviation
+        # Overall homeostatic deviation.
+        # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
         homeostatic_dev = (da_5ht_dev + ei_dev) / self._dtype.type(2.0)
         homeostatic_dev = self._xp.clip(
             homeostatic_dev, self._dtype.type(0.0), self._xp.inf
         )
 
-        # Overall balance score (inverse of deviation)
+        # Overall balance score (inverse of deviation).
+        # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
         balance_score = self._dtype.type(1.0) / (self._dtype.type(1.0) + homeostatic_dev)
         balance_score = self._xp.clip(
             balance_score, self._dtype.type(0.0), self._dtype.type(1.0)

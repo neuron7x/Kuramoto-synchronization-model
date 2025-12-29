@@ -307,6 +307,42 @@ attention_grad = -dev(ach_attention, attention_setpoint)
 Negative gradients indicate the parameter should decrease, positive gradients
 indicate it should increase, and larger deviations produce larger |gradients|.
 
+### Homeostatic Deviation & Balance Score
+
+The optimizer summarizes homeostatic drift with a scalar deviation and its
+inverse balance score.
+
+For the DA/5-HT ratio and E/I balance, first compute relative deviations:
+
+```
+da_5ht_dev = |da_5ht_ratio - da_5ht_setpoint| / da_5ht_setpoint
+ei_dev     = |ei_balance - ei_setpoint| / ei_setpoint
+```
+
+Then average them to obtain the homeostatic deviation:
+
+```
+homeostatic_dev = (da_5ht_dev + ei_dev) / 2
+```
+
+Finally, map deviation to a bounded balance score:
+
+```
+balance_score = 1 / (1 + homeostatic_dev)
+```
+
+**Ranges**
+
+- `homeostatic_dev ∈ [0, +∞)`: zero means perfect alignment with setpoints.
+- `balance_score ∈ (0, 1]`: 1.0 is ideal balance, values approach 0 as deviation grows.
+
+**Physical meaning**
+
+`homeostatic_dev` measures how far the neuromodulator system drifts from its
+target ratios (reward/serotonin and excitation/inhibition). `balance_score`
+is a monotonic inverse transform that compresses large deviations while keeping
+small deviations near 1, making it a stable, interpretable objective term.
+
 ### Stability Objective
 
 Stability is computed from recent performance as:

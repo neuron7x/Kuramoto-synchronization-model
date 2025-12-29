@@ -176,6 +176,33 @@ class TestNeuroOptimizer:
         assert isinstance(balance, BalanceMetrics)
         _assert_balance_invariants(balance)
 
+    def test_balance_score_monotonic_with_homeostatic_dev(self, opt_config):
+        """Ensure balance score decreases as homeostatic deviation increases."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        baseline_state = {
+            "dopamine_level": 0.5,
+            "serotonin_level": 0.3,
+            "gaba_inhibition": 0.4,
+            "na_arousal": 1.0,
+            "ach_attention": 0.7,
+        }
+        stressed_state = {
+            "dopamine_level": 1.6,
+            "serotonin_level": 0.1,
+            "gaba_inhibition": 0.1,
+            "na_arousal": 2.0,
+            "ach_attention": 0.2,
+        }
+
+        baseline_balance = optimizer._calculate_balance_metrics(baseline_state)
+        stressed_balance = optimizer._calculate_balance_metrics(stressed_state)
+
+        assert baseline_balance.homeostatic_deviation >= 0
+        assert stressed_balance.homeostatic_deviation >= 0
+        assert stressed_balance.homeostatic_deviation > baseline_balance.homeostatic_deviation
+        assert stressed_balance.overall_balance_score < baseline_balance.overall_balance_score
+
     @pytest.mark.parametrize(
         "state",
         [
