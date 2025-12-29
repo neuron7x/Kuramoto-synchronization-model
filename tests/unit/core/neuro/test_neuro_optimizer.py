@@ -513,6 +513,34 @@ class TestNeuroOptimizer:
         assert optimizer._current_lr < initial_lr
         assert optimizer._current_lr >= config.learning_rate_floor
 
+    def test_learning_rate_recovers_on_improvement(self):
+        """Test learning rate recovery after an improvement."""
+        config = OptimizationConfig(
+            balance_weight=0.35,
+            performance_weight=0.45,
+            stability_weight=0.20,
+            learning_rate=0.02,
+            learning_rate_floor=0.005,
+            adaptive_decay=0.5,
+            plateau_patience=1,
+            ema_alpha=0.5,
+        )
+
+        optimizer = NeuroOptimizer(config)
+
+        optimizer._update_learning_rate(1.0)
+        base_lr = optimizer._current_lr
+
+        optimizer._update_learning_rate(0.5)
+        decayed_lr = optimizer._current_lr
+
+        optimizer._update_learning_rate(1.5)
+        recovered_lr = optimizer._current_lr
+
+        assert decayed_lr < base_lr
+        assert recovered_lr > decayed_lr
+        assert recovered_lr <= base_lr
+
     def test_estimate_gradients(self, opt_config, sample_params, sample_state):
         """Test gradient estimation."""
         optimizer = NeuroOptimizer(opt_config)
