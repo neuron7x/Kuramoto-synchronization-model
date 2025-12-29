@@ -422,6 +422,7 @@ class NeuroOptimizer:
             stability = 0.5  # Neutral until we have history
 
         # Weighted combination
+        # Formal objective definition: docs/neuro_optimization_guide.md ("Formal Objective")
         objective = (
             self.config.performance_weight * perf_normalized
             + self.config.balance_weight * balance_obj
