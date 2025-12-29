@@ -5,7 +5,9 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
-from typing import Tuple, Type
+from typing import Callable, Tuple, Type
+
+import numpy as np
 
 
 def load_optimizer() -> Tuple[Type[object], Type[object]]:
@@ -18,3 +20,26 @@ def load_optimizer() -> Tuple[Type[object], Type[object]]:
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module.NeuroOptimizer, module.OptimizationConfig
+
+
+def load_validation() -> Callable[..., None]:
+    """Load validate_neuro_invariants from the source file."""
+    module_path = Path("src/tradepulse/core/neuro/_validation.py")
+    spec = importlib.util.spec_from_file_location("neuro_validation", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Unable to load neuro validation module")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.validate_neuro_invariants
+
+
+def compute_stability_score(history: list[float]) -> float:
+    """Compute stability score using the optimizer's objective history."""
+    if len(history) <= 10:
+        return 0.5
+    recent = np.asarray(history[-10:], dtype=float)
+    mean_perf = np.mean(recent)
+    denom = max(abs(mean_perf), 1e-6)
+    stability = 1.0 - (np.std(recent) / denom)
+    return float(np.clip(stability, 0.0, 1.0))

@@ -8,7 +8,11 @@ from pathlib import Path
 
 import numpy as np
 
-from benchmarks._neuro_optimizer_loader import load_optimizer
+from benchmarks._neuro_optimizer_loader import (
+    compute_stability_score,
+    load_optimizer,
+    load_validation,
+)
 from core.utils.determinism import DEFAULT_SEED
 
 try:
@@ -41,11 +45,21 @@ def _build_fixture(seed: int = DEFAULT_SEED) -> tuple[object, dict, dict]:
 def _run_steps(steps: int = 200) -> dict:
     optimizer, params, state = _build_fixture()
     rng = np.random.default_rng(DEFAULT_SEED)
+    validate_neuro_invariants = load_validation()
 
     start = time.perf_counter()
     for _ in range(steps):
         performance = float(rng.normal(loc=0.5, scale=0.1))
-        params, _ = optimizer.optimize(params, state, performance)
+        params, balance = optimizer.optimize(params, state, performance)
+        stability = compute_stability_score(optimizer._performance_history)
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability,
+            da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
+            ei_balance_range=optimizer.config.ei_balance_range,
+        )
     elapsed = time.perf_counter() - start
 
     return {

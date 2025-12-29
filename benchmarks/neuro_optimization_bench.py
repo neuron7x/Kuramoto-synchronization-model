@@ -24,6 +24,10 @@ import importlib.util  # noqa: E402
 
 import numpy as np  # noqa: E402
 from core.utils.determinism import seed_numpy  # noqa: E402
+from benchmarks._neuro_optimizer_loader import (  # noqa: E402
+    compute_stability_score,
+    load_validation,
+)
 
 
 def load_module(name, path):
@@ -145,6 +149,7 @@ def benchmark_optimizer_speed(n_iterations=100):
     )
 
     optimizer = NeuroOptimizer(config)
+    validate_neuro_invariants = load_validation()
 
     params = {
         'dopamine': {'learning_rate': 0.01, 'burst_factor': 1.5},
@@ -163,7 +168,16 @@ def benchmark_optimizer_speed(n_iterations=100):
 
     # Warmup
     for _ in range(5):
-        optimizer.optimize(params, state, 1.5)
+        _, balance = optimizer.optimize(params, state, 1.5)
+        stability = compute_stability_score(optimizer._performance_history)
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability,
+            da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
+            ei_balance_range=optimizer.config.ei_balance_range,
+        )
 
     # Reset
     optimizer = NeuroOptimizer(config)
@@ -178,7 +192,18 @@ def benchmark_optimizer_speed(n_iterations=100):
             'na_arousal': 1.1 + np.random.randn() * 0.2,
             'ach_attention': 0.7 + np.random.randn() * 0.1,
         }
-        optimizer.optimize(params, state_varied, 1.5 + np.random.randn() * 0.3)
+        _, balance = optimizer.optimize(
+            params, state_varied, 1.5 + np.random.randn() * 0.3
+        )
+        stability = compute_stability_score(optimizer._performance_history)
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability,
+            da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
+            ei_balance_range=optimizer.config.ei_balance_range,
+        )
 
     end_time = time.time()
     elapsed = end_time - start_time
@@ -219,6 +244,7 @@ def benchmark_convergence_time():
     )
 
     optimizer = NeuroOptimizer(config)
+    validate_neuro_invariants = load_validation()
 
     start_time = time.time()
     iteration = 0
@@ -236,7 +262,16 @@ def benchmark_convergence_time():
         # Simulate stable performance (should converge)
         performance = 1.5 + np.random.randn() * 0.05  # Low noise
 
-        optimizer.optimize(initial_params, state, performance)
+        _, balance = optimizer.optimize(initial_params, state, performance)
+        stability = compute_stability_score(optimizer._performance_history)
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability,
+            da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
+            ei_balance_range=optimizer.config.ei_balance_range,
+        )
         iteration += 1
 
         # Check convergence every 20 iterations

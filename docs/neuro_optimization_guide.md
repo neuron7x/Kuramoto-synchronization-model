@@ -47,6 +47,19 @@ The system maintains homeostatic balance by monitoring:
 - **E/I Balance**: Excitation to inhibition ratio (target: ~1.5, acceptable range: **[1.0, 2.5]**)
 - **Arousal-Attention Coherence**: Correlation between arousal and attention
 
+#### Invariant Validation
+
+All neuro-optimization runs enforce bounds on the core invariants via
+`validate_neuro_invariants` in `src/tradepulse/core/neuro/_validation.py`:
+
+- **DA/5-HT ratio** must stay within the configured bounds (default **[1.0, 3.0]**).
+- **E/I balance** must stay within the configured bounds (default **[1.0, 2.5]**).
+- **Arousal-attention coherence** must remain in **[0, 1]**.
+- **Stability score** must remain in **[0, 1]**.
+
+These checks are called from unit tests and benchmark runs to provide
+continuous guardrails during optimization and profiling.
+
 #### Multi-Objective Optimization
 
 Optimization balances three objectives:
