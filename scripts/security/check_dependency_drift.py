@@ -249,7 +249,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_arg_parser()
     args = parser.parse_args(argv)
 
-    requirements = args.requirements or [Path(__file__).resolve().parents[2] / "requirements.txt"]
+    default_declared = Path(__file__).resolve().parents[2] / "sbom" / "combined-requirements.txt"
+    requirements = args.requirements or [default_declared]
 
     issues = evaluate_drift(
         lock_path=args.lock,
