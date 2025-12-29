@@ -33,4 +33,7 @@ def test_runtime_semantics_produce_deltas(tmp_path: Path) -> None:
     ] >= 2
     assert invariants["health_counter_incremented"]
     assert invariants["health_latency_incremented"]
+    assert invariants["latency_finite"]
+    assert invariants["inflight_finite"]
+    assert invariants["queue_depth_finite"]
     assert invariants["non_api_metric_delta"]
