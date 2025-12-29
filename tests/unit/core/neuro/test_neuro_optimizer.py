@@ -549,6 +549,31 @@ class TestNeuroOptimizer:
         assert isinstance(updated_params, dict)
         assert isinstance(balance, BalanceMetrics)
 
+    def test_performance_history_respects_window(self, sample_params, sample_state):
+        """Ensure performance history is capped to history_window."""
+        config = OptimizationConfig(history_window=3)
+        optimizer = NeuroOptimizer(config)
+
+        expected_objectives = []
+        params = sample_params
+
+        for i in range(6):
+            performance = 1.0 + i * 0.1
+            balance = optimizer._calculate_balance_metrics(sample_state)
+            expected_objectives.append(
+                optimizer._calculate_objective(performance, balance, sample_state)
+            )
+            params, _ = optimizer.optimize(
+                params,
+                sample_state,
+                performance_score=performance,
+            )
+
+        assert len(optimizer._performance_history) == config.history_window
+        assert optimizer._performance_history == pytest.approx(
+            expected_objectives[-config.history_window:]
+        )
+
     def test_optimize_tracks_best_objective(self, opt_config, sample_params, sample_state):
         """Test that optimizer tracks best objective."""
         optimizer = NeuroOptimizer(opt_config)
