@@ -488,18 +488,25 @@ class TestNeuroOptimizer:
         """Test dopamine gradients scale with deviation magnitude."""
         optimizer = NeuroOptimizer(opt_config)
         setpoint = optimizer._setpoints['da_5ht_ratio']
+        serotonin_level = sample_state['serotonin_level']
 
-        optimizer._balance_history.append(_make_balance_with_ratio(setpoint - 0.05))
+        small_state = dict(
+            sample_state,
+            dopamine_level=serotonin_level * (setpoint - 0.05),
+        )
         small_gradients = optimizer._estimate_gradients(
             sample_params,
-            sample_state,
+            small_state,
             performance=1.0,
         )
 
-        optimizer._balance_history.append(_make_balance_with_ratio(setpoint - 0.2))
+        large_state = dict(
+            sample_state,
+            dopamine_level=serotonin_level * (setpoint - 0.2),
+        )
         large_gradients = optimizer._estimate_gradients(
             sample_params,
-            sample_state,
+            large_state,
             performance=1.0,
         )
 
@@ -517,18 +524,25 @@ class TestNeuroOptimizer:
         """Test serotonin gradients scale with deviation magnitude."""
         optimizer = NeuroOptimizer(opt_config)
         setpoint = optimizer._setpoints['da_5ht_ratio']
+        serotonin_level = sample_state['serotonin_level']
 
-        optimizer._balance_history.append(_make_balance_with_ratio(setpoint + 0.05))
+        small_state = dict(
+            sample_state,
+            dopamine_level=serotonin_level * (setpoint + 0.05),
+        )
         small_gradients = optimizer._estimate_gradients(
             sample_params,
-            sample_state,
+            small_state,
             performance=1.0,
         )
 
-        optimizer._balance_history.append(_make_balance_with_ratio(setpoint + 0.2))
+        large_state = dict(
+            sample_state,
+            dopamine_level=serotonin_level * (setpoint + 0.2),
+        )
         large_gradients = optimizer._estimate_gradients(
             sample_params,
-            sample_state,
+            large_state,
             performance=1.0,
         )
 
@@ -568,6 +582,35 @@ class TestNeuroOptimizer:
 
         small_mag = abs(small_gradients['gaba']['k_inhibit'])
         large_mag = abs(large_gradients['gaba']['k_inhibit'])
+
+        assert large_mag > small_mag
+
+    def test_estimate_gradients_scales_with_deviation_arousal(
+        self,
+        opt_config,
+        sample_params,
+        sample_state,
+    ):
+        """Test NA/ACh arousal gradients scale with deviation magnitude."""
+        optimizer = NeuroOptimizer(opt_config)
+        setpoint = optimizer._setpoints['na_arousal']
+
+        small_state = dict(sample_state, na_arousal=setpoint + 0.05)
+        large_state = dict(sample_state, na_arousal=setpoint + 0.3)
+
+        small_gradients = optimizer._estimate_gradients(
+            sample_params,
+            small_state,
+            performance=1.0,
+        )
+        large_gradients = optimizer._estimate_gradients(
+            sample_params,
+            large_state,
+            performance=1.0,
+        )
+
+        small_mag = abs(small_gradients['na_ach']['arousal_gain'])
+        large_mag = abs(large_gradients['na_ach']['arousal_gain'])
 
         assert large_mag > small_mag
 
