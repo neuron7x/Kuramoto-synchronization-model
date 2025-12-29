@@ -313,6 +313,9 @@ class NeuroOptimizer:
             self._dtype.type(1.0)
             - self._xp.abs(arousal - attention) / self._dtype.type(2.0)
         )
+        aa_coherence = self._xp.clip(
+            aa_coherence, self._dtype.type(0.0), self._dtype.type(1.0)
+        )
 
         # Calculate deviations from setpoints
         da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
@@ -320,9 +323,15 @@ class NeuroOptimizer:
 
         # Overall homeostatic deviation
         homeostatic_dev = (da_5ht_dev + ei_dev) / self._dtype.type(2.0)
+        homeostatic_dev = self._xp.clip(
+            homeostatic_dev, self._dtype.type(0.0), self._xp.inf
+        )
 
         # Overall balance score (inverse of deviation)
         balance_score = self._dtype.type(1.0) / (self._dtype.type(1.0) + homeostatic_dev)
+        balance_score = self._xp.clip(
+            balance_score, self._dtype.type(0.0), self._dtype.type(1.0)
+        )
 
         return BalanceMetrics(
             dopamine_serotonin_ratio=float(da_5ht_ratio),
