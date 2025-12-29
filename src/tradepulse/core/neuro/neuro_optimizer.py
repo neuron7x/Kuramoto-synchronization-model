@@ -456,25 +456,33 @@ class NeuroOptimizer:
             Estimated gradients for each parameter
         """
         gradients = {}
-        balance = self._balance_history[-1] if self._balance_history else None
-        ratio_setpoint = self._setpoints['da_5ht_ratio']
-        ratio_deviation = 0.0
+        epsilon = self._dtype.type(1e-6)
 
-        if balance:
-            ratio_deviation = (
-                balance.dopamine_serotonin_ratio - ratio_setpoint
-            ) / (ratio_setpoint + self._dtype.type(1e-6))
+        def relative_deviation(value: float, setpoint: float) -> float:
+            return float((value - setpoint) / (setpoint + epsilon))
 
-        def relative_deviation(state_key: str) -> float:
-            setpoint = self._setpoints[state_key]
-            value = state.get(state_key, setpoint)
-            return float(
-                (value - setpoint) / (setpoint + self._dtype.type(1e-6))
-            )
+        dopamine_level = float(
+            state.get('dopamine_level', self._setpoints['dopamine_level'])
+        )
+        serotonin_level = float(
+            state.get('serotonin_level', self._setpoints['serotonin_level'])
+        )
+        ratio_value = dopamine_level / (serotonin_level + float(epsilon))
+        ratio_deviation = relative_deviation(ratio_value, self._setpoints['da_5ht_ratio'])
 
-        gaba_dev = relative_deviation('gaba_inhibition')
-        arousal_dev = relative_deviation('na_arousal')
-        attention_dev = relative_deviation('ach_attention')
+        gaba_value = float(
+            state.get('gaba_inhibition', self._setpoints['gaba_inhibition'])
+        )
+        arousal_value = float(
+            state.get('na_arousal', self._setpoints['na_arousal'])
+        )
+        attention_value = float(
+            state.get('ach_attention', self._setpoints['ach_attention'])
+        )
+
+        gaba_dev = relative_deviation(gaba_value, self._setpoints['gaba_inhibition'])
+        arousal_dev = relative_deviation(arousal_value, self._setpoints['na_arousal'])
+        attention_dev = relative_deviation(attention_value, self._setpoints['ach_attention'])
 
         # For each neuromodulator
         for module in ['dopamine', 'serotonin', 'gaba', 'na_ach']:
