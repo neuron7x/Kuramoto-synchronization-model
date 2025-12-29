@@ -61,6 +61,8 @@ class OptimizationConfig:
         Maximum optimization iterations per session
     convergence_threshold : float
         Convergence threshold for early stopping
+    history_window : int
+        Window length for performance history tracking
     dtype : str
         Floating point dtype for numerical buffers (e.g., "float32")
     use_gpu : bool
@@ -91,6 +93,7 @@ class OptimizationConfig:
     momentum: float = 0.9
     max_iterations: int = 100
     convergence_threshold: float = 0.001
+    history_window: int = 20
     dtype: str = "float32"
     use_gpu: bool = False
     enable_plasticity: bool = True
@@ -129,6 +132,9 @@ class OptimizationConfig:
 
         if not 0 <= self.momentum < 1:
             raise ValueError("Momentum must be in [0, 1)")
+
+        if self.history_window < 1:
+            raise ValueError("History window must be a positive integer")
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
@@ -286,6 +292,10 @@ class NeuroOptimizer:
         # Calculate composite objective
         objective = self._calculate_objective(performance_score, balance, current_state)
         self._performance_history.append(objective)
+        if len(self._performance_history) > self.config.history_window:
+            self._performance_history = self._performance_history[
+                -self.config.history_window:
+            ]
         self._update_learning_rate(objective)
 
         # Update best
@@ -439,8 +449,8 @@ class NeuroOptimizer:
         balance_obj = balance.overall_balance_score
 
         # Stability objective (variance over recent history)
-        if len(self._performance_history) > 10:
-            recent_perf = self._performance_history[-10:]
+        if len(self._performance_history) >= self.config.history_window > 1:
+            recent_perf = self._performance_history[-self.config.history_window:]
             recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
             mean_perf = self._xp.mean(recent_array)
             std_perf = self._xp.std(recent_array)
@@ -744,13 +754,13 @@ class NeuroOptimizer:
         Dict[str, Any]
             Convergence status information
         """
-        if len(self._performance_history) < 20:
+        if len(self._performance_history) < self.config.history_window:
             return {
                 'converged': False,
                 'reason': 'insufficient_data',
             }
 
-        recent = self._performance_history[-20:]
+        recent = self._performance_history[-self.config.history_window:]
         variance = float(self._xp.std(recent))
 
         if variance < self.config.convergence_threshold:
