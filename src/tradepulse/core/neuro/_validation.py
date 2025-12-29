@@ -14,6 +14,7 @@ ensure_finite : Validate that a value is finite (not NaN/Inf)
 clamp : Clamp a value to a specified range
 validate_probability : Validate value is in [0, 1]
 validate_positive : Validate value is positive (optionally allowing zero)
+validate_neuro_invariants : Validate neuromodulator metric bounds
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ __all__ = [
     "clamp",
     "validate_probability",
     "validate_positive",
+    "validate_neuro_invariants",
 ]
 
 
@@ -191,3 +193,63 @@ def validate_positive(name: str, value: float, allow_zero: bool = False) -> floa
         if value <= 0.0:
             raise ValueError(f"{name} must be > 0, got {value}")
     return value
+
+
+def validate_neuro_invariants(
+    *,
+    dopamine_serotonin_ratio: float,
+    excitation_inhibition_balance: float,
+    arousal_attention_coherence: float,
+    stability: float,
+    da_5ht_ratio_range: tuple[float, float] = (1.0, 3.0),
+    ei_balance_range: tuple[float, float] = (1.0, 2.5),
+) -> None:
+    """Validate neuromodulator invariants for neuro optimization metrics.
+
+    Parameters
+    ----------
+    dopamine_serotonin_ratio : float
+        Dopamine to serotonin ratio (DA/5-HT).
+    excitation_inhibition_balance : float
+        Excitation to inhibition balance (E/I).
+    arousal_attention_coherence : float
+        Coherence between arousal and attention, expected in [0, 1].
+    stability : float
+        Stability metric expected in [0, 1].
+    da_5ht_ratio_range : tuple[float, float]
+        Inclusive bounds for DA/5-HT ratio.
+    ei_balance_range : tuple[float, float]
+        Inclusive bounds for E/I balance.
+
+    Raises
+    ------
+    ValueError
+        If any invariant is violated.
+    """
+    ratio = ensure_finite("dopamine_serotonin_ratio", dopamine_serotonin_ratio)
+    ei_balance = ensure_finite(
+        "excitation_inhibition_balance", excitation_inhibition_balance
+    )
+    coherence = ensure_finite("arousal_attention_coherence", arousal_attention_coherence)
+    stability_value = ensure_finite("stability", stability)
+
+    da_min, da_max = da_5ht_ratio_range
+    if not da_min <= ratio <= da_max:
+        raise ValueError(
+            f"dopamine_serotonin_ratio must be in [{da_min}, {da_max}], got {ratio}"
+        )
+
+    ei_min, ei_max = ei_balance_range
+    if not ei_min <= ei_balance <= ei_max:
+        raise ValueError(
+            f"excitation_inhibition_balance must be in [{ei_min}, {ei_max}], got {ei_balance}"
+        )
+
+    if not 0.0 <= coherence <= 1.0:
+        raise ValueError(
+            "arousal_attention_coherence must be in [0, 1], "
+            f"got {arousal_attention_coherence}"
+        )
+
+    if not 0.0 <= stability_value <= 1.0:
+        raise ValueError(f"stability must be in [0, 1], got {stability}")

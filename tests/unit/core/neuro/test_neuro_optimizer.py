@@ -17,6 +17,7 @@ from tradepulse.core.neuro.neuro_optimizer import (
     NeuroOptimizer,
     OptimizationConfig,
 )
+from tradepulse.core.neuro._validation import validate_neuro_invariants
 
 
 @pytest.fixture
@@ -79,10 +80,12 @@ def _make_balance_with_ratio(ratio: float) -> BalanceMetrics:
 
 
 def _assert_balance_invariants(balance: BalanceMetrics) -> None:
-    assert balance.dopamine_serotonin_ratio > 0
-    assert balance.gaba_excitation_balance > 0
-    assert 0 <= balance.arousal_attention_coherence <= 1
-    assert 0 <= balance.overall_balance_score <= 1
+    validate_neuro_invariants(
+        dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+        excitation_inhibition_balance=balance.gaba_excitation_balance,
+        arousal_attention_coherence=balance.arousal_attention_coherence,
+        stability=balance.overall_balance_score,
+    )
     assert balance.homeostatic_deviation >= 0
 
 
@@ -555,6 +558,18 @@ class TestNeuroOptimizer:
         optimizer._performance_history.append(-0.0104)
         stability_2 = optimizer._calculate_objective(-0.01, balance, sample_state)
 
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability_1,
+        )
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability_2,
+        )
         assert np.isfinite(stability_1)
         assert np.isfinite(stability_2)
         assert 0 <= stability_1 <= 1

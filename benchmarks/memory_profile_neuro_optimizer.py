@@ -6,7 +6,11 @@ from pathlib import Path
 
 import numpy as np
 
-from benchmarks._neuro_optimizer_loader import load_optimizer
+from benchmarks._neuro_optimizer_loader import (
+    compute_stability_score,
+    load_optimizer,
+    load_validation,
+)
 try:
     from memory_profiler import memory_usage
 except ImportError:  # pragma: no cover - optional dependency
@@ -16,6 +20,7 @@ except ImportError:  # pragma: no cover - optional dependency
 def _run_steps(steps: int = 200) -> None:
     rng = np.random.default_rng(13)
     NeuroOptimizer, OptimizationConfig = load_optimizer()
+    validate_neuro_invariants = load_validation()
     optimizer = NeuroOptimizer(OptimizationConfig(dtype="float32"))
     params = {
         "dopamine": {"learning_rate": 0.01, "discount_gamma": 0.99},
@@ -33,7 +38,16 @@ def _run_steps(steps: int = 200) -> None:
 
     for _ in range(steps):
         performance = float(rng.normal(loc=0.5, scale=0.1))
-        params, _ = optimizer.optimize(params, state, performance)
+        params, balance = optimizer.optimize(params, state, performance)
+        stability = compute_stability_score(optimizer._performance_history)
+        validate_neuro_invariants(
+            dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
+            excitation_inhibition_balance=balance.gaba_excitation_balance,
+            arousal_attention_coherence=balance.arousal_attention_coherence,
+            stability=stability,
+            da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
+            ei_balance_range=optimizer.config.ei_balance_range,
+        )
 
 
 def main() -> None:
