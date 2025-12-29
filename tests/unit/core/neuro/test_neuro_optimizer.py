@@ -239,6 +239,28 @@ class TestNeuroOptimizer:
 
         assert 0 <= balance.arousal_attention_coherence <= 1
 
+    @pytest.mark.parametrize(
+        "arousal,attention",
+        [
+            (1e9, -1e9),
+            (-1e6, 1e6),
+            (1e12, 1e-12),
+        ],
+    )
+    def test_arousal_attention_coherence_extreme_bounds(
+        self, opt_config, sample_state, arousal, attention
+    ):
+        """Verify arousal-attention coherence stays within [0, 1] for extremes."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        extreme_state = dict(sample_state)
+        extreme_state["na_arousal"] = arousal
+        extreme_state["ach_attention"] = attention
+
+        balance = optimizer._calculate_balance_metrics(extreme_state)
+
+        assert 0 <= balance.arousal_attention_coherence <= 1
+
     def test_calculate_balance_with_defaults(self, opt_config):
         """Test balance calculation with missing state values."""
         optimizer = NeuroOptimizer(opt_config)

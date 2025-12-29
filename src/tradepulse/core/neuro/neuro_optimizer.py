@@ -334,9 +334,7 @@ class NeuroOptimizer:
             self._dtype.type(1.0)
             - self._xp.abs(arousal - attention) / self._dtype.type(2.0)
         )
-        aa_coherence = self._xp.clip(
-            aa_coherence, self._dtype.type(0.0), self._dtype.type(1.0)
-        )
+        aa_coherence = self._xp.clip(aa_coherence, 0.0, 1.0)
 
         # Calculate deviations from setpoints
         da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
