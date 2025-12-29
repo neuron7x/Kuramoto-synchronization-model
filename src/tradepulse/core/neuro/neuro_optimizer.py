@@ -610,21 +610,25 @@ class NeuroOptimizer:
         if self._ema_objective is None:
             self._ema_objective = objective
         else:
+            # EMA update: ema_t = alpha * objective_t + (1 - alpha) * ema_{t-1}
             self._ema_objective = (
                 self.config.ema_alpha * objective
                 + (1 - self.config.ema_alpha) * self._ema_objective
             )
 
+        # Improvement rule: objective_t >= ema_t
         improving = objective >= self._ema_objective
         if improving:
             self._plateau_steps = 0
-            # Gradually recover toward base learning rate after decay events
+            # Recovery: lr_t = min(lr_base, lr_prev + 0.25 * (lr_base - lr_prev))
             recovery_step = (self.config.learning_rate - self._current_lr) * 0.25
             self._current_lr = min(self.config.learning_rate, self._current_lr + recovery_step)
             return
 
+        # Plateau tracking: apply decay once plateau_steps >= plateau_patience
         self._plateau_steps += 1
         if self._plateau_steps >= self.config.plateau_patience:
+            # Decay: lr_t = max(lr_floor, lr_prev * adaptive_decay)
             decayed_lr = self._current_lr * self.config.adaptive_decay
             self._current_lr = max(self.config.learning_rate_floor, decayed_lr)
             self._plateau_steps = 0

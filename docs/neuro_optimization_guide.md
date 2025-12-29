@@ -370,6 +370,39 @@ stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
 zero when the mean collapses toward zero. The value is clipped to `[0, 1]` to avoid spikes
 when the mean is negative or near zero.
 
+### Adaptive Learning Rate (EMA + Plateau Decay)
+
+The optimizer smooths the composite objective with an exponential moving average (EMA)
+to distinguish transient noise from true improvements:
+
+```
+ema_t = alpha * objective_t + (1 - alpha) * ema_{t-1}
+```
+
+If the current objective is **at least** the EMA, the run is considered improving:
+
+```
+improving_t = objective_t >= ema_t
+```
+
+Learning-rate recovery on improvement:
+
+```
+lr_t = min(lr_base, lr_{t-1} + 0.25 * (lr_base - lr_{t-1}))
+```
+
+If the objective is **below** the EMA, the step counts toward a plateau. Once
+`plateau_steps >= plateau_patience`, the learning rate decays by `adaptive_decay`,
+but never below the configured floor:
+
+```
+lr_t = max(lr_floor, lr_{t-1} * adaptive_decay)
+plateau_steps = 0
+```
+
+These rules ensure that learning decays during sustained stagnation, while recovering
+steadily when performance rebounds.
+
 ### API Reference
 
 #### OptimizationConfig
