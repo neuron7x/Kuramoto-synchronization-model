@@ -434,6 +434,44 @@ class TestNeuroOptimizer:
         assert len(logged_metrics) > 0
         assert any('objective' in name for name, _ in logged_metrics)
 
+    def test_gpu_backend_avoids_numpy_ops(self, sample_state, monkeypatch):
+        """Test GPU backend uses cupy operations when available."""
+        cp = pytest.importorskip("cupy")
+
+        config = OptimizationConfig(use_gpu=True)
+        optimizer = NeuroOptimizer(config)
+
+        assert optimizer._xp is cp
+
+        def guard_numpy(func):
+            def wrapper(*args, **kwargs):
+                if any(isinstance(arg, cp.ndarray) for arg in args):
+                    raise AssertionError("numpy operation used on cupy array")
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        monkeypatch.setattr(np, "clip", guard_numpy(np.clip))
+        monkeypatch.setattr(np, "mean", guard_numpy(np.mean))
+        monkeypatch.setattr(np, "std", guard_numpy(np.std))
+
+        optimizer._performance_history = [cp.asarray(1.0)] * 11
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        objective = optimizer._calculate_objective(cp.asarray(1.5), balance, sample_state)
+
+        assert isinstance(objective, float)
+
+        optimizer._performance_history = [cp.asarray(1.0)] * 20
+        convergence = optimizer._check_convergence()
+
+        assert 'converged' in convergence
+
+        optimizer._balance_history = [balance] * 10
+        report = optimizer.get_optimization_report()
+
+        assert report['status'] == 'active'
+
 
 @pytest.mark.integration
 class TestNeuroOptimizerIntegration:

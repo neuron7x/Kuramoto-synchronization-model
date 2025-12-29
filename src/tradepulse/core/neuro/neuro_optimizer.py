@@ -358,7 +358,11 @@ class NeuroOptimizer:
         # Typical Sharpe ranges: [-2, 3] but can be adjusted
         sharpe_min, sharpe_max = -2.0, 3.0
         perf_normalized = float(
-            np.clip((performance - sharpe_min) / (sharpe_max - sharpe_min), 0, 1)
+            self._xp.clip(
+                (performance - sharpe_min) / (sharpe_max - sharpe_min),
+                0,
+                1,
+            )
         )
 
         # Balance objective (already in [0, 1])
@@ -494,13 +498,17 @@ class NeuroOptimizer:
 
                 # Gradient clipping relative to parameter magnitude
                 max_step = abs(param_value) * self.config.max_gradient_norm
-                clipped_velocity = float(np.clip(velocity, -max_step, max_step))
+                clipped_velocity = float(
+                    self._xp.clip(velocity, -max_step, max_step)
+                )
 
                 # Apply update
                 new_value = param_value + clipped_velocity
 
                 # Clip to reasonable bounds (prevent instability)
-                new_value = np.clip(new_value, param_value * 0.8, param_value * 1.2)
+                new_value = float(
+                    self._xp.clip(new_value, param_value * 0.8, param_value * 1.2)
+                )
 
                 updated[module][param_name] = new_value
 
@@ -573,8 +581,12 @@ class NeuroOptimizer:
             'best_objective': self._best_objective,
             'current_objective': self._performance_history[-1],
             'performance_trend': 'improving' if len(recent_perf) > 1 and recent_perf[-1] > recent_perf[0] else 'stable',
-            'avg_balance_score': np.mean([b.overall_balance_score for b in recent_balance]),
-            'avg_homeostatic_dev': np.mean([b.homeostatic_deviation for b in recent_balance]),
+            'avg_balance_score': float(
+                self._xp.mean([b.overall_balance_score for b in recent_balance])
+            ),
+            'avg_homeostatic_dev': float(
+                self._xp.mean([b.homeostatic_deviation for b in recent_balance])
+            ),
             'convergence': self._check_convergence(),
             'health_status': self._assess_health(recent_balance[-1] if recent_balance else None),
         }
@@ -594,7 +606,7 @@ class NeuroOptimizer:
             }
 
         recent = self._performance_history[-20:]
-        variance = np.std(recent)
+        variance = float(self._xp.std(recent))
 
         if variance < self.config.convergence_threshold:
             return {
