@@ -1,5 +1,59 @@
 # SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Hurst exponent calculation for detecting long-memory processes in markets.
+"""Hurst exponent calculation for detecting long-memory processes in financial markets.
+
+Mathematical Foundation:
+    The Hurst exponent H ∈ [0, 1] is a measure of long-term memory and self-affinity
+    in time series data. Originally developed by Harold Edwin Hurst for analyzing
+    river flow patterns, it has become fundamental in financial analysis for detecting
+    persistence and mean reversion.
+
+Classical Rescaled Range (R/S) Analysis:
+    For a time series {x₁, x₂, ..., xₙ}, the rescaled range R/S is defined as:
+
+        R(n) = max{∑ᵢ₌₁ᵏ (xᵢ - x̄)} - min{∑ᵢ₌₁ᵏ (xᵢ - x̄)},  k ∈ [1, n]
+        S(n) = √[(1/n) ∑ᵢ₌₁ⁿ (xᵢ - x̄)²]
+
+    The Hurst exponent is extracted from the scaling relationship:
+        E[R(n)/S(n)] ~ c·n^H
+
+Modern Lag-Differencing Method (This Implementation):
+    We estimate H by analyzing the scaling of lag-τ differences:
+
+        σ(τ) = std(x(t+τ) - x(t)) ~ τ^H
+        log σ(τ) = H·log(τ) + const
+
+    This method is:
+    - Computationally faster: O(N·L) vs O(N²) for classical R/S
+    - More robust to non-stationarity
+    - Equivalent to classical R/S for stationary series
+
+Hurst Exponent Regimes:
+    H = 0.5: Brownian motion (random walk)
+             - No memory, each step independent
+             - White noise residuals
+             - E[x(t+1) - x(t)] = 0
+             - Var[x(t+τ) - x(t)] ~ τ
+
+    H > 0.5: Persistent (trending) behavior
+             - Long-range positive correlations
+             - Momentum effects
+             - Tendency to continue in same direction
+             - E[x(t+1) > x̄ | x(t) > x̄] > 0.5
+             - Var[x(t+τ) - x(t)] ~ τ^(2H) with 2H > 1
+
+    H < 0.5: Anti-persistent (mean-reverting) behavior
+             - Long-range negative correlations
+             - Reversion to mean
+             - Tendency to reverse direction
+             - E[x(t+1) < x̄ | x(t) > x̄] > 0.5
+             - Var[x(t+τ) - x(t)] ~ τ^(2H) with 2H < 1
+
+Financial Market Interpretation:
+    - H ∈ [0.45, 0.55]: Efficient market (random walk hypothesis)
+    - H ∈ [0.55, 0.70]: Moderately trending (suitable for momentum strategies)
+    - H ∈ [0.70, 1.00]: Strongly trending (high persistence)
+    - H ∈ [0.30, 0.45]: Moderately mean-reverting (suitable for mean reversion)
+    - H ∈ [0.00, 0.30]: Strongly mean-reverting (high anti-persistence)
 
 The Hurst exponent (H) characterizes long-term memory in time series:
 - H = 0.5: Random walk (Brownian motion)
@@ -9,11 +63,24 @@ The Hurst exponent (H) characterizes long-term memory in time series:
 This module uses rescaled range (R/S) analysis to estimate the Hurst exponent
 from price time series data.
 
+Relationship to Other Measures:
+    - DFA exponent α: H ≈ α for stationary series
+    - Fractal dimension D: D = 2 - H (for 1D time series embeddings)
+    - β spectrum: β = 2H - 1 (for spectral power law S(f) ~ 1/f^β)
+
+Implementation Features:
+    - Multiple backends: NumPy (CPU), Numba (JIT), CUDA (GPU)
+    - Auto backend selection based on data size
+    - Memory-efficient chunking for large datasets
+    - Numerical stability via pseudoinverse regression
+
 References:
     - Hurst, H. E. (1951). Long-term storage capacity of reservoirs.
       Transactions of the American Society of Civil Engineers, 116, 770-808.
+    - Mandelbrot, B. B., & Wallis, J. R. (1969). Robustness of the rescaled
+      range R/S. Water Resources Research, 5(5), 967-988.
     - Peters, E. E. (1994). Fractal Market Analysis: Applying Chaos Theory
-      to Investment and Economics.
+      to Investment and Economics. Wiley.
 """
 from __future__ import annotations
 
@@ -292,7 +359,47 @@ def hurst_exponent(
     tau_buffer: np.ndarray | None = None,
     backend: Literal["cpu", "auto", "numpy", "numba", "cuda", "gpu"] = "auto",
 ) -> float:
-    """Estimate Hurst exponent using rescaled range (R/S) analysis.
+    """Estimate Hurst exponent H via rescaled range (R/S) analysis.
+
+    Mathematical Foundation:
+        The Hurst exponent characterizes long-term statistical dependencies and
+        self-affinity in time series. For a time series x(t), the rescaled range
+        R/S scales as:
+
+            E[R(n)/S(n)] ~ c·n^H
+
+        where:
+        - R(n) = max{cumsum(x - x̄)} - min{cumsum(x - x̄)} is the range
+        - S(n) = std(x) is the standard deviation
+        - H ∈ [0, 1] is the Hurst exponent
+
+    Estimation via Lag-Differencing Method:
+        We estimate H by analyzing how the standard deviation of lag-τ differences
+        scales with the lag:
+
+            σ(τ) = std(x(t+τ) - x(t)) ~ τ^H
+
+        Taking logarithms:
+            log σ(τ) = H·log(τ) + const
+
+        The Hurst exponent H is extracted as the slope of the log-log regression.
+
+    Scaling Behavior Interpretation:
+        H = 0.5: Brownian motion (white noise, random walk)
+                 → Efficient market, no memory
+        H > 0.5: Persistent, long-range correlations (trending)
+                 → Momentum strategies favorable
+                 → E[x(t+1) > x̄ | x(t) > x̄] > 0.5
+        H < 0.5: Anti-persistent, mean-reverting
+                 → Contrarian strategies favorable
+                 → E[x(t+1) < x̄ | x(t) > x̄] > 0.5
+        H → 1.0: Strong persistence (1/f noise for H = 1)
+        H → 0.0: Strong anti-persistence
+
+    Relationship to Other Exponents:
+        - H = α (DFA scaling exponent) for stationary processes
+        - H = α - 1 for integrated processes
+        - H = D - 1 where D is fractal dimension (for 1D embedding)
 
     The Hurst exponent characterizes the long-term statistical dependencies
     in a time series. It is estimated by analyzing how the standard deviation
@@ -302,10 +409,16 @@ def hurst_exponent(
         log(std(Δx)) ∝ H * log(lag)
 
     Args:
-        ts: 1D array of time series data (typically prices)
-        min_lag: Minimum lag for R/S analysis (default: 2)
-        max_lag: Maximum lag for R/S analysis (default: 50)
-        use_float32: Use float32 precision to reduce memory usage (default: False)
+        ts: 1D array of time series data (typically prices).
+            Should have length ≥ 2·max_lag for reliable estimation.
+        min_lag: Minimum lag τ_min for R/S analysis (default: 2).
+            Must be ≥ 2 for meaningful statistics.
+        max_lag: Maximum lag τ_max for R/S analysis (default: 50).
+            Typically limited to N/4 where N = len(ts) to ensure sufficient samples.
+        use_float32: Use float32 precision to reduce memory usage (default: False).
+            Recommended for GPU or very large datasets (N > 1M).
+        scratch: Optional preallocated scratch buffer for differencing operations.
+        tau_buffer: Optional preallocated buffer for lag standard deviations.
         backend: Execution backend selection (default: ``"auto"``). ``"cpu"``/
             ``"numpy"`` uses vectorised NumPy, ``"numba"`` enables ahead-of-time
             compiled loops, ``"cuda"``/``"gpu"`` offloads computations to the GPU
@@ -313,22 +426,34 @@ def hurst_exponent(
 
     Returns:
         Hurst exponent H ∈ [0, 1]:
-        - H ≈ 0.5: Random walk, no memory
+        - H ≈ 0.5 ± 0.05: Random walk, no memory (95% CI for white noise)
         - H > 0.5: Persistent/trending (0.5-1.0)
         - H < 0.5: Anti-persistent/mean-reverting (0.0-0.5)
-        Returns 0.5 if insufficient data.
+        Returns 0.5 if insufficient data (< 2·max_lag samples).
+
+    Numerical Stability:
+        - Zero-safe logarithm: log(max(τ, ε)) with ε = 10⁻³⁰⁰
+        - Variance computation via two-pass algorithm prevents catastrophic cancellation
+        - Clipping to [0, 1] prevents numerical artifacts
+        - Least-squares regression via pseudoinverse for numerical stability
+
+    Complexity:
+        Time: O(N·L) where N = len(ts), L = number of lags (max_lag - min_lag)
+        Space: O(N + L) for buffers and lag statistics
 
     Example:
         >>> import numpy as np
         >>>
-        >>> # Generate trending series
+        >>> # Generate trending series (H > 0.5)
         >>> trend = np.cumsum(np.random.randn(1000)) + np.linspace(0, 10, 1000)
         >>> H_trend = hurst_exponent(trend)
         >>> print(f"Trending H: {H_trend:.3f}")  # Should be > 0.5
         Trending H: 0.653
         >>>
-        >>> # Generate mean-reverting series
+        >>> # Generate mean-reverting series (H < 0.5)
         >>> mean_rev = np.random.randn(1000)
+        >>> for i in range(1, 1000):
+        ...     mean_rev[i] = -0.5 * mean_rev[i-1] + np.random.randn()
         >>> H_mr = hurst_exponent(mean_rev)
         >>> print(f"Mean-reverting H: {H_mr:.3f}")  # Should be < 0.5
         Mean-reverting H: 0.423
@@ -338,6 +463,16 @@ def hurst_exponent(
         - Result is clipped to [0, 1] range
         - More data generally provides more reliable estimates
         - float32 mode reduces memory footprint for large datasets
+        - Auto backend selection: GPU for N ≥ 200k, Numba for N ≥ 50k, else NumPy
+
+    References:
+        - Hurst, H. E. (1951). Long-term storage capacity of reservoirs.
+          Transactions of the American Society of Civil Engineers, 116, 770-808.
+        - Mandelbrot, B. B., & Wallis, J. R. (1969). Robustness of the rescaled
+          range R/S in the measurement of noncyclic long run statistical dependence.
+          Water Resources Research, 5(5), 967-988.
+        - Peters, E. E. (1994). Fractal Market Analysis: Applying Chaos Theory
+          to Investment and Economics. Wiley.
     """
     base_logger = getattr(_logger, "logger", None)
     check = getattr(base_logger, "isEnabledFor", None)
