@@ -9,7 +9,11 @@ import pytest
 
 def _load_module(monkeypatch):
     dummy = types.ModuleType("runtime.thermo_controller")
-    dummy.ThermoController = type("ThermoController", (), {})
+    class DummyController:
+        def __init__(self, *_, **__):
+            pass
+
+    dummy.ThermoController = DummyController
     monkeypatch.setitem(sys.modules, "runtime.thermo_controller", dummy)
     monkeypatch.setitem(sys.modules, "core.energy", types.SimpleNamespace(delta_free_energy=lambda a, b, c: 0.0))
     return importlib.reload(importlib.import_module("scripts.benchmark_bonds"))

@@ -39,7 +39,10 @@ def test_main_writes_matrix(monkeypatch, tmp_path: Path) -> None:
 
 def test_adapter_import_failure_skipped(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(gen.pkgutil, "walk_packages", lambda *a, **k: [(None, "execution.adapters.missing", False)])
-    monkeypatch.setattr(gen.importlib, "import_module", lambda name: (_ for _ in ()).throw(ImportError()))
+    def raise_import(_):
+        raise ImportError()
+
+    monkeypatch.setattr(gen.importlib, "import_module", raise_import)
     output = tmp_path / "out.md"
     monkeypatch.setattr(
         gen.argparse.ArgumentParser, "parse_args", lambda self: types.SimpleNamespace(write=output)

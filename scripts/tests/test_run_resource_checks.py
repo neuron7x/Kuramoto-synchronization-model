@@ -45,13 +45,29 @@ def _install_stub_modules(monkeypatch) -> None:
     monkeypatch.setitem(sys.modules, "core.indicators.kuramoto", kuramoto_mod)
 
     pipeline_mod = types.ModuleType("pipeline")
-    pipeline_mod.IndicatorPipeline = type(
-        "IndicatorPipeline", (), {"__init__": lambda self, *a, **k: None, "run": lambda self, data: types.SimpleNamespace(release=lambda: None)}
-    )
+
+    class DummyPipeline:
+        def __init__(self, *_, **__):
+            pass
+
+        def run(self, data):
+            return types.SimpleNamespace(release=lambda: None)
+
+    pipeline_mod.IndicatorPipeline = DummyPipeline
     monkeypatch.setitem(sys.modules, "core.indicators.pipeline", pipeline_mod)
 
+    class DummyRNG:
+        def normal(self, *_, **__):
+            return [0.0]
+
+        def uniform(self, *_, **__):
+            return [[0.0]]
+
+        def astype(self, *_, **__):
+            return [0.0]
+
     numpy_mod = types.ModuleType("numpy")
-    numpy_mod.random = types.SimpleNamespace(default_rng=lambda seed=None: types.SimpleNamespace(normal=lambda *a, **k: [0.0], uniform=lambda *a, **k: [[0.0]], astype=lambda *a, **k: [0.0]))
+    numpy_mod.random = types.SimpleNamespace(default_rng=lambda seed=None: DummyRNG())
     numpy_mod.linspace = lambda *a, **k: [0.0]
     numpy_mod.cumsum = lambda arr: arr
     monkeypatch.setitem(sys.modules, "numpy", numpy_mod)
