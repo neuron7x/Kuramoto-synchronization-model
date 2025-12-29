@@ -443,9 +443,10 @@ class NeuroOptimizer:
             recent_perf = self._performance_history[-10:]
             recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
             mean_perf = self._xp.mean(recent_array)
+            std_perf = self._xp.std(recent_array)
             epsilon = self._dtype.type(1e-6)
             denom = self._xp.maximum(self._xp.abs(mean_perf), epsilon)
-            stability = self._dtype.type(1.0) - self._xp.std(recent_array) / denom
+            stability = self._dtype.type(1.0) - std_perf / denom
             stability = float(self._xp.clip(stability, 0, 1))
         else:
             stability = 0.5  # Neutral until we have history
