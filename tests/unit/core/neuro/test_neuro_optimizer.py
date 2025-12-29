@@ -361,6 +361,34 @@ class TestNeuroOptimizer:
         assert isinstance(objective, float)
         assert 0 <= objective <= 1
 
+    def test_log_metrics_emits_expected_keys(self, opt_config):
+        """Ensure logged metrics use the neuro_opt.<metric> naming scheme."""
+        captured = {}
+
+        def logger(name: str, value: float) -> None:
+            captured[name] = value
+
+        optimizer = NeuroOptimizer(opt_config, logger=logger)
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.8,
+            homeostatic_deviation=0.2,
+        )
+
+        optimizer._log_metrics(0.6, balance)
+
+        expected = {
+            "neuro_opt.objective",
+            "neuro_opt.balance_score",
+            "neuro_opt.homeostatic_dev",
+            "neuro_opt.da_5ht_ratio",
+            "neuro_opt.ei_balance",
+            "neuro_opt.aa_coherence",
+        }
+        assert expected.issubset(captured.keys())
+
     def test_calculate_objective_clamps_performance(self, sample_state):
         """Ensure performance normalization clamps outside configured bounds."""
         config = OptimizationConfig(

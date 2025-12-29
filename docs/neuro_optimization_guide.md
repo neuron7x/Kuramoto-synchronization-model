@@ -129,6 +129,20 @@ Changing weights shifts the optimizer's focus:
 - Increasing **balance_weight** biases toward homeostatic stability (lower stress/overdrive).
 - Increasing **stability_weight** penalizes volatile objective trajectories (smoother learning).
 
+### Logged Metrics
+
+The optimizer logs the core metrics below (via `_log_metrics`) using the
+`neuro_opt.<metric>` naming scheme. Ranges reflect validated or clipped bounds.
+
+| Metric name | Units | Expected range |
+| --- | --- | --- |
+| `neuro_opt.objective` | unitless | **[0, 1]** |
+| `neuro_opt.balance_score` | unitless | **[0, 1]** |
+| `neuro_opt.homeostatic_dev` | unitless | **[0, ∞)** |
+| `neuro_opt.da_5ht_ratio` | ratio | **[1.0, 3.0]** (default config) |
+| `neuro_opt.ei_balance` | ratio | **[1.0, 2.5]** (default config) |
+| `neuro_opt.aa_coherence` | unitless | **[0, 1]** |
+
 ## Architecture
 
 ```
