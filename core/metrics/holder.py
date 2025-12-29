@@ -1,4 +1,46 @@
-"""Hölder exponent estimation via wavelet coefficients.
+"""Hölder exponent estimation via wavelet coefficients for multifractal analysis.
+
+Mathematical Foundation:
+    The Hölder exponent (also called local regularity exponent) α(t) at time t
+    measures the local smoothness of a function f at that point. A function f
+    is said to be Hölder continuous of order α > 0 at point t₀ if there exists
+    C > 0 and a polynomial P_n of degree < α such that:
+
+        |f(t) - P_n(t - t₀)| ≤ C·|t - t₀|^α
+
+    for all t in a neighborhood of t₀.
+
+Hölder Exponent Regimes:
+    α > 1: Function is differentiable (smooth)
+           → C¹ continuous with bounded derivative
+    α = 1: Lipschitz continuous (locally linear)
+           → |f(t) - f(s)| ≤ L·|t - s|
+    0 < α < 1: Hölder continuous but not differentiable
+           → Fractional smoothness
+    α = 0.5: Brownian motion-like roughness
+           → Typical for random walk processes
+    α < 0.5: Very rough, singular behavior
+           → High-frequency oscillations, cusps
+
+Wavelet-Based Estimation:
+    For a signal x(t) with Hölder exponent α, the wavelet coefficients at
+    scale 2^j satisfy:
+
+        |d_j| ~ 2^{j(α + 1/2)}
+
+    where d_j are the detail coefficients at decomposition level j.
+
+    The wavelet energy decays as:
+        E_j = ⟨d_j²⟩ ~ 2^{2j(α + 1/2)} ~ (scale)^{2α+1}
+
+    Therefore:
+        log₂(E_j) = const + (2α + 1)·log₂(2^j)
+        slope = 2α + 1
+        α = (slope - 1) / 2
+
+    Or equivalently for variance:
+        log₂(var(d_j)) = const - 2α·j
+        α = -slope / 2
 
 This module implements wavelet-based Hölder exponent (local regularity) estimation
 for multifractal analysis as specified in the FHMC (Fracto-Hypothalamic Meta-Controller)
@@ -9,14 +51,50 @@ The Hölder exponent h(t) at time t measures the local smoothness of the signal:
 - h ≈ 0.5: Brownian-like
 - h < 0.5: Rough/singular
 
+Multifractal Formalism:
+    A multifractal signal has different Hölder exponents at different locations.
+    The singularity spectrum f(α) (also called D(h)) characterizes the fractal
+    dimension of the set of points with a given Hölder exponent:
+
+        f(α) = dim_H({t : α(t) = α})
+
+    Properties of f(α):
+    - f(α) ≤ 1 (bounded by embedding dimension for 1D signals)
+    - Concave function (parabolic shape for typical multifractals)
+    - Maximum at α₀ (most common Hölder exponent)
+    - Width Δα = α_max - α_min quantifies multifractality
+
+    Monofractal: Δα ≈ 0 (all points have same α)
+    Multifractal: Δα > 0 (distribution of α values)
+
+Wavelet Leaders Method:
+    The wavelet leaders method provides more robust pointwise estimates than
+    standard wavelet modulus maxima approaches. For each dyadic cube λ_j(k) at
+    scale 2^j and position k, the wavelet leader is:
+
+        L_j(k) = sup{|d_{j'}(k')| : (j', k') ∈ 3λ_j(k)}
+
+    Leaders better capture the local regularity by considering coefficients
+    in a neighborhood, making them more resilient to noise.
+
 The implementation uses the wavelet leaders method which provides more accurate
 estimates than standard wavelet modulus maxima approaches.
 
+Financial Applications:
+    - α_global ≈ 0.5: Efficient market (random walk)
+    - α_global > 0.7: Strong trends, persistent structure
+    - α_global < 0.3: Mean-reverting, anti-persistent
+    - Δα > 0.2: Multifractal (regime-dependent dynamics)
+    - Δα < 0.1: Monofractal (stationary dynamics)
+
 References:
     - Jaffard, S. (2004). Wavelet techniques in multifractal analysis.
-      In Proceedings of Symposia in Pure Mathematics.
+      In Proceedings of Symposia in Pure Mathematics, 72(2), 91-152.
     - Wendt, H., & Abry, P. (2007). Multifractality tests using bootstrapped
-      wavelet leaders. IEEE Transactions on Signal Processing.
+      wavelet leaders. IEEE Transactions on Signal Processing, 55(10), 4811-4820.
+    - Mallat, S. (2009). A Wavelet Tour of Signal Processing. Academic Press.
+    - Mandelbrot, B. B., et al. (1997). A multifractal walk down Wall Street.
+      Scientific American, 280(2), 70-73.
 """
 
 from __future__ import annotations
