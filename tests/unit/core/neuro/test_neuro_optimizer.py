@@ -407,6 +407,35 @@ class TestNeuroOptimizer:
         assert 0 <= stability_2 <= 1
         assert abs(stability_2 - stability_1) < 0.2
 
+    def test_calculate_objective_stability_near_zero_mean(self, sample_state):
+        """Ensure stability is bounded for near-zero mean performance."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+        )
+        optimizer = NeuroOptimizer(config)
+        optimizer._performance_history = [
+            -1e-10,
+            2e-10,
+            -3e-10,
+            1e-10,
+            -2e-10,
+            3e-10,
+            -1e-10,
+            2e-10,
+            -2e-10,
+            1e-10,
+            -1e-10,
+        ]
+
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        stability = optimizer._calculate_objective(0.0, balance, sample_state)
+
+        assert np.isfinite(stability)
+        assert 0 <= stability <= 1
+
     def test_optimize_updates_state(self, opt_config, sample_params, sample_state):
         """Test that optimize() updates optimizer state."""
         optimizer = NeuroOptimizer(opt_config)
