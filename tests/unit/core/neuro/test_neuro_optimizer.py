@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+import importlib.util
+
 import numpy as np
 import pytest
+
+HYPOTHESIS_AVAILABLE = importlib.util.find_spec("hypothesis") is not None
+if HYPOTHESIS_AVAILABLE:  # pragma: no branch
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
 
 from tradepulse.core.neuro.neuro_optimizer import (
     BalanceMetrics,
@@ -69,6 +76,14 @@ def _make_balance_with_ratio(ratio: float) -> BalanceMetrics:
         overall_balance_score=0.7,
         homeostatic_deviation=0.1,
     )
+
+
+def _assert_balance_invariants(balance: BalanceMetrics) -> None:
+    assert balance.dopamine_serotonin_ratio > 0
+    assert balance.gaba_excitation_balance > 0
+    assert 0 <= balance.arousal_attention_coherence <= 1
+    assert 0 <= balance.overall_balance_score <= 1
+    assert balance.homeostatic_deviation >= 0
 
 
 class TestOptimizationConfig:
@@ -159,11 +174,48 @@ class TestNeuroOptimizer:
         balance = optimizer._calculate_balance_metrics(sample_state)
 
         assert isinstance(balance, BalanceMetrics)
-        assert balance.dopamine_serotonin_ratio > 0
-        assert balance.gaba_excitation_balance > 0
-        assert 0 <= balance.arousal_attention_coherence <= 1
-        assert 0 <= balance.overall_balance_score <= 1
-        assert balance.homeostatic_deviation >= 0
+        _assert_balance_invariants(balance)
+
+    @pytest.mark.parametrize(
+        "state",
+        [
+            {
+                "dopamine_level": 2.0,
+                "serotonin_level": 0.05,
+                "gaba_inhibition": 0.2,
+                "na_arousal": 1.5,
+                "ach_attention": 0.3,
+            },
+            {
+                "dopamine_level": 0.05,
+                "serotonin_level": 1.2,
+                "gaba_inhibition": 1.5,
+                "na_arousal": 0.2,
+                "ach_attention": 1.8,
+            },
+            {
+                "dopamine_level": 1.8,
+                "serotonin_level": 0.8,
+                "gaba_inhibition": 0.1,
+                "na_arousal": 5.0,
+                "ach_attention": 0.05,
+            },
+            {
+                "dopamine_level": 0.2,
+                "serotonin_level": 0.02,
+                "gaba_inhibition": 2.5,
+                "na_arousal": 0.01,
+                "ach_attention": 3.5,
+            },
+        ],
+    )
+    def test_balance_metrics_extreme_states(self, opt_config, state):
+        """Ensure balance metrics stay within bounds for extreme states."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        balance = optimizer._calculate_balance_metrics(state)
+
+        _assert_balance_invariants(balance)
 
     @pytest.mark.parametrize(
         "arousal,attention",
@@ -195,7 +247,55 @@ class TestNeuroOptimizer:
         balance = optimizer._calculate_balance_metrics({})
 
         assert isinstance(balance, BalanceMetrics)
-        assert balance.dopamine_serotonin_ratio > 0
+        _assert_balance_invariants(balance)
+
+    if HYPOTHESIS_AVAILABLE:
+
+        @settings(max_examples=50, deadline=None)
+        @given(
+            dopamine=st.floats(
+                min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False
+            ),
+            serotonin=st.floats(
+                min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False
+            ),
+            gaba=st.floats(
+                min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False
+            ),
+            arousal=st.floats(
+                min_value=0.01, max_value=5.0, allow_nan=False, allow_infinity=False
+            ),
+            attention=st.floats(
+                min_value=0.01, max_value=5.0, allow_nan=False, allow_infinity=False
+            ),
+        )
+        def test_balance_metrics_random_states(
+            self,
+            opt_config,
+            dopamine,
+            serotonin,
+            gaba,
+            arousal,
+            attention,
+        ):
+            """Check balance invariants for random valid neuromodulator states."""
+            optimizer = NeuroOptimizer(opt_config)
+            state = {
+                "dopamine_level": dopamine,
+                "serotonin_level": serotonin,
+                "gaba_inhibition": gaba,
+                "na_arousal": arousal,
+                "ach_attention": attention,
+            }
+
+            balance = optimizer._calculate_balance_metrics(state)
+
+            _assert_balance_invariants(balance)
+
+    else:  # pragma: no cover - executed when Hypothesis missing
+
+        def test_balance_metrics_random_states(self, opt_config):  # type: ignore[override]
+            pytest.skip("hypothesis not installed")
 
     def test_calculate_objective(self, opt_config, sample_state):
         """Test objective function calculation."""
