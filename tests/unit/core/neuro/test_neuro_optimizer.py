@@ -456,6 +456,20 @@ class TestNeuroOptimizer:
         assert 'convergence' in report
         assert 'health_status' in report
 
+    def test_get_optimization_report_detects_drift(self, opt_config, sample_state):
+        """Test drift detection triggers health warning."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        for step in range(12):
+            params = {'dopamine': {'learning_rate': 0.1 + step * 1.0}}
+            optimizer.optimize(params, sample_state, performance_score=1.2)
+
+        report = optimizer.get_optimization_report()
+
+        assert report['parameter_drift']['window'] > 0
+        assert report['health_status']['drift_risk']['status'] == 'warning'
+        assert any('drift' in issue.lower() for issue in report['health_status']['issues'])
+
     def test_check_convergence_insufficient_data(self, opt_config):
         """Test convergence check with insufficient data."""
         optimizer = NeuroOptimizer(opt_config)

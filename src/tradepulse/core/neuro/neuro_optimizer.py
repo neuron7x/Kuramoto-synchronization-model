@@ -161,6 +161,10 @@ class NeuroOptimizer:
         Optional logging callback for metrics
     """
 
+    DRIFT_WINDOW = 10
+    DRIFT_MEAN_THRESHOLD = 0.05
+    DRIFT_MEDIAN_THRESHOLD = 0.05
+
     def __init__(
         self,
         config: OptimizationConfig,
@@ -188,6 +192,7 @@ class NeuroOptimizer:
         # Performance tracking
         self._performance_history: List[float] = []
         self._balance_history: List[BalanceMetrics] = []
+        self._param_history: List[Dict[str, Dict[str, float]]] = []
 
     def _select_array_module(self):
         """Select numpy or an optional CuPy backend."""
@@ -266,6 +271,7 @@ class NeuroOptimizer:
 
         # Apply updates with momentum
         updated_params = self._apply_updates(current_params, gradients)
+        self._param_history.append(self._snapshot_params(updated_params))
 
         # Log metrics
         self._log_metrics(objective, balance)
@@ -273,6 +279,21 @@ class NeuroOptimizer:
         self._iteration += 1
 
         return updated_params, balance
+
+    def _snapshot_params(self, params: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+        """Capture a numeric-only snapshot of parameters for drift tracking."""
+        snapshot: Dict[str, Dict[str, float]] = {}
+        for module, module_params in params.items():
+            if not isinstance(module_params, dict):
+                continue
+            numeric_params = {
+                name: float(value)
+                for name, value in module_params.items()
+                if isinstance(value, (int, float))
+            }
+            if numeric_params:
+                snapshot[module] = numeric_params
+        return snapshot
 
     def _calculate_balance_metrics(
         self, state: Dict[str, float]
@@ -585,6 +606,7 @@ class NeuroOptimizer:
 
         recent_perf = self._performance_history[-10:]
         recent_balance = self._balance_history[-10:]
+        parameter_drift = self._calculate_parameter_drift(self.DRIFT_WINDOW)
 
         return {
             'status': 'active',
@@ -592,6 +614,7 @@ class NeuroOptimizer:
             'best_objective': self._best_objective,
             'current_objective': self._performance_history[-1],
             'performance_trend': 'improving' if len(recent_perf) > 1 and recent_perf[-1] > recent_perf[0] else 'stable',
+            'parameter_drift': parameter_drift,
             'avg_balance_score': float(
                 self._xp.mean([b.overall_balance_score for b in recent_balance])
             ),
@@ -599,8 +622,47 @@ class NeuroOptimizer:
                 self._xp.mean([b.homeostatic_deviation for b in recent_balance])
             ),
             'convergence': self._check_convergence(),
-            'health_status': self._assess_health(recent_balance[-1] if recent_balance else None),
+            'health_status': self._assess_health(
+                recent_balance[-1] if recent_balance else None,
+                drift_stats=parameter_drift,
+            ),
         }
+
+    def _calculate_parameter_drift(self, window: int) -> Dict[str, Any]:
+        """Calculate mean/median parameter deltas over the last N steps."""
+        if len(self._param_history) < 2:
+            return {'window': 0, 'stats': {}}
+
+        window = min(window, len(self._param_history) - 1)
+        recent = self._param_history[-(window + 1):]
+        drift_values: Dict[str, Dict[str, List[float]]] = {}
+
+        for prev, curr in zip(recent[:-1], recent[1:]):
+            for module, curr_params in curr.items():
+                prev_params = prev.get(module)
+                if not prev_params:
+                    continue
+                for name, value in curr_params.items():
+                    if name not in prev_params:
+                        continue
+                    drift_values.setdefault(module, {}).setdefault(name, []).append(
+                        abs(value - prev_params[name])
+                    )
+
+        drift_stats: Dict[str, Dict[str, Dict[str, float]]] = {}
+        for module, module_params in drift_values.items():
+            module_stats: Dict[str, Dict[str, float]] = {}
+            for name, deltas in module_params.items():
+                if not deltas:
+                    continue
+                module_stats[name] = {
+                    'mean_delta': float(self._xp.mean(self._xp.asarray(deltas))),
+                    'median_delta': float(self._xp.median(self._xp.asarray(deltas))),
+                }
+            if module_stats:
+                drift_stats[module] = module_stats
+
+        return {'window': window, 'stats': drift_stats}
 
     def _check_convergence(self) -> Dict[str, Any]:
         """Check if optimization has converged.
@@ -633,7 +695,9 @@ class NeuroOptimizer:
             }
 
     def _assess_health(
-        self, balance: Optional[BalanceMetrics]
+        self,
+        balance: Optional[BalanceMetrics],
+        drift_stats: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Assess neuromodulator system health.
 
@@ -654,6 +718,16 @@ class NeuroOptimizer:
             }
 
         issues = []
+        drift_risk = {
+            'status': 'unknown',
+            'thresholds': {
+                'mean_delta': self.DRIFT_MEAN_THRESHOLD,
+                'median_delta': self.DRIFT_MEDIAN_THRESHOLD,
+            },
+            'violations': [],
+            'max_mean_delta': 0.0,
+            'max_median_delta': 0.0,
+        }
 
         # Check DA/5-HT ratio
         if balance.dopamine_serotonin_ratio < 1.0:
@@ -670,6 +744,38 @@ class NeuroOptimizer:
         # Check arousal-attention coherence
         if balance.arousal_attention_coherence < 0.5:
             issues.append('Poor arousal-attention coherence - attention deficits')
+
+        if drift_stats and drift_stats.get('stats'):
+            violations = []
+            max_mean = 0.0
+            max_median = 0.0
+            for module, module_params in drift_stats['stats'].items():
+                for name, stats in module_params.items():
+                    mean_delta = stats.get('mean_delta', 0.0)
+                    median_delta = stats.get('median_delta', 0.0)
+                    max_mean = max(max_mean, mean_delta)
+                    max_median = max(max_median, median_delta)
+                    if (
+                        mean_delta >= self.DRIFT_MEAN_THRESHOLD
+                        or median_delta >= self.DRIFT_MEDIAN_THRESHOLD
+                    ):
+                        violations.append(f"{module}.{name}")
+
+            drift_risk.update(
+                {
+                    'status': 'warning' if violations else 'stable',
+                    'violations': violations,
+                    'max_mean_delta': max_mean,
+                    'max_median_delta': max_median,
+                }
+            )
+            if violations:
+                issues.append(
+                    'Parameter drift risk detected: '
+                    + ', '.join(sorted(violations))
+                )
+        else:
+            drift_risk['status'] = 'unknown'
 
         # Overall assessment
         if balance.overall_balance_score > 0.8:
@@ -688,6 +794,7 @@ class NeuroOptimizer:
             'balance_score': balance.overall_balance_score,
             'homeostatic_deviation': balance.homeostatic_deviation,
             'issues': issues if issues else ['No issues detected'],
+            'drift_risk': drift_risk,
         }
 
     def reset(self) -> None:
@@ -698,3 +805,4 @@ class NeuroOptimizer:
         self._convergence_history = []
         self._performance_history = []
         self._balance_history = []
+        self._param_history = []
