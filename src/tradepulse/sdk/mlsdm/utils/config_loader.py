@@ -84,8 +84,8 @@ class ConfigLoader:
         for key, raw_value in os.environ.items():
             if not key.startswith(env_prefix):
                 continue
-            path = key[len(env_prefix) :].split("__")
-            path = [segment.lower() for segment in path if segment]
+            raw_segments = key[len(env_prefix) :].split("__")
+            path = [segment.strip().lower() for segment in raw_segments if segment and segment.strip()]
             if not path:
                 continue
             try:
