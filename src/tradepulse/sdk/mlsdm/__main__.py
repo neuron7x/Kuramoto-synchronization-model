@@ -110,6 +110,9 @@ def main() -> None:
                 logger.error("Override must be in PATH=VALUE format: %s", override)
                 raise SystemExit(1)
             path, raw_value = override.split("=", 1)
+            if not path:
+                logger.error("Override path must be non-empty: %s", override)
+                raise SystemExit(1)
             try:
                 cli_overrides[path] = yaml.safe_load(raw_value)
             except yaml.YAMLError:

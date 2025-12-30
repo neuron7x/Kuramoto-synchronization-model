@@ -155,6 +155,8 @@ class ConfigLoader:
 
     @staticmethod
     def _set_nested(config: Dict[str, Any], path: list[str], value: Any) -> None:
+        if not path:
+            return
         cursor = config
         for segment in path[:-1]:
             if segment not in cursor or not isinstance(cursor[segment], dict):
