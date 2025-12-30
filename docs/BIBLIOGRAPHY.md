@@ -8,7 +8,7 @@
 
 ## Risk / Execution correctness (thermodynamics, governance)
 - [@Callen1985Thermodynamics] — Helmholtz free energy definition (F = U − T·S) providing the safety metric for TACL. Mapped to: TH-001.
-- [@Friston2010FreeEnergy] — Variational free-energy framing used for thermodynamic governance and crisis detection heuristics. Mapped to: TH-001, CM-001.
+- [@Friston2010FreeEnergy] — Variational free-energy framing used for thermodynamic governance, crisis detection, and active inference control. Mapped to: TH-001, CM-001, NC-004.
 
 ## Metrics / Observability
 - [@Prometheus2024Docs] — Prometheus exposition format and gauge/counter semantics used for neuromodulator telemetry. Mapped to: OBS-001.
