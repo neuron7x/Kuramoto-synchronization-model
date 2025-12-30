@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
+_EPS = 1e-9
+
 
 def _to_array(series) -> np.ndarray:
     arr = np.asarray(series, dtype=float)
@@ -15,7 +17,7 @@ def _to_array(series) -> np.ndarray:
 def _pct_returns(prices: np.ndarray) -> np.ndarray:
     prev = prices[:-1]
     curr = prices[1:]
-    denom = np.where(prev == 0.0, 1e-9, prev)
+    denom = np.where(prev == 0.0, _EPS, prev)
     return (curr - prev) / denom
 
 

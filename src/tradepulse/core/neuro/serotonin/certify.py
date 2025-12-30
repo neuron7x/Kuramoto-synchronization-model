@@ -12,6 +12,8 @@ import numpy as np
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 from tradepulse.policy.basal_ganglia import BasalGangliaDecisionStack
 
+_EPS = 1e-9
+
 
 @dataclass
 class RegimeMetrics:
@@ -28,7 +30,7 @@ def _build_observations(prices: Sequence[float]) -> list[dict[str, float]]:
     arr = np.asarray(prices, dtype=float)
     if arr.ndim != 1 or len(arr) < 2:
         raise ValueError("prices must be 1-D with at least 2 points")
-    returns = np.diff(arr) / np.where(arr[:-1] == 0.0, 1e-9, arr[:-1])
+    returns = np.diff(arr) / np.where(arr[:-1] == 0.0, _EPS, arr[:-1])
     rolling_max = np.maximum.accumulate(arr[:-1])
     drawdowns = (arr[1:] - rolling_max) / rolling_max
     obs = []
@@ -124,7 +126,7 @@ def run_regime(
             violations.append("cooldown_nonfinite")
         if res.cooldown < -1e-9:
             violations.append("cooldown_negative")
-        if res.hold and res.cooldown + 1e-9 < last_cooldown:
+        if res.hold and res.cooldown + _EPS < last_cooldown:
             violations.append("cooldown_nonmonotonic")
         if _hysteresis_violation(res.level, controller.config, res.hold):
             violations.append("hysteresis_violation")

@@ -18,6 +18,8 @@ from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninContro
 
 DATA_ROOT = Path(__file__).resolve().parents[4] / "data"
 DEFAULT_SERIES = pd.read_csv(DATA_ROOT / "sample_crypto_ohlcv.csv")["close"].to_numpy()
+DEFAULT_FLIP_WINDOW = 10
+DEFAULT_FLIP_LIMIT = 7
 
 
 def test_build_regimes_deterministic():
@@ -62,15 +64,21 @@ def test_serotonin_sequence_properties(seq):
     assert np.allclose(levels, levels_repeat)
 
     if len(holds) > 1:
-        window = holds[-10:]
+        window = holds[-DEFAULT_FLIP_WINDOW:]
         flips = sum(window[i] != window[i - 1] for i in range(1, len(window)))
-        assert flips <= 7
+        assert flips <= DEFAULT_FLIP_LIMIT
 
 
 def test_regime_harness_smoke(tmp_path: Path):
     prices = np.linspace(100.0, 101.0, num=64, dtype=float)
     ctrl = SerotoninController()
-    metrics = run_regime("calm", prices, controller=ctrl, flip_window=10, flip_limit=6)
+    metrics = run_regime(
+        "calm",
+        prices,
+        controller=ctrl,
+        flip_window=DEFAULT_FLIP_WINDOW,
+        flip_limit=DEFAULT_FLIP_LIMIT,
+    )
     assert metrics.violations == []
     assert 0.0 <= metrics.min_level <= metrics.max_level <= 1.0
 
