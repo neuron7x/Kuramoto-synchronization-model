@@ -109,6 +109,7 @@ def main() -> None:
             if "=" not in override:
                 logger.error("Override must be in PATH=VALUE format: %s", override)
                 raise SystemExit(1)
+            # value may legitimately contain '='; split only on the first occurrence
             path, raw_value = override.split("=", 1)
             if not path:
                 logger.error("Override path must be non-empty: %s", override)

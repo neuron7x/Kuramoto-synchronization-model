@@ -108,7 +108,10 @@ class ConfigLoader:
     def _apply_env_overrides(
         config: Dict[str, Any], prefix: str = ENV_PREFIX
     ) -> Dict[str, Any]:
-        """Apply environment variable overrides using a prefix-scoped, nested syntax."""
+        """Apply environment variable overrides using a prefix-scoped, nested syntax.
+
+        Segments are normalised to lowercase to match YAML keys.
+        """
 
         def iter_env() -> Iterable[tuple[list[str], Any]]:
             for key, value in os.environ.items():
@@ -117,7 +120,7 @@ class ConfigLoader:
                 remainder = key[len(prefix):]
                 if not remainder:
                     continue
-                path = [segment for segment in remainder.split("__") if segment]
+                path = ConfigLoader._normalize_path(remainder.split("__"))
                 if not path:
                     continue
                 try:
@@ -144,14 +147,18 @@ class ConfigLoader:
             if not raw_path:
                 continue
             path = [
-                segment
-                for segment in raw_path.replace("__", ".").split(".")
-                if segment
+                segment for segment in raw_path.replace("__", ".").split(".") if segment
             ]
+            path = ConfigLoader._normalize_path(path)
             if not path:
                 continue
-            ConfigLoader._set_nested(merged, [segment.lower() for segment in path], value)
+            ConfigLoader._set_nested(merged, path, value)
         return merged
+
+    @staticmethod
+    @staticmethod
+    def _normalize_path(path: Iterable[str]) -> list[str]:
+        return [segment.lower() for segment in path if segment]
 
     @staticmethod
     def _set_nested(config: Dict[str, Any], path: list[str], value: Any) -> None:
