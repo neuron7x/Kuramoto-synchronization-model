@@ -110,7 +110,7 @@ class ConfigLoader:
     ) -> Dict[str, Any]:
         """Apply environment variable overrides using a prefix-scoped, nested syntax.
 
-        Segments are normalised to lowercase to match YAML keys.
+        Segments are normalized to lowercase to match YAML keys.
         """
 
         def iter_env() -> Iterable[tuple[list[str], Any]]:
@@ -123,13 +123,7 @@ class ConfigLoader:
                 path = ConfigLoader._normalize_path(remainder.split("__"))
                 if not path:
                     continue
-                try:
-                    parsed_value: Any = yaml.safe_load(value)
-                except yaml.YAMLError:
-                    logger.warning(
-                        "Failed to parse environment override %s; using raw string", key
-                    )
-                    parsed_value = value
+                parsed_value = ConfigLoader._parse_override_value(value, source=key)
                 yield [segment.lower() for segment in path], parsed_value
 
         merged = config.copy()
@@ -158,6 +152,23 @@ class ConfigLoader:
     @staticmethod
     def _normalize_path(path: Iterable[str]) -> list[str]:
         return [segment.lower() for segment in path if segment]
+
+    @staticmethod
+    def _parse_override_value(value: str, *, source: str) -> Any:
+        """Parse an override value with light heuristics before YAML parsing."""
+        for caster in (int, float):
+            try:
+                return caster(value)
+            except ValueError:
+                pass
+        lowered = value.lower()
+        if lowered in {"true", "false"}:
+            return lowered == "true"
+        try:
+            return yaml.safe_load(value)
+        except yaml.YAMLError:
+            logger.warning("Failed to parse override %s; using raw string", source)
+            return value
 
     @staticmethod
     def _set_nested(config: Dict[str, Any], path: list[str], value: Any) -> None:

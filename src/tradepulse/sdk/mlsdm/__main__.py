@@ -3,8 +3,6 @@ import json
 import logging
 from typing import Any, Dict
 
-import yaml
-
 from .core.memory_manager import MemoryManager
 from .utils.config_loader import ConfigLoader
 
@@ -80,7 +78,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
         metavar="PATH=VALUE",
         help=(
             "Override configuration value using dotted path (e.g., "
-            "--override agent.state_dim=32). CLI overrides have highest precedence."
+            "--override agent.state_dim=32 or "
+            "--override db.url='postgres://user:pw=1@host/db'). "
+            "CLI overrides have highest precedence."
         ),
     )
     return parser
@@ -114,13 +114,9 @@ def main() -> None:
             if not path:
                 logger.error("Override path must be non-empty: %s", override)
                 raise SystemExit(1)
-            try:
-                cli_overrides[path] = yaml.safe_load(raw_value)
-            except yaml.YAMLError:
-                logger.warning(
-                    "Failed to parse override '%s' as YAML; using raw string", path
-                )
-                cli_overrides[path] = raw_value
+            cli_overrides[path] = ConfigLoader._parse_override_value(
+                raw_value, source=path
+            )
 
         config = ConfigLoader.load_config_with_defaults(
             args.config, env_prefix="MLSDM__", overrides=cli_overrides
