@@ -69,8 +69,9 @@ Schema and API diagrams live in [`docs/architecture/system_overview.md`](archite
 | **Knowledge Graph** | Neo4j AuraDS | Continuous backup stream + weekly consistency check | Tracks dependency lineage across signals, policies, and deployments. |
 
 Data contracts are catalogued in [`docs/schemas/`](schemas/) with quality gates governed by the
-[Documentation Standardisation Playbook](documentation_standardisation_playbook.md) and
-[Quality Gates](quality_gates.md).
+[Documentation Standardisation Playbook](documentation_standardisation_playbook.md),
+[Quality Gates](quality_gates.md), and the operational data governance rules in
+[DATA_GOVERNANCE.md](DATA_GOVERNANCE.md).
 
 ## Runtime Interaction Overview
 

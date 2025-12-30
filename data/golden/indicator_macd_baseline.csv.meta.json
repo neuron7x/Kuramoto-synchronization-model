@@ -1,0 +1,10 @@
+{
+  "dataset_id": "indicator-macd-baseline-v1",
+  "origin": "curated",
+  "description": "Baseline MACD indicator output for regression testing.",
+  "creation_method": "analytics/macd baseline generation (curated test fixture)",
+  "temporal_coverage": "5 one-minute bars starting 2024-01-01T00:00Z",
+  "schema_version": "1.0.0",
+  "intended_use": "certification",
+  "forbidden_use": "not for live trading"
+}

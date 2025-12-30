@@ -1,0 +1,10 @@
+{
+  "dataset_id": "sample-crypto-ohlcv-v1",
+  "origin": "synthetic",
+  "description": "Synthetic multi-asset crypto OHLCV data (BTC, ETH, SOL) for multi-asset analysis demos.",
+  "creation_method": "scripts/generate_sample_ohlcv.py --symbols BTC ETH SOL --days 21 --timeframe 1h",
+  "temporal_coverage": "504 hourly bars across 3 assets starting 2024-01-01",
+  "schema_version": "1.0.0",
+  "intended_use": "backtest",
+  "forbidden_use": "not for live trading"
+}

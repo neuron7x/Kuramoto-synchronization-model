@@ -32,6 +32,9 @@ Each controller has configurable parameters that affect its behavior. This guide
 
 For detailed parameter ranges and defaults, see [CALIBRATION_PARAMETER_REFERENCE.md](CALIBRATION_PARAMETER_REFERENCE.md).
 
+> Calibration runs that consume repository datasets must follow the provenance rules in
+> [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md) (metadata sidecars, fingerprints, and schema validation).
+
 ## Key Concepts
 
 ### Accuracy

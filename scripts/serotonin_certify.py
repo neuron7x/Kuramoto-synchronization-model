@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -22,6 +23,8 @@ try:
 except ImportError:
     pass
 
+os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
+
 from tradepulse.core.neuro.serotonin.certify import (
     RegimeMetrics,
     run_basal_ganglia_integration,
@@ -30,6 +33,8 @@ from tradepulse.core.neuro.serotonin.certify import (
 )
 from tradepulse.core.neuro.serotonin.regimes import build_regimes
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
+from core.data.dataset_contracts import contract_by_path
+from core.data.fingerprint import record_run_fingerprint
 
 
 def _load_series(path: Path, *, fast: bool) -> np.ndarray:
@@ -131,6 +136,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     flip_limit = args.flip_limit or (10 if fast else 12)
     dataset_path = Path(args.dataset)
     out_dir = Path(args.out)
+
+    if not dataset_path.exists():
+        raise SystemExit(f"Dataset not found: {dataset_path}")
+
+    contract = contract_by_path(dataset_path)
+    if contract:
+        record_run_fingerprint(contract, run_type="certification")
 
     results, integration_violations = certify(
         dataset=dataset_path,

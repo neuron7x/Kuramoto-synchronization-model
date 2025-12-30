@@ -1,6 +1,6 @@
 # Governance and Data Controls
 
-This guide defines the governance guardrails for TradePulse across access management, data contracts, privacy, and cataloguing. Policies apply to all production and pre-production environments unless explicitly waived by the Governance Council.
+This guide defines the governance guardrails for TradePulse across access management, data contracts, privacy, and cataloguing. Policies apply to all production and pre-production environments unless explicitly waived by the Governance Council. Dataset-level provenance and validation rules are captured in [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md) and must be followed for any calibration or certification workflow that consumes repository data.
 
 ## Role-Based Access Control (RBAC)
 
@@ -114,4 +114,3 @@ This guide defines the governance guardrails for TradePulse across access manage
 - Monthly governance review to assess RBAC exceptions, contract changes, and privacy incidents.
 - Quarterly penetration test focused on data exfiltration paths and identity boundary hardening.
 - Annual recertification of all data sources, with lineage validation and contract renewal.
-

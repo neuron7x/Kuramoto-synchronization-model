@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
+
+from core.data.dataset_contracts import contract_by_path  # noqa: E402
+from core.data.fingerprint import record_run_fingerprint  # noqa: E402
 from core.pipelines import SmokeE2EConfig, SmokeE2EPipeline  # noqa: E402
 
 
@@ -56,6 +61,10 @@ def main() -> None:
     csv_path = args.csv.resolve()
     if not csv_path.exists():
         raise SystemExit(f"CSV source not found: {csv_path}")
+
+    contract = contract_by_path(csv_path)
+    if contract:
+        record_run_fingerprint(contract, run_type="backtest")
 
     pipeline = SmokeE2EPipeline()
     config = SmokeE2EConfig(

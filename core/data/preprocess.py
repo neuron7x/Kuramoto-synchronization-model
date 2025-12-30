@@ -10,6 +10,7 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from ..utils.logging import get_logger
+from .fingerprint import fingerprint_rows, record_transformation_trace
 
 _logger = get_logger(__name__)
 
@@ -21,7 +22,11 @@ __all__ = ["normalize_df", "scale_series", "normalize_numeric_columns"]
 
 
 def normalize_df(
-    df: pd.DataFrame, timestamp_col: str = "ts", *, use_float32: bool = False
+    df: pd.DataFrame,
+    timestamp_col: str = "ts",
+    *,
+    use_float32: bool = False,
+    trace: bool | str = False,
 ) -> pd.DataFrame:
     """Return a cleaned and chronologically ordered copy of ``df``.
 
@@ -45,8 +50,24 @@ def normalize_df(
         A normalised dataframe with a reset index for predictable downstream
         usage.
     """
+    trace_id = "normalize_df" if trace is True else (trace or None)
+    input_fp = None
+    input_columns = list(df.columns)
+
+    if trace_id:
+        input_fp = fingerprint_rows(
+            df.to_dict("records"),
+            columns=input_columns,
+            dataset_id=f"{trace_id}-input",
+            schema_version="dynamic",
+        )
+
     with _logger.operation(
-        "normalize_df", rows=len(df), columns=len(df.columns), use_float32=use_float32
+        "normalize_df",
+        rows=len(df),
+        columns=len(df.columns),
+        use_float32=use_float32,
+        trace=bool(trace_id),
     ):
         normalized = df.copy()
 
@@ -89,7 +110,31 @@ def normalize_df(
                     if col != timestamp_col:
                         normalized[col] = normalized[col].astype(np.float32)
 
-        return normalized.reset_index(drop=True)
+        normalized = normalized.reset_index(drop=True)
+
+        if trace_id and input_fp is not None:
+            output_fp = fingerprint_rows(
+                normalized.to_dict("records"),
+                columns=list(normalized.columns),
+                dataset_id=f"{trace_id}-output",
+                schema_version="dynamic",
+            )
+            record_transformation_trace(
+                transformation_id=trace_id,
+                parameters={"timestamp_col": timestamp_col, "use_float32": use_float32},
+                input_fingerprint=input_fp,
+                output_fingerprint=output_fp,
+            )
+            post_fp = fingerprint_rows(
+                df.to_dict("records"),
+                columns=input_columns,
+                dataset_id=f"{trace_id}-input",
+                schema_version="dynamic",
+            )
+            if post_fp["content_hash"] != input_fp["content_hash"]:
+                _logger.warning("%s mutated input dataframe", trace_id)
+
+        return normalized
 
 
 def scale_series(
