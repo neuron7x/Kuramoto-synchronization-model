@@ -98,7 +98,7 @@ class ConfigLoader:
             Merged configuration dictionary.
         """
         config = ConfigLoader.load_config(path)
-        merged: Dict[str, Any] = defaults.copy() if defaults else {}
+        merged: Dict[str, Any] = (defaults or {}).copy()
         merged = ConfigLoader._deep_merge(merged, config)
         merged = ConfigLoader._apply_env_overrides(merged, env_prefix)
         merged = ConfigLoader._apply_cli_overrides(merged, overrides or {})
@@ -114,7 +114,7 @@ class ConfigLoader:
             for key, value in os.environ.items():
                 if not key.startswith(prefix):
                     continue
-                remainder = key[len(prefix) :]
+                remainder = key[len(prefix):]
                 if not remainder:
                     continue
                 path = [segment for segment in remainder.split("__") if segment]
