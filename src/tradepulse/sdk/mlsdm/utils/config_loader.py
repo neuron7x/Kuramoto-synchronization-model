@@ -7,12 +7,15 @@ and converting them to the appropriate format for MemoryManager.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 import yaml
 
 logger = logging.getLogger(__name__)
+
+ENV_PREFIX = "MLSDM__"
 
 
 class ConfigLoader:
@@ -77,22 +80,81 @@ class ConfigLoader:
 
     @staticmethod
     def load_config_with_defaults(
-        path: str | Path, defaults: Dict[str, Any] | None = None
+        path: str | Path,
+        defaults: Dict[str, Any] | None = None,
+        *,
+        env_prefix: str = ENV_PREFIX,
+        overrides: Dict[str, Any] | None = None,
     ) -> Dict[str, Any]:
         """Load configuration and merge with defaults.
 
         Args:
             path: Path to the YAML configuration file.
             defaults: Optional default values to use as fallback.
+            env_prefix: Environment variable prefix used for overrides.
+            overrides: Explicit CLI-style overrides applied at highest precedence.
 
         Returns:
             Merged configuration dictionary.
         """
         config = ConfigLoader.load_config(path)
+        merged: Dict[str, Any] = defaults.copy() if defaults else {}
+        merged = ConfigLoader._deep_merge(merged, config)
+        merged = ConfigLoader._apply_env_overrides(merged, env_prefix)
+        merged = ConfigLoader._apply_cli_overrides(merged, overrides or {})
+        return merged
 
-        if defaults:
-            # Deep merge defaults with loaded config (config takes precedence)
-            merged = ConfigLoader._deep_merge(defaults, config)
-            return merged
+    @staticmethod
+    def _apply_env_overrides(
+        config: Dict[str, Any], prefix: str = ENV_PREFIX
+    ) -> Dict[str, Any]:
+        """Apply environment variable overrides using a prefix-scoped, nested syntax."""
 
-        return config
+        def iter_env() -> Iterable[tuple[list[str], Any]]:
+            for key, value in os.environ.items():
+                if not key.startswith(prefix):
+                    continue
+                remainder = key[len(prefix) :]
+                if not remainder:
+                    continue
+                path = [segment for segment in remainder.split("__") if segment]
+                if not path:
+                    continue
+                try:
+                    parsed_value: Any = yaml.safe_load(value)
+                except yaml.YAMLError:
+                    parsed_value = value
+                yield [segment.lower() for segment in path], parsed_value
+
+        merged = config.copy()
+        for path, value in iter_env():
+            ConfigLoader._set_nested(merged, path, value)
+        return merged
+
+    @staticmethod
+    def _apply_cli_overrides(
+        config: Dict[str, Any], overrides: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Apply explicit CLI overrides expressed in dotted or '__' notation."""
+        merged = config.copy()
+        for raw_path, value in overrides.items():
+            if not raw_path:
+                continue
+            path = [
+                segment
+                for segment in raw_path.replace("__", ".").split(".")
+                if segment
+            ]
+            if not path:
+                continue
+            ConfigLoader._set_nested(merged, [segment.lower() for segment in path], value)
+        return merged
+
+    @staticmethod
+    def _set_nested(config: Dict[str, Any], path: list[str], value: Any) -> None:
+        cursor = config
+        for segment in path[:-1]:
+            if segment not in cursor or not isinstance(cursor[segment], dict):
+                cursor[segment] = {}
+            cursor = cursor[segment]
+        cursor[path[-1]] = value
