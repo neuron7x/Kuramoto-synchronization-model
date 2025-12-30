@@ -4,7 +4,6 @@ Lint bibliography, citations, and claim mappings.
 """
 from __future__ import annotations
 
-import os
 import re
 import sys
 from pathlib import Path
@@ -16,6 +15,14 @@ CITATION_MAP_PATH = ROOT / "docs" / "CITATION_MAP.md"
 
 REQUIRED_FIELDS = {"title", "author", "year"}
 IDENTIFIER_FIELDS = {"doi", "isbn", "url"}
+NEURO_KEYWORDS = (
+    "serotonin",
+    "basal ganglia",
+    "free energy",
+    "dopamine",
+    "prediction error",
+    r"\bRL\b",
+)
 
 
 class BibEntry:
@@ -32,7 +39,6 @@ def parse_bibtex(path: Path) -> Dict[str, BibEntry]:
         raise FileNotFoundError(f"Missing bibliography file: {path}")
 
     entry_start = re.compile(r"@\w+\s*\{\s*([^,]+),")
-    field_re = re.compile(r"\s*([\w\-]+)\s*=\s*[{\"](.+?)[}\"]\s*,?\s*$")
 
     for raw_line in path.read_text().splitlines():
         line = raw_line.strip()
@@ -51,10 +57,17 @@ def parse_bibtex(path: Path) -> Dict[str, BibEntry]:
                 entries[current_key] = BibEntry(current_key, current_fields)
                 current_key, current_fields = None, {}
         else:
-            match = field_re.match(line)
-            if match and current_key:
-                field, value = match.group(1).lower(), match.group(2).strip()
-                current_fields[field] = value
+            if current_key and "=" in line:
+                field_part, value_part = line.split("=", 1)
+                field = field_part.strip().lower()
+                value = value_part.strip().rstrip(",")
+                if value.startswith("{") or value.startswith('"'):
+                    value = value[1:]
+                if value.endswith("}"):
+                    value = value[:-1]
+                if value.endswith('"'):
+                    value = value[:-1]
+                current_fields[field] = value.strip()
     if current_key:
         entries[current_key] = BibEntry(current_key, current_fields)
     return entries
@@ -62,11 +75,11 @@ def parse_bibtex(path: Path) -> Dict[str, BibEntry]:
 
 def collect_doc_citations(root: Path) -> Set[str]:
     citations: Set[str] = set()
-    citation_pattern = re.compile(r"\[@([^\]]+)\]")
+    citation_pattern = re.compile(r"\[@([A-Za-z0-9_\-\s;]+)\]")
     for path in root.rglob("*.md"):
         if ".github/agents" in str(path):
             continue
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = path.read_text(encoding="utf-8", errors="replace")
         for match in citation_pattern.findall(text):
             for key in match.split(";"):
                 cleaned = key.strip().lstrip("@")
@@ -90,7 +103,7 @@ def parse_citation_map(path: Path) -> List[Tuple[str, str, str, List[str]]]:
         if claim_id.lower() == "claim id":
             continue
         if claim_id and (statement or location or code_path):
-            citation_keys = re.findall(r"@([A-Za-z0-9_:-]+)", citations_field)
+            citation_keys = re.findall(r"@([A-Za-z0-9_-]+)", citations_field)
             rows.append((claim_id, location, code_path, citation_keys))
     return rows
 
@@ -134,20 +147,21 @@ def check_citation_map(rows: List[Tuple[str, str, str, List[str]]], errors: List
 
 
 def check_neuro_strictness(root: Path, errors: List[str]) -> None:
-    neuro_root = root / "docs" / "neuro"
-    if not neuro_root.exists():
-        return
-    keyword_re = re.compile(
-        r"(serotonin|basal ganglia|free energy|dopamine|prediction error|\\bRL\\b)",
-        re.IGNORECASE,
-    )
-    for path in neuro_root.rglob("*.md"):
-        for idx, line in enumerate(path.read_text().splitlines(), start=1):
-            if "[heuristic]" in line.lower():
+    neuro_roots = [
+        root / "docs" / "neuro",
+        root / "docs" / "neuromodulators",
+    ]
+    keyword_re = re.compile("|".join(NEURO_KEYWORDS), re.IGNORECASE)
+    for neuro_root in neuro_roots:
+        if not neuro_root.exists():
+            continue
+        for path in neuro_root.rglob("*.md"):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            if "[heuristic]" in text.lower():
                 continue
-            if keyword_re.search(line) and "[@" not in line:
+            if keyword_re.search(text) and "[@" not in text:
                 errors.append(
-                    f"{path.relative_to(root)}:{idx} neuro doc sentence with keyword lacks citation"
+                    f"{path.relative_to(root)} lacks citation for neuroscience keywords"
                 )
 
 
@@ -156,7 +170,7 @@ def main() -> int:
 
     try:
         entries = parse_bibtex(BIB_PATH)
-    except Exception as exc:  # noqa: BLE001
+    except (FileNotFoundError, ValueError) as exc:
         print(f"Failed to parse {BIB_PATH}: {exc}")
         return 1
 
@@ -174,7 +188,7 @@ def main() -> int:
 
     try:
         citation_rows = parse_citation_map(CITATION_MAP_PATH)
-    except Exception as exc:  # noqa: BLE001
+    except (FileNotFoundError, ValueError) as exc:
         print(f"Failed to parse {CITATION_MAP_PATH}: {exc}")
         return 1
 
