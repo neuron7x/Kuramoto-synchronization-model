@@ -1,5 +1,7 @@
 """Top-level TradePulse namespace."""
 
+__CANONICAL__ = True
+
 from .integration import (
     AgentCoordinatorAdapter,
     IntegrationConfig,

@@ -1,5 +1,7 @@
 """Security primitives for TradePulse core."""
 
+__CANONICAL__ = True
+
 from .audit import AuditLogger, audit  # noqa: F401
 from .encryption import EncryptedField, Encryption  # noqa: F401
 from .ids import IDS, ids  # noqa: F401

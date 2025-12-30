@@ -43,6 +43,8 @@ Example usage::
 
 from __future__ import annotations
 
+__CANONICAL__ = True
+
 from .config import AgentConfig, FHMCConfig, MLSDMConfig, OptimizerConfig
 from .contracts import (
     BiomarkerState,

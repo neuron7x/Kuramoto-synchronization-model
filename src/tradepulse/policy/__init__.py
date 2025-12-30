@@ -1,5 +1,7 @@
 """TradePulse policy module - decision making and governance."""
 
+__CANONICAL__ = True
+
 from .basal_ganglia import BasalGangliaPolicy
 from .basal_ganglia import PolicyResult as LegacyPolicyResult
 from .decision_trace import (

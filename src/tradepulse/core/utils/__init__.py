@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__CANONICAL__ = True
+
 import importlib.util
 import sys
 from pathlib import Path

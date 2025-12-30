@@ -1,5 +1,7 @@
 """NaK v4.2: Bio-Inspired Homeostatic Controller for Trading."""
 
+__CANONICAL__ = True
+
 from .controller import NaKConfig, NaKControllerV4_2
 from .controller import NaKControllerV4_2 as NaKController
 from .desensitization import DesensitizationModule

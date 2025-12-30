@@ -20,6 +20,8 @@ Examples
 >>> print(f"Arousal: {result['arousal']:.3f}, Attention: {result['attention']:.3f}")
 """
 
+__CANONICAL__ = True
+
 from .neuromods import NAACHConfig, NAACHNeuromodulator
 
 __all__ = [

@@ -10,6 +10,8 @@ Example:
     >>> result = analyzer.analyze(df)
 """
 
+__CANONICAL__ = True
+
 from core.indicators import (
     BackfillState,
     CacheRecord,

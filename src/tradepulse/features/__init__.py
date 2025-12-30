@@ -1,5 +1,7 @@
 """TradePulse features module - market indicators and sensors."""
 
+__CANONICAL__ = True
+
 from .causal import CausalGuard, CausalResult
 from .kuramoto import KuramotoResult, KuramotoSynchrony
 from .ricci import RicciCurvatureGraph, RicciResult

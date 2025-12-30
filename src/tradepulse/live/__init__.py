@@ -12,6 +12,8 @@ Example:
 
 from __future__ import annotations
 
+__CANONICAL__ = True
+
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path

@@ -6,6 +6,8 @@ interfaces lightweight while providing mathematically precise building
 blocks that downstream services can rely on.
 """
 
+__CANONICAL__ = True
+
 from .divconv import (
     DivConvSignal,
     DivConvSnapshot,

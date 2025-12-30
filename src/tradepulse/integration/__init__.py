@@ -12,6 +12,8 @@ Example:
     >>> health = integrator.get_unified_health()
 """
 
+__CANONICAL__ = True
+
 # Re-export from core.integration
 from core.integration import (
     AgentCoordinatorAdapter,

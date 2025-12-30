@@ -23,6 +23,8 @@ Example usage::
     action = mlsdm.act(observation)
 """
 
+__CANONICAL__ = True
+
 # Re-export MLSDM submodule for convenience
 from . import mlsdm
 from .contracts import (
