@@ -10,6 +10,8 @@ Example:
     >>> manager.validate_order("BTC-USD", "buy", 1, 50000.0)
 """
 
+__CANONICAL__ = True
+
 # Import RiskManager and related classes from execution.risk
 from execution.risk import (
     KillSwitch,

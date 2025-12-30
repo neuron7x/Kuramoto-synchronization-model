@@ -33,6 +33,8 @@ Example:
     ...     print(report.issues)
 """
 
+__CANONICAL__ = True
+
 # Validation utilities from core
 from core.data.validation import (
     OHLCVValidationResult,

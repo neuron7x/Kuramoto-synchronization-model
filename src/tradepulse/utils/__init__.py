@@ -1,5 +1,7 @@
 """Utility helpers for statistical drift analysis and related tooling."""
 
+__CANONICAL__ = True
+
 from .drift import (  # noqa: F401
     DriftDetector,
     DriftMetric,

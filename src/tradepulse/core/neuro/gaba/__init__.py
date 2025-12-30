@@ -20,6 +20,8 @@ Examples
 >>> print(f"Inhibition: {result['inhibition']:.3f}")
 """
 
+__CANONICAL__ = True
+
 from .gaba_inhibition_gate import GABAConfig, GABAInhibitionGate
 
 __all__ = [

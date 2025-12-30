@@ -1,0 +1,29 @@
+name: architecture-validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    name: Architecture guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run architecture guard scripts
+        run: |
+          python scripts/check_namespace_integrity.py
+          python scripts/check_single_entrypoint.py
+          python scripts/check_config_single_source.py

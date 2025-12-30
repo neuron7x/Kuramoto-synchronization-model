@@ -53,6 +53,8 @@ Examples
 >>> print(output.to_json())
 """
 
+__CANONICAL__ = True
+
 from . import desensitization, dopamine, gaba, na_ach, nak, serotonin
 from .neuro_orchestrator import (
     LearningLoop,

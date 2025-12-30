@@ -1,5 +1,7 @@
 """Neuro-inspired desensitization primitives for stable trading behavior."""
 
+__CANONICAL__ = True
+
 from . import integration
 from .gate import DesensitizationGate, DesensitizationGateConfig
 from .manager import DesensitizationConfig, DesensitizationManager

@@ -18,6 +18,8 @@ Invariants & Safety:
 
 from __future__ import annotations
 
+__CANONICAL__ = True
+
 from ._invariants import assert_no_nan_inf, check_monotonic_thresholds, clamp
 from .action_gate import ActionGate, GateEvaluation
 from .ddm_adapter import (

@@ -1,5 +1,7 @@
 """Authentication helpers for TradePulse core."""
 
+__CANONICAL__ = True
+
 from .mfa import MFA  # noqa: F401
 from .rbac import (
     Permission,

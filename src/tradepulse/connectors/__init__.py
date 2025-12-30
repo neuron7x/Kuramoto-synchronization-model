@@ -11,6 +11,8 @@ Example:
 
 from __future__ import annotations
 
+__CANONICAL__ = True
+
 import logging
 from typing import Any, Mapping
 

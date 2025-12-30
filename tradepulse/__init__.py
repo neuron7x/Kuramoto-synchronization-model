@@ -8,6 +8,8 @@ under ``src.tradepulse`` so that packaging metadata remains consistent. Avoid
 importing ``src.*`` directly in new code.
 """
 
+__CANONICAL__ = False
+
 import os
 import sys
 from importlib import import_module

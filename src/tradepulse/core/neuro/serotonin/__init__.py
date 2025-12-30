@@ -1,5 +1,7 @@
 """Legacy mirror for serotonin API; canonical lives in core.neuro.serotonin.*"""
 
+__CANONICAL__ = True
+
 from tradepulse.core.neuro.serotonin.observability import (  # noqa: F401
     SEROTONIN_ALERTS,
     SEROTONIN_SLIS,
