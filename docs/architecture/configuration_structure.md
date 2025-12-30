@@ -63,6 +63,13 @@ controller = SerotoninController("configs/serotonin.yaml")
 
 ## Best Practices
 
+### Precedence Model
+
+- Canonical precedence is **CLI > ENV > YAML > defaults**.
+- Environment overrides use the `MLSDM_` prefix with double underscores to express nesting, e.g. `MLSDM_AGENT__STATE_DIM=16`.
+- CLI-provided overrides (when present) are applied last; YAML files are treated as the single source of record and defaults only backstop missing keys.
+- The loader enforces this ordering so that precedence is deterministic across local runs and CI.
+
 ### When to Use Each Directory
 
 1. **Use `conf/`** when:

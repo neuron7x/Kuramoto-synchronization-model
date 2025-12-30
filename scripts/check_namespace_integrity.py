@@ -17,7 +17,10 @@ from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CANONICAL_ROOT = REPO_ROOT / "src" / "tradepulse"
-SHIM_PATHS = {REPO_ROOT / "tradepulse" / "__init__.py"}
+SHIM_PATHS = {
+    REPO_ROOT / "tradepulse" / "__init__.py",
+    REPO_ROOT / "core" / "__init__.py",
+}
 
 
 @dataclass(frozen=True)

@@ -6,9 +6,11 @@ and converting them to the appropriate format for MemoryManager.
 
 from __future__ import annotations
 
+import copy
 import logging
+import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import yaml
 
@@ -57,6 +59,43 @@ class ConfigLoader:
             raise
 
     @staticmethod
+    def _set_nested(target: Dict[str, Any], keys: List[str], value: Any) -> None:
+        """Assign a value into a nested dictionary using a list of keys."""
+
+        current = target
+        for key in keys[:-1]:
+            if key not in current or not isinstance(current[key], dict):
+                current[key] = {}
+            current = current[key]
+        current[keys[-1]] = value
+
+    @staticmethod
+    def _collect_env_overrides(env_prefix: str) -> Dict[str, Any]:
+        """Collect environment-based overrides using double-underscore paths.
+
+        Example:
+            MLSDM_AGENT__STATE_DIM=16 -> {"agent": {"state_dim": 16}}
+        """
+
+        overrides: Dict[str, Any] = {}
+        if not env_prefix:
+            return overrides
+
+        for key, raw_value in os.environ.items():
+            if not key.startswith(env_prefix):
+                continue
+            path = key[len(env_prefix) :].split("__")
+            path = [segment.lower() for segment in path if segment]
+            if not path:
+                continue
+            try:
+                value = yaml.safe_load(raw_value)
+            except yaml.YAMLError:
+                value = raw_value
+            ConfigLoader._set_nested(overrides, path, value)
+        return overrides
+
+    @staticmethod
     def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
         """Deep merge two dictionaries.
 
@@ -88,11 +127,30 @@ class ConfigLoader:
         Returns:
             Merged configuration dictionary.
         """
-        config = ConfigLoader.load_config(path)
+        return ConfigLoader.load_config_layered(path, defaults=defaults)
 
-        if defaults:
-            # Deep merge defaults with loaded config (config takes precedence)
-            merged = ConfigLoader._deep_merge(defaults, config)
-            return merged
+    @staticmethod
+    def load_config_layered(
+        path: str | Path,
+        defaults: Dict[str, Any] | None = None,
+        env_prefix: str = "MLSDM_",
+        cli_overrides: Dict[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        """Load configuration with deterministic precedence.
 
-        return config
+        Precedence: CLI overrides > environment overrides > YAML file > defaults.
+        """
+
+        base_config: Dict[str, Any] = copy.deepcopy(defaults) if defaults else {}
+
+        yaml_config = ConfigLoader.load_config(path)
+        merged = ConfigLoader._deep_merge(base_config, yaml_config)
+
+        env_overrides = ConfigLoader._collect_env_overrides(env_prefix)
+        if env_overrides:
+            merged = ConfigLoader._deep_merge(merged, env_overrides)
+
+        if cli_overrides:
+            merged = ConfigLoader._deep_merge(merged, cli_overrides)
+
+        return merged

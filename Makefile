@@ -172,6 +172,7 @@ arch-validate:
 	python scripts/check_namespace_integrity.py
 	python scripts/check_single_entrypoint.py
 	python scripts/check_config_single_source.py
+	python scripts/check_namespace_policy.py
 	@echo "✅ Architecture guardrails passed"
 
 .PHONY: clean

@@ -116,3 +116,26 @@ class TestConfigLoader:
         result = ConfigLoader.load_config(str(config_file))
 
         assert result["test"] == "value"
+
+    def test_load_config_layered_precedence(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Config precedence should follow CLI > ENV > YAML > defaults."""
+
+        defaults = {"agent": {"state_dim": 8, "action_dim": 2}}
+        config_data = {"agent": {"state_dim": 10}}
+
+        config_file = tmp_path / "config.yaml"
+        with config_file.open("w") as f:
+            yaml.dump(config_data, f)
+
+        monkeypatch.setenv("MLSDM_AGENT__ACTION_DIM", "4")
+
+        cli_overrides = {"agent": {"state_dim": 12}}
+
+        result = ConfigLoader.load_config_layered(
+            config_file, defaults=defaults, cli_overrides=cli_overrides
+        )
+
+        assert result["agent"]["state_dim"] == 12
+        assert result["agent"]["action_dim"] == 4

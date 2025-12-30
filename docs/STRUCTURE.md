@@ -3,6 +3,7 @@
 ## Canonical Roots
 - Runtime namespace: `src/tradepulse` (all packages carry `__CANONICAL__ = True`)
 - Shim namespace: `tradepulse/__init__.py` (`__CANONICAL__ = False`, re-export only)
+- Legacy shim for duplicated core symbols: `core/__init__.py` (`__CANONICAL__ = False`, forwards to `tradepulse.core`)
 
 ## Entrypoints
 - **Control CLI (canonical):** `cli/tradepulse_cli.py`

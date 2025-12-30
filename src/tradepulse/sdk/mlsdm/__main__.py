@@ -62,7 +62,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--host",
         type=str,
-        default="127.0.0.1",
+        default="0.0.0.0",
         help="Host for API server (used only with --api).",
     )
     parser.add_argument(
@@ -92,7 +92,7 @@ def main() -> None:
         return
 
     try:
-        config = ConfigLoader.load_config(args.config)
+        config = ConfigLoader.load_config_layered(args.config)
     except (FileNotFoundError, OSError) as exc:
         logger.exception("Failed to load config '%s': %s", args.config, exc)
         raise SystemExit(1) from exc

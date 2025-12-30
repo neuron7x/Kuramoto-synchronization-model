@@ -11,6 +11,8 @@ from __future__ import annotations
 import sys
 from importlib import import_module
 
+__CANONICAL__ = False
+
 
 def __getattr__(name: str):
     """Forward known duplicate symbols to the canonical tradepulse.core."""
