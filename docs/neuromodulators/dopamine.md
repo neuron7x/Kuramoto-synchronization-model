@@ -2,7 +2,7 @@
 
 ## Overview
 
-The dopamine module implements a production-grade neuromodulatory controller for trading decisions, based on TD(0) reinforcement learning with phasic/tonic dopamine dynamics, exploration temperature, and Go/Hold/No-Go gating.
+The dopamine module implements a production-grade neuromodulatory controller for trading decisions, based on TD(0) reinforcement learning with phasic/tonic dopamine dynamics, exploration temperature, and Go/Hold/No-Go gating. Evidence: [@SuttonBarto2018RL]
 
 **Version:** 1.0.0  
 **Status:** Production  

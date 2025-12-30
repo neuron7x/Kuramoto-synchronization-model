@@ -256,6 +256,8 @@ All 87 existing tests pass without modification.
 
 The improvements draw from established neuroscience literature:
 
+Evidence: [@JacobsAzmitia1992Serotonin; @Ferguson2001GPCR; @BendaHerz2003Adaptation]
+
 1. **Tonic-Phasic Dynamics**: Based on serotonergic raphe nucleus firing patterns (Jacobs & Azmitia, 1992)
 2. **Receptor Desensitization**: Follows GPCR desensitization kinetics (Ferguson, 2001)
 3. **Action Potentials**: Implements Hodgkin-Huxley-like threshold dynamics
@@ -269,9 +271,9 @@ The improvements draw from established neuroscience literature:
 
 ## References
 
-- Benda, J., & Herz, A. V. (2003). A universal model for spike-frequency adaptation. *Neural computation*, 15(11), 2523-2564.
-- Ferguson, S. S. (2001). Evolving concepts in G protein-coupled receptor endocytosis. *Nature reviews Molecular cell biology*, 2(8), 577-587.
-- Jacobs, B. L., & Azmitia, E. C. (1992). Structure and function of the brain serotonin system. *Physiological reviews*, 72(1), 165-229.
+- [@BendaHerz2003Adaptation] — Spike-frequency adaptation model.
+- [@Ferguson2001GPCR] — GPCR desensitization kinetics.
+- [@JacobsAzmitia1992Serotonin] — Tonic/phasic serotonin system structure.
 
 ## Future Enhancements
 

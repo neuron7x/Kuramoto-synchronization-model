@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive index to the TradePulse security framework, implementing all 10 critical security requirements aligned with NIST, ISO 27001, and industry best practices.
+This document provides a comprehensive index to the TradePulse security framework, implementing all 10 critical security requirements aligned with NIST, ISO 27001, and industry best practices. Evidence: [@NIST80061r2; @ISO27001_2022]
 
 ## Framework Structure
 

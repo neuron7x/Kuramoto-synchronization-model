@@ -2,11 +2,11 @@
 
 ## Overview
 
-The HPC-AI v4 module implements a neurobiologically-inspired framework that combines Hierarchical Predictive Coding (HPC) with Active Inference (AI) and Self-Rewarding Deep Reinforcement Learning (SRDRL) for adaptive trading in non-stationary market environments.
+The HPC-AI v4 module implements a neurobiologically-inspired framework that combines Hierarchical Predictive Coding (HPC) with Active Inference (AI) and Self-Rewarding Deep Reinforcement Learning (SRDRL) for adaptive trading in non-stationary market environments. Evidence: [@Friston2010FreeEnergy] (variational free-energy basis); Anokhin TFS references are treated as [heuristic] due to historical sources.
 
 ## Theoretical Foundations
 
-### 1. Anokhin's Theory of Functional Systems (TFS)
+### 1. Anokhin's Theory of Functional Systems (TFS) [heuristic]
 
 The architecture is based on P.K. Anokhin's Theory of Functional Systems (1935-1974), where the **Acceptor of Action Results (AAR)** serves as a predictive template for comparing expected and actual outcomes, generating error signals for correction.
 

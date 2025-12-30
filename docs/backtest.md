@@ -2,7 +2,7 @@
 
 TradePulse ships with a deterministic, vectorised walk-forward engine designed
 for rapid iteration over strategy parameter sets. This guide explains the data
-contract, scoring outputs, and extension hooks for more advanced simulations.
+contract, scoring outputs, and extension hooks for more advanced simulations. Evidence: [@LopezDePrado2018AFML]
 
 ---
 

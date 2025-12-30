@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ML Crisis Predictor is a thermodynamic-inspired crisis detection system that monitors system free energy, entropy, and latency patterns to identify and predict potential crisis conditions in the TradePulse trading platform. The predictor uses a physics-based approach combined with genetic algorithms to optimize system topology and maintain stability.
+The ML Crisis Predictor is a thermodynamic-inspired crisis detection system that monitors system free energy, entropy, and latency patterns to identify and predict potential crisis conditions in the TradePulse trading platform. The predictor uses a physics-based approach combined with genetic algorithms to optimize system topology and maintain stability. Evidence: [@Friston2010FreeEnergy]
 
 ## Architecture
 
