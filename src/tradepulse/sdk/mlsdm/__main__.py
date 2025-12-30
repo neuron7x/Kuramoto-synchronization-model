@@ -113,6 +113,9 @@ def main() -> None:
             try:
                 cli_overrides[path] = yaml.safe_load(raw_value)
             except yaml.YAMLError:
+                logger.warning(
+                    "Failed to parse override '%s' as YAML; using raw string", path
+                )
                 cli_overrides[path] = raw_value
 
         config = ConfigLoader.load_config_with_defaults(

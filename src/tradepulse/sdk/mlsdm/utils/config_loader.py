@@ -123,6 +123,9 @@ class ConfigLoader:
                 try:
                     parsed_value: Any = yaml.safe_load(value)
                 except yaml.YAMLError:
+                    logger.warning(
+                        "Failed to parse environment override %s; using raw string", key
+                    )
                     parsed_value = value
                 yield [segment.lower() for segment in path], parsed_value
 
