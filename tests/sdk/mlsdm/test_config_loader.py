@@ -116,3 +116,41 @@ class TestConfigLoader:
         result = ConfigLoader.load_config(str(config_file))
 
         assert result["test"] == "value"
+
+    def test_env_overrides_yaml_and_defaults(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ensure environment variables take precedence over YAML and defaults."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            yaml.dump({"agent": {"state_dim": 8, "action_dim": 2}}),
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("MLSDM__AGENT__STATE_DIM", "16")
+
+        result = ConfigLoader.load_config_with_defaults(
+            config_file, defaults={"agent": {"state_dim": 4, "action_dim": 3}}
+        )
+
+        assert result["agent"]["state_dim"] == 16
+        assert result["agent"]["action_dim"] == 2
+
+    def test_cli_overrides_win_over_env(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ensure explicit CLI overrides outrank environment overrides."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            yaml.dump({"agent": {"state_dim": 8, "action_dim": 2}}),
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("MLSDM__AGENT__STATE_DIM", "12")
+
+        result = ConfigLoader.load_config_with_defaults(
+            config_file,
+            defaults={"agent": {"state_dim": 4, "action_dim": 3}},
+            overrides={"agent.state_dim": 20},
+        )
+
+        assert result["agent"]["state_dim"] == 20
+        assert result["agent"]["action_dim"] == 2

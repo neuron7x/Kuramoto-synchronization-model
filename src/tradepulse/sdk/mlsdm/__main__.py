@@ -71,6 +71,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=8000,
         help="Port for API server (used only with --api).",
     )
+    parser.add_argument(
+        "--override",
+        action="append",
+        default=[],
+        metavar="PATH=VALUE",
+        help=(
+            "Override configuration value using dotted path (e.g., "
+            "--override agent.state_dim=32 or "
+            "--override db.url='postgres://user:pw=1@host/db'). "
+            "CLI overrides have highest precedence."
+        ),
+    )
     return parser
 
 
@@ -92,7 +104,23 @@ def main() -> None:
         return
 
     try:
-        config = ConfigLoader.load_config(args.config)
+        cli_overrides: Dict[str, Any] = {}
+        for override in args.override:
+            if "=" not in override:
+                logger.error("Override must be in PATH=VALUE format: %s", override)
+                raise SystemExit(1)
+            # value may legitimately contain '='; split only on the first occurrence
+            path, raw_value = override.split("=", 1)
+            if not path:
+                logger.error("Override path must be non-empty: %s", override)
+                raise SystemExit(1)
+            cli_overrides[path] = ConfigLoader._parse_override_value(
+                raw_value, source=path
+            )
+
+        config = ConfigLoader.load_config_with_defaults(
+            args.config, env_prefix="MLSDM__", overrides=cli_overrides
+        )
     except (FileNotFoundError, OSError) as exc:
         logger.exception("Failed to load config '%s': %s", args.config, exc)
         raise SystemExit(1) from exc
