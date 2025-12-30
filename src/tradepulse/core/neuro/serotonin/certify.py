@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import math
 import threading
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
@@ -63,15 +65,20 @@ def _hysteresis_violation(level: float, cfg: Mapping[str, float], hold_state: bo
     return (not hold_state) and level > threshold + 1e-6
 
 
-def _check_persistence(ctrl: SerotoninController, path: Path) -> list[str]:
+def _check_persistence(ctrl: SerotoninController) -> list[str]:
     violations: list[str] = []
+    fd, path_str = tempfile.mkstemp(prefix="serotonin_state_", suffix=".json")
+    os.close(fd)
+    path = Path(path_str)
     before = ctrl.get_state()
     ctrl.save_state(str(path))
 
     # Second writer should block via lock but not corrupt
-    t = threading.Thread(target=ctrl.save_state, args=(str(path),))
+    t = threading.Thread(target=ctrl.save_state, args=(str(path),), daemon=True)
     t.start()
     t.join(timeout=2)
+    if t.is_alive():
+        violations.append("concurrent_save_timeout")
 
     new_ctrl = SerotoninController(ctrl.config_path)
     new_ctrl.load_state(str(path))
@@ -88,6 +95,8 @@ def _check_persistence(ctrl: SerotoninController, path: Path) -> list[str]:
     if path.with_suffix(path.suffix + ".tmp").exists():
         violations.append("atomic_write_failed")
 
+    if path.exists():
+        path.unlink()
     return violations
 
 
@@ -144,11 +153,7 @@ def run_regime(
                 violations.append("excessive_hold_flips")
                 break
 
-    tmp_path = Path(".artifacts_tmp_serotonin_state.json")
-    tmp_path.parent.mkdir(parents=True, exist_ok=True)
-    violations.extend(_check_persistence(controller, tmp_path))
-    if tmp_path.exists():
-        tmp_path.unlink()
+    violations.extend(_check_persistence(controller))
 
     time_in_hold = sum(1 for h in holds if h) / max(1, len(holds))
     return RegimeMetrics(

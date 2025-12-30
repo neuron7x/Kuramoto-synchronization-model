@@ -14,12 +14,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 try:
     import sitecustomize  # type: ignore  # noqa: F401
-except Exception:
+except ImportError:
     pass
 # Preload legacy observability shim to avoid circular imports during certification entrypoint
 try:
     import core.neuro.serotonin.observability  # type: ignore  # noqa: F401
-except Exception:
+except ImportError:
     pass
 
 from tradepulse.core.neuro.serotonin.certify import (

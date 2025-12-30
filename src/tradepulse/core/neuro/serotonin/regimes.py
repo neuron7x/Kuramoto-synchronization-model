@@ -66,7 +66,8 @@ def build_regimes(series, seed: int) -> dict[str, np.ndarray]:
 
     # R3: Whipsaw (alternating returns with bounded amplitude)
     whipsaw_returns = np.empty_like(base_returns)
-    amp = max(0.01, float(np.std(base_returns) or 0.01))
+    base_std = float(np.std(base_returns))
+    amp = max(0.01, base_std if base_std > 0 else 0.01)
     signs = np.where(np.arange(len(whipsaw_returns)) % 2 == 0, 1.0, -1.0)
     noise = rng.uniform(0.5, 1.2, size=len(whipsaw_returns))
     whipsaw_returns[:] = np.clip(signs * amp * noise, -0.2, 0.2)
