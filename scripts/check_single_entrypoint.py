@@ -2,7 +2,7 @@
 
 Canonicals:
 - control CLI: ``cli/tradepulse_cli.py``
-- API server: ``cortex_service/app/main.py``
+- API server: ``cortex_service/app/__main__.py``
 - calibration tooling: ``scripts/calibrate_controllers.py``
 
 Any additional entrypoint-like modules must be explicitly allowlisted as legacy
