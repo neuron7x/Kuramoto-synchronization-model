@@ -14,6 +14,7 @@
 - Canonical configs: `config/default_config.yaml`, `config/dopamine.yaml`, `config/thermo_config.yaml`
 - Legacy duplicates (explicit opt-in only): `configs/dopamine.yaml`
 - Other top-level config dirs (`configs/`, `conf/`) are treated as legacy and may not be extended without updating the guardrail.
+- Config precedence (MLSDM): CLI overrides (`--override key=value`) > environment (`MLSDM__...`) > YAML file > defaults.
 
 ## Guardrails
 - `scripts/check_namespace_integrity.py` — ensures canonical/shim markers are present and exclusive to `src/tradepulse`.
