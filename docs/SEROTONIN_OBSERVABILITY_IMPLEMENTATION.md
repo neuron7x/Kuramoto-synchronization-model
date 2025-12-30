@@ -116,6 +116,8 @@
 
 ### 2.3 Observability Module (`observability.py`)
 
+Evidence: [@Prometheus2024Docs] (Prometheus exposition format and metric types)
+
 Новий модуль на 14.5 KB з:
 
 #### SLI Definitions (5)

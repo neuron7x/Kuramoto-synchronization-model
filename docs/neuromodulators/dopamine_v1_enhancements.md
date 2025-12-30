@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the production-grade enhancements made to the dopamine neuromodulator module in version 1.0, bringing it from research prototype to production-ready code.
+This document summarizes the production-grade enhancements made to the dopamine neuromodulator module in version 1.0, bringing it from research prototype to production-ready code. Evidence: [@SuttonBarto2018RL]
 
 ## Key Enhancements
 

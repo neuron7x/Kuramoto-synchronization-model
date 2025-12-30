@@ -1,0 +1,22 @@
+name: bibliography-lint
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bibliography:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run bibliography linter
+        run: python scripts/lint_bibliography.py

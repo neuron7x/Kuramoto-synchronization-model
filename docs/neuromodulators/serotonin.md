@@ -2,7 +2,7 @@
 
 ## Overview
 
-The serotonin module implements a production-grade neuromodulatory controller for risk management and stress adaptation in trading systems. It models tonic (chronic baseline) and phasic (acute spike) serotonin dynamics with hysteretic hold logic to prevent trading during high-stress periods.
+The serotonin module implements a production-grade neuromodulatory controller for risk management and stress adaptation in trading systems. It models tonic (chronic baseline) and phasic (acute spike) serotonin dynamics with hysteretic hold logic to prevent trading during high-stress periods. Evidence: [@JacobsAzmitia1992Serotonin; @BendaHerz2003Adaptation]
 
 **Version:** 2.5.0
 **Status:** Production

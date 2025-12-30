@@ -4,7 +4,7 @@ The Thermodynamic Autonomic Control Layer is responsible for validating that the
 TradePulse execution graph operates inside the safe energy envelope before a
 rollout progresses beyond the laboratory environment.  The validator ingests a
 compact set of telemetry collected from the link activator and control plane and
-computes the Helmholtz free energy
+computes the Helmholtz free energy (Helmholtz definition and variational framing supported by [@Callen1985Thermodynamics; @Friston2010FreeEnergy])
 
 \[
 F = U - T S
