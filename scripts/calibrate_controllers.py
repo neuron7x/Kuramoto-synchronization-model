@@ -21,12 +21,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import os
 import yaml
 
 # Import calibration_constants module
 # Note: This script is intended to be run from the repository root
 # For development, use: pip install -e .
 try:
+    os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
     from core.neuro.calibration_constants import (
         DopamineParameterRanges,
         NAKParameterRanges,
@@ -35,6 +37,8 @@ try:
         SerotoninParameterRanges,
         validate_parameter_invariants,
     )
+    from core.data.dataset_contracts import contract_by_path
+    from core.data.fingerprint import record_run_fingerprint
 except ImportError:
     # Fallback for when running directly from scripts directory
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -46,6 +50,8 @@ except ImportError:
         SerotoninParameterRanges,
         validate_parameter_invariants,
     )
+    from core.data.dataset_contracts import contract_by_path  # noqa: F401
+    from core.data.fingerprint import record_run_fingerprint  # noqa: F401
 
 # Configure logging
 logging.basicConfig(
@@ -674,7 +680,24 @@ Examples:
         help="Validate an existing configuration file",
     )
 
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        help="Optional dataset used during calibration for provenance tracking",
+    )
+
     args = parser.parse_args()
+
+    if args.dataset:
+        dataset_path = args.dataset.resolve()
+        if not dataset_path.exists():
+            logger.error("Dataset not found for provenance tracking: %s", dataset_path)
+        else:
+            contract = contract_by_path(dataset_path)
+            if contract:
+                record_run_fingerprint(contract, run_type="calibration")
+            else:
+                logger.warning("No dataset contract registered for %s", dataset_path)
 
     # Handle list profiles
     if args.list_profiles:

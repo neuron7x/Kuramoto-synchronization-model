@@ -1,0 +1,49 @@
+name: data-governance-validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  data-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install minimal test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Validate dataset metadata and fingerprints
+        run: |
+          python scripts/validate_datasets.py --write-fingerprints artifacts/data-fingerprints
+          python scripts/validate_dataset_schema.py
+
+      - name: Run data governance tests
+        run: |
+          pytest tests/data/test_dataset_metadata_validation.py \
+                tests/data/test_data_fingerprinting.py \
+                tests/data/test_dataset_schema_validation.py
+
+      - name: Upload data fingerprints
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-fingerprints
+          path: artifacts/data-fingerprints/
+          if-no-files-found: warn
+
+      - name: Upload data transformation traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-traces
+          path: artifacts/data-traces/
+          if-no-files-found: warn

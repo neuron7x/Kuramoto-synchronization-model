@@ -1,0 +1,10 @@
+{
+  "dataset_id": "sample-timeseries-v1",
+  "origin": "synthetic",
+  "description": "Synthetic price/volume sequence for quick smoke tests and indicator validation.",
+  "creation_method": "scripts/generate_sample_ohlcv.py (single-asset sample preset)",
+  "temporal_coverage": "500 sequential steps",
+  "schema_version": "1.0.0",
+  "intended_use": "backtest",
+  "forbidden_use": "not for live trading"
+}

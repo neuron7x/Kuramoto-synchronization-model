@@ -1,0 +1,10 @@
+{
+  "dataset_id": "sample-stocks-daily-v1",
+  "origin": "synthetic",
+  "description": "Synthetic daily OHLCV bars for equities (AAPL, SPY) used in portfolio demos.",
+  "creation_method": "scripts/generate_sample_ohlcv.py --symbols AAPL SPY --days 60 --timeframe 1d",
+  "temporal_coverage": "60 daily bars starting 2024-01-01",
+  "schema_version": "1.0.0",
+  "intended_use": "backtest",
+  "forbidden_use": "not for live trading"
+}

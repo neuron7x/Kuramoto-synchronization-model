@@ -1,0 +1,10 @@
+{
+  "dataset_id": "sample-ohlc-v1",
+  "origin": "synthetic",
+  "description": "Synthetic OHLCV bars for indicator and strategy regression coverage.",
+  "creation_method": "scripts/generate_sample_ohlcv.py (OHLC sample preset)",
+  "temporal_coverage": "300 sequential bars",
+  "schema_version": "1.0.0",
+  "intended_use": "backtest",
+  "forbidden_use": "not for live trading"
+}
