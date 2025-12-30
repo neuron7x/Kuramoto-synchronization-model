@@ -156,7 +156,6 @@ class ConfigLoader:
         return merged
 
     @staticmethod
-    @staticmethod
     def _normalize_path(path: Iterable[str]) -> list[str]:
         return [segment.lower() for segment in path if segment]
 
