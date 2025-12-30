@@ -40,7 +40,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests prometheus-api-client
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt requests prometheus-api-client
 
       - name: Query Prometheus metrics
         id: metrics

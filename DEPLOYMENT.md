@@ -24,8 +24,8 @@ Before deploying, install the following tools:
 - **MANDATORY**: Always install dependencies with the constraint file to guarantee hardened versions:
 
   ```bash
-  pip install -c constraints/security.txt -r requirements.txt
-  pip install -c constraints/security.txt -r requirements-dev.txt
+  pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+  pip install -c constraints/security.txt -r requirements-dev.lock
   ```
 
 - **Verification**: Run the security constraint verification script after installation:
@@ -41,17 +41,20 @@ Before deploying, install the following tools:
   2. Re-lock dependency sets:
      ```bash
      pip install --upgrade pip-tools
-     make lock  # regenerates *.lock using the security constraint
+     pip-compile --constraint=constraints/security.txt --no-annotate --output-file=requirements.lock --strip-extras requirements.txt
+     pip-compile --constraint=constraints/security.txt --no-annotate --output-file=requirements-dev.lock --strip-extras requirements-dev.txt
+     cp requirements.lock sbom/combined-requirements.txt
      ```
   3. Validate locally (lint, unit tests, smoke flows)
   4. Run security audit to verify the vulnerability is resolved:
      ```bash
-     pip-audit -c constraints/security.txt -r requirements.txt -r requirements-dev.txt
+     pip-audit --severity HIGH --severity CRITICAL -r sbom/combined-requirements.txt -r requirements-dev.lock
      python scripts/verify_security_constraints.py
      ```
 
 - Commit the updated constraint and regenerated lock files. Dependabot is configured to watch `/constraints/security.txt`, so
   CVE-driven updates will surface as automated pull requests that follow the same workflow.
+  See [docs/SECURITY_DEPENDENCIES.md](docs/SECURITY_DEPENDENCIES.md) for the complete dependency hardening playbook.
 
 ## Configuration Management
 

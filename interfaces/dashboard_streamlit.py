@@ -18,6 +18,10 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
+from interfaces.streamlit_security import enforce_dev_only_dashboard
+
+enforce_dev_only_dashboard()
+
 import numpy as np
 import pandas as pd
 import streamlit as st

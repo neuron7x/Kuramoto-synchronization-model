@@ -144,7 +144,7 @@ format:
 audit:
 	@echo "🔒 Running security audits..."
 	@echo "Note: pip-audit may report vulnerabilities that need review"
-	python -m pip_audit -r requirements.txt -r requirements-dev.txt || echo "⚠️  pip-audit found issues - review above output"
+	python -m pip_audit -r sbom/combined-requirements.txt -r requirements-dev.lock || echo "⚠️  pip-audit found issues - review above output"
 	python -m bandit -r core/ backtest/ execution/ src/ -ll -q
 	@echo "✅ Security audit complete"
 

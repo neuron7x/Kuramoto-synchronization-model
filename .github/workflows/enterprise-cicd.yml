@@ -78,9 +78,9 @@ jobs:
 
       - name: Install quality tooling
         run: |
-          uv pip install -c constraints/security.txt -r requirements.txt
-          uv pip install -c constraints/security.txt -r requirements-dev.txt
-          uv pip install pre-commit detect-secrets bandit
+          uv pip install -c constraints/security.txt -r requirements.lock
+          uv pip install -c constraints/security.txt -r requirements-dev.lock
+          uv pip install -c constraints/security.txt pre-commit detect-secrets bandit
 
       - name: Run ruff
         run: .venv/bin/ruff check .
@@ -144,8 +144,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -c constraints/security.txt -r requirements.txt
-          uv pip install -c constraints/security.txt -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.lock
+          uv pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Prepare report directories
         run: mkdir -p reports
@@ -194,8 +194,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -c constraints/security.txt -r requirements.txt
-          uv pip install -c constraints/security.txt -r requirements-dev.txt
+          uv pip install -c constraints/security.txt -r requirements.lock
+          uv pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Prepare report directories
         run: |
@@ -514,7 +514,7 @@ jobs:
           kustomize edit set image ghcr.io/neuron7x/tradepulse=${IMAGE_REF}
           popd >/dev/null
           kustomize build "$temp_dir/overlay" > "$temp_dir/manifest.yaml"
-          python -m pip install --quiet pyyaml
+          python -m pip install --quiet -c constraints/security.txt pyyaml
           python <<'PY' "$temp_dir/manifest.yaml" "${IMAGE_REF}"
           import copy
           import sys

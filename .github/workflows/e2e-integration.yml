@@ -42,8 +42,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
           if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
-          pip install -c constraints/security.txt -r requirements-dev.txt
       - name: Run integration tests (marked integration)
         env:
           CI: true

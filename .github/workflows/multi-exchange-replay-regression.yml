@@ -52,8 +52,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Create artifacts directory
         run: mkdir -p .ci_artifacts/multi-exchange-replay
@@ -138,8 +138,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Create baseline directory
         run: mkdir -p .ci_artifacts/baseline
@@ -178,8 +178,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.txt
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
       - name: Download historical baselines
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4

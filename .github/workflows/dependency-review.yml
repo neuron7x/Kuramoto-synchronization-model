@@ -76,12 +76,14 @@ jobs:
 
       - name: Install license scanning tools
         run: |
-          pip install pip-licenses licensecheck
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
+          pip install -c constraints/security.txt pip-licenses licensecheck
 
       - name: Scan Python dependencies for licenses
         id: python_licenses
         run: |
-          pip install -r requirements.txt
+          pip install -c constraints/security.txt -r requirements-dev.lock
 
           # Generate license report
           pip-licenses --format=json --output-file=python-licenses.json
@@ -137,7 +139,7 @@ jobs:
       - name: Check for known malicious packages
         run: |
           # Use pip-audit to check for known malicious packages
-          pip install pip-audit
+          pip install -c constraints/security.txt pip-audit
 
           pip-audit --desc --format json -o malicious-packages-report.json || {
             echo "⚠️  pip-audit scan completed with warnings"

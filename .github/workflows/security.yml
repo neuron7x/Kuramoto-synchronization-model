@@ -40,7 +40,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install bandit safety numpy
+        pip install -c constraints/security.txt bandit safety numpy
 
     - name: Run custom secret scanner
       run: |
@@ -105,7 +105,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -c constraints/security.txt -r requirements.lock -r requirements-dev.lock
-        pip install safety pip-audit
+        pip install -c constraints/security.txt safety pip-audit packaging
+
+    - name: Check dependency drift
+      run: |
+        mkdir -p artifacts/security
+        python scripts/security/check_dependency_drift.py --output artifacts/security/dependency-drift.json
 
     - name: Check for known vulnerabilities with Safety
       run: |
@@ -117,10 +122,12 @@ jobs:
     - name: Audit dependencies with pip-audit
       run: |
         # Run pip-audit and save the report
-        pip-audit --desc -o pip-audit-report.json --format json || true
-
-        # Display the full report for visibility
-        pip-audit --desc || true
+        mkdir -p artifacts/security
+        pip-audit --desc \
+          --format json \
+          --output artifacts/security/pip-audit.json \
+          --severity HIGH --severity CRITICAL \
+          -r sbom/combined-requirements.txt || true
 
         # TEMPORARY WORKAROUND: Ignore known pip vulnerability GHSA-4xh5-x5gv-qwph (CVE-2025-8869)
         # This vulnerability is in pip itself and will be fixed in pip 25.3
@@ -128,14 +135,14 @@ jobs:
         # Reference: https://github.com/pypa/pip/security/advisories/GHSA-4xh5-x5gv-qwph
 
         # Use jq to check if there are any vulnerabilities OTHER than the known pip issue
-        if [ -f pip-audit-report.json ]; then
+        if [ -f artifacts/security/pip-audit.json ]; then
           OTHER_VULNS=$(jq -r '
             [.dependencies[] // empty |
              select(.vulns != null and (.vulns | length) > 0) |
              .vulns[] |
              select(.id != "GHSA-4xh5-x5gv-qwph")
             ] | length
-          ' pip-audit-report.json)
+          ' artifacts/security/pip-audit.json)
 
           echo "Found $OTHER_VULNS vulnerabilities (excluding GHSA-4xh5-x5gv-qwph)"
 
@@ -145,10 +152,10 @@ jobs:
             jq -r '
               .dependencies[] // empty |
               select(.vulns != null and (.vulns | length) > 0) |
-              .vulns[] |
-              select(.id != "GHSA-4xh5-x5gv-qwph") |
-              "  - \(.id): \(.description[:100])..."
-            ' pip-audit-report.json
+               .vulns[] |
+               select(.id != "GHSA-4xh5-x5gv-qwph") |
+               "  - \(.id): \(.description[:100])..."
+             ' artifacts/security/pip-audit.json
             exit 1
           else
             echo "SUCCESS: Only the known pip vulnerability GHSA-4xh5-x5gv-qwph is present"
@@ -166,7 +173,8 @@ jobs:
         name: dependency-reports
         path: |
           safety-report.json
-          pip-audit-report.json
+          artifacts/security/pip-audit.json
+          artifacts/security/dependency-drift.json
 
   container-scan:
     name: Container Image Scan
