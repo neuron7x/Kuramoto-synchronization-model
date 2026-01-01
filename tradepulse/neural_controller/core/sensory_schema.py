@@ -33,6 +33,22 @@ class SensoryChannel:
             raise ValueError("SensoryChannel max must exceed min.")
 
 
+DEFAULT_CHANNELS = tuple(
+    SensoryChannel(
+        name=key,
+        min=0.0,
+        max=1.0,
+        dtype=float,
+        nan_policy="zero",
+        scale=None,
+        clip=True,
+        weight=1.0,
+        confidence_floor=0.0,
+    )
+    for key in OBSERVATION_KEYS
+)
+
+
 @dataclass
 class SensorySchemaResult:
     normalized: Dict[str, float]
@@ -51,22 +67,7 @@ class SensorySchema:
 
     @classmethod
     def default(cls) -> "SensorySchema":
-        return cls(
-            channels=tuple(
-                SensoryChannel(
-                    name=key,
-                    min=0.0,
-                    max=1.0,
-                    dtype=float,
-                    nan_policy="zero",
-                    scale=None,
-                    clip=True,
-                    weight=1.0,
-                    confidence_floor=0.0,
-                )
-                for key in OBSERVATION_KEYS
-            )
-        )
+        return cls(channels=DEFAULT_CHANNELS)
 
     def validate(self, obs: Mapping[str, Any]) -> SensorySchemaResult:
         normalized: Dict[str, float] = {}
@@ -139,4 +140,10 @@ class SensorySchema:
         return value < channel.min or value > channel.max
 
 
-__all__ = ["SCHEMA_VERSION", "SensoryChannel", "SensorySchema", "SensorySchemaResult"]
+__all__ = [
+    "DEFAULT_CHANNELS",
+    "SCHEMA_VERSION",
+    "SensoryChannel",
+    "SensorySchema",
+    "SensorySchemaResult",
+]
