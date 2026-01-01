@@ -343,10 +343,16 @@ For any state value \(x\) with setpoint \(s\), the relative deviation is:
 dev(x, s) = (x - s) / (s + epsilon)
 ```
 
+To prevent extreme states from dominating updates, deviations are clipped:
+
+```
+dev_clip(x, s) = clip(dev(x, s), -gradient_dev_clip, gradient_dev_clip)
+```
+
 For dopamine/serotonin, the DA/5-HT ratio deviation directly drives proportional updates:
 
 ```
-ratio_dev = (da_5ht_ratio - da_5ht_setpoint) / (da_5ht_setpoint + epsilon)
+ratio_dev = dev_clip(da_5ht_ratio, da_5ht_setpoint)
 dopamine_grad  = -ratio_dev
 serotonin_grad =  ratio_dev
 ```
@@ -354,9 +360,9 @@ serotonin_grad =  ratio_dev
 Other modules follow the same proportional rule:
 
 ```
-gaba_grad     = -dev(gaba_inhibition, gaba_setpoint)
-arousal_grad  = -dev(na_arousal, arousal_setpoint)
-attention_grad = -dev(ach_attention, attention_setpoint)
+gaba_grad      = -dev_clip(gaba_inhibition, gaba_setpoint)
+arousal_grad   = -dev_clip(na_arousal, arousal_setpoint)
+attention_grad = -dev_clip(ach_attention, attention_setpoint)
 ```
 
 Negative gradients indicate the parameter should decrease, positive gradients
@@ -459,6 +465,7 @@ class OptimizationConfig:
     performance_min: float = -2.0      # Min performance for normalization
     performance_max: float = 3.0       # Max performance for normalization
     stability_epsilon: float = 1e-6    # Numerical stability constant
+    gradient_dev_clip: float = 3.0     # Deviation clip for gradient heuristic
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations

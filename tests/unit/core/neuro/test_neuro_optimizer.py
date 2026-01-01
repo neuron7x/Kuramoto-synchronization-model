@@ -134,6 +134,11 @@ class TestOptimizationConfig:
         with pytest.raises(ValueError, match="stability_epsilon"):
             OptimizationConfig(stability_epsilon=0.0)
 
+    def test_gradient_dev_clip_positive(self):
+        """Test gradient_dev_clip must be positive."""
+        with pytest.raises(ValueError, match="gradient_dev_clip"):
+            OptimizationConfig(gradient_dev_clip=0.0)
+
 
 class TestBalanceMetrics:
     """Tests for BalanceMetrics dataclass."""
@@ -953,6 +958,38 @@ class TestNeuroOptimizer:
         large_mag = abs(large_gradients['na_ach']['arousal_gain'])
 
         assert large_mag > small_mag
+
+    def test_estimate_gradients_clips_deviation_extremes(self, sample_params, sample_state):
+        """Ensure gradient deviations are clipped for extreme states."""
+        config = OptimizationConfig(
+            learning_rate=0.2,
+            momentum=0.0,
+            gradient_dev_clip=0.5,
+        )
+        optimizer = NeuroOptimizer(config)
+
+        extreme_state = dict(
+            sample_state,
+            dopamine_level=1000.0,
+            serotonin_level=0.001,
+            gaba_inhibition=1000.0,
+            na_arousal=1000.0,
+            ach_attention=1000.0,
+        )
+
+        gradients = optimizer._estimate_gradients(
+            sample_params,
+            extreme_state,
+            performance=5.0,
+        )
+
+        max_grad = config.learning_rate * config.gradient_dev_clip
+
+        assert abs(gradients['dopamine']['learning_rate']) <= max_grad
+        assert abs(gradients['serotonin']['stress_threshold']) <= max_grad
+        assert abs(gradients['gaba']['k_inhibit']) <= max_grad
+        assert abs(gradients['na_ach']['arousal_gain']) <= max_grad
+        assert abs(gradients['na_ach']['attention_gain']) <= max_grad
 
     def test_apply_updates_with_momentum(self, opt_config, sample_params):
         """Test parameter updates with momentum."""

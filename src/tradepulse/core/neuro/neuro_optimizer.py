@@ -66,6 +66,8 @@ class OptimizationConfig:
         Window length for performance history tracking
     stability_epsilon : float
         Numerical stability constant for ratio/stability denominators
+    gradient_dev_clip : float
+        Maximum absolute deviation used in proportional gradient estimates
     dtype : str
         Floating point dtype for numerical buffers (e.g., "float32")
     use_gpu : bool
@@ -102,6 +104,7 @@ class OptimizationConfig:
     convergence_threshold: float = 0.001
     history_window: int = 20
     stability_epsilon: float = 1e-6
+    gradient_dev_clip: float = 3.0
     dtype: str = "float32"
     use_gpu: bool = False
     enable_plasticity: bool = True
@@ -148,6 +151,9 @@ class OptimizationConfig:
 
         if self.stability_epsilon <= 0:
             raise ValueError("stability_epsilon must be positive")
+
+        if self.gradient_dev_clip <= 0:
+            raise ValueError("gradient_dev_clip must be positive")
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
@@ -570,6 +576,11 @@ class NeuroOptimizer:
         def relative_deviation(value: float, setpoint: float) -> float:
             return float((value - setpoint) / (setpoint + epsilon))
 
+        max_deviation = self._dtype.type(self.config.gradient_dev_clip)
+
+        def clip_deviation(value: float) -> float:
+            return float(self._xp.clip(value, -max_deviation, max_deviation))
+
         dopamine_level = float(
             state.get('dopamine_level', self._setpoints['dopamine_level'])
         )
@@ -577,7 +588,9 @@ class NeuroOptimizer:
             state.get('serotonin_level', self._setpoints['serotonin_level'])
         )
         ratio_value = dopamine_level / (serotonin_level + float(epsilon))
-        ratio_deviation = relative_deviation(ratio_value, self._setpoints['da_5ht_ratio'])
+        ratio_deviation = clip_deviation(
+            relative_deviation(ratio_value, self._setpoints['da_5ht_ratio'])
+        )
 
         gaba_value = float(
             state.get('gaba_inhibition', self._setpoints['gaba_inhibition'])
@@ -589,9 +602,15 @@ class NeuroOptimizer:
             state.get('ach_attention', self._setpoints['ach_attention'])
         )
 
-        gaba_dev = relative_deviation(gaba_value, self._setpoints['gaba_inhibition'])
-        arousal_dev = relative_deviation(arousal_value, self._setpoints['na_arousal'])
-        attention_dev = relative_deviation(attention_value, self._setpoints['ach_attention'])
+        gaba_dev = clip_deviation(
+            relative_deviation(gaba_value, self._setpoints['gaba_inhibition'])
+        )
+        arousal_dev = clip_deviation(
+            relative_deviation(arousal_value, self._setpoints['na_arousal'])
+        )
+        attention_dev = clip_deviation(
+            relative_deviation(attention_value, self._setpoints['ach_attention'])
+        )
 
         # For each neuromodulator
         for module in ['dopamine', 'serotonin', 'gaba', 'na_ach']:
