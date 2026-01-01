@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 OBSERVATION_KEYS = ("dd", "liq", "reg", "vol")
 
@@ -39,6 +39,9 @@ class Params:
     M0: float = 0.8
     prediction_gain: float = 0.08
     sensory_confidence_gain: float = 1.0
+    neuromodulation_mix: "NeuromodulationMixConfig" = field(
+        default_factory=lambda: NeuromodulationMixConfig()
+    )
 
 
 @dataclass(frozen=True)
@@ -99,3 +102,20 @@ class PredictiveConfig:
         normalized = tuple(self.keys)
         _validate_keys("PredictiveConfig", normalized)
         object.__setattr__(self, "keys", normalized)
+
+
+@dataclass(frozen=True)
+class NeuromodulationMixConfig:
+    prediction_weight: float = 0.6
+    rpe_weight: float = 0.4
+    volatility_midpoint: float = 0.5
+    volatility_slope: float = 8.0
+    anneal_rate: float = 0.2
+    min_weight: float = 0.05
+    max_weight: float = 0.95
+
+    def normalized_prediction_weight(self) -> float:
+        total = self.prediction_weight + self.rpe_weight
+        if total <= 0:
+            return 0.5
+        return self.prediction_weight / total

@@ -20,11 +20,12 @@ if "tradepulse" not in sys.modules:
     sys.modules["tradepulse"] = pkg
 
 from ..config import load_default_config
-from ..core.emh_model import EMHSSM
+from ..core.emh_model import EMHSSM, mix_prediction_rpe
 from ..core.params import (
     EKFConfig,
     HomeoConfig,
     MarketAdapterConfig,
+    NeuromodulationMixConfig,
     Params,
     PolicyConfig,
     RiskConfig,
@@ -191,6 +192,44 @@ def test_bridge_emits_predictive_state_from_config() -> None:
     assert "prediction_error_channels" in decision
     assert set(decision["prediction_mu"]) == {"dd", "liq", "reg", "vol"}
     assert set(decision["prediction_error_channels"]) == {"dd", "liq", "reg", "vol"}
+
+
+def test_mix_prediction_rpe_volatility_dominates_prediction_error() -> None:
+    cfg = NeuromodulationMixConfig(
+        volatility_midpoint=0.5,
+        volatility_slope=10.0,
+        anneal_rate=1.0,
+        min_weight=0.05,
+        max_weight=0.95,
+    )
+    mixed, weight = mix_prediction_rpe(
+        prediction_error=1.0,
+        rpe=0.2,
+        volatility=0.95,
+        confidence=1.0,
+        config=cfg,
+    )
+    assert weight > 0.7
+    assert abs(mixed - 1.0) < abs(mixed - 0.2)
+
+
+def test_mix_prediction_rpe_stable_regime_prefers_rpe() -> None:
+    cfg = NeuromodulationMixConfig(
+        volatility_midpoint=0.5,
+        volatility_slope=10.0,
+        anneal_rate=1.0,
+        min_weight=0.05,
+        max_weight=0.95,
+    )
+    mixed, weight = mix_prediction_rpe(
+        prediction_error=1.0,
+        rpe=0.2,
+        volatility=0.05,
+        confidence=1.0,
+        config=cfg,
+    )
+    assert weight < 0.3
+    assert abs(mixed - 0.2) < abs(mixed - 1.0)
 
 
 def test_toy_stream_invariants(controller: NeuralMarketController) -> None:

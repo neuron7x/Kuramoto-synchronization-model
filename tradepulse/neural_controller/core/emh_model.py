@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Dict
 
-from .params import Params
+from .params import NeuromodulationMixConfig, Params
 from .state import EMHState, clamp
 
 log = logging.getLogger(__name__)
@@ -29,6 +30,30 @@ def _threat_mode(dd: float, var_breach: bool, vol: float) -> str:
     return "GREEN"
 
 
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + math.exp(-x))
+
+
+def mix_prediction_rpe(
+    prediction_error: float,
+    rpe: float,
+    *,
+    volatility: float,
+    confidence: float,
+    config: NeuromodulationMixConfig,
+    prev_weight: float | None = None,
+) -> tuple[float, float]:
+    drive = max(clamp(volatility), 1.0 - clamp(confidence))
+    target = _sigmoid(config.volatility_slope * (drive - config.volatility_midpoint))
+    target = clamp(target, config.min_weight, config.max_weight)
+    base_weight = config.normalized_prediction_weight()
+    current = base_weight if prev_weight is None else prev_weight
+    weight = current + config.anneal_rate * (target - current)
+    weight = clamp(weight, config.min_weight, config.max_weight)
+    mixed = weight * prediction_error + (1.0 - weight) * rpe
+    return mixed, weight
+
+
 class EMHSSM:
     """EMH-inspired bounded state-space model."""
 
@@ -36,6 +61,7 @@ class EMHSSM:
         self.p = p
         self.s = s or EMHState()
         self.belief_term_gain = 0.05
+        self.mix_weight = self.p.neuromodulation_mix.normalized_prediction_weight()
 
     def step(self, obs: Dict[str, float]) -> Dict[str, float]:
         dd = clamp(float(obs.get("dd", 0.0)))
@@ -60,13 +86,22 @@ class EMHSSM:
         gamma_rl = 0.9
         delta_rpe = reward + gamma_rl * self.s.V - self.s.V
         self.s.V += 0.1 * delta_rpe
+        scaled_rpe = self.p.kappa * delta_rpe
+        scaled_prediction = self.p.prediction_gain * prediction_error
+        mixed_error, self.mix_weight = mix_prediction_rpe(
+            scaled_prediction,
+            scaled_rpe,
+            volatility=vol,
+            confidence=sensory_confidence,
+            config=self.p.neuromodulation_mix,
+            prev_weight=self.mix_weight,
+        )
 
         self.s.S = clamp(
             self.p.phi * D
             + self.p.omega * (1.0 - self.s.M / self.p.M0)
-            + self.p.kappa * delta_rpe
             + self.belief_term_gain * belief_term
-            + self.p.prediction_gain * prediction_error
+            + mixed_error
         )
 
         dH = self.p.alpha * self.s.S - self.p.beta * self.s.H + self.p.gamma * self.s.M
