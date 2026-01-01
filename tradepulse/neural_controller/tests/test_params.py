@@ -39,3 +39,9 @@ def test_config_keys_empty(config_cls) -> None:
 def test_config_keys_duplicates(config_cls) -> None:
     with pytest.raises(ValueError, match="keys must be unique"):
         config_cls(keys=("dd", "dd"))
+
+
+@pytest.mark.parametrize("config_cls", [SensoryConfig, PredictiveConfig])
+def test_config_keys_blank_entry(config_cls) -> None:
+    with pytest.raises(ValueError, match="keys must be non-empty strings"):
+        config_cls(keys=("dd", ""))
