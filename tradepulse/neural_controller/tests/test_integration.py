@@ -145,6 +145,28 @@ def test_bridge_flow(controller: NeuralMarketController) -> None:
     assert out["temperature"] > 0.0
 
 
+def test_bridge_emits_predictive_state_from_config() -> None:
+    controller = NeuralMarketController(
+        Params(),
+        EKFConfig(),
+        PolicyConfig(),
+        RiskConfig(),
+        HomeoConfig(),
+        emit_predictive_state=True,
+    )
+    bridge = NeuralTACLBridge(
+        controller, DummyTACL(), DummyKuramoto(), sync_threshold=0.3
+    )
+    obs = dict(
+        dd=0.2, liq=0.3, reg=0.4, vol=0.6, reward=0.01, var_breach=False, m_proxy=0.6
+    )
+    decision = bridge.step(obs)
+    assert "prediction_mu" in decision
+    assert "prediction_error_channels" in decision
+    assert set(decision["prediction_mu"]) == {"dd", "liq", "reg", "vol"}
+    assert set(decision["prediction_error_channels"]) == {"dd", "liq", "reg", "vol"}
+
+
 def test_toy_stream_invariants(controller: NeuralMarketController) -> None:
     bridge = NeuralTACLBridge(
         controller, DummyTACL(), DummyKuramoto(), sync_threshold=0.3

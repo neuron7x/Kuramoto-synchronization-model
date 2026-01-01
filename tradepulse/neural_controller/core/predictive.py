@@ -42,10 +42,10 @@ class PredictiveCoder:
         self._last_error = dict(errors)
         return PredictiveState(mu=dict(self._mu), error=errors)
 
-    def snapshot(self) -> Dict[str, Dict[str, float] | None]:
-        """Return the latest mean state and last error if available."""
-        last_error = None if not self._last_error else dict(self._last_error)
-        return {"mu": dict(self._mu), "error": last_error}
+    def snapshot(self) -> PredictiveState:
+        """Return the latest mean state and last per-channel error."""
+        last_error = dict(self._last_error) if self._last_error else {}
+        return PredictiveState(mu=dict(self._mu), error=last_error)
 
     def error_energy(self, obs: Dict[str, float]) -> float:
         state = self.step(obs)

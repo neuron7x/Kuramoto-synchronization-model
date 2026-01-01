@@ -173,6 +173,8 @@ class NeuralMarketController:
         sensory: SensoryConfig | None = None,
         predictive: PredictiveConfig | None = None,
         adapter: MarketAdapterConfig | None = None,
+        *,
+        emit_predictive_state: bool = False,
     ) -> None:
         self.model = EMHSSM(params, EMHState())
         self.ekf = EMHEKF(params, ekf)
@@ -187,6 +189,7 @@ class NeuralMarketController:
         self.metrics = MetricsEmitter()
         self.metrics_exporter = DecisionMetricsExporter()
         self.adapter_config = adapter or MarketAdapterConfig()
+        self.emit_predictive_state = bool(emit_predictive_state)
 
     @classmethod
     def from_yaml(cls, path: str | None = None) -> "NeuralMarketController":
@@ -219,6 +222,9 @@ class NeuralMarketController:
             bridge_cfg.get("sync_threshold", inst.sync_threshold)
         )
         inst.generations = int(bridge_cfg.get("generations", inst.generations))
+        inst.emit_predictive_state = bool(
+            bridge_cfg.get("emit_predictive_state", inst.emit_predictive_state)
+        )
         return inst
 
     def decide(
@@ -263,12 +269,12 @@ class NeuralMarketController:
             "action": action,
             "reward": float(obs.get("reward", 0.0)),
         }
-        if include_prediction_snapshot:
+        if include_prediction_snapshot or self.emit_predictive_state:
             pred_snapshot = self.predictive.snapshot()
             decision.update(
                 {
-                    "prediction_mu": pred_snapshot["mu"],
-                    "prediction_error_last": pred_snapshot["error"],
+                    "prediction_mu": pred_snapshot.mu,
+                    "prediction_error_channels": pred_snapshot.error,
                 }
             )
 
