@@ -3,25 +3,31 @@
 from __future__ import annotations
 
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+
+from .sensory_calibrator import SensoryCalibrator, SensoryCalibrationConfig
 
 
-def prepare_timeseries(data: pd.DataFrame, *, target_col: str) -> pd.DataFrame:
+def prepare_timeseries(
+    data: pd.DataFrame,
+    *,
+    target_col: str,
+    calibrator: SensoryCalibrator | None = None,
+) -> pd.DataFrame:
     """Scale non-target columns to ``[0, 1]`` while keeping the target intact."""
 
     if target_col not in data.columns:
         raise ValueError(f"Target column '{target_col}' missing from dataframe")
 
-    scaler = MinMaxScaler()
     feature_columns = [col for col in data.columns if col != target_col]
     features = data[feature_columns]
-    scaled = pd.DataFrame(
-        scaler.fit_transform(features),
-        columns=feature_columns,
-        index=data.index,
-    )
+    if calibrator is None:
+        calibrator = SensoryCalibrator(
+            feature_columns, config=SensoryCalibrationConfig()
+        )
+
+    scaled = calibrator.normalize(features)
     scaled[target_col] = data[target_col].to_numpy()
     return scaled
 
 
-__all__ = ["prepare_timeseries"]
+__all__ = ["prepare_timeseries", "SensoryCalibrator", "SensoryCalibrationConfig"]

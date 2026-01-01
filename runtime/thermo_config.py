@@ -192,6 +192,13 @@ class VLPOFilterConfig:
     # Smoothing factor
     smoothing_alpha: float = 0.2
 
+    # Sensory calibration configuration
+    calibration_mode: str = "ema_minmax"
+    calibration_window: int = 256
+    calibration_alpha: float = 0.2
+    quantile_low: float = 0.05
+    quantile_high: float = 0.95
+
 
 @dataclass
 class DualApprovalConfig:
@@ -619,6 +626,53 @@ class ThermoConfig:
                     message="Smoothing alpha must be in (0, 1]",
                     severity="error",
                     current_value=self.vlpo_filter.smoothing_alpha,
+                )
+            )
+
+        valid_calibration_modes = {"ema_minmax", "robust_quantile"}
+        if self.vlpo_filter.calibration_mode not in valid_calibration_modes:
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.calibration_mode",
+                    message=(
+                        "Calibration mode must be one of "
+                        f"{sorted(valid_calibration_modes)}"
+                    ),
+                    severity="error",
+                    current_value=self.vlpo_filter.calibration_mode,
+                )
+            )
+
+        if self.vlpo_filter.calibration_window < 1:
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.calibration_window",
+                    message="Calibration window must be at least 1",
+                    severity="error",
+                    current_value=self.vlpo_filter.calibration_window,
+                )
+            )
+
+        if not (0 < self.vlpo_filter.calibration_alpha <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.calibration_alpha",
+                    message="Calibration alpha must be in (0, 1]",
+                    severity="error",
+                    current_value=self.vlpo_filter.calibration_alpha,
+                )
+            )
+
+        if not (0 <= self.vlpo_filter.quantile_low < self.vlpo_filter.quantile_high <= 1):
+            issues.append(
+                ConfigValidationIssue(
+                    field="vlpo_filter.quantile_bounds",
+                    message="Quantile bounds must satisfy 0 <= low < high <= 1",
+                    severity="error",
+                    current_value={
+                        "low": self.vlpo_filter.quantile_low,
+                        "high": self.vlpo_filter.quantile_high,
+                    },
                 )
             )
 

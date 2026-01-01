@@ -9,6 +9,7 @@ import pandas as pd
 
 from .correlation import forget_low_correlation
 from .entropy import downscale_low_entropy
+from ..data.sensory_calibrator import SensoryCalibrator, SensoryCalibrationConfig
 
 
 @dataclass(slots=True)
@@ -41,11 +42,34 @@ class VLPOCoreFilter:
         entropy_threshold: float = 2.5,
         correlation_threshold: float = 0.3,
         scale_factor: float = 0.5,
+        calibration_mode: str = "ema_minmax",
+        calibration_window: int = 256,
+        calibration_alpha: float = 0.2,
+        quantile_low: float = 0.05,
+        quantile_high: float = 0.95,
     ) -> None:
         self.entropy_threshold = entropy_threshold
         self.correlation_threshold = correlation_threshold
         self.scale_factor = scale_factor
         self.last_stats: dict[str, FilterStats] = {}
+        self._calibration_config = SensoryCalibrationConfig(
+            mode=calibration_mode,
+            calibration_window=calibration_window,
+            ema_alpha=calibration_alpha,
+            quantile_low=quantile_low,
+            quantile_high=quantile_high,
+        )
+        self._calibrator: SensoryCalibrator | None = None
+
+    def _ensure_calibrator(self, feature_columns: list[str]) -> None:
+        if not feature_columns:
+            return
+        if self._calibrator is None or self._calibrator.channels != tuple(
+            feature_columns
+        ):
+            self._calibrator = SensoryCalibrator(
+                feature_columns, config=self._calibration_config
+            )
 
     @staticmethod
     def _glymphatic_clearance(data: pd.DataFrame) -> pd.DataFrame:
@@ -74,9 +98,12 @@ class VLPOCoreFilter:
         if data.empty:
             return data.copy()
 
-        features = data.drop(columns=[target_col])
-
         cleaned = self._glymphatic_clearance(data)
+        features = cleaned.drop(columns=[target_col])
+        if not features.empty:
+            self._ensure_calibrator(list(features.columns))
+            if self._calibrator is not None:
+                features = self._calibrator.normalize(features)
         cleaned_target = cleaned[target_col].to_numpy(dtype=float)
 
         filtered_columns: dict[str, np.ndarray] = {}
