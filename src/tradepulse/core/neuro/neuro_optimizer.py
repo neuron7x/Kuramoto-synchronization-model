@@ -26,6 +26,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from .metrics import (
+    BalanceMetrics,
+    compute_balance_metrics,
+    compute_objective,
+    compute_stability,
+)
 
 @dataclass
 class OptimizationConfig:
@@ -181,31 +187,6 @@ class OptimizationConfig:
                     )
 
 
-@dataclass
-class BalanceMetrics:
-    """Neuromodulator balance health metrics.
-
-    Attributes
-    ----------
-    dopamine_serotonin_ratio : float
-        Ratio of dopamine to serotonin levels
-    gaba_excitation_balance : float
-        Balance between inhibition and excitation
-    arousal_attention_coherence : float
-        Coherence between arousal and attention
-    overall_balance_score : float
-        Composite balance score (0-1, higher is better)
-    homeostatic_deviation : float
-        Deviation from homeostatic setpoint
-    """
-
-    dopamine_serotonin_ratio: float
-    gaba_excitation_balance: float
-    arousal_attention_coherence: float
-    overall_balance_score: float
-    homeostatic_deviation: float
-
-
 class NeuroOptimizer:
     """Cross-neuromodulator optimization system.
 
@@ -264,10 +245,6 @@ class NeuroOptimizer:
             return cp
         except ImportError:
             return np
-
-    def _to_array(self, values: List[float]):
-        """Create a contiguous buffer with the configured dtype."""
-        return self._xp.asarray(values, dtype=self._dtype, order="C")
 
     def _initialize_setpoints(self) -> Dict[str, float]:
         """Initialize homeostatic setpoints for each neuromodulator.
@@ -374,56 +351,11 @@ class NeuroOptimizer:
         BalanceMetrics
             Computed balance metrics
         """
-        # Extract state values with defaults
-        da_level, sero_level, gaba_inhib, arousal, attention = self._to_array(
-            [
-                state.get('dopamine_level', 0.5),
-                state.get('serotonin_level', 0.3),
-                state.get('gaba_inhibition', 0.4),
-                state.get('na_arousal', 1.0),
-                state.get('ach_attention', 0.7),
-            ]
-        )
-
-        # Calculate ratios
-        da_5ht_ratio = da_level / (sero_level + self._dtype.type(1e-6))
-
-        # Excitation-inhibition balance (higher dopamine = more excitation)
-        excitation = da_level + arousal
-        inhibition = gaba_inhib + sero_level
-        ei_balance = excitation / (inhibition + self._dtype.type(1e-6))
-
-        # Arousal-attention coherence (should be correlated)
-        aa_coherence = (
-            self._dtype.type(1.0)
-            - self._xp.abs(arousal - attention) / self._dtype.type(2.0)
-        )
-        aa_coherence = self._xp.clip(aa_coherence, 0.0, 1.0)
-
-        # Calculate deviations from setpoints
-        da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
-        ei_dev = self._xp.abs(ei_balance - self._setpoints['excitation_inhibition']) / self._setpoints['excitation_inhibition']
-
-        # Overall homeostatic deviation.
-        # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
-        homeostatic_dev = (da_5ht_dev + ei_dev) / self._dtype.type(2.0)
-        homeostatic_dev = self._xp.clip(
-            homeostatic_dev, self._dtype.type(0.0), self._xp.inf
-        )
-
-        # Overall balance score (inverse of deviation).
-        # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
-        balance_score = self._dtype.type(1.0) / (self._dtype.type(1.0) + homeostatic_dev)
-        balance_score = self._xp.clip(
-            balance_score, self._dtype.type(0.0), self._dtype.type(1.0)
-        )
-
-        return BalanceMetrics(
-            dopamine_serotonin_ratio=float(da_5ht_ratio),
-            gaba_excitation_balance=float(ei_balance),
-            arousal_attention_coherence=float(aa_coherence),
-            overall_balance_score=float(balance_score),
-            homeostatic_deviation=float(homeostatic_dev),
+        return compute_balance_metrics(
+            state,
+            self._setpoints,
+            xp=self._xp,
+            dtype=self._dtype,
         )
 
     def _calculate_objective(
@@ -462,39 +394,25 @@ class NeuroOptimizer:
         # Normalize performance to [0, 1] with configurable Sharpe bounds
         # Typical Sharpe ranges: [-2, 3] but can be adjusted
         sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
-        perf_normalized = float(
-            self._xp.clip(
-                (performance - sharpe_min) / (sharpe_max - sharpe_min),
-                0,
-                1,
-            )
+        stability = compute_stability(
+            self._performance_history,
+            self.config.history_window,
+            xp=self._xp,
+            dtype=self._dtype,
         )
 
-        # Balance objective (already in [0, 1])
-        balance_obj = balance.overall_balance_score
-
-        # Stability objective (variance over recent history)
-        if len(self._performance_history) >= self.config.history_window > 1:
-            recent_perf = self._performance_history[-self.config.history_window:]
-            recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
-            mean_perf = self._xp.mean(recent_array)
-            std_perf = self._xp.std(recent_array)
-            epsilon = self._dtype.type(1e-6)
-            denom = self._xp.maximum(self._xp.abs(mean_perf), epsilon)
-            stability = self._dtype.type(1.0) - std_perf / denom
-            stability = float(self._xp.clip(stability, 0, 1))
-        else:
-            stability = 0.5  # Neutral until we have history
-
-        # Weighted combination
-        # Formal objective definition: docs/neuro_optimization_guide.md ("Formal Objective")
-        objective = (
-            self.config.performance_weight * perf_normalized
-            + self.config.balance_weight * balance_obj
-            + self.config.stability_weight * stability
+        return compute_objective(
+            performance,
+            balance,
+            stability,
+            performance_min=sharpe_min,
+            performance_max=sharpe_max,
+            performance_weight=self.config.performance_weight,
+            balance_weight=self.config.balance_weight,
+            stability_weight=self.config.stability_weight,
+            xp=self._xp,
+            dtype=self._dtype,
         )
-
-        return objective
 
     def _estimate_gradients(
         self,

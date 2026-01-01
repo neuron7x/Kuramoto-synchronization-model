@@ -325,6 +325,7 @@ report = calibrator.get_calibration_report()
 ### Overview
 
 The `NeuroOptimizer` coordinates all neuromodulators to maintain homeostatic balance while optimizing performance.
+Core balance/objective computations are implemented in `tradepulse.core.neuro.metrics` to keep formulas centralized.
 
 ### Key Features
 

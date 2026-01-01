@@ -24,7 +24,7 @@ Implements simulated annealing-based parameter optimization:
 Implements homeostatic balance optimization:
 
 - **OptimizationConfig**: Configuration dataclass
-- **BalanceMetrics**: Neuromodulator balance health metrics
+- **BalanceMetrics**: Neuromodulator balance health metrics (defined in `metrics.py`)
 - **NeuroOptimizer**: Main optimization controller
 - **Features**:
   - Homeostatic regulation (DA/5-HT ratio, E/I balance)
@@ -32,6 +32,14 @@ Implements homeostatic balance optimization:
   - Momentum-based gradient updates
   - Real-time health assessment
   - Convergence detection
+
+### 3. Metrics Utilities (`metrics.py`)
+
+Encapsulates metric computations used by the optimizer:
+
+- **compute_balance_metrics**: Homeostatic balance calculations
+- **compute_stability**: Objective stability from performance history
+- **compute_objective**: Weighted multi-objective aggregation
 
 ## Quick Start
 
