@@ -80,6 +80,8 @@ class OptimizationConfig:
         Acceptable dopamine/serotonin ratio range for health checks
     ei_balance_range : Tuple[float, float]
         Acceptable excitation/inhibition balance range for health checks
+    aa_coherence_min : float
+        Minimum arousal-attention coherence for health checks
     bounds_spec : Dict[str, Dict[str, BoundsSpec]]
         Structured parameter bounds with enforcement behavior
     param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
@@ -109,6 +111,7 @@ class OptimizationConfig:
     regime_adaptation: bool = True
     da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
     ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    aa_coherence_min: float = 0.5
     bounds_spec: Dict[str, Dict[str, BoundsSpec]] = field(default_factory=dict)
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
@@ -151,6 +154,7 @@ class OptimizationConfig:
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
+        self._validate_aa_coherence_min()
         self._validate_bounds_spec()
         self._validate_param_bounds()
 
@@ -190,6 +194,12 @@ class OptimizationConfig:
                     raise ValueError(
                         f"param_bounds[{module!r}][{param_name!r}] must have low < high"
                     )
+
+    def _validate_aa_coherence_min(self) -> None:
+        if not isinstance(self.aa_coherence_min, (int, float)):
+            raise ValueError("aa_coherence_min must be a number")
+        if not 0 <= self.aa_coherence_min <= 1:
+            raise ValueError("aa_coherence_min must be in [0, 1]")
 
     def _validate_bounds_spec(self) -> None:
         if not isinstance(self.bounds_spec, dict):
@@ -923,7 +933,7 @@ class NeuroOptimizer:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence
-        if balance.arousal_attention_coherence < 0.5:
+        if balance.arousal_attention_coherence < self.config.aa_coherence_min:
             issues.append('Poor arousal-attention coherence - attention deficits')
 
         if drift_stats and drift_stats.get('stats'):

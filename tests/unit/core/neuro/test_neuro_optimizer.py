@@ -1151,6 +1151,22 @@ class TestNeuroOptimizer:
         assert 'balance_score' in health
         assert 'issues' in health
 
+    def test_assess_health_acceptable_system(self, opt_config):
+        """Test health assessment for acceptable system."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.6,
+            gaba_excitation_balance=1.4,
+            arousal_attention_coherence=0.7,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.2,
+        )
+
+        health = optimizer._assess_health(balance)
+
+        assert health['status'] == 'acceptable'
+
     def test_assess_health_imbalanced_system(self, opt_config):
         """Test health assessment for imbalanced system."""
         optimizer = NeuroOptimizer(opt_config)
@@ -1166,7 +1182,7 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(balance)
 
-        assert health['status'] in ['warning', 'acceptable']
+        assert health['status'] == 'warning'
         assert len(health['issues']) > 0
 
     def test_assess_health_respects_configured_ranges(self):
@@ -1174,6 +1190,7 @@ class TestNeuroOptimizer:
         config = OptimizationConfig(
             da_5ht_ratio_range=(1.2, 2.2),
             ei_balance_range=(0.8, 1.4),
+            aa_coherence_min=0.95,
         )
         optimizer = NeuroOptimizer(config)
 
@@ -1192,6 +1209,10 @@ class TestNeuroOptimizer:
         )
         assert any(
             'Excessive inhibition' in issue for issue in health['issues']
+        )
+        assert any(
+            'Poor arousal-attention coherence' in issue
+            for issue in health['issues']
         )
 
     def test_reset(self, opt_config, sample_params, sample_state):
