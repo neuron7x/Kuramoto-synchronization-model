@@ -157,6 +157,7 @@ class LiveExecutionLoop:
         *,
         config: LiveLoopConfig,
         session_snapshotter: SessionSnapshotter | None = None,
+        pre_action_filter: object | None = None,
     ) -> None:
         if not connectors:
             raise ValueError("at least one connector must be provided")
@@ -174,6 +175,9 @@ class LiveExecutionLoop:
         self._started = False
         self._kill_notified = False
         self._watchdog: Watchdog | None = None
+        self._pre_action_filter = pre_action_filter
+        self._strategy_mode = "normal"
+        self._previous_strategy_mode: str | None = None
         self._session_snapshotter = session_snapshotter or SessionSnapshotter(
             config.state_dir / "session_snapshots",
             mode=ExecutionMode.LIVE,
@@ -300,6 +304,31 @@ class LiveExecutionLoop:
         context = self._contexts.get(venue)
         if context is None:
             raise LookupError(f"Unknown venue: {venue}")
+        if self._pre_action_filter is not None:
+            decision = self._evaluate_pre_action(venue, order)
+            if decision["safe_mode"]:
+                self._apply_strategy_mode(
+                    decision.get("policy_override") or "conservative",
+                    reason=";".join(decision["reasons"]),
+                )
+            if decision["rollback"]:
+                self._trigger_emergency_rollback(
+                    reason=";".join(decision["reasons"])
+                )
+            if not decision["allowed"]:
+                reason = ";".join(decision["reasons"])
+                order.reject(f"pre_action_blocked:{reason}")
+                self._logger.warning(
+                    "Pre-action filter blocked order",
+                    extra={
+                        "event": "live_loop.pre_action_blocked",
+                        "venue": venue,
+                        "symbol": order.symbol,
+                        "correlation_id": correlation_id,
+                        "reason": reason,
+                    },
+                )
+                return order
         submitted = context.oms.submit(order, correlation_id=correlation_id)
         self._activity.set()
         self._logger.debug(
@@ -363,6 +392,110 @@ class LiveExecutionLoop:
                 },
             )
         return cancelled
+
+    def _apply_strategy_mode(self, mode: str, *, reason: str) -> None:
+        if not mode or mode == self._strategy_mode:
+            return
+        self._previous_strategy_mode = self._strategy_mode
+        self._strategy_mode = mode
+        self._logger.warning(
+            "Strategy mode switched",
+            extra={
+                "event": "live_loop.strategy_mode_switch",
+                "from": self._previous_strategy_mode,
+                "to": self._strategy_mode,
+                "reason": reason,
+            },
+        )
+
+    def _trigger_emergency_rollback(self, *, reason: str) -> None:
+        self._logger.error(
+            "Emergency rollback triggered",
+            extra={
+                "event": "live_loop.emergency_rollback",
+                "reason": reason,
+                "strategy_mode": self._strategy_mode,
+            },
+        )
+        self._cancel_all_outstanding(reason=reason)
+        if self._previous_strategy_mode is not None:
+            restored = self._previous_strategy_mode
+            self._previous_strategy_mode = None
+            self._strategy_mode = restored
+            self._logger.warning(
+                "Strategy mode rolled back",
+                extra={
+                    "event": "live_loop.strategy_mode_rollback",
+                    "restored": restored,
+                    "reason": reason,
+                },
+            )
+
+    def _evaluate_pre_action(self, venue: str, order: Order) -> dict[str, object]:
+        context = self._build_pre_action_context(venue, order)
+        try:
+            decision = self._pre_action_filter.check(context)  # type: ignore[attr-defined]
+        except Exception as exc:  # pragma: no cover - defensive
+            self._logger.exception(
+                "Pre-action filter failed",
+                extra={
+                    "event": "live_loop.pre_action_error",
+                    "venue": venue,
+                    "symbol": order.symbol,
+                    "error": str(exc),
+                },
+            )
+            return {
+                "allowed": True,
+                "reasons": ("filter_error",),
+                "safe_mode": False,
+                "rollback": False,
+                "policy_override": None,
+            }
+        if isinstance(decision, Mapping):
+            allowed = bool(decision.get("allowed", True))
+            reasons = decision.get("reasons", ()) or ()
+            safe_mode = bool(decision.get("safe_mode", False))
+            rollback = bool(decision.get("rollback", False))
+            policy_override = decision.get("policy_override")
+        else:
+            allowed = bool(getattr(decision, "allowed", True))
+            reasons = getattr(decision, "reasons", ()) or ()
+            safe_mode = bool(getattr(decision, "safe_mode", False))
+            rollback = bool(getattr(decision, "rollback", False))
+            policy_override = getattr(decision, "policy_override", None)
+        if isinstance(reasons, str):
+            reasons = (reasons,)
+        else:
+            reasons = tuple(reasons)
+        return {
+            "allowed": allowed,
+            "reasons": reasons,
+            "safe_mode": safe_mode,
+            "rollback": rollback,
+            "policy_override": policy_override,
+        }
+
+    def _build_pre_action_context(self, venue: str, order: Order) -> dict[str, object]:
+        venue_state = self._market_state.get(venue, {})
+        return {
+            "venue": venue,
+            "symbol": order.symbol,
+            "side": order.side.value,
+            "quantity": float(order.quantity),
+            "price": order.price,
+            "volatility": self._coerce_float(venue_state.get("volatility")),
+            "liquidity": self._coerce_float(venue_state.get("liquidity")),
+            "latency_ms": self._coerce_float(
+                venue_state.get("latency_ms") or venue_state.get("latency")
+            ),
+            "policy_deviation": self._coerce_float(
+                venue_state.get("policy_deviation")
+            ),
+            "policy_mode": self._strategy_mode,
+            "timestamp": time.time(),
+            "metadata": {"market_state_keys": tuple(venue_state.keys())},
+        }
 
     # ------------------------------------------------------------------
     # Internal helpers

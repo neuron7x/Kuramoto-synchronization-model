@@ -15,6 +15,13 @@ from .energy_model import (
     EnergyValidationResult,
     EnergyValidator,
 )
+from .risk_gating import (
+    PreActionContext,
+    PreActionDecision,
+    PreActionFilter,
+    RiskGatingConfig,
+    RiskGatingEngine,
+)
 from .validate import load_scenarios
 
 __all__ = [
@@ -29,5 +36,10 @@ __all__ = [
     "BehavioralContractReport",
     "BehavioralContractViolation",
     "ContractBreach",
+    "PreActionContext",
+    "PreActionDecision",
+    "PreActionFilter",
+    "RiskGatingConfig",
+    "RiskGatingEngine",
     "load_scenarios",
 ]
