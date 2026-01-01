@@ -46,7 +46,7 @@ the GitHub Actions workflows in `.github/workflows/` (notably `ci.yml`, `pr-rele
 | `runtime/` | Runtime safety controls (kill switch, thermo control, recovery) and live runner interfaces in [`interfaces/live_runner.py`](../interfaces/live_runner.py) | `core/`, `execution/` | SemVer (`runtime.api.v1`); release gates run integration + property suites |
 | `observability/` | Metrics/logging/tracing, release gate telemetry, and dashboards in [`observability/`](../observability/) | `core/` (telemetry types only) | SemVer (`observability.telemetry.v1`); trace/metric shape changes require dual approval |
 | `ui/dashboard/` | gRPC-web/GraphQL DTOs derived from [`schemas/openapi/tradepulse-online-inference-v1.json`](../schemas/openapi/tradepulse-online-inference-v1.json) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
-| `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
+| `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py); pre-action risk gating in [`tacl/risk_gating.py`](../tacl/risk_gating.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
 
 Links use `../` because this document lives under `docs/`; they resolve to the repo-root `schemas/`, `interfaces/`, and module directories listed above.
 
@@ -83,7 +83,10 @@ updating catalog states that are surfaced through the UI hub and CLI.
 producing signed signals that honour [`domain/`](../domain/) invariants.
 4. **Execution Loop** – The execution gateway enforces risk budgets, liaises with broker adapters, and persists
 trade lifecycle updates back to the operational store.
-5. **Feedback & Oversight** – Telemetry collectors, SLO dashboards, and governance hooks feed incidents,
+5. **Safety Gating** – The runtime runner injects a pre-action filter into `execution.live_loop` to enforce
+threat-model constraints on volatility, liquidity, latency, and policy deviation; breaches trigger safe-mode
+policy routing (conservative) or emergency rollback of outstanding orders.
+6. **Feedback & Oversight** – Telemetry collectors, SLO dashboards, and governance hooks feed incidents,
 runbooks, and compliance reports found in [`docs/operational_handbook.md`](operational_handbook.md).
 
 Sequence and data flow diagrams backing this narrative are maintained in

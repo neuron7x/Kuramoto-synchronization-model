@@ -34,6 +34,7 @@ from interfaces.secrets.backends import (
     build_hashicorp_vault_resolver,
 )
 from interfaces.secrets.manager import SecretManager, SecretManagerError, VaultResolver
+from tacl.risk_gating import RiskGatingConfig, RiskGatingEngine
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_CONFIG_PATH = Path("configs/live/default.toml")
@@ -177,6 +178,7 @@ class LiveTradingRunner:
         self._raw_loop = dict(raw_config.get("loop", {}))
         self._raw_risk = dict(raw_config.get("risk", {}))
         self._raw_metrics = dict(raw_config.get("metrics", {}))
+        self._raw_risk_gating = dict(raw_config.get("risk_gating", {}))
 
         requested = {v.lower() for v in venues} if venues else None
         raw_venues = raw_config.get("venues", [])
@@ -222,6 +224,7 @@ class LiveTradingRunner:
         self._loop: LiveExecutionLoop | None = None
         self._loop_config: LiveLoopConfig | None = None
         self._risk_manager: RiskManager | None = None
+        self._pre_action_filter: object | None = None
         self._connectors: Dict[str, ExecutionConnector] = {}
         self._credentials: Dict[str, Mapping[str, str]] = {}
         self._secret_manager = secret_manager
@@ -240,6 +243,7 @@ class LiveTradingRunner:
         self._build_credentials()
         self._build_risk_manager()
         self._build_loop_config()
+        self._build_pre_action_filter()
 
     # ------------------------------------------------------------------
     # Public API
@@ -275,7 +279,10 @@ class LiveTradingRunner:
         if self._loop_config is None:
             raise RuntimeError("Live loop configuration not initialised")
         loop = LiveExecutionLoop(
-            self._connectors, self.risk_manager, config=self._loop_config
+            self._connectors,
+            self.risk_manager,
+            config=self._loop_config,
+            pre_action_filter=self._pre_action_filter,
         )
         loop.on_kill_switch.connect(self._handle_kill_switch)
         loop.on_reconnect.connect(self._handle_reconnect)
@@ -526,6 +533,17 @@ class LiveTradingRunner:
         self._loop_config = LiveLoopConfig(**loop_kwargs)
         # Ensure credentials map is available even if dataclass filtered it out
         self._loop_config.credentials = self._credentials
+
+    def _build_pre_action_filter(self) -> None:
+        if self._pre_action_filter is not None:
+            return
+        payload = dict(self._raw_risk_gating)
+        enabled = payload.pop("enabled", True)
+        if not enabled:
+            return
+        config_kwargs = _dataclass_kwargs(RiskGatingConfig, payload)
+        config = RiskGatingConfig(**config_kwargs)
+        self._pre_action_filter = RiskGatingEngine(config)
 
     def _start_metrics_server(self) -> None:
         if self._metrics_port is None:
