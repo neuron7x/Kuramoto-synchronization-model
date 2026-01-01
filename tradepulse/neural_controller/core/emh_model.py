@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict
+from typing import Dict, Iterable
 
 from .params import Params
+from .s_modulators import SModulator, load_s_modulators
 from .state import EMHState, clamp
 
 log = logging.getLogger(__name__)
@@ -32,10 +33,16 @@ def _threat_mode(dd: float, var_breach: bool, vol: float) -> str:
 class EMHSSM:
     """EMH-inspired bounded state-space model."""
 
-    def __init__(self, p: Params, s: EMHState | None = None):
+    def __init__(
+        self,
+        p: Params,
+        s: EMHState | None = None,
+        s_modulators: Iterable[SModulator] | None = None,
+    ):
         self.p = p
         self.s = s or EMHState()
         self.belief_term_gain = 0.05
+        self.S_modulators = list(s_modulators or load_s_modulators())
 
     def step(self, obs: Dict[str, float]) -> Dict[str, float]:
         dd = clamp(float(obs.get("dd", 0.0)))
@@ -45,15 +52,6 @@ class EMHSSM:
         var_breach = bool(obs.get("var_breach", False))
         reward = float(obs.get("reward", 0.0))
         belief_term = float(obs.get("belief_term", 0.0))
-        prediction_error = float(obs.get("prediction_error", 0.0))
-        sensory_confidence = clamp(float(obs.get("sensory_confidence", 1.0)))
-        confidence_weight = max(
-            0.0,
-            (1.0 - self.p.sensory_confidence_gain)
-            + self.p.sensory_confidence_gain * sensory_confidence,
-        )
-        prediction_error *= confidence_weight
-
         self.s.mode = _threat_mode(dd, var_breach, vol)
         D = _demand(dd, liq, reg, self.p.psi)
 
@@ -61,13 +59,14 @@ class EMHSSM:
         delta_rpe = reward + gamma_rl * self.s.V - self.s.V
         self.s.V += 0.1 * delta_rpe
 
-        self.s.S = clamp(
+        base_S = (
             self.p.phi * D
             + self.p.omega * (1.0 - self.s.M / self.p.M0)
             + self.p.kappa * delta_rpe
             + self.belief_term_gain * belief_term
-            + self.p.prediction_gain * prediction_error
         )
+        modulation = sum(modulator(self, obs) for modulator in self.S_modulators)
+        self.s.S = clamp(base_S + modulation)
 
         dH = self.p.alpha * self.s.S - self.p.beta * self.s.H + self.p.gamma * self.s.M
         dM = -self.p.delta * self.s.M + self.p.theta
