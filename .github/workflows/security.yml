@@ -253,7 +253,7 @@ jobs:
       run: |
         set -euo pipefail
 
-        BASE_IMAGE="python:3.13-slim"
+        BASE_IMAGE="python:3.12-slim"
         GHCR_MIRROR="ghcr.io/library/${BASE_IMAGE}"
         AWS_MIRROR="public.ecr.aws/docker/library/${BASE_IMAGE}"
         MAX_RETRIES=5
