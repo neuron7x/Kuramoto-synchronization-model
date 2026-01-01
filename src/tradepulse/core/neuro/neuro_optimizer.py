@@ -17,6 +17,14 @@ Public API
 NeuroOptimizer : Main optimization controller
 OptimizationConfig : Configuration for optimization parameters
 BalanceMetrics : Neuromodulator balance health metrics
+
+Documentation references
+------------------------
+See the neuro-optimization guide for formulas and bounds:
+- docs/neuro_optimization_guide.md#cross-neuromodulator-optimizer
+- docs/neuro_optimization_guide.md#homeostatic-deviation--balance-score
+- docs/neuro_optimization_guide.md#numerical-stability
+- docs/neuro_optimization_guide.md#optimizationconfig
 """
 
 from __future__ import annotations
