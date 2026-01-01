@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-from .params import PredictiveConfig
+from .neuro_params import PredictiveConfig
 
 
 @dataclass

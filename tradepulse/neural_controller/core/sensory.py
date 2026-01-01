@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict
 
-from .params import SensoryConfig
+from .neuro_params import SensoryConfig
 from .sensory_schema import SensorySchemaResult
 from .state import clamp
 

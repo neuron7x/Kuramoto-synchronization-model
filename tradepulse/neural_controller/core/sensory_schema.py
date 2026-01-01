@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Mapping
 
-from .params import OBSERVATION_KEYS
+from .neuro_params import OBSERVATION_KEYS
 from .state import clamp
 
 SCHEMA_VERSION = 1
