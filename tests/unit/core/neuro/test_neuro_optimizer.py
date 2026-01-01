@@ -17,7 +17,7 @@ from tradepulse.core.neuro.neuro_optimizer import (
     NeuroOptimizer,
     OptimizationConfig,
 )
-from tradepulse.core.neuro._validation import validate_neuro_invariants
+from tradepulse.core.neuro._validation import BoundsSpec, validate_neuro_invariants
 
 
 @pytest.fixture
@@ -1007,14 +1007,18 @@ class TestNeuroOptimizer:
         updated_lr = updated['dopamine']['learning_rate']
         assert updated_lr <= original_lr * 1.2
 
-    def test_apply_updates_respects_param_bounds(self):
-        """Ensure param_bounds clamps updated values."""
+    def test_apply_updates_respects_bounds_spec_clip(self):
+        """Ensure bounds_spec with clip clamps updated values."""
         config = OptimizationConfig(
             max_gradient_norm=1.0,
             momentum=0.0,
-            param_bounds={
+            bounds_spec={
                 'dopamine': {
-                    'learning_rate': (0.55, 0.65),
+                    'learning_rate': BoundsSpec(
+                        min_value=0.55,
+                        max_value=0.65,
+                        behavior="clip",
+                    ),
                 }
             },
         )
@@ -1028,6 +1032,28 @@ class TestNeuroOptimizer:
         low_gradients = {'dopamine': {'learning_rate': -0.5}}
         low_updated = optimizer._apply_updates(params, low_gradients)
         assert low_updated['dopamine']['learning_rate'] == pytest.approx(0.55)
+
+    def test_apply_updates_respects_bounds_spec_raise(self):
+        """Ensure bounds_spec with raise triggers error when out of bounds."""
+        config = OptimizationConfig(
+            max_gradient_norm=1.0,
+            momentum=0.0,
+            bounds_spec={
+                'dopamine': {
+                    'learning_rate': BoundsSpec(
+                        min_value=0.59,
+                        max_value=0.61,
+                        behavior="raise",
+                    ),
+                }
+            },
+        )
+        optimizer = NeuroOptimizer(config)
+        params = {'dopamine': {'learning_rate': 0.6}}
+        gradients = {'dopamine': {'learning_rate': 0.5}}
+
+        with pytest.raises(ValueError, match="dopamine.learning_rate"):
+            optimizer._apply_updates(params, gradients)
 
     def test_get_optimization_report_no_data(self, opt_config):
         """Test optimization report with no data."""
