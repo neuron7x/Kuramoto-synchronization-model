@@ -27,6 +27,7 @@ from ..core.params import (
 from ..core.state import EMHState
 from ..core.predictive import PredictiveCoder
 from ..core.sensory import SensoryFilter
+from ..core.sensory_schema import SCHEMA_VERSION, SensorySchema
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
 from ..homeostasis.homeo import HomeostaticModule
@@ -172,6 +173,7 @@ class NeuralMarketController:
         risk: RiskConfig,
         homeo: HomeoConfig,
         sensory: SensoryConfig | None = None,
+        sensory_schema: SensorySchema | None = None,
         predictive: PredictiveConfig | None = None,
         adapter: MarketAdapterConfig | None = None,
         *,
@@ -184,6 +186,7 @@ class NeuralMarketController:
         self.ctrl = BasalGangliaController(policy.temp, policy.tau_E_amber)
         self.cvar = CVARGate(risk.cvar_alpha, risk.cvar_limit, risk.lookback)
         self.sensory = SensoryFilter(sensory or SensoryConfig())
+        self.sensory_schema = sensory_schema or SensorySchema.default()
         self.predictive = PredictiveCoder(predictive or PredictiveConfig())
         self.sync_threshold = 0.30
         self.generations = 10
@@ -200,6 +203,12 @@ class NeuralMarketController:
             yaml_path = Path(path)
             with yaml_path.open("r", encoding="utf-8") as stream:
                 cfg = yaml.safe_load(stream)
+        schema_version = cfg.get("schema_version")
+        if schema_version != SCHEMA_VERSION:
+            raise ValueError(
+                "Unsupported sensory schema version "
+                f"{schema_version!r}; expected {SCHEMA_VERSION}."
+            )
         params = Params(**cfg["model"])
         ekf = EKFConfig(**cfg["ekf"])
         policy = PolicyConfig(**cfg["policy"])
@@ -236,8 +245,10 @@ class NeuralMarketController:
     ) -> Dict[str, Any]:
         obs = dict(obs)
         start = time.perf_counter()
-        sensory = self.sensory.transform(obs)
+        schema_output = self.sensory_schema.validate(obs)
+        sensory = self.sensory.transform(schema_output)
         timing_sensory_ms = (time.perf_counter() - start) * 1000.0
+        obs.update(schema_output.normalized)
         obs.update(sensory.filtered)
 
         start = time.perf_counter()

@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-import logging
-import math
 from dataclasses import dataclass, field
-from typing import Dict, Iterable
+from typing import Dict
 
 from .params import SensoryConfig
+from .sensory_schema import SensorySchemaResult
 from .state import clamp
-
-log = logging.getLogger(__name__)
-
 
 @dataclass
 class SensorySnapshot:
     filtered: Dict[str, float]
     temporal: Dict[str, float]
     spatial: Dict[str, float]
+    quality_flags: Dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -35,29 +32,8 @@ class SensoryFilter:
         for key in self.cfg.keys:
             self._prev.setdefault(key, values.get(key, 0.0))
 
-    def _sanitize_value(self, key: str, raw_value: object) -> float:
-        try:
-            value = float(raw_value)
-        except (TypeError, ValueError):
-            log.warning(
-                "SensoryFilter received non-numeric value for %s: %r; defaulting to 0.0",
-                key,
-                raw_value,
-            )
-            return 0.0
-        if not math.isfinite(value):
-            log.warning(
-                "SensoryFilter received non-finite value for %s: %r; defaulting to 0.0",
-                key,
-                value,
-            )
-            return 0.0
-        return value
-
-    def transform(self, obs: Dict[str, float]) -> SensorySnapshot:
-        values = {
-            k: self._sanitize_value(k, obs.get(k, 0.0)) for k in self.cfg.keys
-        }
+    def transform(self, schema_output: SensorySchemaResult) -> SensorySnapshot:
+        values = {k: schema_output.normalized.get(k, 0.0) for k in self.cfg.keys}
         self._ensure_prev(values)
 
         filtered: Dict[str, float] = {}
@@ -78,12 +54,17 @@ class SensoryFilter:
             spatial[key] = spatial_delta
 
         self._prev.update(values)
-        return SensorySnapshot(filtered=filtered, temporal=temporal, spatial=spatial)
+        return SensorySnapshot(
+            filtered=filtered,
+            temporal=temporal,
+            spatial=spatial,
+            quality_flags=dict(schema_output.quality_flags),
+        )
 
-    def apply(self, obs: Dict[str, float]) -> Dict[str, float]:
-        """Return filtered observation values merged with original obs."""
+    def apply(self, schema_output: SensorySchemaResult) -> Dict[str, float]:
+        """Return filtered observation values merged with normalized output."""
 
-        snapshot = self.transform(obs)
-        merged = dict(obs)
+        snapshot = self.transform(schema_output)
+        merged = dict(schema_output.normalized)
         merged.update(snapshot.filtered)
         return merged

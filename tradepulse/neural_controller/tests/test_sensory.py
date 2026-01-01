@@ -1,22 +1,40 @@
 from __future__ import annotations
 
-import logging
-
 from ..core.sensory import SensoryFilter
+from ..core.sensory_schema import SensoryChannel, SensorySchema
 
 
-def test_sensory_filter_non_finite_values(caplog) -> None:
+def test_sensory_schema_nan_inf_behavior() -> None:
+    schema = SensorySchema(
+        channels=(
+            SensoryChannel(name="dd", min=0.0, max=1.0, nan_policy="zero"),
+            SensoryChannel(name="liq", min=0.0, max=1.0, nan_policy="hold-last"),
+        )
+    )
+    first = schema.validate({"dd": float("nan"), "liq": 0.4})
+    assert first.normalized["dd"] == 0.0
+    assert first.normalized["liq"] == 0.4
+    assert "nan" in first.quality_flags["dd"]
+
+    second = schema.validate({"dd": float("inf"), "liq": float("inf")})
+    assert second.normalized["dd"] == 0.0
+    assert second.normalized["liq"] == 0.4
+    assert "nan" in second.quality_flags["dd"]
+    assert "nan" in second.quality_flags["liq"]
+
+
+def test_sensory_schema_out_of_range_clip() -> None:
+    schema = SensorySchema(
+        channels=(SensoryChannel(name="dd", min=0.0, max=1.0, clip=True),)
+    )
+    result = schema.validate({"dd": 1.5})
+    assert result.normalized["dd"] == 1.0
+    assert "out_of_range" in result.quality_flags["dd"]
+
+
+def test_sensory_filter_preserves_quality_flags() -> None:
+    schema = SensorySchema.default()
     filt = SensoryFilter()
-    obs = {"dd": float("nan"), "liq": float("inf"), "reg": 0.2, "vol": 0.1}
-
-    with caplog.at_level(logging.WARNING):
-        snapshot = filt.transform(obs)
-
-    assert snapshot.filtered["dd"] == 0.0
-    assert snapshot.filtered["liq"] == 0.0
-    assert 0.0 <= snapshot.filtered["reg"] <= 1.0
-    assert 0.0 <= snapshot.filtered["vol"] <= 1.0
-
-    warnings = [record for record in caplog.records if record.levelno >= logging.WARNING]
-    assert any("dd" in record.message for record in warnings)
-    assert any("liq" in record.message for record in warnings)
+    result = schema.validate({"dd": 0.2, "liq": 0.3, "reg": 0.4, "vol": 0.5})
+    snapshot = filt.transform(result)
+    assert snapshot.quality_flags == result.quality_flags
