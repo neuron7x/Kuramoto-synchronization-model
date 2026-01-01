@@ -66,6 +66,48 @@ class OptimizationConfig:
         Window length for performance history tracking
     stability_epsilon : float
         Numerical stability constant for ratio/stability denominators
+    setpoint_dopamine_level : float
+        Baseline dopamine setpoint
+    setpoint_serotonin_level : float
+        Baseline serotonin setpoint
+    setpoint_gaba_inhibition : float
+        Baseline GABA inhibition setpoint
+    setpoint_na_arousal : float
+        Baseline noradrenaline/arousal setpoint
+    setpoint_ach_attention : float
+        Baseline acetylcholine/attention setpoint
+    setpoint_da_5ht_ratio : float
+        Dopamine/serotonin ratio setpoint
+    setpoint_excitation_inhibition : float
+        Excitation/inhibition ratio setpoint
+    homeostatic_divisor : float
+        Divisor for averaging homeostatic deviations
+    arousal_attention_max_delta : float
+        Scaling factor for arousal/attention coherence
+    stability_neutral : float
+        Stability score used before enough history exists
+    arousal_attention_blend : float
+        Blending coefficient for arousal/attention gradient heuristics
+    update_clip_lower : float
+        Lower multiplier for relative parameter update clipping
+    update_clip_upper : float
+        Upper multiplier for relative parameter update clipping
+    recovery_factor : float
+        Fraction of remaining learning-rate gap recovered per improvement
+    drift_window : int
+        Window length for parameter drift assessment
+    drift_mean_threshold : float
+        Mean drift threshold for warnings
+    drift_median_threshold : float
+        Median drift threshold for warnings
+    report_window : int
+        Window length for optimization reporting summaries
+    coherence_threshold : float
+        Minimum arousal/attention coherence before flagging a warning
+    balance_score_good : float
+        Balance score threshold for "healthy" status
+    balance_score_ok : float
+        Balance score threshold for "acceptable" status
     dtype : str
         Floating point dtype for numerical buffers (e.g., "float32")
     use_gpu : bool
@@ -102,6 +144,27 @@ class OptimizationConfig:
     convergence_threshold: float = 0.001
     history_window: int = 20
     stability_epsilon: float = 1e-6
+    setpoint_dopamine_level: float = 0.5
+    setpoint_serotonin_level: float = 0.3
+    setpoint_gaba_inhibition: float = 0.4
+    setpoint_na_arousal: float = 1.0
+    setpoint_ach_attention: float = 0.7
+    setpoint_da_5ht_ratio: float = 1.67
+    setpoint_excitation_inhibition: float = 1.5
+    homeostatic_divisor: float = 2.0
+    arousal_attention_max_delta: float = 2.0
+    stability_neutral: float = 0.5
+    arousal_attention_blend: float = 0.5
+    update_clip_lower: float = 0.8
+    update_clip_upper: float = 1.2
+    recovery_factor: float = 0.25
+    drift_window: int = 10
+    drift_mean_threshold: float = 0.05
+    drift_median_threshold: float = 0.05
+    report_window: int = 10
+    coherence_threshold: float = 0.5
+    balance_score_good: float = 0.8
+    balance_score_ok: float = 0.6
     dtype: str = "float32"
     use_gpu: bool = False
     enable_plasticity: bool = True
@@ -148,6 +211,57 @@ class OptimizationConfig:
 
         if self.stability_epsilon <= 0:
             raise ValueError("stability_epsilon must be positive")
+
+        setpoint_values = {
+            "setpoint_dopamine_level": self.setpoint_dopamine_level,
+            "setpoint_serotonin_level": self.setpoint_serotonin_level,
+            "setpoint_gaba_inhibition": self.setpoint_gaba_inhibition,
+            "setpoint_na_arousal": self.setpoint_na_arousal,
+            "setpoint_ach_attention": self.setpoint_ach_attention,
+            "setpoint_da_5ht_ratio": self.setpoint_da_5ht_ratio,
+            "setpoint_excitation_inhibition": self.setpoint_excitation_inhibition,
+        }
+        for name, value in setpoint_values.items():
+            if value <= 0:
+                raise ValueError(f"{name} must be positive")
+
+        if self.homeostatic_divisor <= 0:
+            raise ValueError("homeostatic_divisor must be positive")
+
+        if self.arousal_attention_max_delta <= 0:
+            raise ValueError("arousal_attention_max_delta must be positive")
+
+        if not 0 <= self.stability_neutral <= 1:
+            raise ValueError("stability_neutral must be in [0, 1]")
+
+        if not 0 < self.arousal_attention_blend <= 1:
+            raise ValueError("arousal_attention_blend must be in (0, 1]")
+
+        if not 0 < self.update_clip_lower < self.update_clip_upper:
+            raise ValueError("update_clip_lower must be > 0 and < update_clip_upper")
+
+        if not 0 < self.recovery_factor <= 1:
+            raise ValueError("recovery_factor must be in (0, 1]")
+
+        if self.drift_window < 1:
+            raise ValueError("drift_window must be positive")
+
+        if self.drift_mean_threshold < 0:
+            raise ValueError("drift_mean_threshold must be non-negative")
+
+        if self.drift_median_threshold < 0:
+            raise ValueError("drift_median_threshold must be non-negative")
+
+        if self.report_window < 1:
+            raise ValueError("report_window must be positive")
+
+        if not 0 <= self.coherence_threshold <= 1:
+            raise ValueError("coherence_threshold must be in [0, 1]")
+
+        if not 0 <= self.balance_score_ok <= self.balance_score_good <= 1:
+            raise ValueError(
+                "balance_score_ok must be <= balance_score_good and both in [0, 1]"
+            )
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
@@ -253,10 +367,6 @@ class NeuroOptimizer:
         Optional logging callback for metrics
     """
 
-    DRIFT_WINDOW = 10
-    DRIFT_MEAN_THRESHOLD = 0.05
-    DRIFT_MEDIAN_THRESHOLD = 0.05
-
     def __init__(
         self,
         config: OptimizationConfig,
@@ -310,14 +420,14 @@ class NeuroOptimizer:
             Setpoint values for homeostatic regulation
         """
         return {
-            'dopamine_level': 0.5,  # Baseline dopamine
-            'serotonin_level': 0.3,  # Baseline serotonin (lower = less stress)
-            'gaba_inhibition': 0.4,  # Moderate inhibition
-            'na_arousal': 1.0,  # Neutral arousal
-            'ach_attention': 0.7,  # Good attention
+            'dopamine_level': self.config.setpoint_dopamine_level,
+            'serotonin_level': self.config.setpoint_serotonin_level,
+            'gaba_inhibition': self.config.setpoint_gaba_inhibition,
+            'na_arousal': self.config.setpoint_na_arousal,
+            'ach_attention': self.config.setpoint_ach_attention,
             # Ratios and balances
-            'da_5ht_ratio': 1.67,  # Dopamine/serotonin ratio
-            'excitation_inhibition': 1.5,  # E/I balance
+            'da_5ht_ratio': self.config.setpoint_da_5ht_ratio,
+            'excitation_inhibition': self.config.setpoint_excitation_inhibition,
         }
 
     def optimize(
@@ -409,11 +519,11 @@ class NeuroOptimizer:
         # Extract state values with defaults
         da_level, sero_level, gaba_inhib, arousal, attention = self._to_array(
             [
-                state.get('dopamine_level', 0.5),
-                state.get('serotonin_level', 0.3),
-                state.get('gaba_inhibition', 0.4),
-                state.get('na_arousal', 1.0),
-                state.get('ach_attention', 0.7),
+                state.get('dopamine_level', self.config.setpoint_dopamine_level),
+                state.get('serotonin_level', self.config.setpoint_serotonin_level),
+                state.get('gaba_inhibition', self.config.setpoint_gaba_inhibition),
+                state.get('na_arousal', self.config.setpoint_na_arousal),
+                state.get('ach_attention', self.config.setpoint_ach_attention),
             ]
         )
 
@@ -429,7 +539,8 @@ class NeuroOptimizer:
         # Arousal-attention coherence (should be correlated)
         aa_coherence = (
             self._dtype.type(1.0)
-            - self._xp.abs(arousal - attention) / self._dtype.type(2.0)
+            - self._xp.abs(arousal - attention)
+            / self._dtype.type(self.config.arousal_attention_max_delta)
         )
         aa_coherence = self._xp.clip(aa_coherence, 0.0, 1.0)
 
@@ -445,7 +556,9 @@ class NeuroOptimizer:
 
         # Overall homeostatic deviation.
         # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
-        homeostatic_dev = (da_5ht_dev + ei_dev) / self._dtype.type(2.0)
+        homeostatic_dev = (
+            da_5ht_dev + ei_dev
+        ) / self._dtype.type(self.config.homeostatic_divisor)
         homeostatic_dev = self._xp.clip(
             homeostatic_dev, self._dtype.type(0.0), self._xp.inf
         )
@@ -524,7 +637,7 @@ class NeuroOptimizer:
             stability = self._dtype.type(1.0) - std_perf / denom
             stability = float(self._xp.clip(stability, 0, 1))
         else:
-            stability = 0.5  # Neutral until we have history
+            stability = self.config.stability_neutral  # Neutral until we have history
 
         # Weighted combination
         # Formal objective definition: docs/neuro_optimization_guide.md ("Formal Objective")
@@ -618,7 +731,10 @@ class NeuroOptimizer:
                     elif 'attention' in param_name:
                         grad = -attention_dev
                     else:
-                        grad = -0.5 * (arousal_dev + attention_dev)
+                        grad = (
+                            -self.config.arousal_attention_blend
+                            * (arousal_dev + attention_dev)
+                        )
 
                 gradients[module][param_name] = grad * self._current_lr
 
@@ -684,7 +800,11 @@ class NeuroOptimizer:
 
                 # Clip to reasonable bounds (prevent instability)
                 new_value = float(
-                    self._xp.clip(new_value, param_value * 0.8, param_value * 1.2)
+                    self._xp.clip(
+                        new_value,
+                        param_value * self.config.update_clip_lower,
+                        param_value * self.config.update_clip_upper,
+                    )
                 )
 
                 bounds_spec = self.config.bounds_spec.get(module, {}).get(param_name)
@@ -732,8 +852,12 @@ class NeuroOptimizer:
         if improving:
             self._plateau_steps = 0
             # Recovery: lr_t = min(lr_base, lr_prev + 0.25 * (lr_base - lr_prev))
-            recovery_step = (self.config.learning_rate - self._current_lr) * 0.25
-            self._current_lr = min(self.config.learning_rate, self._current_lr + recovery_step)
+            recovery_step = (
+                self.config.learning_rate - self._current_lr
+            ) * self.config.recovery_factor
+            self._current_lr = min(
+                self.config.learning_rate, self._current_lr + recovery_step
+            )
             return
 
         # Plateau tracking: apply decay once plateau_steps >= plateau_patience
@@ -782,9 +906,9 @@ class NeuroOptimizer:
                 'message': 'No optimization data available',
             }
 
-        recent_perf = self._performance_history[-10:]
-        recent_balance = self._balance_history[-10:]
-        parameter_drift = self._calculate_parameter_drift(self.DRIFT_WINDOW)
+        recent_perf = self._performance_history[-self.config.report_window:]
+        recent_balance = self._balance_history[-self.config.report_window:]
+        parameter_drift = self._calculate_parameter_drift(self.config.drift_window)
 
         return {
             'status': 'active',
@@ -899,8 +1023,8 @@ class NeuroOptimizer:
         drift_risk = {
             'status': 'unknown',
             'thresholds': {
-                'mean_delta': self.DRIFT_MEAN_THRESHOLD,
-                'median_delta': self.DRIFT_MEDIAN_THRESHOLD,
+                'mean_delta': self.config.drift_mean_threshold,
+                'median_delta': self.config.drift_median_threshold,
             },
             'violations': [],
             'max_mean_delta': 0.0,
@@ -923,7 +1047,7 @@ class NeuroOptimizer:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence
-        if balance.arousal_attention_coherence < 0.5:
+        if balance.arousal_attention_coherence < self.config.coherence_threshold:
             issues.append('Poor arousal-attention coherence - attention deficits')
 
         if drift_stats and drift_stats.get('stats'):
@@ -937,8 +1061,8 @@ class NeuroOptimizer:
                     max_mean = max(max_mean, mean_delta)
                     max_median = max(max_median, median_delta)
                     if (
-                        mean_delta >= self.DRIFT_MEAN_THRESHOLD
-                        or median_delta >= self.DRIFT_MEDIAN_THRESHOLD
+                        mean_delta >= self.config.drift_mean_threshold
+                        or median_delta >= self.config.drift_median_threshold
                     ):
                         violations.append(f"{module}.{name}")
 
@@ -959,10 +1083,10 @@ class NeuroOptimizer:
             drift_risk['status'] = 'unknown'
 
         # Overall assessment
-        if balance.overall_balance_score > 0.8:
+        if balance.overall_balance_score > self.config.balance_score_good:
             status = 'healthy'
             message = 'Neuromodulator system is well-balanced'
-        elif balance.overall_balance_score > 0.6:
+        elif balance.overall_balance_score > self.config.balance_score_ok:
             status = 'acceptable'
             message = 'Minor imbalances detected but within acceptable range'
         else:

@@ -43,8 +43,8 @@ TradePulse models four key neuromodulator systems:
 
 The system maintains homeostatic balance by monitoring:
 
-- **DA/5-HT Ratio**: Dopamine to serotonin ratio (target: ~1.67, acceptable range: **[1.0, 3.0]**)
-- **E/I Balance**: Excitation to inhibition ratio (target: ~1.5, acceptable range: **[1.0, 2.5]**)
+- **DA/5-HT Ratio**: Dopamine to serotonin ratio (target: `setpoint_da_5ht_ratio`, default **1.67**; acceptable range: **[1.0, 3.0]**)
+- **E/I Balance**: Excitation to inhibition ratio (target: `setpoint_excitation_inhibition`, default **1.5**; acceptable range: **[1.0, 2.5]**)
 - **Arousal-Attention Coherence**: Correlation between arousal and attention
 
 #### Invariant Validation
@@ -107,12 +107,12 @@ performance_norm = clip(
   `1 - std(recent) / max(abs(mean), ε)`, clipped to **[0, 1]**.
   - `abs(mean)` makes negative and positive averages comparable in magnitude.
   - `ε` prevents division by zero or near-zero means from exploding the ratio.
-  - Until enough history accumulates, stability defaults to **0.5**.
+  - Until enough history accumulates, stability defaults to `stability_neutral` (default **0.5**).
 
 **Mathematical note on normalization and bounds**
 
 - **Arousal-attention coherence** is computed as:
-  `aa_coherence = 1 - |na_arousal - ach_attention| / 2`.
+  `aa_coherence = 1 - |na_arousal - ach_attention| / arousal_attention_max_delta`.
 - The raw value is explicitly **clipped to [0, 1]** to keep the metric bounded,
   even for extreme arousal/attention inputs.
 
@@ -377,7 +377,7 @@ ei_dev     = |ei_balance - ei_setpoint| / ei_setpoint
 Then average them to obtain the homeostatic deviation:
 
 ```
-homeostatic_dev = (da_5ht_dev + ei_dev) / 2
+homeostatic_dev = (da_5ht_dev + ei_dev) / homeostatic_divisor
 ```
 
 Finally, map deviation to a bounded balance score:
@@ -431,7 +431,7 @@ improving_t = objective_t >= ema_t
 Learning-rate recovery on improvement:
 
 ```
-lr_t = min(lr_base, lr_{t-1} + 0.25 * (lr_base - lr_{t-1}))
+lr_t = min(lr_base, lr_{t-1} + recovery_factor * (lr_base - lr_{t-1}))
 ```
 
 If the objective is **below** the EMA, the step counts toward a plateau. Once
@@ -450,24 +450,56 @@ steadily when performance rebounds.
 
 #### OptimizationConfig
 
-```python
-@dataclass
-class OptimizationConfig:
-    balance_weight: float = 0.35       # Weight for balance objective
-    performance_weight: float = 0.45   # Weight for performance
-    stability_weight: float = 0.20     # Weight for stability
-    performance_min: float = -2.0      # Min performance for normalization
-    performance_max: float = 3.0       # Max performance for normalization
-    stability_epsilon: float = 1e-6    # Numerical stability constant
-    learning_rate: float = 0.01        # Base learning rate
-    momentum: float = 0.9              # Momentum factor
-    max_iterations: int = 100          # Max iterations
-    convergence_threshold: float = 0.001  # Convergence threshold
-    enable_plasticity: bool = True     # Enable plasticity
-    plasticity_window: int = 50        # Plasticity window
-    regime_adaptation: bool = True     # Regime adaptation
-    param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
-```
+**Configuration parameters and formal bounds**
+
+| Parameter | Default | Formal bounds / constraints |
+| --- | --- | --- |
+| `balance_weight` | `0.35` | `(0, 1)`; objective weights must sum to **1.0** |
+| `performance_weight` | `0.45` | `(0, 1)`; objective weights must sum to **1.0** |
+| `stability_weight` | `0.20` | `(0, 1)`; objective weights must sum to **1.0** |
+| `performance_min` | `-2.0` | `< performance_max` |
+| `performance_max` | `3.0` | `> performance_min` |
+| `learning_rate` | `0.01` | `(0, 1)` |
+| `learning_rate_floor` | `0.001` | `(0, learning_rate]` |
+| `adaptive_decay` | `0.6` | `(0, 1)` |
+| `plateau_patience` | `5` | integer `>= 1` |
+| `ema_alpha` | `0.2` | `(0, 1]` |
+| `max_gradient_norm` | `0.05` | `(0, 1]` |
+| `momentum` | `0.9` | `[0, 1)` |
+| `max_iterations` | `100` | integer `>= 1` (runtime guard) |
+| `convergence_threshold` | `0.001` | non-negative |
+| `history_window` | `20` | integer `>= 1` |
+| `stability_epsilon` | `1e-6` | `> 0` |
+| `setpoint_dopamine_level` | `0.5` | `> 0` |
+| `setpoint_serotonin_level` | `0.3` | `> 0` |
+| `setpoint_gaba_inhibition` | `0.4` | `> 0` |
+| `setpoint_na_arousal` | `1.0` | `> 0` |
+| `setpoint_ach_attention` | `0.7` | `> 0` |
+| `setpoint_da_5ht_ratio` | `1.67` | `> 0` |
+| `setpoint_excitation_inhibition` | `1.5` | `> 0` |
+| `homeostatic_divisor` | `2.0` | `> 0` |
+| `arousal_attention_max_delta` | `2.0` | `> 0` |
+| `stability_neutral` | `0.5` | `[0, 1]` |
+| `arousal_attention_blend` | `0.5` | `(0, 1]` |
+| `update_clip_lower` | `0.8` | `> 0` and `< update_clip_upper` |
+| `update_clip_upper` | `1.2` | `> update_clip_lower` |
+| `recovery_factor` | `0.25` | `(0, 1]` |
+| `drift_window` | `10` | integer `>= 1` |
+| `drift_mean_threshold` | `0.05` | `>= 0` |
+| `drift_median_threshold` | `0.05` | `>= 0` |
+| `report_window` | `10` | integer `>= 1` |
+| `coherence_threshold` | `0.5` | `[0, 1]` |
+| `balance_score_good` | `0.8` | `[0, 1]` and `>= balance_score_ok` |
+| `balance_score_ok` | `0.6` | `[0, 1]` and `<= balance_score_good` |
+| `dtype` | `"float32"` | valid NumPy dtype string |
+| `use_gpu` | `False` | boolean |
+| `enable_plasticity` | `True` | boolean |
+| `plasticity_window` | `50` | integer `>= 1` (runtime guard) |
+| `regime_adaptation` | `True` | boolean |
+| `da_5ht_ratio_range` | `(1.0, 3.0)` | tuple `(low, high)` with `0 < low < high` |
+| `ei_balance_range` | `(1.0, 2.5)` | tuple `(low, high)` with `0 < low < high` |
+| `bounds_spec` | `{}` | dict of `BoundsSpec(min_value < max_value, behavior in {"clip","raise"})` |
+| `param_bounds` | `{}` | dict of `(low, high)` with `low < high` |
 
 #### BalanceMetrics
 
