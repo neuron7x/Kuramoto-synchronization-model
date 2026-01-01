@@ -46,6 +46,13 @@ class EMHSSM:
         reward = float(obs.get("reward", 0.0))
         belief_term = float(obs.get("belief_term", 0.0))
         prediction_error = float(obs.get("prediction_error", 0.0))
+        sensory_confidence = clamp(float(obs.get("sensory_confidence", 1.0)))
+        confidence_weight = max(
+            0.0,
+            (1.0 - self.p.sensory_confidence_gain)
+            + self.p.sensory_confidence_gain * sensory_confidence,
+        )
+        prediction_error *= confidence_weight
 
         self.s.mode = _threat_mode(dd, var_breach, vol)
         D = _demand(dd, liq, reg, self.p.psi)
