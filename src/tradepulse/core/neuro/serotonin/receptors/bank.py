@@ -21,7 +21,7 @@ class ReceptorBank:
         ]
         if enabled_list is not None:
             wanted = {name.lower() for name in enabled_list}
-            ordered = [item for item in ordered if item[0] in wanted]
+            ordered = [item for item in ordered if item[0].lower() in wanted]
         self._receptors: List[Tuple[str, object]] = ordered
         self._state: Dict[str, ReceptorState] = {
             name: ReceptorState() for name, _ in self._receptors

@@ -82,8 +82,9 @@ def test_ht3_alarm_triggers_veto_lane(serotonin_cls, tmp_path: Path):
     assert baseline.hold is False
     assert alarm.hold is True
     assert alarm.veto is True
-    assert ctrl_alarm._last_receptor_trace is not None
-    for act in ctrl_alarm._last_receptor_trace["activations"].values():
+    trace = ctrl_alarm.get_last_receptor_trace()
+    assert trace is not None
+    for act in trace["activations"].values():
         assert 0.0 <= act <= 1.0
 
 

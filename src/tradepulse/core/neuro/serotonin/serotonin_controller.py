@@ -794,6 +794,7 @@ class SerotoninController:
         )
         cooldown_s = float(max(0.0, base["cooldown_s"] + deltas.cooldown_s))
         risk_cap = float(base["risk_budget_cap"])
+        # Spec: pos_mult_cap is decrease-only; ignore positive deltas to avoid risk inflation.
         if deltas.pos_mult_cap_delta < 0:
             risk_cap = float(max(self._min_risk_budget, risk_cap + deltas.pos_mult_cap_delta))
         serotonin_level = float(
@@ -1590,6 +1591,11 @@ class SerotoninController:
             f"risk_budget={risk_budget:.3f} "
             f"gate={gate} reasons={','.join(reasons)}"
         )
+
+    def get_last_receptor_trace(self) -> Optional[Mapping[str, Mapping[str, float | bool]]]:
+        """Expose the last receptor activation/delta trace for diagnostics."""
+
+        return self._last_receptor_trace
 
     def get_state(self) -> Mapping[str, float | bool]:
         with self._lock:
