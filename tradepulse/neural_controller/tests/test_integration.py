@@ -4,6 +4,7 @@ import copy
 import json
 import logging
 import os
+import pkgutil
 import sys
 import time
 import types
@@ -240,6 +241,21 @@ def test_yaml_resource_loader() -> None:
     cfg = load_default_config()
     assert "model" in cfg
     assert cfg["market_adapter"]["max_drawdown_limit"] == pytest.approx(0.2, rel=1e-6)
+
+
+def test_yaml_resource_loader_missing_optional_include(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_get_data = pkgutil.get_data
+
+    def fake_get_data(package: str, resource: str) -> bytes | None:
+        if resource == "neuro_sensory.yaml":
+            return None
+        return original_get_data(package, resource)
+
+    monkeypatch.setattr(pkgutil, "get_data", fake_get_data)
+    cfg = load_default_config()
+    assert "model" in cfg
 
 
 def test_market_adapter_resilience() -> None:
