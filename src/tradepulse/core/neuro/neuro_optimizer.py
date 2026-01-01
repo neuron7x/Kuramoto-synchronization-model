@@ -147,6 +147,8 @@ class OptimizationConfig:
         Enable market regime-based adaptation
     numeric : NumericConfig
         Numeric configuration for optimization calculations
+    gradient_clip : Optional[float]
+        Maximum absolute deviation used in proportional gradient estimates
     bounds_spec : Dict[str, Dict[str, BoundsSpec]]
         Structured parameter bounds with enforcement behavior
     param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
@@ -171,6 +173,7 @@ class OptimizationConfig:
     plasticity_window: int = 50
     regime_adaptation: bool = True
     numeric: NumericConfig = field(default_factory=NumericConfig)
+    gradient_clip: Optional[float] = None
     bounds_spec: Dict[str, Dict[str, BoundsSpec]] = field(default_factory=dict)
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
@@ -204,6 +207,12 @@ class OptimizationConfig:
 
         if not isinstance(self.numeric, NumericConfig):
             raise ValueError("numeric must be a NumericConfig instance")
+
+        if self.gradient_clip is None:
+            self.gradient_clip = self.numeric.gradient_dev_clip
+        elif self.gradient_clip <= 0:
+            raise ValueError("gradient_clip must be positive")
+
         self._validate_bounds_spec()
         self._validate_param_bounds()
 
@@ -631,7 +640,7 @@ class NeuroOptimizer:
         def relative_deviation(value: float, setpoint: float) -> float:
             return float((value - setpoint) / (setpoint + epsilon))
 
-        max_deviation = self._dtype.type(self.config.numeric.gradient_dev_clip)
+        max_deviation = self._dtype.type(self.config.gradient_clip)
 
         def clip_deviation(value: float) -> float:
             return float(self._xp.clip(value, -max_deviation, max_deviation))
