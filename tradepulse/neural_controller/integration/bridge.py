@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping
 
@@ -228,16 +229,22 @@ class NeuralMarketController:
         include_prediction_snapshot: bool = False,
     ) -> Dict[str, Any]:
         obs = dict(obs)
+        start = time.perf_counter()
         sensory = self.sensory.transform(obs)
+        timing_sensory_ms = (time.perf_counter() - start) * 1000.0
         obs.update(sensory.filtered)
 
+        start = time.perf_counter()
         prediction_error = float(self.predictive.error_energy(obs))
+        timing_predictive_ms = (time.perf_counter() - start) * 1000.0
         obs["prediction_error"] = prediction_error
 
         belief = self.belief.step(float(obs.get("vol", 0.0)))
         obs["belief_term"] = belief - 0.5
 
+        start = time.perf_counter()
         snapshot = self.model.step(obs)
+        timing_model_step_ms = (time.perf_counter() - start) * 1000.0
         snapshot["S"] = float(
             np.clip(snapshot["S"] + 0.10 * self.homeo.pressure(snapshot["M"]), 0.0, 1.0)
         )
@@ -245,9 +252,11 @@ class NeuralMarketController:
         estimate = self.ekf.step(obs)
         estimate_scoped = {f"{key}_est": value for key, value in estimate.items()}
 
+        start = time.perf_counter()
         action, extra = self.ctrl.decide(
             {**snapshot, **estimate}, snapshot["mode"], snapshot["RPE"]
         )
+        timing_ctrl_decide_ms = (time.perf_counter() - start) * 1000.0
 
         scale = self.cvar.update(float(obs.get("reward", 0.0)))
         extra["alloc_main"] = float(extra["alloc_main"] * scale)
@@ -262,6 +271,10 @@ class NeuralMarketController:
             "prediction_error": prediction_error,
             "action": action,
             "reward": float(obs.get("reward", 0.0)),
+            "timing_sensory_ms": timing_sensory_ms,
+            "timing_predictive_ms": timing_predictive_ms,
+            "timing_model_step_ms": timing_model_step_ms,
+            "timing_ctrl_decide_ms": timing_ctrl_decide_ms,
         }
         if include_prediction_snapshot:
             pred_snapshot = self.predictive.snapshot()

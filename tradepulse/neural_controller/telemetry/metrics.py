@@ -47,6 +47,10 @@ class DecisionMetricsExporter:
     _alloc_scale_sum: float = 0.0
     _rpe_sum: float = 0.0
     _prediction_error_sum: float = 0.0
+    _timing_sensory_ms_sum: float = 0.0
+    _timing_predictive_ms_sum: float = 0.0
+    _timing_model_step_ms_sum: float = 0.0
+    _timing_ctrl_decide_ms_sum: float = 0.0
 
     def update(self, decision: Dict[str, Any]) -> Dict[str, float]:
         reward = float(decision.get("reward", 0.0))
@@ -57,11 +61,19 @@ class DecisionMetricsExporter:
         alloc_scale = float(decision.get("alloc_scale", 1.0))
         rpe = float(decision.get("RPE", 0.0))
         prediction_error = float(decision.get("prediction_error", 0.0))
+        timing_sensory_ms = float(decision.get("timing_sensory_ms", 0.0))
+        timing_predictive_ms = float(decision.get("timing_predictive_ms", 0.0))
+        timing_model_step_ms = float(decision.get("timing_model_step_ms", 0.0))
+        timing_ctrl_decide_ms = float(decision.get("timing_ctrl_decide_ms", 0.0))
 
         self._decisions += 1
         self._alloc_scale_sum += alloc_scale
         self._rpe_sum += rpe
         self._prediction_error_sum += prediction_error
+        self._timing_sensory_ms_sum += timing_sensory_ms
+        self._timing_predictive_ms_sum += timing_predictive_ms
+        self._timing_model_step_ms_sum += timing_model_step_ms
+        self._timing_ctrl_decide_ms_sum += timing_ctrl_decide_ms
 
         if mode == "RED":
             self._red_decisions += 1
@@ -78,6 +90,18 @@ class DecisionMetricsExporter:
             "rpe_mean": self._ratio(self._rpe_sum, self._decisions),
             "prediction_error": self._ratio(
                 self._prediction_error_sum, self._decisions
+            ),
+            "timing_sensory_ms": self._ratio(
+                self._timing_sensory_ms_sum, self._decisions
+            ),
+            "timing_predictive_ms": self._ratio(
+                self._timing_predictive_ms_sum, self._decisions
+            ),
+            "timing_model_step_ms": self._ratio(
+                self._timing_model_step_ms_sum, self._decisions
+            ),
+            "timing_ctrl_decide_ms": self._ratio(
+                self._timing_ctrl_decide_ms_sum, self._decisions
             ),
         }
         return metrics

@@ -215,12 +215,24 @@ def test_metrics_exporter_tracks_tail() -> None:
                 "alloc_scale": 1.0,
                 "RPE": 0.0,
                 "prediction_error": 0.1,
+                "timing_sensory_ms": 0.5,
+                "timing_predictive_ms": 0.7,
+                "timing_model_step_ms": 0.9,
+                "timing_ctrl_decide_ms": 1.1,
             }
         )
     assert "tail_ES95" in metrics
     assert metrics["tail_ES95"] >= 0.0
     assert "prediction_error" in metrics
     assert isinstance(metrics["prediction_error"], float)
+    for key in (
+        "timing_sensory_ms",
+        "timing_predictive_ms",
+        "timing_model_step_ms",
+        "timing_ctrl_decide_ms",
+    ):
+        assert key in metrics
+        assert isinstance(metrics[key], float)
 
 
 def test_controller_performance(controller: NeuralMarketController) -> None:
