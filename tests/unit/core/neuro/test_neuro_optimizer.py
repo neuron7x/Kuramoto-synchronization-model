@@ -20,6 +20,7 @@ from tradepulse.core.neuro.neuro_optimizer import (
 )
 from tradepulse.core.neuro._validation import (
     BoundsSpec,
+    HealthPolicy,
     validate_neuro_invariants,
     validate_neuro_metric_bounds,
 )
@@ -1335,6 +1336,32 @@ class TestNeuroOptimizer:
         health = optimizer._assess_health(balance)
 
         assert health['status'] == 'acceptable'
+
+    def test_assess_health_threshold_cases(self, opt_config):
+        """Test health assessment against control threshold metrics."""
+        optimizer = NeuroOptimizer(opt_config)
+        policy = HealthPolicy()
+        cases = [
+            (policy.healthy_threshold + 0.01, 'healthy'),
+            (
+                (policy.healthy_threshold + policy.acceptable_threshold) / 2,
+                'acceptable',
+            ),
+            (policy.acceptable_threshold, 'warning'),
+        ]
+
+        for score, expected in cases:
+            balance = BalanceMetrics(
+                dopamine_serotonin_ratio=1.8,
+                gaba_excitation_balance=1.5,
+                arousal_attention_coherence=policy.aa_coherence_min + 0.1,
+                overall_balance_score=score,
+                homeostatic_deviation=0.1,
+            )
+
+            health = optimizer._assess_health(balance)
+
+            assert health['status'] == expected
 
     def test_assess_health_imbalanced_system(self, opt_config):
         """Test health assessment for imbalanced system."""

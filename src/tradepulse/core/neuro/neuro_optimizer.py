@@ -26,7 +26,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from tradepulse.core.neuro._validation import BoundsSpec
+from tradepulse.core.neuro._validation import BoundsSpec, HealthPolicy
 
 @dataclass
 class OptimizationConfig:
@@ -907,6 +907,16 @@ class NeuroOptimizer:
                 'message': f'Still optimizing (variance={variance:.4f})',
             }
 
+    def _build_health_policy(self) -> HealthPolicy:
+        """Compose a health policy using configured ranges and thresholds."""
+        return HealthPolicy(
+            da_5ht_ratio_range=self.config.da_5ht_ratio_range,
+            ei_balance_range=self.config.ei_balance_range,
+            aa_coherence_min=self.config.aa_coherence_min,
+            drift_mean_threshold=self.DRIFT_MEAN_THRESHOLD,
+            drift_median_threshold=self.DRIFT_MEDIAN_THRESHOLD,
+        )
+
     def _assess_health(
         self,
         balance: Optional[BalanceMetrics],
@@ -930,20 +940,21 @@ class NeuroOptimizer:
                 'message': 'No balance data available',
             }
 
+        policy = self._build_health_policy()
         issues = []
         drift_risk = {
             'status': 'unknown',
             'thresholds': {
-                'mean_delta': self.DRIFT_MEAN_THRESHOLD,
-                'median_delta': self.DRIFT_MEDIAN_THRESHOLD,
+                'mean_delta': policy.drift_mean_threshold,
+                'median_delta': policy.drift_median_threshold,
             },
             'violations': [],
             'max_mean_delta': 0.0,
             'max_median_delta': 0.0,
         }
 
-        da_ratio_min, da_ratio_max = self.config.da_5ht_ratio_range
-        ei_min, ei_max = self.config.ei_balance_range
+        da_ratio_min, da_ratio_max = policy.da_5ht_ratio_range
+        ei_min, ei_max = policy.ei_balance_range
 
         # Check DA/5-HT ratio
         if balance.dopamine_serotonin_ratio < da_ratio_min:
@@ -958,7 +969,7 @@ class NeuroOptimizer:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence
-        if balance.arousal_attention_coherence < self.config.aa_coherence_min:
+        if balance.arousal_attention_coherence < policy.aa_coherence_min:
             issues.append('Poor arousal-attention coherence - attention deficits')
 
         if drift_stats and drift_stats.get('stats'):
@@ -972,8 +983,8 @@ class NeuroOptimizer:
                     max_mean = max(max_mean, mean_delta)
                     max_median = max(max_median, median_delta)
                     if (
-                        mean_delta >= self.DRIFT_MEAN_THRESHOLD
-                        or median_delta >= self.DRIFT_MEDIAN_THRESHOLD
+                        mean_delta >= policy.drift_mean_threshold
+                        or median_delta >= policy.drift_median_threshold
                     ):
                         violations.append(f"{module}.{name}")
 
@@ -994,10 +1005,10 @@ class NeuroOptimizer:
             drift_risk['status'] = 'unknown'
 
         # Overall assessment
-        if balance.overall_balance_score > 0.8:
+        if balance.overall_balance_score > policy.healthy_threshold:
             status = 'healthy'
             message = 'Neuromodulator system is well-balanced'
-        elif balance.overall_balance_score > 0.6:
+        elif balance.overall_balance_score > policy.acceptable_threshold:
             status = 'acceptable'
             message = 'Minor imbalances detected but within acceptable range'
         else:

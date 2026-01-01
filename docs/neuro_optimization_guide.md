@@ -335,10 +335,10 @@ Behavior when metrics or inputs exceed their intended bounds.
 | `da_5ht_ratio` | Outside `da_5ht_ratio_range` | **ValueError** via `validate_neuro_invariants` |
 | `ei_balance` | Outside `ei_balance_range` | **ValueError** via `validate_neuro_invariants` |
 | `aa_coherence` | Raw value < 0 or > 1 | **Clip** to **[0, 1]** |
-| `aa_coherence` | < 0.5 (advisory threshold) | **Warning** in health assessment (`issues` list) |
+| `aa_coherence` | < `HealthPolicy.aa_coherence_min` (default 0.5) | **Warning** in health assessment (`issues` list) |
 | `homeostatic_dev` | Negative due to numerical drift | **Clip** to **[0, +∞)** |
 | `balance_score` | Outside **[0, 1]** due to numeric error | **Clip** to **[0, 1]** |
-| `balance_score` | < 0.6 (advisory threshold) | **Warning** status in health assessment |
+| `balance_score` | ≤ `HealthPolicy.acceptable_threshold` (default 0.6) | **Warning** status in health assessment |
 | `stability` | Outside **[0, 1]** due to mean/variance extremes | **Clip** to **[0, 1]** |
 
 ## Architecture
@@ -603,8 +603,16 @@ small deviations near 1, making it a stable, interpretable objective term.
 
 ### Health Status Rules
 
-The health status derives **only** from the balance score. Let
-`s = overall_balance_score`, with thresholds:
+The health status derives **only** from the balance score and is governed by
+`HealthPolicy` (`src/tradepulse/core/neuro/_validation.py`). The policy is composed
+from:
+
+- `OptimizationConfig` ranges: `da_5ht_ratio_range`, `ei_balance_range`,
+  `aa_coherence_min`.
+- Drift thresholds: `DRIFT_MEAN_THRESHOLD`, `DRIFT_MEDIAN_THRESHOLD`.
+- Balance score thresholds: `healthy_threshold`, `acceptable_threshold`.
+
+Let `s = overall_balance_score`, with default thresholds:
 
 ```
 healthy_threshold   = 0.8

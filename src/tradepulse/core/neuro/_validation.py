@@ -26,6 +26,7 @@ from typing import Literal, Optional
 
 __all__ = [
     "BoundsSpec",
+    "HealthPolicy",
     "ensure_float",
     "ensure_int",
     "ensure_bool",
@@ -55,6 +56,37 @@ class BoundsSpec:
     min_value: float
     max_value: float
     behavior: Literal["clip", "raise"] = "clip"
+
+
+@dataclass(frozen=True)
+class HealthPolicy:
+    """Threshold policy for neuromodulator health assessment.
+
+    Attributes
+    ----------
+    healthy_threshold : float
+        Balance score above which the system is considered healthy.
+    acceptable_threshold : float
+        Balance score above which the system is considered acceptable.
+    da_5ht_ratio_range : tuple[float, float]
+        Inclusive dopamine/serotonin ratio bounds.
+    ei_balance_range : tuple[float, float]
+        Inclusive excitation/inhibition balance bounds.
+    aa_coherence_min : float
+        Minimum arousal-attention coherence.
+    drift_mean_threshold : float
+        Mean parameter drift threshold for warnings.
+    drift_median_threshold : float
+        Median parameter drift threshold for warnings.
+    """
+
+    healthy_threshold: float = 0.8
+    acceptable_threshold: float = 0.6
+    da_5ht_ratio_range: tuple[float, float] = (1.0, 3.0)
+    ei_balance_range: tuple[float, float] = (1.0, 2.5)
+    aa_coherence_min: float = 0.5
+    drift_mean_threshold: float = 0.05
+    drift_median_threshold: float = 0.05
 
 
 def ensure_float(
