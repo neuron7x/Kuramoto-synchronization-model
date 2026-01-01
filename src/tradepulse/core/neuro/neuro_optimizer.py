@@ -16,6 +16,7 @@ Public API
 ----------
 NeuroOptimizer : Main optimization controller
 OptimizationConfig : Configuration for optimization parameters
+NumericConfig : Numeric tuning for optimization calculations
 BalanceMetrics : Neuromodulator balance health metrics
 """
 
@@ -27,6 +28,74 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 
 from tradepulse.core.neuro._validation import BoundsSpec
+
+
+@dataclass
+class NumericConfig:
+    """Numeric configuration for optimization calculations.
+
+    Attributes
+    ----------
+    performance_min : float
+        Minimum performance value for normalization
+    performance_max : float
+        Maximum performance value for normalization
+    stability_epsilon : float
+        Numerical stability constant for ratio/stability denominators
+    gradient_dev_clip : float
+        Maximum absolute deviation used in proportional gradient estimates
+    max_gradient_norm : float
+        Maximum relative gradient magnitude applied per update
+    da_5ht_ratio_range : Tuple[float, float]
+        Acceptable dopamine/serotonin ratio range for health checks
+    ei_balance_range : Tuple[float, float]
+        Acceptable excitation/inhibition balance range for health checks
+    aa_coherence_min : float
+        Minimum arousal-attention coherence for health checks
+    """
+
+    performance_min: float = -2.0
+    performance_max: float = 3.0
+    stability_epsilon: float = 1e-6
+    gradient_dev_clip: float = 3.0
+    max_gradient_norm: float = 0.05
+    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
+    ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    aa_coherence_min: float = 0.5
+
+    def __post_init__(self) -> None:
+        if self.performance_min >= self.performance_max:
+            raise ValueError("performance_min must be less than performance_max")
+
+        if not 0 < self.max_gradient_norm <= 1:
+            raise ValueError("Max gradient norm must be in (0, 1]")
+
+        if self.stability_epsilon <= 0:
+            raise ValueError("stability_epsilon must be positive")
+
+        if self.gradient_dev_clip <= 0:
+            raise ValueError("gradient_dev_clip must be positive")
+
+        self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
+        self._validate_range(self.ei_balance_range, 'ei_balance_range')
+        self._validate_aa_coherence_min()
+
+    @staticmethod
+    def _validate_range(value_range: Tuple[float, float], name: str) -> None:
+        if (
+            len(value_range) != 2
+            or not all(isinstance(value, (int, float)) for value in value_range)
+        ):
+            raise ValueError(f"{name} must be a tuple of two numbers")
+        low, high = value_range
+        if low <= 0 or high <= 0 or low >= high:
+            raise ValueError(f"{name} must be positive with low < high")
+
+    def _validate_aa_coherence_min(self) -> None:
+        if not isinstance(self.aa_coherence_min, (int, float)):
+            raise ValueError("aa_coherence_min must be a number")
+        if not 0 <= self.aa_coherence_min <= 1:
+            raise ValueError("aa_coherence_min must be in [0, 1]")
 
 @dataclass
 class OptimizationConfig:
@@ -40,10 +109,6 @@ class OptimizationConfig:
         Weight for performance objective (0-1)
     stability_weight : float
         Weight for stability objective (0-1)
-    performance_min : float
-        Minimum performance value for normalization
-    performance_max : float
-        Maximum performance value for normalization
     learning_rate : float
         Base learning rate for parameter updates
     learning_rate_floor : float
@@ -54,8 +119,6 @@ class OptimizationConfig:
         Number of stagnant iterations before applying decay
     ema_alpha : float
         Smoothing factor for exponential moving average of the objective
-    max_gradient_norm : float
-        Maximum relative gradient magnitude applied per update
     momentum : float
         Momentum factor for gradient updates
     max_iterations : int
@@ -64,10 +127,6 @@ class OptimizationConfig:
         Convergence threshold for early stopping
     history_window : int
         Window length for performance history tracking
-    stability_epsilon : float
-        Numerical stability constant for ratio/stability denominators
-    gradient_dev_clip : float
-        Maximum absolute deviation used in proportional gradient estimates
     dtype : str
         Floating point dtype for numerical buffers (e.g., "float32")
     use_gpu : bool
@@ -78,12 +137,8 @@ class OptimizationConfig:
         Window for plasticity calculations
     regime_adaptation : bool
         Enable market regime-based adaptation
-    da_5ht_ratio_range : Tuple[float, float]
-        Acceptable dopamine/serotonin ratio range for health checks
-    ei_balance_range : Tuple[float, float]
-        Acceptable excitation/inhibition balance range for health checks
-    aa_coherence_min : float
-        Minimum arousal-attention coherence for health checks
+    numeric : NumericConfig
+        Numeric configuration for optimization calculations
     bounds_spec : Dict[str, Dict[str, BoundsSpec]]
         Structured parameter bounds with enforcement behavior
     param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
@@ -93,28 +148,21 @@ class OptimizationConfig:
     balance_weight: float = 0.35
     performance_weight: float = 0.45
     stability_weight: float = 0.20
-    performance_min: float = -2.0
-    performance_max: float = 3.0
     learning_rate: float = 0.01
     learning_rate_floor: float = 0.001
     adaptive_decay: float = 0.6
     plateau_patience: int = 5
     ema_alpha: float = 0.2
-    max_gradient_norm: float = 0.05
     momentum: float = 0.9
     max_iterations: int = 100
     convergence_threshold: float = 0.001
     history_window: int = 10
-    stability_epsilon: float = 1e-6
-    gradient_dev_clip: float = 3.0
     dtype: str = "float32"
     use_gpu: bool = False
     enable_plasticity: bool = True
     plasticity_window: int = 50
     regime_adaptation: bool = True
-    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
-    ei_balance_range: Tuple[float, float] = (1.0, 2.5)
-    aa_coherence_min: float = 0.5
+    numeric: NumericConfig = field(default_factory=NumericConfig)
     bounds_spec: Dict[str, Dict[str, BoundsSpec]] = field(default_factory=dict)
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
@@ -124,9 +172,6 @@ class OptimizationConfig:
             self.balance_weight + self.performance_weight + self.stability_weight, 1.0
         ):
             raise ValueError("Objective weights must sum to 1.0")
-
-        if self.performance_min >= self.performance_max:
-            raise ValueError("performance_min must be less than performance_max")
 
         if not 0 < self.learning_rate < 1:
             raise ValueError("Learning rate must be in (0, 1)")
@@ -143,24 +188,14 @@ class OptimizationConfig:
         if not 0 < self.ema_alpha <= 1:
             raise ValueError("EMA alpha must be in (0, 1]")
 
-        if not 0 < self.max_gradient_norm <= 1:
-            raise ValueError("Max gradient norm must be in (0, 1]")
-
         if not 0 <= self.momentum < 1:
             raise ValueError("Momentum must be in [0, 1)")
 
         if self.history_window < 1:
             raise ValueError("History window must be a positive integer")
 
-        if self.stability_epsilon <= 0:
-            raise ValueError("stability_epsilon must be positive")
-
-        if self.gradient_dev_clip <= 0:
-            raise ValueError("gradient_dev_clip must be positive")
-
-        self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
-        self._validate_range(self.ei_balance_range, 'ei_balance_range')
-        self._validate_aa_coherence_min()
+        if not isinstance(self.numeric, NumericConfig):
+            raise ValueError("numeric must be a NumericConfig instance")
         self._validate_bounds_spec()
         self._validate_param_bounds()
 
@@ -168,17 +203,6 @@ class OptimizationConfig:
             np.dtype(self.dtype)
         except TypeError as exc:
             raise ValueError(f"Invalid dtype supplied: {self.dtype}") from exc
-
-    @staticmethod
-    def _validate_range(value_range: Tuple[float, float], name: str) -> None:
-        if (
-            len(value_range) != 2
-            or not all(isinstance(value, (int, float)) for value in value_range)
-        ):
-            raise ValueError(f"{name} must be a tuple of two numbers")
-        low, high = value_range
-        if low <= 0 or high <= 0 or low >= high:
-            raise ValueError(f"{name} must be positive with low < high")
 
     def _validate_param_bounds(self) -> None:
         if not isinstance(self.param_bounds, dict):
@@ -200,12 +224,6 @@ class OptimizationConfig:
                     raise ValueError(
                         f"param_bounds[{module!r}][{param_name!r}] must have low < high"
                     )
-
-    def _validate_aa_coherence_min(self) -> None:
-        if not isinstance(self.aa_coherence_min, (int, float)):
-            raise ValueError("aa_coherence_min must be a number")
-        if not 0 <= self.aa_coherence_min <= 1:
-            raise ValueError("aa_coherence_min must be in [0, 1]")
 
     def _validate_bounds_spec(self) -> None:
         if not isinstance(self.bounds_spec, dict):
@@ -434,7 +452,7 @@ class NeuroOptimizer:
         )
 
         # Calculate ratios
-        epsilon = self._dtype.type(self.config.stability_epsilon)
+        epsilon = self._dtype.type(self.config.numeric.stability_epsilon)
         da_5ht_ratio = da_level / (sero_level + epsilon)
 
         # Excitation-inhibition balance (higher dopamine = more excitation)
@@ -442,10 +460,10 @@ class NeuroOptimizer:
         inhibition = gaba_inhib + sero_level
         ei_balance = excitation / (inhibition + epsilon)
 
-        da_min, da_max = self.config.da_5ht_ratio_range
+        da_min, da_max = self.config.numeric.da_5ht_ratio_range
         da_5ht_ratio = self._xp.clip(da_5ht_ratio, da_min, da_max)
 
-        ei_min, ei_max = self.config.ei_balance_range
+        ei_min, ei_max = self.config.numeric.ei_balance_range
         ei_balance = self._xp.clip(ei_balance, ei_min, ei_max)
 
         # Arousal-attention coherence (should be correlated)
@@ -522,7 +540,10 @@ class NeuroOptimizer:
         """
         # Normalize performance to [0, 1] with configurable Sharpe bounds.
         # Formula reference: docs/neuro_optimization_guide.md ("Metric Scales and Objective Influence").
-        sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
+        sharpe_min, sharpe_max = (
+            self.config.numeric.performance_min,
+            self.config.numeric.performance_max,
+        )
         perf_normalized = float(
             self._xp.clip(
                 (performance - sharpe_min) / (sharpe_max - sharpe_min),
@@ -541,7 +562,7 @@ class NeuroOptimizer:
             recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
             mean_perf = self._xp.mean(recent_array)
             std_perf = self._xp.std(recent_array)
-            epsilon = self._dtype.type(self.config.stability_epsilon)
+            epsilon = self._dtype.type(self.config.numeric.stability_epsilon)
             denom = self._xp.maximum(self._xp.abs(mean_perf), epsilon)
             stability = self._dtype.type(1.0) - std_perf / denom
             stability = float(self._xp.clip(stability, 0, 1))
@@ -585,14 +606,14 @@ class NeuroOptimizer:
             Estimated gradients for each parameter
         """
         gradients = {}
-        epsilon = self._dtype.type(self.config.stability_epsilon)
+        epsilon = self._dtype.type(self.config.numeric.stability_epsilon)
 
         # Proportional gradient heuristic.
         # Formula reference: docs/neuro_optimization_guide.md ("Proportional Gradient Heuristic").
         def relative_deviation(value: float, setpoint: float) -> float:
             return float((value - setpoint) / (setpoint + epsilon))
 
-        max_deviation = self._dtype.type(self.config.gradient_dev_clip)
+        max_deviation = self._dtype.type(self.config.numeric.gradient_dev_clip)
 
         def clip_deviation(value: float) -> float:
             return float(self._xp.clip(value, -max_deviation, max_deviation))
@@ -709,7 +730,7 @@ class NeuroOptimizer:
                 self._velocity[module][param_name] = velocity
 
                 # Gradient clipping relative to parameter magnitude
-                max_step = abs(param_value) * self.config.max_gradient_norm
+                max_step = abs(param_value) * self.config.numeric.max_gradient_norm
                 clipped_velocity = float(
                     self._xp.clip(velocity, -max_step, max_step)
                 )
@@ -942,8 +963,8 @@ class NeuroOptimizer:
             'max_median_delta': 0.0,
         }
 
-        da_ratio_min, da_ratio_max = self.config.da_5ht_ratio_range
-        ei_min, ei_max = self.config.ei_balance_range
+        da_ratio_min, da_ratio_max = self.config.numeric.da_5ht_ratio_range
+        ei_min, ei_max = self.config.numeric.ei_balance_range
 
         # Check DA/5-HT ratio
         if balance.dopamine_serotonin_ratio < da_ratio_min:
@@ -958,7 +979,7 @@ class NeuroOptimizer:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence
-        if balance.arousal_attention_coherence < self.config.aa_coherence_min:
+        if balance.arousal_attention_coherence < self.config.numeric.aa_coherence_min:
             issues.append('Poor arousal-attention coherence - attention deficits')
 
         if drift_stats and drift_stats.get('stats'):
