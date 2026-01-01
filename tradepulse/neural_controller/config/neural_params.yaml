@@ -54,6 +54,7 @@ predictive:
 tacl_bridge:
   sync_threshold: 0.3
   generations: 12
+  emit_predictive_state: false
 
 market_adapter:
   max_drawdown_limit: 0.2
