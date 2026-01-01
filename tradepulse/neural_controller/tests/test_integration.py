@@ -67,6 +67,14 @@ def controller() -> NeuralMarketController:
     )
 
 
+def test_params_backward_imports() -> None:
+    from ..core import neuro_params
+    from ..core.params import PredictiveConfig, SensoryConfig
+
+    assert SensoryConfig is neuro_params.SensoryConfig
+    assert PredictiveConfig is neuro_params.PredictiveConfig
+
+
 def test_emh_state_bounds() -> None:
     model = EMHSSM(Params(), EMHState())
     for _ in range(256):
