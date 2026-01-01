@@ -79,12 +79,18 @@ def _make_balance_with_ratio(ratio: float) -> BalanceMetrics:
     )
 
 
-def _assert_balance_invariants(balance: BalanceMetrics) -> None:
+def _assert_balance_invariants(
+    balance: BalanceMetrics,
+    da_5ht_ratio_range: tuple[float, float] = (1.0, 3.0),
+    ei_balance_range: tuple[float, float] = (1.0, 2.5),
+) -> None:
     validate_neuro_invariants(
         dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
         excitation_inhibition_balance=balance.gaba_excitation_balance,
         arousal_attention_coherence=balance.arousal_attention_coherence,
         stability=balance.overall_balance_score,
+        da_5ht_ratio_range=da_5ht_ratio_range,
+        ei_balance_range=ei_balance_range,
     )
     assert balance.homeostatic_deviation >= 0
 
@@ -241,11 +247,19 @@ class TestNeuroOptimizer:
     )
     def test_balance_metrics_extreme_states(self, opt_config, state):
         """Ensure balance metrics stay within bounds for extreme states."""
+        opt_config = OptimizationConfig(
+            da_5ht_ratio_range=(0.01, 50.0),
+            ei_balance_range=(0.01, 20.0),
+        )
         optimizer = NeuroOptimizer(opt_config)
 
         balance = optimizer._calculate_balance_metrics(state)
 
-        _assert_balance_invariants(balance)
+        _assert_balance_invariants(
+            balance,
+            da_5ht_ratio_range=opt_config.da_5ht_ratio_range,
+            ei_balance_range=opt_config.ei_balance_range,
+        )
 
     @pytest.mark.parametrize(
         "arousal,attention",
@@ -395,8 +409,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=1.0,
             stability_weight=0.0,
-            performance_min=-1.0,
-            performance_max=1.0,
+            sharpe_range=(-1.0, 1.0),
         )
         optimizer = NeuroOptimizer(config)
         balance = optimizer._calculate_balance_metrics(sample_state)
@@ -415,15 +428,13 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=1.0,
             stability_weight=0.0,
-            performance_min=0.0,
-            performance_max=2.0,
+            sharpe_range=(0.0, 2.0),
         )
         wide_config = OptimizationConfig(
             balance_weight=0.0,
             performance_weight=1.0,
             stability_weight=0.0,
-            performance_min=-2.0,
-            performance_max=4.0,
+            sharpe_range=(-2.0, 4.0),
         )
         balance = BalanceMetrics(
             dopamine_serotonin_ratio=1.7,
@@ -564,6 +575,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=0.0,
             stability_weight=1.0,
+            history_window=10,
         )
         optimizer = NeuroOptimizer(config)
         optimizer._performance_history = [
@@ -610,6 +622,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=0.0,
             stability_weight=1.0,
+            history_window=10,
         )
         optimizer = NeuroOptimizer(config)
         optimizer._performance_history = [
@@ -633,12 +646,59 @@ class TestNeuroOptimizer:
         assert np.isfinite(stability)
         assert 0 <= stability <= 1
 
+    def test_stability_respects_configured_epsilon(self, sample_state):
+        """Ensure stability changes when epsilon is adjusted."""
+        history = [
+            -1e-8,
+            2e-8,
+            -3e-8,
+            1e-8,
+            -2e-8,
+            3e-8,
+            -1e-8,
+            2e-8,
+            -2e-8,
+            1e-8,
+            -1e-8,
+        ]
+        small_epsilon_config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+            history_window=10,
+            epsilon=1e-12,
+        )
+        large_epsilon_config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+            history_window=10,
+            epsilon=1e-2,
+        )
+        small_optimizer = NeuroOptimizer(small_epsilon_config)
+        large_optimizer = NeuroOptimizer(large_epsilon_config)
+        small_optimizer._performance_history = history
+        large_optimizer._performance_history = history
+
+        balance_small = small_optimizer._calculate_balance_metrics(sample_state)
+        balance_large = large_optimizer._calculate_balance_metrics(sample_state)
+
+        stability_small = small_optimizer._calculate_objective(
+            0.0, balance_small, sample_state
+        )
+        stability_large = large_optimizer._calculate_objective(
+            0.0, balance_large, sample_state
+        )
+
+        assert stability_large > stability_small
+
     def test_calculate_objective_stability_constant_performance(self, sample_state):
         """Stability should be 1.0 when performance variance is zero."""
         config = OptimizationConfig(
             balance_weight=0.0,
             performance_weight=0.0,
             stability_weight=1.0,
+            history_window=10,
         )
         optimizer = NeuroOptimizer(config)
         optimizer._performance_history = [0.05] * 11
@@ -1122,6 +1182,72 @@ class TestNeuroOptimizer:
         assert any(
             'Excessive inhibition' in issue for issue in health['issues']
         )
+
+    def test_assess_health_respects_coherence_threshold(self):
+        """Ensure arousal-attention coherence threshold is configurable."""
+        strict_config = OptimizationConfig(
+            arousal_attention_coherence_min=0.95,
+        )
+        lenient_config = OptimizationConfig(
+            arousal_attention_coherence_min=0.3,
+        )
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.2,
+        )
+
+        strict_health = NeuroOptimizer(strict_config)._assess_health(balance)
+        lenient_health = NeuroOptimizer(lenient_config)._assess_health(balance)
+
+        assert any(
+            'arousal-attention coherence' in issue
+            for issue in strict_health['issues']
+        )
+        assert not any(
+            'arousal-attention coherence' in issue
+            for issue in lenient_health['issues']
+        )
+
+    def test_assess_health_respects_drift_thresholds(self):
+        """Ensure drift thresholds control drift warnings."""
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.2,
+        )
+        drift_stats = {
+            'stats': {
+                'dopamine': {
+                    'learning_rate': {
+                        'mean_delta': 0.08,
+                        'median_delta': 0.07,
+                    }
+                }
+            }
+        }
+        strict_config = OptimizationConfig(
+            drift_mean_threshold=0.05,
+            drift_median_threshold=0.05,
+        )
+        lenient_config = OptimizationConfig(
+            drift_mean_threshold=0.2,
+            drift_median_threshold=0.2,
+        )
+
+        strict_health = NeuroOptimizer(strict_config)._assess_health(
+            balance, drift_stats=drift_stats
+        )
+        lenient_health = NeuroOptimizer(lenient_config)._assess_health(
+            balance, drift_stats=drift_stats
+        )
+
+        assert strict_health['drift_risk']['status'] == 'warning'
+        assert lenient_health['drift_risk']['status'] == 'stable'
 
     def test_reset(self, opt_config, sample_params, sample_state):
         """Test optimizer reset."""

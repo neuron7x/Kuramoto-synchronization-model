@@ -89,15 +89,15 @@ Subject to:
 The optimizer combines metrics that are normalized onto comparable scales before weighting:
 
 - **Performance scale**: Sharpe ratio is normalized from
-  **[performance_min, performance_max] → [0, 1]** with clipping.
-  - Below `performance_min` maps to **0**, above `performance_max` maps to **1**.
-  - Defaults: `performance_min = -2`, `performance_max = 3`.
+  **[sharpe_range[0], sharpe_range[1]] → [0, 1]** with clipping.
+  - Below `sharpe_range[0]` maps to **0**, above `sharpe_range[1]` maps to **1**.
+  - Defaults: `sharpe_range = (-2, 3)`.
 
 Formally, the normalization is:
 
 ```
 performance_norm = clip(
-    (performance - performance_min) / (performance_max - performance_min),
+    (performance - sharpe_range[0]) / (sharpe_range[1] - sharpe_range[0]),
     0,
     1
 )
@@ -107,6 +107,7 @@ performance_norm = clip(
   `1 - std(recent) / max(abs(mean), ε)`, clipped to **[0, 1]**.
   - `abs(mean)` makes negative and positive averages comparable in magnitude.
   - `ε` prevents division by zero or near-zero means from exploding the ratio.
+  - `ε` is configured via `OptimizationConfig.epsilon`.
   - Until enough history accumulates, stability defaults to **0.5**.
 
 **Mathematical note on normalization and bounds**
@@ -453,8 +454,8 @@ class OptimizationConfig:
     balance_weight: float = 0.35       # Weight for balance objective
     performance_weight: float = 0.45   # Weight for performance
     stability_weight: float = 0.20     # Weight for stability
-    performance_min: float = -2.0      # Min performance for normalization
-    performance_max: float = 3.0       # Max performance for normalization
+    sharpe_range: Tuple[float, float] = (-2.0, 3.0)  # Sharpe range for normalization
+    epsilon: float = 1e-6              # Numerical stability epsilon
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations
@@ -462,6 +463,9 @@ class OptimizationConfig:
     enable_plasticity: bool = True     # Enable plasticity
     plasticity_window: int = 50        # Plasticity window
     regime_adaptation: bool = True     # Regime adaptation
+    arousal_attention_coherence_min: float = 0.5  # Min coherence before warnings
+    drift_mean_threshold: float = 0.05  # Drift mean delta threshold
+    drift_median_threshold: float = 0.05  # Drift median delta threshold
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
 

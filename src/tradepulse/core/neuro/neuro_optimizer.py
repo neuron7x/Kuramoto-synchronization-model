@@ -39,10 +39,10 @@ class OptimizationConfig:
         Weight for performance objective (0-1)
     stability_weight : float
         Weight for stability objective (0-1)
-    performance_min : float
-        Minimum performance value for normalization
-    performance_max : float
-        Maximum performance value for normalization
+    sharpe_range : Tuple[float, float]
+        Sharpe ratio bounds for normalization
+    epsilon : float
+        Numerical stability epsilon for division safeguards
     learning_rate : float
         Base learning rate for parameter updates
     learning_rate_floor : float
@@ -77,6 +77,12 @@ class OptimizationConfig:
         Acceptable dopamine/serotonin ratio range for health checks
     ei_balance_range : Tuple[float, float]
         Acceptable excitation/inhibition balance range for health checks
+    arousal_attention_coherence_min : float
+        Minimum arousal-attention coherence before flagging health issues
+    drift_mean_threshold : float
+        Mean delta threshold for drift risk detection
+    drift_median_threshold : float
+        Median delta threshold for drift risk detection
     param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
         Optional parameter bounds by module and parameter name
     """
@@ -84,8 +90,8 @@ class OptimizationConfig:
     balance_weight: float = 0.35
     performance_weight: float = 0.45
     stability_weight: float = 0.20
-    performance_min: float = -2.0
-    performance_max: float = 3.0
+    sharpe_range: Tuple[float, float] = (-2.0, 3.0)
+    epsilon: float = 1e-6
     learning_rate: float = 0.01
     learning_rate_floor: float = 0.001
     adaptive_decay: float = 0.6
@@ -103,6 +109,9 @@ class OptimizationConfig:
     regime_adaptation: bool = True
     da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
     ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    arousal_attention_coherence_min: float = 0.5
+    drift_mean_threshold: float = 0.05
+    drift_median_threshold: float = 0.05
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -112,8 +121,10 @@ class OptimizationConfig:
         ):
             raise ValueError("Objective weights must sum to 1.0")
 
-        if self.performance_min >= self.performance_max:
-            raise ValueError("performance_min must be less than performance_max")
+        self._validate_sharpe_range(self.sharpe_range)
+
+        if self.epsilon <= 0:
+            raise ValueError("epsilon must be positive")
 
         if not 0 < self.learning_rate < 1:
             raise ValueError("Learning rate must be in (0, 1)")
@@ -141,6 +152,14 @@ class OptimizationConfig:
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
+        if not 0 <= self.arousal_attention_coherence_min <= 1:
+            raise ValueError(
+                "arousal_attention_coherence_min must be in [0, 1]"
+            )
+        if self.drift_mean_threshold < 0:
+            raise ValueError("drift_mean_threshold must be non-negative")
+        if self.drift_median_threshold < 0:
+            raise ValueError("drift_median_threshold must be non-negative")
         self._validate_param_bounds()
 
         try:
@@ -158,6 +177,17 @@ class OptimizationConfig:
         low, high = value_range
         if low <= 0 or high <= 0 or low >= high:
             raise ValueError(f"{name} must be positive with low < high")
+
+    @staticmethod
+    def _validate_sharpe_range(value_range: Tuple[float, float]) -> None:
+        if (
+            len(value_range) != 2
+            or not all(isinstance(value, (int, float)) for value in value_range)
+        ):
+            raise ValueError("sharpe_range must be a tuple of two numbers")
+        low, high = value_range
+        if low >= high:
+            raise ValueError("sharpe_range must have low < high")
 
     def _validate_param_bounds(self) -> None:
         if not isinstance(self.param_bounds, dict):
@@ -222,8 +252,6 @@ class NeuroOptimizer:
     """
 
     DRIFT_WINDOW = 10
-    DRIFT_MEAN_THRESHOLD = 0.05
-    DRIFT_MEDIAN_THRESHOLD = 0.05
 
     def __init__(
         self,
@@ -386,12 +414,13 @@ class NeuroOptimizer:
         )
 
         # Calculate ratios
-        da_5ht_ratio = da_level / (sero_level + self._dtype.type(1e-6))
+        epsilon = self._dtype.type(self.config.epsilon)
+        da_5ht_ratio = da_level / (sero_level + epsilon)
 
         # Excitation-inhibition balance (higher dopamine = more excitation)
         excitation = da_level + arousal
         inhibition = gaba_inhib + sero_level
-        ei_balance = excitation / (inhibition + self._dtype.type(1e-6))
+        ei_balance = excitation / (inhibition + epsilon)
 
         # Arousal-attention coherence (should be correlated)
         aa_coherence = (
@@ -461,7 +490,7 @@ class NeuroOptimizer:
         """
         # Normalize performance to [0, 1] with configurable Sharpe bounds
         # Typical Sharpe ranges: [-2, 3] but can be adjusted
-        sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
+        sharpe_min, sharpe_max = self.config.sharpe_range
         perf_normalized = float(
             self._xp.clip(
                 (performance - sharpe_min) / (sharpe_max - sharpe_min),
@@ -479,7 +508,7 @@ class NeuroOptimizer:
             recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
             mean_perf = self._xp.mean(recent_array)
             std_perf = self._xp.std(recent_array)
-            epsilon = self._dtype.type(1e-6)
+            epsilon = self._dtype.type(self.config.epsilon)
             denom = self._xp.maximum(self._xp.abs(mean_perf), epsilon)
             stability = self._dtype.type(1.0) - std_perf / denom
             stability = float(self._xp.clip(stability, 0, 1))
@@ -523,7 +552,7 @@ class NeuroOptimizer:
             Estimated gradients for each parameter
         """
         gradients = {}
-        epsilon = self._dtype.type(1e-6)
+        epsilon = self._dtype.type(self.config.epsilon)
 
         def relative_deviation(value: float, setpoint: float) -> float:
             return float((value - setpoint) / (setpoint + epsilon))
@@ -838,8 +867,8 @@ class NeuroOptimizer:
         drift_risk = {
             'status': 'unknown',
             'thresholds': {
-                'mean_delta': self.DRIFT_MEAN_THRESHOLD,
-                'median_delta': self.DRIFT_MEDIAN_THRESHOLD,
+                'mean_delta': self.config.drift_mean_threshold,
+                'median_delta': self.config.drift_median_threshold,
             },
             'violations': [],
             'max_mean_delta': 0.0,
@@ -862,7 +891,7 @@ class NeuroOptimizer:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence
-        if balance.arousal_attention_coherence < 0.5:
+        if balance.arousal_attention_coherence < self.config.arousal_attention_coherence_min:
             issues.append('Poor arousal-attention coherence - attention deficits')
 
         if drift_stats and drift_stats.get('stats'):
@@ -876,8 +905,8 @@ class NeuroOptimizer:
                     max_mean = max(max_mean, mean_delta)
                     max_median = max(max_median, median_delta)
                     if (
-                        mean_delta >= self.DRIFT_MEAN_THRESHOLD
-                        or median_delta >= self.DRIFT_MEDIAN_THRESHOLD
+                        mean_delta >= self.config.drift_mean_threshold
+                        or median_delta >= self.config.drift_median_threshold
                     ):
                         violations.append(f"{module}.{name}")
 
