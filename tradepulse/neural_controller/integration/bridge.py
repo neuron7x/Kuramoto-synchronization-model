@@ -221,7 +221,12 @@ class NeuralMarketController:
         inst.generations = int(bridge_cfg.get("generations", inst.generations))
         return inst
 
-    def decide(self, obs: Dict[str, float | bool]) -> Dict[str, Any]:
+    def decide(
+        self,
+        obs: Dict[str, float | bool],
+        *,
+        include_prediction_snapshot: bool = False,
+    ) -> Dict[str, Any]:
         obs = dict(obs)
         sensory = self.sensory.transform(obs)
         obs.update(sensory.filtered)
@@ -258,6 +263,14 @@ class NeuralMarketController:
             "action": action,
             "reward": float(obs.get("reward", 0.0)),
         }
+        if include_prediction_snapshot:
+            pred_snapshot = self.predictive.snapshot()
+            decision.update(
+                {
+                    "prediction_mu": pred_snapshot["mu"],
+                    "prediction_error_last": pred_snapshot["error"],
+                }
+            )
 
         metrics = self.metrics_exporter.update(decision)
         decision.update(metrics)
@@ -301,8 +314,15 @@ class NeuralTACLBridge:
     def _mode_to_coupling(mode: str) -> float:
         return {"GREEN": 0.5, "AMBER": 0.9, "RED": 1.5}.get(mode, 0.5)
 
-    def step(self, obs: Dict[str, float | bool]) -> Dict[str, Any]:
-        decision = self.neural.decide(obs)
+    def step(
+        self,
+        obs: Dict[str, float | bool],
+        *,
+        include_prediction_snapshot: bool = False,
+    ) -> Dict[str, Any]:
+        decision = self.neural.decide(
+            obs, include_prediction_snapshot=include_prediction_snapshot
+        )
         temperature = self._action_to_temp(decision["action"])
         coupling = self._mode_to_coupling(decision["mode"])
 

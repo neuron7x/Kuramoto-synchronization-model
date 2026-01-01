@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Optional
 
 from .params import PredictiveConfig
 
@@ -14,10 +14,15 @@ class PredictiveState:
 
 @dataclass
 class PredictiveCoder:
-    """Predictive coding module that emits aggregated prediction error."""
+    """Predictive coding module that emits aggregated prediction error.
+
+    Maintains stateful prediction means across steps; errors reflect the most
+    recent observation update cadence.
+    """
 
     cfg: PredictiveConfig = field(default_factory=PredictiveConfig)
     _mu: Dict[str, float] = field(default_factory=dict, init=False)
+    _last_error: Optional[Dict[str, float]] = field(default=None, init=False)
 
     def _ensure_mu(self, values: Dict[str, float]) -> None:
         for key in self.cfg.keys:
@@ -34,7 +39,13 @@ class PredictiveCoder:
             self._mu[key] = mu
             errors[key] = value - mu
 
+        self._last_error = dict(errors)
         return PredictiveState(mu=dict(self._mu), error=errors)
+
+    def snapshot(self) -> Dict[str, Dict[str, float] | None]:
+        """Return the latest mean state and last error if available."""
+        last_error = None if not self._last_error else dict(self._last_error)
+        return {"mu": dict(self._mu), "error": last_error}
 
     def error_energy(self, obs: Dict[str, float]) -> float:
         state = self.step(obs)
