@@ -1,0 +1,5 @@
+# Temporary exclusions for non-exploitable vulnerabilities in base image
+# Review and remove as fixes become available
+
+# Example format:
+# CVE-YYYY-XXXXX expiry:2026-02-01
