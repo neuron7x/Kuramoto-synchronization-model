@@ -5,6 +5,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
+from runtime.model_registry import ModelMetadata, register_model
 
 # --- Graph backend (minimal, dependency free) ---
 def _normalize_adjacency(A: torch.Tensor, add_self_loops: bool = True) -> torch.Tensor:
@@ -187,3 +188,24 @@ class HydroBrainV2(nn.Module):
             "water_quality": self.quality_head(U),
             "features": U,
         }
+
+
+HYDROBRAIN_V2_METADATA = register_model(
+    ModelMetadata(
+        model_id="hydrobrain_v2",
+        training_data_window={
+            "source": "synthetic_yangtze_npz",
+            "window_shape": "N=256, T=64, S=8, F=5",
+            "seasonality": "0-4π seasonal cycle",
+        },
+        eval_metrics={
+            "flood_f1": "pending",
+            "hydrology_mae": "pending",
+            "water_quality_mae": "pending",
+        },
+        model_type="spatiotemporal_gnn_tfm",
+        module="hydrobrain_v2.model.HydroBrainV2",
+        owners=("hydrobrain", "risk-monitoring"),
+        notes="Unified GNN+LSTM+Transformer backbone with flood/hydrology/quality heads.",
+    )
+)

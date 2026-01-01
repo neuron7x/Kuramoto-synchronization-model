@@ -49,6 +49,7 @@ from runtime.behavior_contract import (
     tacl_gate,
 )
 from runtime.cns_stabilizer import CNSStabilizer
+from runtime.drift_monitor import DriftDetector, DriftStatus
 from runtime.dual_approval import DualApprovalManager
 from runtime.filters.vlpo_core_filter import VLPOCoreFilter
 from runtime.kill_switch import is_kill_switch_active
@@ -128,6 +129,8 @@ class SupportsThermoFeedback(Protocol):
 class _AgentBinding:
     agent: SupportsThermoFeedback
     metrics: Deque[Dict[str, float]]
+    drift_detector: DriftDetector
+    latest_drift: Optional[DriftStatus] = None
 
 
 CRITICAL_HALT_STATE = "CRITICAL_HALT"
@@ -325,6 +328,7 @@ class ThermoController:
         self._dual_approval_token = os.getenv("THERMO_DUAL_TOKEN", "")
         self.telemetry_history: List[Dict[str, float | str]] = []
         self._agent_bindings: Dict[str, _AgentBinding] = {}
+        self.drift_history: List[Dict[str, Any]] = []
 
         self.stabilizer = CNSStabilizer(normalize="logret", hybrid_mode=True)
         self.stabilizer.start_circadian()
@@ -378,7 +382,11 @@ class ThermoController:
         if name in self._agent_bindings:
             raise ValueError(f"agent '{name}' is already registered")
 
-        binding = _AgentBinding(agent=agent, metrics=deque(maxlen=max(1, window)))
+        binding = _AgentBinding(
+            agent=agent,
+            metrics=deque(maxlen=max(1, window)),
+            drift_detector=DriftDetector(),
+        )
         self._agent_bindings[name] = binding
 
         def _hook(metrics: Dict[str, float]) -> None:
@@ -388,6 +396,29 @@ class ThermoController:
                     clean[key] = float(value)
             if clean:
                 binding.metrics.append(clean)
+                drift_status = binding.drift_detector.update(clean)
+                if drift_status is not None:
+                    binding.latest_drift = drift_status
+                    self.metrics.record(
+                        "agent_drift_score",
+                        drift_status.score,
+                        labels={"agent": name},
+                    )
+                    if drift_status.drifted:
+                        self.metrics.record(
+                            "agent_drift_detected",
+                            1.0,
+                            labels={"agent": name},
+                        )
+                        self.drift_history.append(
+                            {
+                                "timestamp": drift_status.timestamp,
+                                "agent": name,
+                                "score": drift_status.score,
+                                "metrics": dict(drift_status.metric_scores),
+                                "threshold": drift_status.threshold,
+                            }
+                        )
 
         return _hook
 

@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from runtime.model_registry import ModelMetadata, register_model
+
 
 class HabitHead(nn.Module):
     """Value-free head for action preference encoding."""
@@ -34,3 +36,23 @@ def ape_update(
     loss.backward()
     optimizer.step()
     return float(loss.item())
+
+
+HABIT_HEAD_METADATA = register_model(
+    ModelMetadata(
+        model_id="fhmc_habit_head",
+        training_data_window={
+            "source": "online_action_preference",
+            "window_shape": "state_dim/action_dim configurable",
+            "update_rule": "ape_update",
+        },
+        eval_metrics={
+            "ape_loss": "tracked",
+            "action_agreement": "tracked",
+        },
+        model_type="habit_head",
+        module="rl.core.habit_head.HabitHead",
+        owners=("rl", "fhmc"),
+        notes="Value-free action preference head for habitual policy adaptation.",
+    )
+)
