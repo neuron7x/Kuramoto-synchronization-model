@@ -7,6 +7,8 @@ from typing import Any, Dict, Iterable
 
 import numpy as np
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
 from ..desensitization.sensory_habituation import SensoryHabituation
 from .desensitization import DesensitizationModule
 
@@ -92,7 +94,7 @@ class NaKControllerV4_2:
         self._p_hist.append(p)
 
         if len(self._p_hist) > 1:
-            std_p = float(np.std(self._p_hist)) or 1e-9
+            std_p = float(np.std(self._p_hist)) or STABILITY_EPSILON
             z = (p - p_exp) / std_p
             if abs(z) >= self.cfg.burst_z:
                 self._refr_ticks = self.cfg.refractory_ticks
@@ -104,8 +106,10 @@ class NaKControllerV4_2:
         log["refractory_left"] = float(self._refr_ticks)
 
         err = p_exp - p
-        pi_p = kp_eff * self._act(err / max(1e-9, self.scale))
-        pi_i = self.cfg.K_i * self._act(self.I_integral / max(1e-9, self.cfg.I_scale))
+        pi_p = kp_eff * self._act(err / max(STABILITY_EPSILON, self.scale))
+        pi_i = self.cfg.K_i * self._act(
+            self.I_integral / max(STABILITY_EPSILON, self.cfg.I_scale)
+        )
         u = pi_p + pi_i
         self.I_integral += err
 
@@ -122,8 +126,8 @@ class NaKControllerV4_2:
         dd_soft = self.cfg.dd_soft_base * regime_mult
         vol_ref = self.cfg.vol_ref_base * regime_mult
         danger = (
-            (-drawdown / max(1e-6, dd_soft))
-            + 0.5 * math.log1p(v / max(1e-6, vol_ref))
+            (-drawdown / max(STABILITY_EPSILON, dd_soft))
+            + 0.5 * math.log1p(v / max(STABILITY_EPSILON, vol_ref))
             + hpa_tone
         )
         gate = 1.0 / (1.0 + math.exp(danger - 1.2))
@@ -147,7 +151,7 @@ class NaKControllerV4_2:
         log["danger"] = danger
         log["r_mode"] = self.r_mode
 
-        ei_current = self.E / max(1e-6, self.I_integral + 1.0)
+        ei_current = self.E / max(STABILITY_EPSILON, self.I_integral + 1.0)
         self.scale, self.lambda_ = self.desens.update(p, ei_current, ht5=hpa_tone)
         log["lambda_"] = log["lambda"] = self.lambda_
         log["scale"] = self.scale

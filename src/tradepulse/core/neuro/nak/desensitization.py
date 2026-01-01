@@ -5,6 +5,8 @@ from typing import Deque, Tuple
 
 import numpy as np
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
 
 class DesensitizationModule:
     """Maintains lambda/scale adaptation from energy-imbalance signals."""
@@ -41,5 +43,5 @@ class DesensitizationModule:
                     self.lambda_ + self.mu * (ei_current - 1.0), bounds[0], bounds[1]
                 )
             )
-        self.scale = float(self.sigma_target / max(1e-6, sigma_ei))
+        self.scale = float(self.sigma_target / max(STABILITY_EPSILON, sigma_ei))
         return self.scale, self.lambda_

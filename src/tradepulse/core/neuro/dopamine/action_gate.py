@@ -6,6 +6,8 @@ import logging
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
 from .dopamine_controller import DopamineController
 
 
@@ -82,7 +84,7 @@ class ActionGate:
         na_ach: Optional[NAACHSnapshot] = None,
     ) -> GateEvaluation:
         da = float(min(1.0, max(0.0, dopamine.level)))
-        temperature = float(max(1e-6, dopamine.temperature))
+        temperature = float(max(STABILITY_EPSILON, dopamine.temperature))
         go_threshold = min(1.0, max(0.0, dopamine.go_threshold))
         no_go_threshold = min(1.0, max(0.0, dopamine.no_go_threshold))
         hold_threshold = min(1.0, max(0.0, dopamine.hold_threshold))

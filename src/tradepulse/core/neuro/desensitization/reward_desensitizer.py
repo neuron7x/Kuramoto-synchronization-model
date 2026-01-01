@@ -4,6 +4,8 @@ import math
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
 
 @dataclass(slots=True)
 class RewardDesensitizerConfig:
@@ -25,7 +27,7 @@ class RewardDesensitizer:
     def __init__(self, cfg: RewardDesensitizerConfig | None = None) -> None:
         self.cfg = cfg or RewardDesensitizerConfig()
         self._mean = 0.0
-        self._var = 1e-6
+        self._var = STABILITY_EPSILON
         self._last = 0.0
         self._refractory = 0
 
@@ -37,7 +39,7 @@ class RewardDesensitizer:
         self._var = (
             1 - self.cfg.ewma_alpha
         ) * self._var + self.cfg.ewma_alpha * delta * delta
-        std = max(1e-6, math.sqrt(self._var))
+        std = max(STABILITY_EPSILON, math.sqrt(self._var))
         z = (reward - self._mean) / std
         rpe = reward - self._last
 
@@ -53,7 +55,7 @@ class RewardDesensitizer:
         adjusted = centered + gain * rpe
         adjusted = max(-self.cfg.max_abs, min(self.cfg.max_abs, adjusted))
 
-        scale = 1.0 / max(1e-6, std)
+        scale = 1.0 / max(STABILITY_EPSILON, std)
         scale = max(self.cfg.min_scale, min(self.cfg.max_scale, scale))
         normalized = adjusted * scale
         self._last = reward

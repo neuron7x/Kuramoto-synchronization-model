@@ -4,6 +4,8 @@ import math
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
 
 @dataclass(slots=True)
 class ThreatGateConfig:
@@ -37,9 +39,9 @@ class ThreatGate:
         """Compute the gate intensity for the current stress conditions."""
 
         dd = max(0.0, drawdown)
-        vol_ratio = vol / max(1e-6, self.cfg.vol_ref)
+        vol_ratio = vol / max(STABILITY_EPSILON, self.cfg.vol_ref)
         danger = (
-            dd / max(1e-6, self.cfg.dd_soft)
+            dd / max(STABILITY_EPSILON, self.cfg.dd_soft)
             + 0.5 * math.log1p(vol_ratio)
             + self.cfg.hpa_gain * hpa_tone
         )

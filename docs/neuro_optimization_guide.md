@@ -145,9 +145,10 @@ Changing weights shifts the optimizer's focus:
 
 ### Numerical Stability
 
-All numerically sensitive denominators share the same `OptimizationConfig.stability_epsilon`
-to ensure consistent behavior across balance, stability, and gradient calculations. The
-current uses are:
+All numerically sensitive denominators share the same
+`OptimizationConfig.numeric.stability_epsilon` (re-exported as
+`tradepulse.core.neuro.numeric_config.STABILITY_EPSILON`) to ensure consistent behavior
+across balance, stability, and gradient calculations. The current uses are:
 
 - **Dopamine/serotonin ratio**: `dopamine_level / (serotonin_level + ε)`.
 - **Excitation/inhibition balance**: `(dopamine_level + na_arousal) / (gaba_inhibition + serotonin_level + ε)`.
@@ -200,7 +201,7 @@ values indicate stronger reward-driven behavior.
 
 - `dopamine_level >= 0`
 - `serotonin_level >= 0`
-- `epsilon = stability_epsilon > 0`
+- `epsilon = numeric.stability_epsilon > 0`
 
 ### `ei_balance`
 
@@ -228,7 +229,7 @@ behavior; lower values indicate stronger inhibitory control.
 - `na_arousal >= 0`
 - `gaba_inhibition >= 0`
 - `serotonin_level >= 0`
-- `epsilon = stability_epsilon > 0`
+- `epsilon = numeric.stability_epsilon > 0`
 
 ### `aa_coherence`
 
@@ -278,7 +279,7 @@ homeostasis; larger values indicate increasing drift.
 
 - `da_5ht_ratio`, `ei_balance` finite real values
 - `da_5ht_setpoint > 0`, `ei_setpoint > 0`
-- `epsilon = stability_epsilon > 0`
+- `epsilon = numeric.stability_epsilon > 0`
 
 ### `balance_score`
 
@@ -327,7 +328,7 @@ relative to mean magnitude.
 
 - `recent_perf` list of finite floats
 - `history_window > 1`
-- `epsilon = stability_epsilon > 0`
+- `epsilon = numeric.stability_epsilon > 0`
 
 ### Failure Modes
 
@@ -632,7 +633,8 @@ Stability is computed from recent objective history (using the configured
 stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
 ```
 
-Here, `epsilon` is `OptimizationConfig.stability_epsilon`.
+Here, `epsilon` is `OptimizationConfig.numeric.stability_epsilon` (or the
+`STABILITY_EPSILON` re-export).
 
 `abs` normalizes negative/positive means by magnitude, while `epsilon` prevents division by
 zero when the mean collapses toward zero. The value is clipped to `[0, 1]` to avoid spikes
@@ -677,14 +679,22 @@ steadily when performance rebounds.
 
 ```python
 @dataclass
-class OptimizationConfig:
-    balance_weight: float = 0.35       # Weight for balance objective
-    performance_weight: float = 0.45   # Weight for performance
-    stability_weight: float = 0.20     # Weight for stability
+class NumericConfig:
     performance_min: float = -2.0      # Min performance for normalization
     performance_max: float = 3.0       # Max performance for normalization
     stability_epsilon: float = 1e-6    # Numerical stability constant
     gradient_dev_clip: float = 3.0     # Deviation clip for gradient heuristic
+    max_gradient_norm: float = 0.05    # Max relative gradient magnitude
+    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)  # DA/5-HT ratio limits
+    ei_balance_range: Tuple[float, float] = (1.0, 2.5)    # E/I balance limits
+    aa_coherence_min: float = 0.5      # Min arousal-attention coherence
+
+
+@dataclass
+class OptimizationConfig:
+    balance_weight: float = 0.35       # Weight for balance objective
+    performance_weight: float = 0.45   # Weight for performance
+    stability_weight: float = 0.20     # Weight for stability
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations
@@ -692,9 +702,7 @@ class OptimizationConfig:
     enable_plasticity: bool = True     # Enable plasticity
     plasticity_window: int = 50        # Plasticity window
     regime_adaptation: bool = True     # Regime adaptation
-    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)  # DA/5-HT ratio limits
-    ei_balance_range: Tuple[float, float] = (1.0, 2.5)    # E/I balance limits
-    aa_coherence_min: float = 0.5      # Min arousal-attention coherence
+    numeric: NumericConfig = field(default_factory=NumericConfig)
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
 
@@ -703,28 +711,28 @@ class OptimizationConfig:
 | `balance_weight` | Вага складової `balance_score` в об'єктиві: `objective += balance_weight * balance_score`. | **[0, 1]**, сума ваг = **1.0**. |
 | `performance_weight` | Вага нормалізованої продуктивності: `objective += performance_weight * performance_norm`. | **[0, 1]**, сума ваг = **1.0**. |
 | `stability_weight` | Вага стабільності: `objective += stability_weight * stability_score`. | **[0, 1]**, сума ваг = **1.0**. |
-| `performance_min` | Нижня межа нормалізації продуктивності: `performance_norm = clip((performance - min)/(max-min), 0, 1)`. | `< performance_max`. |
-| `performance_max` | Верхня межа нормалізації продуктивності. | `> performance_min`. |
+| `numeric.performance_min` | Нижня межа нормалізації продуктивності: `performance_norm = clip((performance - min)/(max-min), 0, 1)`. | `< performance_max`. |
+| `numeric.performance_max` | Верхня межа нормалізації продуктивності. | `> performance_min`. |
 | `learning_rate` | Базова швидкість оновлення параметрів. | **(0, 1)**. |
 | `learning_rate_floor` | Мінімальний адаптивний LR під час плато: `lr = max(lr_floor, lr * adaptive_decay)`. | **(0, learning_rate]**. |
 | `adaptive_decay` | Множник зменшення LR після плато. | **(0, 1)**. |
 | `plateau_patience` | Кількість ітерацій без покращення до зниження LR. | Ціле **≥ 1**. |
 | `ema_alpha` | Коефіцієнт EMA: `ema_t = α * obj_t + (1-α) * ema_{t-1}`. | **(0, 1]**. |
-| `max_gradient_norm` | Обмеження відносної величини градієнта на крок. | **(0, 1]**. |
+| `numeric.max_gradient_norm` | Обмеження відносної величини градієнта на крок. | **(0, 1]**. |
 | `momentum` | Моментум у кумуляції швидкості: `v = momentum * v + grad`. | **[0, 1)**. |
 | `max_iterations` | Ліміт ітерацій оптимізації. | Ціле **≥ 1**. |
 | `convergence_threshold` | Поріг ранньої зупинки за зміною об'єктива. | **> 0** (рекомендовано). |
 | `history_window` | Розмір вікна для стабільності/EMA історії. | Ціле **≥ 1**. |
-| `stability_epsilon` | ε для стабільності знаменників (баланс/стабільність/відхилення). | **> 0**. |
-| `gradient_dev_clip` | Кліп девіацій в пропорційному градієнті: `clip(dev, ±gradient_dev_clip)`. | **> 0**. |
+| `numeric.stability_epsilon` | ε для стабільності знаменників (баланс/стабільність/відхилення). | **> 0**. |
+| `numeric.gradient_dev_clip` | Кліп девіацій в пропорційному градієнті: `clip(dev, ±gradient_dev_clip)`. | **> 0**. |
 | `dtype` | Тип чисел для буферів (numpy dtype). | Валідний `np.dtype` (напр. `float32`). |
 | `use_gpu` | Спроба використати CuPy (за наявності). | `True/False`. |
 | `enable_plasticity` | Увімкнення пластичності. | `True/False`. |
 | `plasticity_window` | Вікно для оцінки пластичності. | Ціле **≥ 1** (рекомендовано). |
 | `regime_adaptation` | Увімкнення адаптації під режими ринку. | `True/False`. |
-| `da_5ht_ratio_range` | Межі клiпiнгу DA/5-HT: `clip(da_5ht_ratio, min, max)`. | `(low, high)` з **low > 0**, **high > 0**, **low < high**. |
-| `ei_balance_range` | Межі клiпiнгу E/I балансу. | `(low, high)` з **low > 0**, **high > 0**, **low < high**. |
-| `aa_coherence_min` | Мінімально допустима узгодженість arousal/attention. | **[0, 1]**. |
+| `numeric.da_5ht_ratio_range` | Межі клiпiнгу DA/5-HT: `clip(da_5ht_ratio, min, max)`. | `(low, high)` з **low > 0**, **high > 0**, **low < high**. |
+| `numeric.ei_balance_range` | Межі клiпiнгу E/I балансу. | `(low, high)` з **low > 0**, **high > 0**, **low < high**. |
+| `numeric.aa_coherence_min` | Мінімально допустима узгодженість arousal/attention. | **[0, 1]**. |
 | `bounds_spec` | Структуровані BoundsSpec: визначають `min_value`, `max_value`, `behavior`. | Кожен `min_value < max_value`, `behavior ∈ {clip, raise}`. |
 | `param_bounds` | Пер-параметрові межі `low/high`, застосовуються після оновлень. | Кожен `low < high`. |
 

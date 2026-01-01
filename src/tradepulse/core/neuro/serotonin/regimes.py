@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-_EPS = 1e-9
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
+_EPS = STABILITY_EPSILON
 
 
 def _to_array(series) -> np.ndarray:
