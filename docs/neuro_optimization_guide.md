@@ -400,7 +400,8 @@ small deviations near 1, making it a stable, interpretable objective term.
 
 ### Stability Objective
 
-Stability is computed from recent performance as:
+Stability is computed from recent objective history (using the configured
+`history_window`) as:
 
 ```
 stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
