@@ -149,6 +149,24 @@ def test_policy_mode_config_changes_behavior(tmp_path: Path) -> None:
     assert amber_probs["increase_risk"] == 0.0
 
 
+def test_yaml_with_extra_keys_does_not_break(tmp_path: Path, caplog) -> None:
+    cfg = copy.deepcopy(load_default_config())
+    cfg["model"]["extra_param"] = 1.23
+    cfg["sensory"]["unexpected"] = 0.4
+    cfg["unknown_section"] = {"flag": True}
+    config_path = tmp_path / "neuro_extra.yaml"
+    config_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+    with caplog.at_level(logging.WARNING):
+        controller = NeuralMarketController.from_yaml(str(config_path))
+
+    assert controller is not None
+    assert any(
+        "Ignoring unknown config key" in record.getMessage()
+        for record in caplog.records
+    )
+
+
 def test_cvar_monotonic() -> None:
     gate = CVARGate(alpha=0.95, limit=0.01, lookback=20)
     shocks = np.concatenate([np.linspace(-0.05, -0.02, 10), np.zeros(10)])

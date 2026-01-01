@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, Mapping
 import numpy as np
 import yaml
 
-from ..config import load_default_config
+from ..config import load_default_config, merge_config
 from ..core.emh_model import EMHSSM
 from ..core.params import (
     EKFConfig,
@@ -213,7 +213,9 @@ class NeuralMarketController:
         else:
             yaml_path = Path(path)
             with yaml_path.open("r", encoding="utf-8") as stream:
-                cfg = yaml.safe_load(stream)
+                raw_cfg = yaml.safe_load(stream)
+            default_cfg = load_default_config()
+            cfg = merge_config(default_cfg, raw_cfg, safe_merge=True)
         schema_version = cfg.get("schema_version")
         if schema_version != SCHEMA_VERSION:
             raise ValueError(
