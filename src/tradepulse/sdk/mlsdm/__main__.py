@@ -62,7 +62,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--host",
         type=str,
-        default="127.0.0.1",
+        default="0.0.0.0",
         help="Host for API server (used only with --api).",
     )
     parser.add_argument(
@@ -86,6 +86,30 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def parse_cli_overrides(overrides: list[str]) -> Dict[str, Any]:
+    """Parse CLI overrides provided as PATH=VALUE pairs."""
+    parsed: Dict[str, Any] = {}
+    for override in overrides:
+        if "=" not in override:
+            logger.error("Override must be in PATH=VALUE format: %s", override)
+            raise SystemExit(1)
+        # value may legitimately contain '='; split only on the first occurrence
+        path, raw_value = override.split("=", 1)
+        if not path:
+            logger.error("Override path must be non-empty: %s", override)
+            raise SystemExit(1)
+        parsed[path] = ConfigLoader._parse_override_value(raw_value, source=path)
+    return parsed
+
+
+def load_config_from_cli(config_path: str, overrides: list[str]) -> Dict[str, Any]:
+    """Load MLSDM config with env and CLI overrides applied."""
+    cli_overrides = parse_cli_overrides(overrides)
+    return ConfigLoader.load_config_with_defaults(
+        config_path, env_prefix="MLSDM__", overrides=cli_overrides
+    )
+
+
 def main() -> None:
     parser = build_arg_parser()
     args = parser.parse_args()
@@ -104,23 +128,7 @@ def main() -> None:
         return
 
     try:
-        cli_overrides: Dict[str, Any] = {}
-        for override in args.override:
-            if "=" not in override:
-                logger.error("Override must be in PATH=VALUE format: %s", override)
-                raise SystemExit(1)
-            # value may legitimately contain '='; split only on the first occurrence
-            path, raw_value = override.split("=", 1)
-            if not path:
-                logger.error("Override path must be non-empty: %s", override)
-                raise SystemExit(1)
-            cli_overrides[path] = ConfigLoader._parse_override_value(
-                raw_value, source=path
-            )
-
-        config = ConfigLoader.load_config_with_defaults(
-            args.config, env_prefix="MLSDM__", overrides=cli_overrides
-        )
+        config = load_config_from_cli(args.config, args.override)
     except (FileNotFoundError, OSError) as exc:
         logger.exception("Failed to load config '%s': %s", args.config, exc)
         raise SystemExit(1) from exc

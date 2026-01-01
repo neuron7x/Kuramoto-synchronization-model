@@ -193,7 +193,7 @@ class TestBuildArgParser:
 class TestMainFunction:
     """Tests for main function."""
 
-    @patch("tradepulse.sdk.mlsdm.__main__.ConfigLoader.load_config")
+    @patch("tradepulse.sdk.mlsdm.__main__.load_config_from_cli")
     @patch("tradepulse.sdk.mlsdm.__main__.MemoryManager")
     def test_main_simulation_success(
         self, mock_manager_class: MagicMock, mock_load_config: MagicMock
@@ -211,7 +211,7 @@ class TestMainFunction:
         mock_load_config.assert_called_once()
         mock_manager.run_simulation.assert_called_once_with(10)
 
-    @patch("tradepulse.sdk.mlsdm.__main__.ConfigLoader.load_config")
+    @patch("tradepulse.sdk.mlsdm.__main__.load_config_from_cli")
     def test_main_config_load_failure(self, mock_load_config: MagicMock) -> None:
         """Test main function with config load failure."""
         from tradepulse.sdk.mlsdm.__main__ import main
@@ -223,7 +223,7 @@ class TestMainFunction:
                 main()
             assert exc_info.value.code == 1
 
-    @patch("tradepulse.sdk.mlsdm.__main__.ConfigLoader.load_config")
+    @patch("tradepulse.sdk.mlsdm.__main__.load_config_from_cli")
     @patch("tradepulse.sdk.mlsdm.__main__.MemoryManager")
     def test_main_simulation_failure(
         self, mock_manager_class: MagicMock, mock_load_config: MagicMock
