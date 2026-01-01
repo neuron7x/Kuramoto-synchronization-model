@@ -53,3 +53,8 @@ online store safely:
 </figure>
 
 Update the Mermaid source in [`assets/feature_store_internals.mmd`](assets/feature_store_internals.mmd) to regenerate the rendered diagram alongside this page.
+
+## Related model & dataset cards
+
+- [Feature Store Market Snapshot](../datasets/market_feature_snapshot.md)
+- [Market Regime Classifier](../model_cards/market_regime_classifier.md)

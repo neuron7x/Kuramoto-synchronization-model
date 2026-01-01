@@ -99,3 +99,8 @@ reproducible. Artifacts uploaded to GitHub include:
 - The workflow honours the engineering deadline from the operations order: the
   schedule keeps the training cadence ready before the November 2025 cut-off and
   supports additional manual runs as needed.
+
+## Documentation Links
+
+- [Model Card: Market Regime Classifier](../model_cards/market_regime_classifier.md)
+- [Dataset Card: Feature Store Market Snapshot](../datasets/market_feature_snapshot.md)
