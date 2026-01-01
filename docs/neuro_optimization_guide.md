@@ -559,8 +559,11 @@ dev(x, s) = (x - s) / (s + epsilon)
 To prevent extreme states from dominating updates, deviations are clipped:
 
 ```
-dev_clip(x, s) = clip(dev(x, s), -gradient_dev_clip, gradient_dev_clip)
+dev_clip(x, s) = clip(dev(x, s), -gradient_clip, gradient_clip)
 ```
+
+`gradient_clip` is configured via `OptimizationConfig.gradient_clip` (defaults to
+`OptimizationConfig.numeric.gradient_dev_clip` when unset).
 
 For dopamine/serotonin, the DA/5-HT ratio deviation directly drives proportional updates:
 
@@ -695,7 +698,7 @@ class NumericConfig:
     performance_min: float = -2.0      # Min performance for normalization
     performance_max: float = 3.0       # Max performance for normalization
     stability_epsilon: float = 1e-6    # Numerical stability constant
-    gradient_dev_clip: float = 3.0     # Deviation clip for gradient heuristic
+    gradient_dev_clip: float = 3.0     # Default deviation clip for gradients
     max_gradient_norm: float = 0.05    # Max relative gradient magnitude
     da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)  # DA/5-HT ratio limits
     ei_balance_range: Tuple[float, float] = (1.0, 2.5)    # E/I balance limits
@@ -708,6 +711,7 @@ class OptimizationConfig:
     performance_weight: float = 0.45   # Weight for performance
     stability_weight: float = 0.20     # Weight for stability
     learning_rate: float = 0.01        # Base learning rate
+    gradient_clip: float = 3.0         # Deviation clip for gradient heuristic
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations
     convergence_threshold: float = 0.001  # Convergence threshold
@@ -736,7 +740,8 @@ class OptimizationConfig:
 | `convergence_threshold` | Поріг ранньої зупинки за зміною об'єктива. | **> 0** (рекомендовано). |
 | `history_window` | Розмір вікна для стабільності/EMA історії. | Ціле **≥ 1**. |
 | `numeric.stability_epsilon` | ε для стабільності знаменників (баланс/стабільність/відхилення). | **> 0**. |
-| `numeric.gradient_dev_clip` | Кліп девіацій в пропорційному градієнті: `clip(dev, ±gradient_dev_clip)`. | **> 0**. |
+| `gradient_clip` | Кліп девіацій в пропорційному градієнті: `clip(dev, ±gradient_clip)`. | **> 0**. |
+| `numeric.gradient_dev_clip` | Дефолтне значення `gradient_clip`, якщо воно не задане. | **> 0**. |
 | `dtype` | Тип чисел для буферів (numpy dtype). | Валідний `np.dtype` (напр. `float32`). |
 | `use_gpu` | Спроба використати CuPy (за наявності). | `True/False`. |
 | `enable_plasticity` | Увімкнення пластичності. | `True/False`. |

@@ -145,27 +145,37 @@ class TestOptimizationConfig:
         with pytest.raises(ValueError, match="gradient_dev_clip"):
             NumericConfig(gradient_dev_clip=0.0)
 
+    def test_gradient_clip_positive(self):
+        """Test gradient_clip must be positive."""
+        with pytest.raises(ValueError, match="gradient_clip"):
+            OptimizationConfig(gradient_clip=0.0)
+
     @pytest.mark.parametrize(
-        "kwargs, error_match",
+        "config_kwargs, numeric_kwargs, error_match",
         [
             (
+                {},
                 {"performance_min": 1.0, "performance_max": 1.0},
                 "performance_min must be less than performance_max",
             ),
             (
+                {},
                 {"performance_min": 2.0, "performance_max": 1.0},
                 "performance_min must be less than performance_max",
             ),
-            ({"stability_epsilon": 0.0}, "stability_epsilon must be positive"),
-            ({"history_window": 0}, "History window must be a positive integer"),
-            ({"momentum": -0.1}, "Momentum must be in \\[0, 1\\)"),
-            ({"momentum": 1.0}, "Momentum must be in \\[0, 1\\)"),
+            ({}, {"stability_epsilon": 0.0}, "stability_epsilon must be positive"),
+            ({"history_window": 0}, None, "History window must be a positive integer"),
+            ({"momentum": -0.1}, None, "Momentum must be in \\[0, 1\\)"),
+            ({"momentum": 1.0}, None, "Momentum must be in \\[0, 1\\)"),
         ],
     )
-    def test_critical_ranges(self, kwargs, error_match):
+    def test_critical_ranges(self, config_kwargs, numeric_kwargs, error_match):
         """Test critical ranges for key configuration values."""
         with pytest.raises(ValueError, match=error_match):
-            OptimizationConfig(**kwargs)
+            if numeric_kwargs:
+                OptimizationConfig(numeric=NumericConfig(**numeric_kwargs), **config_kwargs)
+            else:
+                OptimizationConfig(**config_kwargs)
 
 
 class TestBalanceMetrics:
@@ -1222,7 +1232,7 @@ class TestNeuroOptimizer:
         config = OptimizationConfig(
             learning_rate=0.2,
             momentum=0.0,
-            numeric=NumericConfig(gradient_dev_clip=0.5),
+            gradient_clip=0.5,
         )
         optimizer = NeuroOptimizer(config)
 
@@ -1241,7 +1251,39 @@ class TestNeuroOptimizer:
             performance=5.0,
         )
 
-        max_grad = config.learning_rate * config.numeric.gradient_dev_clip
+        max_grad = config.learning_rate * config.gradient_clip
+
+        assert abs(gradients['dopamine']['learning_rate']) <= max_grad
+        assert abs(gradients['serotonin']['stress_threshold']) <= max_grad
+        assert abs(gradients['gaba']['k_inhibit']) <= max_grad
+        assert abs(gradients['na_ach']['arousal_gain']) <= max_grad
+        assert abs(gradients['na_ach']['attention_gain']) <= max_grad
+
+    def test_estimate_gradients_respects_gradient_clip(self, sample_params, sample_state):
+        """Ensure gradient clip bounds deviations before learning rate scaling."""
+        config = OptimizationConfig(
+            learning_rate=0.3,
+            momentum=0.0,
+            gradient_clip=0.25,
+        )
+        optimizer = NeuroOptimizer(config)
+
+        extreme_state = dict(
+            sample_state,
+            dopamine_level=5000.0,
+            serotonin_level=0.001,
+            gaba_inhibition=5000.0,
+            na_arousal=5000.0,
+            ach_attention=5000.0,
+        )
+
+        gradients = optimizer._estimate_gradients(
+            sample_params,
+            extreme_state,
+            performance=5.0,
+        )
+
+        max_grad = config.learning_rate * config.gradient_clip
 
         assert abs(gradients['dopamine']['learning_rate']) <= max_grad
         assert abs(gradients['serotonin']['stress_threshold']) <= max_grad
