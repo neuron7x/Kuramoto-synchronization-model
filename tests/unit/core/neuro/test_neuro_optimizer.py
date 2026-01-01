@@ -297,6 +297,33 @@ class TestNeuroOptimizer:
         assert stressed_balance.homeostatic_deviation > baseline_balance.homeostatic_deviation
         assert stressed_balance.overall_balance_score < baseline_balance.overall_balance_score
 
+    def test_balance_score_decreases_as_homeostatic_dev_grows(self, opt_config):
+        """Higher homeostatic deviation should reduce the balance score."""
+        optimizer = NeuroOptimizer(opt_config)
+        optimizer._setpoints["da_5ht_ratio"] = 1.0
+        optimizer._setpoints["excitation_inhibition"] = 1.0
+
+        low_dev_state = {
+            "dopamine_level": 1.0,
+            "serotonin_level": 1.0,
+            "gaba_inhibition": 1.0,
+            "na_arousal": 1.0,
+            "ach_attention": 1.0,
+        }
+        high_dev_state = {
+            "dopamine_level": 2.0,
+            "serotonin_level": 1.0,
+            "gaba_inhibition": 0.5,
+            "na_arousal": 2.0,
+            "ach_attention": 0.0,
+        }
+
+        low_dev_balance = optimizer._calculate_balance_metrics(low_dev_state)
+        high_dev_balance = optimizer._calculate_balance_metrics(high_dev_state)
+
+        assert high_dev_balance.homeostatic_deviation > low_dev_balance.homeostatic_deviation
+        assert high_dev_balance.overall_balance_score < low_dev_balance.overall_balance_score
+
     @pytest.mark.parametrize(
         "state",
         [
