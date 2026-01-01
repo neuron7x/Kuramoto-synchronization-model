@@ -459,8 +459,8 @@ class NeuroOptimizer:
         float
             Composite objective value (higher is better)
         """
-        # Normalize performance to [0, 1] with configurable Sharpe bounds
-        # Typical Sharpe ranges: [-2, 3] but can be adjusted
+        # Normalize performance to [0, 1] with configurable Sharpe bounds.
+        # Formula reference: docs/neuro_optimization_guide.md ("Metric Scales and Objective Influence").
         sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
         perf_normalized = float(
             self._xp.clip(
@@ -473,7 +473,8 @@ class NeuroOptimizer:
         # Balance objective (already in [0, 1])
         balance_obj = balance.overall_balance_score
 
-        # Stability objective (variance over recent history)
+        # Stability objective (variance over recent history).
+        # Formula reference: docs/neuro_optimization_guide.md ("Stability Objective").
         if len(self._performance_history) >= self.config.history_window > 1:
             recent_perf = self._performance_history[-self.config.history_window:]
             recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
@@ -525,6 +526,8 @@ class NeuroOptimizer:
         gradients = {}
         epsilon = self._dtype.type(1e-6)
 
+        # Proportional gradient heuristic.
+        # Formula reference: docs/neuro_optimization_guide.md ("Proportional Gradient Heuristic").
         def relative_deviation(value: float, setpoint: float) -> float:
             return float((value - setpoint) / (setpoint + epsilon))
 

@@ -409,6 +409,46 @@ class TestNeuroOptimizer:
         assert mid_objective == pytest.approx(0.5)
         assert high_objective == pytest.approx(1.0)
 
+    def test_objective_matches_formula_at_performance_bounds(self, sample_state):
+        """Objective should match weighted formula at min/max performance inputs."""
+        config = OptimizationConfig(
+            balance_weight=0.3,
+            performance_weight=0.5,
+            stability_weight=0.2,
+            performance_min=-2.0,
+            performance_max=2.0,
+        )
+        optimizer = NeuroOptimizer(config)
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.7,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.25,
+            homeostatic_deviation=0.1,
+        )
+
+        objective_min = optimizer._calculate_objective(
+            config.performance_min, balance, sample_state
+        )
+        objective_max = optimizer._calculate_objective(
+            config.performance_max, balance, sample_state
+        )
+
+        expected_stability = 0.5
+        expected_min = (
+            config.performance_weight * 0.0
+            + config.balance_weight * balance.overall_balance_score
+            + config.stability_weight * expected_stability
+        )
+        expected_max = (
+            config.performance_weight * 1.0
+            + config.balance_weight * balance.overall_balance_score
+            + config.stability_weight * expected_stability
+        )
+
+        assert objective_min == pytest.approx(expected_min)
+        assert objective_max == pytest.approx(expected_max)
+
     def test_calculate_objective_respects_performance_range(self, sample_state):
         """Ensure performance range changes normalization sensitivity."""
         narrow_config = OptimizationConfig(
