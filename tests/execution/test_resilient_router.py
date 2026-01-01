@@ -144,3 +144,21 @@ def test_throttled_route_raises_transient_error() -> None:
     router.place_order("slow", _order())
     with pytest.raises(TransientOrderError):
         router.place_order("slow", _order())
+
+
+def test_latency_spike_increases_throttle_factor() -> None:
+    throttler = AdaptiveThrottler(
+        target_p95_ms=100.0,
+        smoothing=1.0,
+        min_multiplier=0.5,
+        max_multiplier=3.0,
+        window_size=20,
+    )
+    for _ in range(10):
+        throttler.record_latency(80.0)
+    baseline = throttler.throttle_factor()
+
+    for _ in range(5):
+        throttler.record_latency(400.0)
+
+    assert throttler.throttle_factor() > baseline

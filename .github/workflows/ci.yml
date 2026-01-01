@@ -124,6 +124,12 @@ jobs:
           python -m coverage combine
           python -m coverage xml -i -o coverage.xml
 
+      - name: Enforce coverage regression guard
+        run: |
+          python -m tools.coverage.drop_guard \
+            --baseline configs/quality/coverage_baseline.json \
+            --coverage coverage.xml
+
       - name: Enforce global coverage threshold (90%)
         run: python -m coverage report --fail-under=90
 
