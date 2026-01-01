@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
+import math
 from dataclasses import dataclass, field
 from typing import Dict, Iterable
 
 from .params import SensoryConfig
 from .state import clamp
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -29,10 +33,31 @@ class SensoryFilter:
 
     def _ensure_prev(self, values: Dict[str, float]) -> None:
         for key in self.cfg.keys:
-            self._prev.setdefault(key, float(values.get(key, 0.0)))
+            self._prev.setdefault(key, values.get(key, 0.0))
+
+    def _sanitize_value(self, key: str, raw_value: object) -> float:
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            log.warning(
+                "SensoryFilter received non-numeric value for %s: %r; defaulting to 0.0",
+                key,
+                raw_value,
+            )
+            return 0.0
+        if not math.isfinite(value):
+            log.warning(
+                "SensoryFilter received non-finite value for %s: %r; defaulting to 0.0",
+                key,
+                value,
+            )
+            return 0.0
+        return value
 
     def transform(self, obs: Dict[str, float]) -> SensorySnapshot:
-        values = {k: float(obs.get(k, 0.0)) for k in self.cfg.keys}
+        values = {
+            k: self._sanitize_value(k, obs.get(k, 0.0)) for k in self.cfg.keys
+        }
         self._ensure_prev(values)
 
         filtered: Dict[str, float] = {}
