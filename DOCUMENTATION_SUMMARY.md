@@ -40,9 +40,9 @@ links:
 
 TradePulse maintains **enterprise-grade documentation** across multiple categories:
 
-- **📚 Total Documentation Files:** 150+ Markdown documents
-- **📊 Coverage Level:** 85% of features documented
-- **✅ Quality Score:** 92/100 (Target: 95)
+- **📚 Total Documentation Files:** 154+ Markdown documents
+- **📊 Coverage Level:** 87% of features documented
+- **✅ Quality Score:** 93/100 (Target: 95)
 - **🔄 Review Compliance:** 78% within cadence (Target: 90%)
 - **🔗 Link Health:** 98.5% valid links (Target: 99%)
 
@@ -96,7 +96,11 @@ TradePulse/
 │   │   └── template.md              ✅ ADR template
 │   │
 │   ├── contracts/                    📁 Interface contracts
-│   │   └── interface-contracts.md   ✅ Formal contracts
+│   │   ├── data_contracts.md        ✅ Data-plane contracts
+│   │   ├── execution_contracts.md   ✅ Execution-plane contracts
+│   │   ├── interface-contracts.md   ✅ Formal contracts
+│   │   ├── observability_contracts.md ✅ Observability contracts
+│   │   └── runtime_contracts.md     ✅ Runtime contracts
 │   │
 │   ├── formal/                       📁 Formal verification
 │   │   └── README.md                ✅ Verification index
@@ -125,7 +129,7 @@ TradePulse/
 |----------|-------|----------|---------|--------|
 | **Requirements** | 13 | 100% | ✅ Excellent | Complete |
 | **Architecture (ADRs)** | 16/16 | 100% | ✅ Excellent | Complete |
-| **Contracts** | 10 | 67% | ✅ Good | In Progress |
+| **Contracts** | 14 | 85% | ✅ Good | Active |
 | **User Guides** | 25 | 85% | ✅ Good | Active |
 | **API Documentation** | 19 | 90% | ✅ Good | Active |
 | **Security** | 12 | 100% | ✅ Excellent | Complete |
@@ -544,6 +548,17 @@ All documents properly indexed in MkDocs navigation.
 ---
 
 ## Change Log
+
+### Version 1.0.3 (2026-01-01)
+**Status:** Active Maintenance
+
+**Added:**
+- Formal data, execution, runtime, and observability contract documents (`docs/contracts/*.md`)
+- Cross-links to `schemas/` and `interfaces/` across contract specifications
+
+**Context:**
+Expands the contract catalog with explicit SLA, error model, and versioning guarantees
+to improve coverage and traceability across platform interfaces.
 
 ### Version 1.0.2 (2026-01-01)
 **Status:** Active Maintenance
