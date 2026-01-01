@@ -56,6 +56,11 @@ import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+try:  # Allow loading as a standalone module in tests
+    from tradepulse.core.neuro.serotonin.receptors import ParamDeltas, ReceptorBank, ReceptorContext
+except ImportError:  # pragma: no cover - fallback for relative import
+    from .receptors import ParamDeltas, ReceptorBank, ReceptorContext
+
 __CANONICAL__ = True
 DEFAULT_ACTIVE_PROFILE: Literal["v24", "legacy"] = "v24"
 
@@ -68,6 +73,15 @@ class _ConfigView(dict):
             return self[item]
         except KeyError as exc:  # pragma: no cover - defensive
             raise AttributeError(item) from exc
+
+
+class ReceptorConfig(BaseModel):
+    """Optional receptor modulation settings."""
+
+    enabled: bool = False
+    enabled_list: list[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class SerotoninStepResult:
@@ -218,6 +232,10 @@ class SerotoninConfig(BaseModel):
         ge=0.0,
         le=1.0,
         description="Upper bound for the serotonin-governed temperature floor",
+    )
+    receptors: ReceptorConfig = Field(
+        default_factory=ReceptorConfig,
+        description="Optional receptor-based parameter modulators (default disabled)",
     )
     tau_5ht_ms: Optional[float] = Field(
         None, gt=0.0, description="Tonic decay time constant in milliseconds"
@@ -647,6 +665,13 @@ class SerotoninController:
         self._last_event: OrderedDict[str, object] | None = None
         self._last_decision: ControllerOutput | None = None
         self._time_provider = lambda: _dt.datetime.now(_dt.timezone.utc)
+        self._receptors_cfg = dict(self.config.get("receptors", {"enabled": False, "enabled_list": []}))
+        self._receptor_bank: Optional[ReceptorBank] = None
+        if self._receptors_cfg.get("enabled"):
+            self._receptor_bank = ReceptorBank(self._receptors_cfg.get("enabled_list"))
+        self._receptor_prev_stress: Optional[float] = None
+        self._last_receptor_trace: Optional[Mapping[str, Mapping[str, float | bool]]] = None
+        self._last_receptor_budget_cap: Optional[float] = None
 
     @staticmethod
     def noop_logger(name: str, value: float) -> None:
@@ -713,6 +738,80 @@ class SerotoninController:
             "SerotoninController tick_hours=%.3f implies logistic saturation bounds (0,1)",
             self._tick_hours,
         )
+
+    def _build_receptor_context(
+        self,
+        stress: float,
+        drawdown: float,
+        novelty: float,
+        vol: float,
+        free_energy: float,
+        dt: Optional[float],
+    ) -> ReceptorContext:
+        prev = self._receptor_prev_stress
+        shock_norm = 0.0
+        if prev is not None:
+            shock_norm = abs(stress - prev) / max(0.1, prev + 0.5)
+        self._receptor_prev_stress = stress
+        volatility_norm = float(min(1.0, math.tanh(max(0.0, vol))))
+        drawdown_norm = float(min(1.0, abs(drawdown)))
+        novelty_norm = float(min(1.0, math.tanh(max(0.0, novelty))))
+        impulse_dt = (
+            float(dt) if dt is not None else (time() - self._last_step_time) if self._last_step_time else 1.0
+        )
+        impulse_pressure = 1.0 / max(impulse_dt, 1e-3)
+        impulse_pressure_norm = float(min(1.0, math.tanh(impulse_pressure)))
+        regime_entropy_norm = float(min(1.0, math.tanh(abs(novelty) + abs(vol - drawdown))))
+        return ReceptorContext(
+            volatility_norm=volatility_norm,
+            drawdown_norm=drawdown_norm,
+            novelty_norm=novelty_norm,
+            shock_norm=float(min(1.0, shock_norm)),
+            impulse_pressure_norm=impulse_pressure_norm,
+            regime_entropy_norm=regime_entropy_norm,
+            circadian_phase=None,
+            temperature_floor=float(self.temperature_floor),
+        )
+
+    def _apply_param_deltas(
+        self, base: Mapping[str, float], deltas: ParamDeltas
+    ) -> Mapping[str, float | bool]:
+        floor_min = float(self.config["temperature_floor_min"])
+        floor_max = float(self.config["temperature_floor_max"])
+        temp_floor = float(
+            max(floor_min, min(floor_max, base["temperature_floor"] + deltas.temperature_floor_delta))
+        )
+        hysteresis_margin = float(
+            max(0.01, min(0.2, base["hysteresis_margin"] + deltas.hold_hysteresis_delta))
+        )
+        veto_bias = max(-0.2, min(0.5, deltas.veto_bias))
+        cooldown_threshold = float(
+            max(0.05, base["cooldown_threshold"] * (1.0 - 0.3 * max(veto_bias, 0.0)))
+        )
+        gate_veto = float(max(0.0, min(1.2, base["gate_veto"] * (1.0 - 0.2 * max(veto_bias, 0.0)))))
+        phasic_veto = float(
+            max(0.0, min(1.2, base["phasic_veto"] * (1.0 - 0.2 * max(veto_bias, 0.0))))
+        )
+        cooldown_s = float(max(0.0, base["cooldown_s"] + deltas.cooldown_s))
+        risk_cap = float(base["risk_budget_cap"])
+        if deltas.pos_mult_cap_delta < 0:
+            risk_cap = float(max(self._min_risk_budget, risk_cap + deltas.pos_mult_cap_delta))
+        serotonin_level = float(
+            max(0.0, min(1.0, base["serotonin_level"] * (1.0 + deltas.tonic_weight_delta)))
+        )
+        phasic_level = float(max(0.0, base["phasic_level"] * (1.0 + deltas.phasic_weight_delta)))
+        return {
+            "temperature_floor": temp_floor,
+            "hysteresis_margin": hysteresis_margin,
+            "cooldown_threshold": cooldown_threshold,
+            "gate_veto": gate_veto,
+            "phasic_veto": phasic_veto,
+            "cooldown_s": cooldown_s,
+            "risk_budget_cap": risk_cap,
+            "serotonin_level": serotonin_level,
+            "phasic_level": phasic_level,
+            "force_veto": bool(deltas.force_veto),
+        }
 
     def set_tacl_guard(
         self, guard_fn: Callable[[str, Mapping[str, float]], bool]
@@ -790,9 +889,56 @@ class SerotoninController:
             aversive = self.estimate_aversive_state(vol, fe, losses, rho)
             level = self.compute_serotonin_signal(aversive)
 
+            base_params = {
+                "temperature_floor": float(self.temperature_floor),
+                "hysteresis_margin": float(self.config.get("hysteresis_margin", 0.05)),
+                "cooldown_threshold": float(self.config["cooldown_threshold"]),
+                "gate_veto": float(self.config["gate_veto"]),
+                "phasic_veto": float(self.config["phasic_veto"]),
+                "cooldown_s": 0.0,
+                "risk_budget_cap": float(self._max_risk_budget),
+                "serotonin_level": float(level),
+                "phasic_level": float(self.phasic_level),
+            }
+            receptors_enabled = bool(self._receptor_bank and self._receptors_cfg.get("enabled"))
+            activations = {}
+            params = base_params
+            if receptors_enabled and self._receptor_bank:
+                ctx = self._build_receptor_context(stress, drawdown, novelty, vol, fe, dt)
+                activations, deltas = self._receptor_bank.run(ctx)
+                params = self._apply_param_deltas(base_params, deltas)
+                self._last_receptor_trace = {"activations": activations, "deltas": deltas.to_dict()}
+            else:
+                self._last_receptor_trace = None
+            serotonin_level_eff = float(params.get("serotonin_level", level))
+            phasic_level_eff = float(params.get("phasic_level", self.phasic_level))
+            hysteresis_margin = float(params.get("hysteresis_margin", base_params["hysteresis_margin"]))
+            cooldown_threshold = float(params.get("cooldown_threshold", self.config["cooldown_threshold"]))
+            gate_veto_th = float(params.get("gate_veto", self.config["gate_veto"]))
+            phasic_veto_th = float(params.get("phasic_veto", self.config["phasic_veto"]))
+            cooldown_bias = float(params.get("cooldown_s", 0.0))
+            temperature_floor_out = float(params.get("temperature_floor", self.temperature_floor))
+            force_veto = bool(params.get("force_veto", False))
+            budget_cap_override = float(params.get("risk_budget_cap", self._max_risk_budget))
+            overrides = None
+            if receptors_enabled:
+                overrides = {
+                    "hysteresis_margin": hysteresis_margin,
+                    "cooldown_threshold": cooldown_threshold,
+                    "gate_veto": gate_veto_th,
+                    "phasic_veto": phasic_veto_th,
+                    "phasic_level": phasic_level_eff,
+                    "gate_level": self.gate_level,
+                }
+                self._last_receptor_budget_cap = budget_cap_override
+            else:
+                self._last_receptor_budget_cap = None
+
             # Check cooldown and track hold state
-            veto = self.check_cooldown(level)
-            hold = veto
+            veto = self.check_cooldown(serotonin_level_eff, overrides=overrides)
+            hold = veto or force_veto
+            if force_veto:
+                veto = True
             if stress >= 1.0 or abs(drawdown) >= 0.5:
                 veto = True
                 hold = True
@@ -804,14 +950,16 @@ class SerotoninController:
                 self._cooldown_start_time = current_time
                 self._hold_state = True
                 self._hold = True
-                self._cooldown = 0.0
+                self._cooldown = max(0.0, cooldown_bias)
             elif not hold and self._hold_state:
                 # Exiting cooldown
                 self._hold_state = False
                 self._cooldown_start_time = None
-                self._cooldown = float(self.config.get("desens_threshold_ticks", 0))
+                self._cooldown = max(float(self.config.get("desens_threshold_ticks", 0)), cooldown_bias)
             else:
                 self._hold = bool(self._hold_state)
+                if hold:
+                    self._cooldown = max(self._cooldown, cooldown_bias)
 
             # Calculate cooldown duration
             cooldown_s = 0.0
@@ -823,6 +971,7 @@ class SerotoninController:
                 step_dt = float(dt) if dt is not None else 1.0
                 self._cooldown = max(0.0, self._cooldown - step_dt)
             self._hold = bool(self._hold_state)
+            cooldown_s = max(cooldown_s, cooldown_bias)
 
             # Track performance metrics
             self._step_count += 1
@@ -835,7 +984,8 @@ class SerotoninController:
             self._last_step_time = current_time
 
             # Emit TACL telemetry
-            self._log("tacl.5ht.level", level)
+            self.temperature_floor = temperature_floor_out
+            self._log("tacl.5ht.level", serotonin_level_eff)
             self._log("tacl.5ht.hold", float(hold))
             self._log("tacl.5ht.cooldown", cooldown_s)
 
@@ -844,7 +994,7 @@ class SerotoninController:
                 hold=hold,
                 veto=veto,
                 cooldown=cooldown_s,
-                level=level,
+                level=serotonin_level_eff,
                 temperature_floor=self.temperature_floor,
                 desensitization=desensitization,
             )
@@ -1096,7 +1246,9 @@ class SerotoninController:
 
             return float(np.clip(biased, 0.0, 1.0))
 
-    def check_cooldown(self, serotonin_signal: Optional[float] = None) -> bool:
+    def check_cooldown(
+        self, serotonin_signal: Optional[float] = None, overrides: Optional[Mapping[str, float]] = None
+    ) -> bool:
         """Return ``True`` when the serotonin veto threshold is exceeded.
 
         Implements hysteresis-based veto logic with multi-level thresholds:
@@ -1114,34 +1266,37 @@ class SerotoninController:
                 serotonin_signal = self.serotonin_level
 
             cfg = self.config
+            overrides = overrides or {}
 
             # Configurable hysteresis margin (v2.5.0)
             # Defaults to 5% of threshold for smooth transitions
-            hysteresis_margin = cfg.get("hysteresis_margin", 0.05)
+            hysteresis_margin = float(overrides.get("hysteresis_margin", cfg.get("hysteresis_margin", 0.05)))
 
             # Calculate effective thresholds based on current hold state
             if self._hold_state:
                 # When in HOLD, require signal to drop below threshold - margin to exit
                 # This prevents premature exit from rest state
-                serotonin_threshold = cfg["cooldown_threshold"] * (
+                serotonin_threshold = overrides.get("cooldown_threshold", cfg["cooldown_threshold"]) * (
                     1.0 - hysteresis_margin
                 )
-                phasic_threshold = cfg["phasic_veto"] * (1.0 - hysteresis_margin)
-                gate_threshold = cfg["gate_veto"] * (1.0 - hysteresis_margin)
+                phasic_threshold = overrides.get("phasic_veto", cfg["phasic_veto"]) * (1.0 - hysteresis_margin)
+                gate_threshold = overrides.get("gate_veto", cfg["gate_veto"]) * (1.0 - hysteresis_margin)
             else:
                 # When active, require signal to exceed threshold + margin to enter HOLD
                 # This prevents premature entry to rest state
-                serotonin_threshold = cfg["cooldown_threshold"] * (
+                serotonin_threshold = overrides.get("cooldown_threshold", cfg["cooldown_threshold"]) * (
                     1.0 + hysteresis_margin
                 )
-                phasic_threshold = cfg["phasic_veto"] * (1.0 + hysteresis_margin)
-                gate_threshold = cfg["gate_veto"] * (1.0 + hysteresis_margin)
+                phasic_threshold = overrides.get("phasic_veto", cfg["phasic_veto"]) * (1.0 + hysteresis_margin)
+                gate_threshold = overrides.get("gate_veto", cfg["gate_veto"]) * (1.0 + hysteresis_margin)
 
             # Multi-level veto with weighted contribution
             # Serotonin level is primary, phasic and gate provide additional signals
             serotonin_veto = serotonin_signal > serotonin_threshold
-            phasic_veto = self.phasic_level > phasic_threshold
-            gate_veto = self.gate_level > gate_threshold
+            phasic_level = overrides.get("phasic_level", self.phasic_level)
+            gate_level = overrides.get("gate_level", self.gate_level)
+            phasic_veto = phasic_level > phasic_threshold
+            gate_veto = gate_level > gate_threshold
 
             # Combined veto decision with logical OR (any threshold triggers veto)
             veto = serotonin_veto or phasic_veto or gate_veto
@@ -1227,14 +1382,17 @@ class SerotoninController:
             self._log("tacl.5ht.cooldown", cooldown_s)
 
     # ------------------------------- Runtime safety + deterministic update API
-    def _derive_risk_budget(self, serotonin_level: float, stress: float) -> tuple[float, bool]:
+    def _derive_risk_budget(
+        self, serotonin_level: float, stress: float, max_budget: Optional[float] = None
+    ) -> tuple[float, bool]:
         # Simple monotone transform: higher serotonin → lower budget
-        raw_budget = self._max_risk_budget * (1.0 - serotonin_level)
+        budget_cap = float(max_budget) if max_budget is not None else self._max_risk_budget
+        raw_budget = budget_cap * (1.0 - serotonin_level)
         # Mild additional suppression when stress is high to maintain monotonicity
         if stress > self.config["cooldown_threshold"]:
             raw_budget *= STRESS_BUDGET_MULTIPLIER
         clamped_budget = float(
-            max(self._min_risk_budget, min(self._max_risk_budget, raw_budget))
+            max(self._min_risk_budget, min(budget_cap, raw_budget))
         )
         return clamped_budget, bool(abs(clamped_budget - raw_budget) > BUDGET_TOLERANCE)
 
@@ -1294,6 +1452,12 @@ class SerotoninController:
                 ("serotonin_level", float(serotonin_level)),
             ]
         )
+        receptor_snapshot = None
+        if self._last_receptor_trace is not None:
+            receptor_snapshot = {
+                "activations": {k: float(v) for k, v in self._last_receptor_trace.get("activations", {}).items()},
+                "deltas": self._last_receptor_trace.get("deltas", {}),
+            }
         event = OrderedDict(
             [
                 ("timestamp_utc", now.isoformat() + "Z"),
@@ -1306,6 +1470,8 @@ class SerotoninController:
                 ("update_latency_us", int(update_latency_us)),
             ]
         )
+        if receptor_snapshot is not None:
+            event["receptors"] = receptor_snapshot
         self._last_event = event
         self._trace_events.append(json.dumps(event, separators=(",", ":")))
 
@@ -1361,7 +1527,10 @@ class SerotoninController:
         veto = bool(veto or hold)
 
         update_latency_us = int((perf_counter_ns() - start_ns) / 1000)
-        risk_budget, clamped_budget = self._derive_risk_budget(serotonin_level, stress)
+        cap_override = self._last_receptor_budget_cap
+        risk_budget, clamped_budget = self._derive_risk_budget(
+            serotonin_level, stress, max_budget=cap_override
+        )
         inv_ok, inv_reasons, invariant_flags = self._safety_monitor.check_invariants(
             serotonin_level, risk_budget, bool(hold), stress, clamped_budget=clamped_budget
         )
