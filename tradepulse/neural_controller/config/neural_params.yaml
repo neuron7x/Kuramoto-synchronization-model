@@ -54,6 +54,12 @@ predictive:
     - reg
     - vol
 
+temporal_gating:
+  cadence: step
+  sensory_frequency: 1.0
+  predictive_frequency: 1.0
+  ema_alpha: 0.5
+
 tacl_bridge:
   sync_threshold: 0.3
   generations: 12
