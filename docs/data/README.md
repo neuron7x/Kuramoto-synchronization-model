@@ -1,3 +1,9 @@
+---
+owner: data@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # TradePulse Data Artifact Contracts
 
 ## Overview

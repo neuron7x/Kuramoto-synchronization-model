@@ -241,6 +241,15 @@ Documentation-specific automation augments the repository quality gates document
 | Quarterly | Deep-dive review per domain, ensuring canonical references align with shipped behaviour and ADRs. | Updated `DOCUMENTATION_SUMMARY.md` entry and issue list for remediation. |
 | Post-Release | Audit release notes, upgrade guides, and quickstarts for the released version. | Completed checklist attached to release tag. |
 
+## Quarterly Review Plan (2026)
+
+| Quarter | Review Date | Preparation Window | Focus Areas |
+| ------- | ----------- | ------------------ | ----------- |
+| Q1 2026 | 2026-03-13 | 2026-03-02 → 2026-03-11 | API documentation freshness, architecture references, and incident playbooks. |
+| Q2 2026 | 2026-06-12 | 2026-06-01 → 2026-06-10 | Data contracts, operational runbooks, and onboarding guides. |
+| Q3 2026 | 2026-09-11 | 2026-08-31 → 2026-09-09 | Security/compliance documentation, release readiness artifacts, and observability guides. |
+| Q4 2026 | 2026-12-11 | 2026-11-30 → 2026-12-09 | Templates refresh, doc automation accuracy, and cross-link integrity. |
+
 Key quality indicators tracked in the metrics snapshot:
 
 - Metadata coverage (% of docs with valid YAML front matter)

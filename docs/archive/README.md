@@ -1,3 +1,9 @@
+---
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Archive Directory
 
 This directory contains legacy documents, drafts, and historical artifacts that are no longer actively used by the current system but are preserved for historical context and reference.

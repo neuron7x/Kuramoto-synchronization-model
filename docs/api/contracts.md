@@ -1,3 +1,9 @@
+---
+owner: platform@tradepulse.example
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # TradePulse API & Contract Catalog
 
 This catalog cross-checks the API docs in `docs/api/` against interface modules in

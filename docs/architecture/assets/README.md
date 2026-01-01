@@ -1,3 +1,9 @@
+---
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Архітектурні діаграми / Architecture Diagrams
 
 Цей каталог містить вихідні файли Mermaid (`.mmd`) та згенеровані SVG діаграми для візуалізації архітектури TradePulse.
