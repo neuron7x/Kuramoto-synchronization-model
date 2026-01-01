@@ -32,6 +32,13 @@ last_reviewed: 2026-01-01
 For contract-by-contract inputs/outputs, DTOs, and examples (including interface-layer contracts), see
 [`docs/api/contracts.md`](contracts.md).
 
+## Operational guides
+
+- [Authentication](authentication.md)
+- [Error model](error_model.md)
+- [Rate limits](rate_limits.md)
+- [Pagination](pagination.md)
+
 ## Smoke tests
 
 | Name | Description | Expected status | Route |

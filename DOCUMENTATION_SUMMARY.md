@@ -1,7 +1,7 @@
 ---
 owner: docs@tradepulse
 review_cadence: quarterly
-last_reviewed: 2025-12-28
+last_reviewed: 2026-01-01
 status: active
 version: 1.0.0
 links:
@@ -15,7 +15,7 @@ links:
 
 **Purpose:** This document provides a comprehensive overview of the TradePulse documentation ecosystem, tracking coverage, quality metrics, and enhancement initiatives. It serves as the central registry for documentation health and improvement efforts.
 
-**Last Updated:** 2025-12-28  
+**Last Updated:** 2026-01-01  
 **Status:** 🟢 Active  
 **Next Review:** 2026-03-28
 
@@ -127,7 +127,7 @@ TradePulse/
 | **Architecture (ADRs)** | 9/13 | 69% | ✅ Excellent | In Progress |
 | **Contracts** | 10 | 67% | ✅ Good | In Progress |
 | **User Guides** | 25 | 85% | ✅ Good | Active |
-| **API Documentation** | 15 | 80% | ⚠️ Fair | Needs Review |
+| **API Documentation** | 19 | 90% | ✅ Good | Active |
 | **Security** | 12 | 100% | ✅ Excellent | Complete |
 | **Operational** | 20 | 90% | ✅ Good | Active |
 | **Templates** | 12 | 100% | ✅ Excellent | Complete |
@@ -150,14 +150,6 @@ TradePulse/
 The following categories require remediation based on coverage below 90%.
 
 #### Critical (P0) — Must Raise Immediately
-
-**docs/api/** — Coverage 80% (Owner: Platform Engineering + Developer Experience)
-- **Missing Artifacts:**
-  - `docs/api/authentication.md` — API auth flows, signatures, idempotency headers
-  - `docs/api/error_model.md` — error schema, retry semantics, error catalog
-  - `docs/api/rate_limits.md` — rate limits, throttling, quota reset behavior
-  - `docs/api/pagination.md` — cursor/offset patterns and examples
-- **Priority:** P0 (docs-critical)
 
 **docs/adr/** — Coverage 69% (Owner: Principal Architect)
 - **Missing Artifacts:**
@@ -544,6 +536,17 @@ All documents properly indexed in MkDocs navigation.
 
 ## Change Log
 
+### Version 1.0.2 (2026-01-01)
+**Status:** Active Maintenance
+
+**Added:**
+- API operations guides for authentication, error model, rate limits, and pagination (`docs/api/*.md`)
+- API overview cross-links to new operational guides
+
+**Context:**
+Closes the remaining P0 API documentation gaps and improves consistency with
+the documentation standardisation playbook.
+
 ### Version 1.0.1 (2025-12-28)
 **Status:** Active Maintenance
 
@@ -614,7 +617,7 @@ The creation of this document addresses a critical gap in the documentation gove
 
 ---
 
-**Last Updated:** 2025-12-28  
+**Last Updated:** 2026-01-01  
 **Next Review:** 2026-03-28  
 **Status:** 🟢 Active
 
