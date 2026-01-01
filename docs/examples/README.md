@@ -35,6 +35,17 @@ The manifest lists deterministic seeds and the pinned dependencies (from
 
 ---
 
+## API & Integration Examples
+
+| Example | Description |
+| --- | --- |
+| [`quickstart_signal_fetch.md`](quickstart_signal_fetch.md) | Fetch market signals with signed requests. |
+| [`prediction_submission.md`](prediction_submission.md) | Submit async predictions with idempotency. |
+| [`webhook_consumer.md`](webhook_consumer.md) | Consume `signal.published` and `prediction.completed` webhooks. |
+| [`sdk_integration.md`](sdk_integration.md) | SDK wrapper patterns for TradePulse API. |
+
+---
+
 ## Quick Examples
 
 ### 1. Basic Analysis
