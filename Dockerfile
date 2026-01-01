@@ -4,7 +4,7 @@
 # Stage 1: Lightweight scan stage (for security scanning only)
 # This stage excludes heavy GPU dependencies to reduce image size
 # =============================================================================
-FROM python:3.12-slim AS scan
+FROM python:3.13-slim AS scan
 
 WORKDIR /app
 
@@ -13,6 +13,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Update system packages to fix known vulnerabilities
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 # Copy requirements files (scan lock excludes torch and NVIDIA CUDA libraries)
 COPY requirements-scan.lock ./
