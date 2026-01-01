@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Tuple
 
 import numpy as np
+
+from ..core.params import OBSERVATION_KEYS
+from ..core.sensory_schema import SCHEMA_VERSION
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +38,8 @@ class MarketDataAdapter:
         hist_max_vol: float = 1.0,
         risk_free: float = 0.02,
         eps: float = 1e-6,
+        schema_version: int = SCHEMA_VERSION,
+        expected_fields: Iterable[str] = OBSERVATION_KEYS,
     ) -> None:
         self.max_dd_limit = float(max_drawdown_limit)
         self.spread_thr = float(spread_threshold)
@@ -42,10 +47,30 @@ class MarketDataAdapter:
         self.hist_max_vol = float(hist_max_vol)
         self.risk_free = float(risk_free)
         self.eps = float(eps)
+        self.schema_version = int(schema_version)
+        self.expected_fields = self._normalize_expected_fields(expected_fields)
+
+    @staticmethod
+    def _normalize_expected_fields(fields: Iterable[str]) -> Tuple[str, ...]:
+        normalized = tuple(fields)
+        if not normalized:
+            raise ValueError("MarketDataAdapter expected_fields must be non-empty.")
+        if any(not key for key in normalized):
+            raise ValueError("MarketDataAdapter expected_fields must be non-empty strings.")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("MarketDataAdapter expected_fields must be unique.")
+        unexpected = set(normalized) - set(OBSERVATION_KEYS)
+        if unexpected:
+            allowed = ", ".join(OBSERVATION_KEYS)
+            raise ValueError(
+                "MarketDataAdapter expected_fields contains unexpected values "
+                f"{sorted(unexpected)}. Allowed keys: {allowed}."
+            )
+        return normalized
 
     def transform(
         self, candles: Dict[str, Any], portfolio: Dict[str, Any]
-    ) -> Dict[str, float | bool]:
+    ) -> Dict[str, Any]:
         """Return a normalized observation dictionary safe for controller ingestion."""
 
         dd_raw = _safe_float(portfolio.get("current_drawdown"))
@@ -104,4 +129,6 @@ class MarketDataAdapter:
                 "m_proxy": 0.5,
             }
 
+        payload["schema_version"] = self.schema_version
+        payload["expected_fields"] = self.expected_fields
         return payload
