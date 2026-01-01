@@ -22,11 +22,17 @@ BalanceMetrics : Neuromodulator balance health metrics
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 
 from tradepulse.core.neuro._validation import BoundsSpec
+
+PERFORMANCE_PRESETS: Dict[str, Tuple[float, float]] = {
+    "sharpe": (-2.0, 3.0),
+    "sortino": (-1.0, 4.0),
+    "calmar": (-1.0, 3.0),
+}
 
 @dataclass
 class OptimizationConfig:
@@ -40,10 +46,12 @@ class OptimizationConfig:
         Weight for performance objective (0-1)
     stability_weight : float
         Weight for stability objective (0-1)
-    performance_min : float
-        Minimum performance value for normalization
-    performance_max : float
-        Maximum performance value for normalization
+    performance_metric : Literal["sharpe", "sortino", "calmar"]
+        Metric type used for performance normalization presets
+    performance_min : Optional[float]
+        Minimum performance value for normalization (uses preset when None)
+    performance_max : Optional[float]
+        Maximum performance value for normalization (uses preset when None)
     learning_rate : float
         Base learning rate for parameter updates
     learning_rate_floor : float
@@ -89,8 +97,9 @@ class OptimizationConfig:
     balance_weight: float = 0.35
     performance_weight: float = 0.45
     stability_weight: float = 0.20
-    performance_min: float = -2.0
-    performance_max: float = 3.0
+    performance_metric: Literal["sharpe", "sortino", "calmar"] = "sharpe"
+    performance_min: Optional[float] = None
+    performance_max: Optional[float] = None
     learning_rate: float = 0.01
     learning_rate_floor: float = 0.001
     adaptive_decay: float = 0.6
@@ -118,6 +127,21 @@ class OptimizationConfig:
             self.balance_weight + self.performance_weight + self.stability_weight, 1.0
         ):
             raise ValueError("Objective weights must sum to 1.0")
+
+        if self.performance_metric not in PERFORMANCE_PRESETS:
+            raise ValueError(
+                "performance_metric must be one of "
+                f"{', '.join(sorted(PERFORMANCE_PRESETS))}"
+            )
+
+        if self.performance_min is None and self.performance_max is None:
+            preset_min, preset_max = PERFORMANCE_PRESETS[self.performance_metric]
+            self.performance_min = preset_min
+            self.performance_max = preset_max
+        elif self.performance_min is None or self.performance_max is None:
+            raise ValueError(
+                "performance_min and performance_max must be set together"
+            )
 
         if self.performance_min >= self.performance_max:
             raise ValueError("performance_min must be less than performance_max")
@@ -475,8 +499,9 @@ class NeuroOptimizer:
 
         Metric scales and weighting
         ----------------------------
-        - Performance is normalized from a Sharpe ratio range of [-2, 3] into [0, 1]
-          with clipping. Values below -2 map to 0, above 3 map to 1.
+        - Performance is normalized from the configured metric range into [0, 1]
+          with clipping. Presets are selected by performance_metric unless bounds
+          are explicitly provided.
         - Balance is the homeostatic balance score already in [0, 1] (higher is better).
         - Stability is derived from the inverse coefficient of variation over recent
           objective history, clipped to [0, 1]. Before enough history exists, a
@@ -498,16 +523,9 @@ class NeuroOptimizer:
         float
             Composite objective value (higher is better)
         """
-        # Normalize performance to [0, 1] with configurable Sharpe bounds.
+        # Normalize performance to [0, 1] using metric presets or overrides.
         # Formula reference: docs/neuro_optimization_guide.md ("Metric Scales and Objective Influence").
-        sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
-        perf_normalized = float(
-            self._xp.clip(
-                (performance - sharpe_min) / (sharpe_max - sharpe_min),
-                0,
-                1,
-            )
-        )
+        perf_normalized = self._normalize_performance(performance)
 
         # Balance objective (already in [0, 1])
         balance_obj = balance.overall_balance_score
@@ -535,6 +553,20 @@ class NeuroOptimizer:
         )
 
         return objective
+
+    def _normalize_performance(self, performance: float) -> float:
+        """Normalize the performance metric to [0, 1] with clipping."""
+        performance_min = self.config.performance_min
+        performance_max = self.config.performance_max
+        if performance_min is None or performance_max is None:
+            raise ValueError("Performance normalization bounds are not configured")
+        return float(
+            self._xp.clip(
+                (performance - performance_min) / (performance_max - performance_min),
+                0,
+                1,
+            )
+        )
 
     def _estimate_gradients(
         self,

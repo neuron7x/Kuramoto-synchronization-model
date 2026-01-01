@@ -134,6 +134,22 @@ class TestOptimizationConfig:
         with pytest.raises(ValueError, match="stability_epsilon"):
             OptimizationConfig(stability_epsilon=0.0)
 
+    def test_performance_metric_presets(self):
+        """Ensure performance presets are applied by metric."""
+        config = OptimizationConfig(performance_metric="sortino")
+
+        assert config.performance_min == pytest.approx(-1.0)
+        assert config.performance_max == pytest.approx(4.0)
+
+    def test_performance_metric_requires_bounds_pair(self):
+        """Ensure performance bounds are set together when overriding."""
+        with pytest.raises(ValueError, match="performance_min and performance_max"):
+            OptimizationConfig(performance_min=-1.0)
+
+    def test_performance_metric_invalid(self):
+        """Ensure invalid performance metric names raise errors."""
+        with pytest.raises(ValueError, match="performance_metric"):
+            OptimizationConfig(performance_metric="omega")  # type: ignore[arg-type]
 
 class TestBalanceMetrics:
     """Tests for BalanceMetrics dataclass."""
@@ -413,6 +429,45 @@ class TestNeuroOptimizer:
         assert low_objective == pytest.approx(0.0)
         assert mid_objective == pytest.approx(0.5)
         assert high_objective == pytest.approx(1.0)
+
+    @pytest.mark.parametrize(
+        "metric,expected_min,expected_max",
+        [
+            ("sharpe", -2.0, 3.0),
+            ("sortino", -1.0, 4.0),
+            ("calmar", -1.0, 3.0),
+        ],
+    )
+    def test_performance_metric_normalization_presets(
+        self,
+        sample_state,
+        metric,
+        expected_min,
+        expected_max,
+    ):
+        """Ensure each metric preset normalizes to expected bounds."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=1.0,
+            stability_weight=0.0,
+            performance_metric=metric,
+        )
+        optimizer = NeuroOptimizer(config)
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        objective_min = optimizer._calculate_objective(
+            expected_min, balance, sample_state
+        )
+        objective_mid = optimizer._calculate_objective(
+            (expected_min + expected_max) / 2.0, balance, sample_state
+        )
+        objective_max = optimizer._calculate_objective(
+            expected_max, balance, sample_state
+        )
+
+        assert objective_min == pytest.approx(0.0)
+        assert objective_mid == pytest.approx(0.5)
+        assert objective_max == pytest.approx(1.0)
 
     def test_objective_matches_formula_at_performance_bounds(self, sample_state):
         """Objective should match weighted formula at min/max performance inputs."""

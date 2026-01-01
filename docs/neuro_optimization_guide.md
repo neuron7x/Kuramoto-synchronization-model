@@ -88,10 +88,33 @@ Subject to:
 
 The optimizer combines metrics that are normalized onto comparable scales before weighting:
 
-- **Performance scale**: Sharpe ratio is normalized from
+- **Performance scale**: The selected performance metric is normalized from
   **[performance_min, performance_max] → [0, 1]** with clipping.
   - Below `performance_min` maps to **0**, above `performance_max` maps to **1**.
-  - Defaults: `performance_min = -2`, `performance_max = 3`.
+  - Presets are selected by `performance_metric` unless explicit bounds are provided.
+
+**Metric definitions used for performance inputs**
+
+- **Sharpe ratio**:
+  \[
+  \text{Sharpe} = \frac{\mathbb{E}[R] - R_f}{\sigma(R)}
+  \]
+- **Sortino ratio**:
+  \[
+  \text{Sortino} = \frac{\mathbb{E}[R] - R_\text{target}}{\sigma(R_\text{downside})}
+  \]
+- **Calmar ratio**:
+  \[
+  \text{Calmar} = \frac{\text{CAGR}}{|\text{Max Drawdown}|}
+  \]
+
+**Normalization presets**
+
+| Metric (`performance_metric`) | `performance_min` | `performance_max` |
+| --- | --- | --- |
+| `sharpe` | -2.0 | 3.0 |
+| `sortino` | -1.0 | 4.0 |
+| `calmar` | -1.0 | 3.0 |
 
 Formally, the normalization is:
 
@@ -456,8 +479,9 @@ class OptimizationConfig:
     balance_weight: float = 0.35       # Weight for balance objective
     performance_weight: float = 0.45   # Weight for performance
     stability_weight: float = 0.20     # Weight for stability
-    performance_min: float = -2.0      # Min performance for normalization
-    performance_max: float = 3.0       # Max performance for normalization
+    performance_metric: Literal["sharpe", "sortino", "calmar"] = "sharpe"
+    performance_min: Optional[float] = None   # Min performance (preset if None)
+    performance_max: Optional[float] = None   # Max performance (preset if None)
     stability_epsilon: float = 1e-6    # Numerical stability constant
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
