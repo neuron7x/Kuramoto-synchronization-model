@@ -21,6 +21,7 @@ if "tradepulse" not in sys.modules:
 
 from ..config import load_default_config
 from ..core.emh_model import EMHSSM
+from ..core.contracts import SignalContracts
 from ..core.params import (
     EKFConfig,
     HomeoConfig,
@@ -213,6 +214,7 @@ def test_yaml_loader_defaults(tmp_path: Path) -> None:
     assert neural.sync_threshold == pytest.approx(0.3, rel=1e-6)
     assert neural.generations == 12
     assert neural.adapter_config == MarketAdapterConfig()
+    assert neural.strict_contracts is False
 
 
 def test_yaml_resource_loader() -> None:
@@ -250,6 +252,39 @@ def test_market_adapter_extremes() -> None:
     zero_obs = adapter.transform({}, {})
     assert zero_obs["dd"] == 0.0
     assert zero_obs["reward"] == 0.0
+
+
+def test_contracts_cover_component_outputs() -> None:
+    contracts = SignalContracts()
+    obs = dict(
+        dd=0.2,
+        liq=0.3,
+        reg=0.4,
+        vol=0.5,
+        reward=0.02,
+        var_breach=False,
+        m_proxy=0.6,
+        sensory_confidence=0.9,
+    )
+    assert not contracts.validate_obs(obs)
+
+    emh_state = EMHSSM(Params(), EMHState()).step(obs)
+    assert not contracts.validate_state(emh_state)
+
+    ekf_state = EMHEKF(Params(), EKFConfig()).step(obs)
+    assert not contracts.validate_state(ekf_state)
+
+    action, policy_out = BasalGangliaController().decide(
+        emh_state, emh_state["mode"], emh_state["RPE"]
+    )
+    scale = CVARGate().update(obs["reward"])
+    decision_payload = {
+        "action": action,
+        "alloc_main": policy_out["alloc_main"],
+        "alloc_alt": policy_out["alloc_alt"],
+        "alloc_scale": scale,
+    }
+    assert not contracts.validate_decision(decision_payload)
 
 
 def test_schema_version_mismatch_blocks_pipeline(controller: NeuralMarketController) -> None:

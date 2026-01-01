@@ -1,4 +1,5 @@
 schema_version: 1
+strict_contracts: false
 
 model:
   alpha: 0.1

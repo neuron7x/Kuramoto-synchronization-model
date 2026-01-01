@@ -13,6 +13,11 @@ import numpy as np
 import yaml
 
 from ..config import load_default_config
+from ..core.contracts import (
+    ContractViolation,
+    SignalContracts,
+    check_alloc_monotonicity,
+)
 from ..core.emh_model import EMHSSM
 from ..core.params import (
     EKFConfig,
@@ -178,6 +183,7 @@ class NeuralMarketController:
         adapter: MarketAdapterConfig | None = None,
         *,
         emit_predictive_state: bool = False,
+        strict_contracts: bool = False,
     ) -> None:
         self.model = EMHSSM(params, EMHState())
         self.ekf = EMHEKF(params, ekf)
@@ -194,6 +200,10 @@ class NeuralMarketController:
         self.metrics_exporter = DecisionMetricsExporter()
         self.adapter_config = adapter or MarketAdapterConfig()
         self.emit_predictive_state = bool(emit_predictive_state)
+        self.strict_contracts = bool(strict_contracts)
+        self.contracts = SignalContracts()
+        self._last_contract_obs: Dict[str, Any] | None = None
+        self._last_contract_decision: Dict[str, Any] | None = None
 
     @classmethod
     def from_yaml(cls, path: str | None = None) -> "NeuralMarketController":
@@ -217,6 +227,7 @@ class NeuralMarketController:
         sensory = SensoryConfig(**(cfg.get("sensory", {}) or {}))
         predictive = PredictiveConfig(**(cfg.get("predictive", {}) or {}))
         adapter_cfg = MarketAdapterConfig(**(cfg.get("market_adapter", {}) or {}))
+        strict_contracts = bool(cfg.get("strict_contracts", False))
         inst = cls(
             params,
             ekf,
@@ -226,6 +237,7 @@ class NeuralMarketController:
             sensory=sensory,
             predictive=predictive,
             adapter=adapter_cfg,
+            strict_contracts=strict_contracts,
         )
         bridge_cfg = cfg.get("tacl_bridge", {}) or {}
         inst.sync_threshold = float(
@@ -236,6 +248,14 @@ class NeuralMarketController:
             bridge_cfg.get("emit_predictive_state", inst.emit_predictive_state)
         )
         return inst
+
+    def _handle_contract_errors(self, stage: str, errors: list[str]) -> None:
+        if not errors:
+            return
+        payload = {"event": "neuro.contract_violation", "stage": stage, "errors": errors}
+        if self.strict_contracts:
+            raise ContractViolation(f"{stage} contract violation: {errors}")
+        log.warning("Contract violations detected", extra=payload)
 
     def _validate_schema_metadata(
         self,
@@ -299,6 +319,7 @@ class NeuralMarketController:
         obs.update(schema_output.normalized)
         obs["sensory_confidence"] = schema_output.sensory_confidence
         obs.update(sensory.filtered)
+        self._handle_contract_errors("obs", self.contracts.validate_obs(obs))
 
         start = time.perf_counter()
         prediction_error = float(self.predictive.error_energy(obs))
@@ -314,9 +335,11 @@ class NeuralMarketController:
         snapshot["S"] = float(
             np.clip(snapshot["S"] + 0.10 * self.homeo.pressure(snapshot["M"]), 0.0, 1.0)
         )
+        self._handle_contract_errors("state", self.contracts.validate_state(snapshot))
 
         estimate = self.ekf.step(obs)
         estimate_scoped = {f"{key}_est": value for key, value in estimate.items()}
+        self._handle_contract_errors("ekf", self.contracts.validate_state(estimate))
 
         start = time.perf_counter()
         action, extra = self.ctrl.decide(
@@ -325,8 +348,20 @@ class NeuralMarketController:
         timing_ctrl_decide_ms = (time.perf_counter() - start) * 1000.0
 
         scale = self.cvar.update(float(obs.get("reward", 0.0)))
+        pre_scale_main = float(extra["alloc_main"])
+        pre_scale_alt = float(extra["alloc_alt"])
         extra["alloc_main"] = float(extra["alloc_main"] * scale)
         extra["alloc_alt"] = float(extra["alloc_alt"] * scale)
+        self._handle_contract_errors(
+            "monotonicity",
+            check_alloc_monotonicity(
+                scale,
+                pre_scale_main,
+                pre_scale_alt,
+                float(extra["alloc_main"]),
+                float(extra["alloc_alt"]),
+            ),
+        )
 
         decision: Dict[str, Any] = {
             **snapshot,
@@ -355,6 +390,17 @@ class NeuralMarketController:
         metrics = self.metrics_exporter.update(decision)
         decision.update(metrics)
         self.metrics.emit(**metrics)
+        self._handle_contract_errors(
+            "decision", self.contracts.validate_decision(decision)
+        )
+        self._handle_contract_errors(
+            "lipschitz",
+            self.contracts.validate_lipschitz(
+                obs, decision, self._last_contract_obs, self._last_contract_decision
+            ),
+        )
+        self._last_contract_obs = dict(obs)
+        self._last_contract_decision = dict(decision)
         return decision
 
 
