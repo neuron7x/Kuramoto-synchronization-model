@@ -60,6 +60,44 @@ All neuro-optimization runs enforce bounds on the core invariants via
 These checks are called from unit tests and benchmark runs to provide
 continuous guardrails during optimization and profiling.
 
+#### Invariant Catalog
+
+`validate_neuro_invariants` enforces the following ranges and monotonic
+relationships for the optimizer’s state and metrics.
+
+**State ranges (non-negative, finite)**
+
+| State key | Expected range |
+| --- | --- |
+| `dopamine_level` | **[0, 5]** |
+| `serotonin_level` | **[0, 5]** |
+| `gaba_inhibition` | **[0, 5]** |
+| `na_arousal` | **[0, 5]** |
+| `ach_attention` | **[0, 5]** |
+
+**Metric ranges (finite, non-negative where applicable)**
+
+| Metric | Expected range |
+| --- | --- |
+| `dopamine_serotonin_ratio` | **[da_5ht_ratio_min, da_5ht_ratio_max]** |
+| `excitation_inhibition_balance` | **[ei_balance_min, ei_balance_max]** |
+| `arousal_attention_coherence` | **[0, 1]** |
+| `overall_balance_score` | **[0, 1]** |
+| `homeostatic_deviation` | **[0, ∞)** |
+| `stability` | **[0, 1]** |
+
+**Monotonic relationships**
+
+- **DA/5-HT ratio** must match `dopamine_level / (serotonin_level + ε)`, which is
+  monotonic in dopamine (↑) and serotonin (↓).
+- **E/I balance** must match `(dopamine_level + na_arousal) /
+  (gaba_inhibition + serotonin_level + ε)`, monotonic in excitation (↑) and
+  inhibition (↓).
+- **Arousal-attention coherence** must match `clip(1 - |na_arousal - ach_attention| / 2)`,
+  monotonically decreasing as arousal/attention diverge.
+- **Balance score** must match `1 / (1 + homeostatic_deviation)`, monotonically decreasing
+  as deviation grows.
+
 #### Multi-Objective Optimization
 
 Optimization balances three objectives:

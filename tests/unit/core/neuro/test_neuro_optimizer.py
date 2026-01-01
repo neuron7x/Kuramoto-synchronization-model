@@ -79,12 +79,14 @@ def _make_balance_with_ratio(ratio: float) -> BalanceMetrics:
     )
 
 
-def _assert_balance_invariants(balance: BalanceMetrics) -> None:
+def _assert_balance_invariants(balance: BalanceMetrics, state: dict) -> None:
     validate_neuro_invariants(
+        state=state,
         dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
         excitation_inhibition_balance=balance.gaba_excitation_balance,
         arousal_attention_coherence=balance.arousal_attention_coherence,
-        stability=balance.overall_balance_score,
+        overall_balance_score=balance.overall_balance_score,
+        homeostatic_deviation=balance.homeostatic_deviation,
     )
     assert balance.homeostatic_deviation >= 0
 
@@ -182,7 +184,7 @@ class TestNeuroOptimizer:
         balance = optimizer._calculate_balance_metrics(sample_state)
 
         assert isinstance(balance, BalanceMetrics)
-        _assert_balance_invariants(balance)
+        _assert_balance_invariants(balance, sample_state)
 
     def test_balance_score_monotonic_with_homeostatic_dev(self, opt_config):
         """Ensure balance score decreases as homeostatic deviation increases."""
@@ -250,7 +252,7 @@ class TestNeuroOptimizer:
 
         balance = optimizer._calculate_balance_metrics(state)
 
-        _assert_balance_invariants(balance)
+        _assert_balance_invariants(balance, state)
 
     @pytest.mark.parametrize(
         "arousal,attention",
@@ -304,7 +306,7 @@ class TestNeuroOptimizer:
         balance = optimizer._calculate_balance_metrics({})
 
         assert isinstance(balance, BalanceMetrics)
-        _assert_balance_invariants(balance)
+        _assert_balance_invariants(balance, {})
 
     if HYPOTHESIS_AVAILABLE:
 
@@ -347,7 +349,7 @@ class TestNeuroOptimizer:
 
             balance = optimizer._calculate_balance_metrics(state)
 
-            _assert_balance_invariants(balance)
+            _assert_balance_invariants(balance, state)
 
     else:  # pragma: no cover - executed when Hypothesis missing
 
@@ -632,15 +634,21 @@ class TestNeuroOptimizer:
         stability_2 = optimizer._calculate_objective(-0.01, balance, sample_state)
 
         validate_neuro_invariants(
+            state=sample_state,
             dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
             excitation_inhibition_balance=balance.gaba_excitation_balance,
             arousal_attention_coherence=balance.arousal_attention_coherence,
+            overall_balance_score=balance.overall_balance_score,
+            homeostatic_deviation=balance.homeostatic_deviation,
             stability=stability_1,
         )
         validate_neuro_invariants(
+            state=sample_state,
             dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
             excitation_inhibition_balance=balance.gaba_excitation_balance,
             arousal_attention_coherence=balance.arousal_attention_coherence,
+            overall_balance_score=balance.overall_balance_score,
+            homeostatic_deviation=balance.homeostatic_deviation,
             stability=stability_2,
         )
         assert np.isfinite(stability_1)

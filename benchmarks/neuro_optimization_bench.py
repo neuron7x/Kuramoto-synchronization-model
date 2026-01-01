@@ -55,6 +55,10 @@ NeuroOptimizer = neuro_optimizer.NeuroOptimizer
 OptimizationConfig = neuro_optimizer.OptimizationConfig
 
 
+def _clamp_state_value(value: float) -> float:
+    return float(np.clip(value, 0.0, 5.0))
+
+
 def benchmark_calibrator_speed(n_iterations=100):
     """Benchmark calibrator iteration speed."""
     print(f"\n{'='*60}")
@@ -171,12 +175,16 @@ def benchmark_optimizer_speed(n_iterations=100):
         _, balance = optimizer.optimize(params, state, 1.5)
         stability = compute_stability_score(optimizer._performance_history)
         validate_neuro_invariants(
+            state=state,
             dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
             excitation_inhibition_balance=balance.gaba_excitation_balance,
             arousal_attention_coherence=balance.arousal_attention_coherence,
+            overall_balance_score=balance.overall_balance_score,
+            homeostatic_deviation=balance.homeostatic_deviation,
             stability=stability,
             da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
             ei_balance_range=optimizer.config.ei_balance_range,
+            epsilon=optimizer.config.stability_epsilon,
         )
 
     # Reset
@@ -186,23 +194,29 @@ def benchmark_optimizer_speed(n_iterations=100):
     start_time = time.time()
     for _ in range(n_iterations):
         state_varied = {
-            'dopamine_level': 0.6 + np.random.randn() * 0.1,
-            'serotonin_level': 0.3 + abs(np.random.randn() * 0.05),
-            'gaba_inhibition': 0.4 + abs(np.random.randn() * 0.05),
-            'na_arousal': 1.1 + np.random.randn() * 0.2,
-            'ach_attention': 0.7 + np.random.randn() * 0.1,
+            'dopamine_level': _clamp_state_value(0.6 + np.random.randn() * 0.1),
+            'serotonin_level': _clamp_state_value(
+                0.3 + abs(np.random.randn() * 0.05)
+            ),
+            'gaba_inhibition': _clamp_state_value(0.4 + abs(np.random.randn() * 0.05)),
+            'na_arousal': _clamp_state_value(1.1 + np.random.randn() * 0.2),
+            'ach_attention': _clamp_state_value(0.7 + np.random.randn() * 0.1),
         }
         _, balance = optimizer.optimize(
             params, state_varied, 1.5 + np.random.randn() * 0.3
         )
         stability = compute_stability_score(optimizer._performance_history)
         validate_neuro_invariants(
+            state=state_varied,
             dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
             excitation_inhibition_balance=balance.gaba_excitation_balance,
             arousal_attention_coherence=balance.arousal_attention_coherence,
+            overall_balance_score=balance.overall_balance_score,
+            homeostatic_deviation=balance.homeostatic_deviation,
             stability=stability,
             da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
             ei_balance_range=optimizer.config.ei_balance_range,
+            epsilon=optimizer.config.stability_epsilon,
         )
 
     end_time = time.time()
@@ -265,12 +279,16 @@ def benchmark_convergence_time():
         _, balance = optimizer.optimize(initial_params, state, performance)
         stability = compute_stability_score(optimizer._performance_history)
         validate_neuro_invariants(
+            state=state,
             dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
             excitation_inhibition_balance=balance.gaba_excitation_balance,
             arousal_attention_coherence=balance.arousal_attention_coherence,
+            overall_balance_score=balance.overall_balance_score,
+            homeostatic_deviation=balance.homeostatic_deviation,
             stability=stability,
             da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
             ei_balance_range=optimizer.config.ei_balance_range,
+            epsilon=optimizer.config.stability_epsilon,
         )
         iteration += 1
 

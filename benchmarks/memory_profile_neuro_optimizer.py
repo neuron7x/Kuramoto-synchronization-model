@@ -43,12 +43,16 @@ def _run_steps(steps: int = 200) -> None:
         params, balance = optimizer.optimize(params, state, performance)
         stability = compute_stability_score(optimizer._performance_history)
         validate_neuro_invariants(
+            state=state,
             dopamine_serotonin_ratio=balance.dopamine_serotonin_ratio,
             excitation_inhibition_balance=balance.gaba_excitation_balance,
             arousal_attention_coherence=balance.arousal_attention_coherence,
+            overall_balance_score=balance.overall_balance_score,
+            homeostatic_deviation=balance.homeostatic_deviation,
             stability=stability,
             da_5ht_ratio_range=optimizer.config.da_5ht_ratio_range,
             ei_balance_range=optimizer.config.ei_balance_range,
+            epsilon=optimizer.config.stability_epsilon,
         )
 
 

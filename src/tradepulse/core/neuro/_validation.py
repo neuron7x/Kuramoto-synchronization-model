@@ -14,14 +14,14 @@ ensure_finite : Validate that a value is finite (not NaN/Inf)
 clamp : Clamp a value to a specified range
 validate_probability : Validate value is in [0, 1]
 validate_positive : Validate value is positive (optionally allowing zero)
-validate_neuro_invariants : Validate neuromodulator metric bounds
+validate_neuro_invariants : Validate neuromodulator metric and state invariants
 """
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Literal, Mapping, Optional
 
 __all__ = [
     "BoundsSpec",
@@ -34,6 +34,44 @@ __all__ = [
     "validate_positive",
     "validate_neuro_invariants",
 ]
+
+NEURO_STATE_RANGES: Mapping[str, tuple[float, float]] = {
+    "dopamine_level": (0.0, 5.0),
+    "serotonin_level": (0.0, 5.0),
+    "gaba_inhibition": (0.0, 5.0),
+    "na_arousal": (0.0, 5.0),
+    "ach_attention": (0.0, 5.0),
+}
+
+NEURO_STATE_DEFAULTS: Mapping[str, float] = {
+    "dopamine_level": 0.5,
+    "serotonin_level": 0.3,
+    "gaba_inhibition": 0.4,
+    "na_arousal": 1.0,
+    "ach_attention": 0.7,
+}
+
+NEURO_METRIC_RANGES: Mapping[str, tuple[float, float]] = {
+    "arousal_attention_coherence": (0.0, 1.0),
+    "overall_balance_score": (0.0, 1.0),
+    "stability": (0.0, 1.0),
+    "homeostatic_deviation": (0.0, math.inf),
+}
+
+
+def _ensure_range(
+    name: str,
+    value: float,
+    *,
+    min_value: float,
+    max_value: float,
+) -> float:
+    value = ensure_finite(name, value)
+    if value < min_value:
+        raise ValueError(f"{name} must be >= {min_value}, got {value}")
+    if value > max_value:
+        raise ValueError(f"{name} must be <= {max_value}, got {value}")
+    return value
 
 
 @dataclass(frozen=True)
@@ -221,9 +259,14 @@ def validate_neuro_invariants(
     dopamine_serotonin_ratio: float,
     excitation_inhibition_balance: float,
     arousal_attention_coherence: float,
-    stability: float,
+    overall_balance_score: float,
+    homeostatic_deviation: float,
+    stability: Optional[float] = None,
+    state: Optional[Mapping[str, float]] = None,
     da_5ht_ratio_range: tuple[float, float] = (1.0, 3.0),
     ei_balance_range: tuple[float, float] = (1.0, 2.5),
+    epsilon: float = 1e-6,
+    tolerance: float = 1e-5,
 ) -> None:
     """Validate neuromodulator invariants for neuro optimization metrics.
 
@@ -235,12 +278,22 @@ def validate_neuro_invariants(
         Excitation to inhibition balance (E/I).
     arousal_attention_coherence : float
         Coherence between arousal and attention, expected in [0, 1].
-    stability : float
-        Stability metric expected in [0, 1].
+    overall_balance_score : float
+        Overall balance score expected in [0, 1].
+    homeostatic_deviation : float
+        Homeostatic deviation expected to be non-negative.
+    stability : Optional[float]
+        Stability metric expected in [0, 1] when supplied.
+    state : Optional[Mapping[str, float]]
+        Optional neuromodulator state (levels, arousal, attention) to validate.
     da_5ht_ratio_range : tuple[float, float]
         Inclusive bounds for DA/5-HT ratio.
     ei_balance_range : tuple[float, float]
         Inclusive bounds for E/I balance.
+    epsilon : float
+        Numerical stability constant for ratio-based checks.
+    tolerance : float
+        Tolerance for monotonic consistency checks.
 
     Raises
     ------
@@ -251,8 +304,29 @@ def validate_neuro_invariants(
     ei_balance = ensure_finite(
         "excitation_inhibition_balance", excitation_inhibition_balance
     )
-    coherence = ensure_finite("arousal_attention_coherence", arousal_attention_coherence)
-    stability_value = ensure_finite("stability", stability)
+    coherence = ensure_finite(
+        "arousal_attention_coherence", arousal_attention_coherence
+    )
+    balance_score = _ensure_range(
+        "overall_balance_score",
+        overall_balance_score,
+        min_value=NEURO_METRIC_RANGES["overall_balance_score"][0],
+        max_value=NEURO_METRIC_RANGES["overall_balance_score"][1],
+    )
+    deviation = _ensure_range(
+        "homeostatic_deviation",
+        homeostatic_deviation,
+        min_value=NEURO_METRIC_RANGES["homeostatic_deviation"][0],
+        max_value=NEURO_METRIC_RANGES["homeostatic_deviation"][1],
+    )
+
+    if stability is not None:
+        _ensure_range(
+            "stability",
+            stability,
+            min_value=NEURO_METRIC_RANGES["stability"][0],
+            max_value=NEURO_METRIC_RANGES["stability"][1],
+        )
 
     da_min, da_max = da_5ht_ratio_range
     if not da_min <= ratio <= da_max:
@@ -266,11 +340,70 @@ def validate_neuro_invariants(
             f"excitation_inhibition_balance must be in [{ei_min}, {ei_max}], got {ei_balance}"
         )
 
-    if not 0.0 <= coherence <= 1.0:
+    if not (
+        NEURO_METRIC_RANGES["arousal_attention_coherence"][0]
+        <= coherence
+        <= NEURO_METRIC_RANGES["arousal_attention_coherence"][1]
+    ):
         raise ValueError(
             "arousal_attention_coherence must be in [0, 1], "
             f"got {arousal_attention_coherence}"
         )
 
-    if not 0.0 <= stability_value <= 1.0:
-        raise ValueError(f"stability must be in [0, 1], got {stability}")
+    expected_balance = 1.0 / (1.0 + deviation)
+    if abs(balance_score - expected_balance) > tolerance:
+        raise ValueError(
+            "overall_balance_score must decrease monotonically with "
+            "homeostatic_deviation (expected "
+            f"{expected_balance:.6f}, got {balance_score:.6f})"
+        )
+
+    if state is None:
+        return
+
+    for name, (min_value, max_value) in NEURO_STATE_RANGES.items():
+        value = float(state.get(name, NEURO_STATE_DEFAULTS[name]))
+        _ensure_range(
+            name,
+            value,
+            min_value=min_value,
+            max_value=max_value,
+        )
+
+    dopamine_level = float(
+        state.get("dopamine_level", NEURO_STATE_DEFAULTS["dopamine_level"])
+    )
+    serotonin_level = float(
+        state.get("serotonin_level", NEURO_STATE_DEFAULTS["serotonin_level"])
+    )
+    gaba_inhibition = float(
+        state.get("gaba_inhibition", NEURO_STATE_DEFAULTS["gaba_inhibition"])
+    )
+    na_arousal = float(state.get("na_arousal", NEURO_STATE_DEFAULTS["na_arousal"]))
+    ach_attention = float(
+        state.get("ach_attention", NEURO_STATE_DEFAULTS["ach_attention"])
+    )
+
+    expected_ratio = dopamine_level / (serotonin_level + epsilon)
+    if abs(ratio - expected_ratio) > tolerance:
+        raise ValueError(
+            "dopamine_serotonin_ratio must follow the monotonic DA/5-HT "
+            f"ratio formula (expected {expected_ratio:.6f}, got {ratio:.6f})"
+        )
+
+    expected_ei = (dopamine_level + na_arousal) / (
+        gaba_inhibition + serotonin_level + epsilon
+    )
+    if abs(ei_balance - expected_ei) > tolerance:
+        raise ValueError(
+            "excitation_inhibition_balance must follow the monotonic E/I "
+            f"balance formula (expected {expected_ei:.6f}, got {ei_balance:.6f})"
+        )
+
+    expected_coherence = 1.0 - abs(na_arousal - ach_attention) / 2.0
+    expected_coherence = clamp(expected_coherence, 0.0, 1.0)
+    if abs(coherence - expected_coherence) > tolerance:
+        raise ValueError(
+            "arousal_attention_coherence must follow the monotonic arousal/attention "
+            f"coherence formula (expected {expected_coherence:.6f}, got {coherence:.6f})"
+        )
