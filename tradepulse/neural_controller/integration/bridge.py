@@ -19,9 +19,13 @@ from ..core.params import (
     MarketAdapterConfig,
     Params,
     PolicyConfig,
+    PredictiveConfig,
     RiskConfig,
+    SensoryConfig,
 )
 from ..core.state import EMHState
+from ..core.predictive import PredictiveCoder
+from ..core.sensory import SensoryFilter
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
 from ..homeostasis.homeo import HomeostaticModule
@@ -166,6 +170,8 @@ class NeuralMarketController:
         policy: PolicyConfig,
         risk: RiskConfig,
         homeo: HomeoConfig,
+        sensory: SensoryConfig | None = None,
+        predictive: PredictiveConfig | None = None,
         adapter: MarketAdapterConfig | None = None,
     ) -> None:
         self.model = EMHSSM(params, EMHState())
@@ -174,6 +180,8 @@ class NeuralMarketController:
         self.homeo = HomeostaticModule(homeo.M_target, homeo.k_sigmoid)
         self.ctrl = BasalGangliaController(policy.temp, policy.tau_E_amber)
         self.cvar = CVARGate(risk.cvar_alpha, risk.cvar_limit, risk.lookback)
+        self.sensory = SensoryFilter(sensory or SensoryConfig())
+        self.predictive = PredictiveCoder(predictive or PredictiveConfig())
         self.sync_threshold = 0.30
         self.generations = 10
         self.metrics = MetricsEmitter()
@@ -193,8 +201,19 @@ class NeuralMarketController:
         policy = PolicyConfig(**cfg["policy"])
         risk = RiskConfig(**cfg["risk"])
         homeo = HomeoConfig(**cfg["homeostasis"])
+        sensory = SensoryConfig(**(cfg.get("sensory", {}) or {}))
+        predictive = PredictiveConfig(**(cfg.get("predictive", {}) or {}))
         adapter_cfg = MarketAdapterConfig(**(cfg.get("market_adapter", {}) or {}))
-        inst = cls(params, ekf, policy, risk, homeo, adapter=adapter_cfg)
+        inst = cls(
+            params,
+            ekf,
+            policy,
+            risk,
+            homeo,
+            sensory=sensory,
+            predictive=predictive,
+            adapter=adapter_cfg,
+        )
         bridge_cfg = cfg.get("tacl_bridge", {}) or {}
         inst.sync_threshold = float(
             bridge_cfg.get("sync_threshold", inst.sync_threshold)
@@ -204,6 +223,12 @@ class NeuralMarketController:
 
     def decide(self, obs: Dict[str, float | bool]) -> Dict[str, Any]:
         obs = dict(obs)
+        sensory = self.sensory.transform(obs)
+        obs.update(sensory.filtered)
+
+        prediction_error = float(self.predictive.error_energy(obs))
+        obs["prediction_error"] = prediction_error
+
         belief = self.belief.step(float(obs.get("vol", 0.0)))
         obs["belief_term"] = belief - 0.5
 
@@ -229,6 +254,7 @@ class NeuralMarketController:
             **extra,
             "alloc_scale": scale,
             "belief": belief,
+            "prediction_error": prediction_error,
             "action": action,
             "reward": float(obs.get("reward", 0.0)),
         }

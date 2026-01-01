@@ -5,7 +5,9 @@ from .core.params import (
     MarketAdapterConfig,
     Params,
     PolicyConfig,
+    PredictiveConfig,
     RiskConfig,
+    SensoryConfig,
 )
 from .core.state import EMHState
 from .estimation.belief import VolBelief
@@ -28,6 +30,8 @@ __all__ = [
     "RiskConfig",
     "HomeoConfig",
     "MarketAdapterConfig",
+    "SensoryConfig",
+    "PredictiveConfig",
     "EMHState",
     "EMHSSM",
     "EMHEKF",

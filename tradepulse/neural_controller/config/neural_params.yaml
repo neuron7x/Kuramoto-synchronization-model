@@ -13,6 +13,7 @@ model:
   eps: 0.7
   eta: 0.2
   M0: 0.8
+  prediction_gain: 0.08
 
 ekf:
   q: 0.001
@@ -30,6 +31,25 @@ risk:
 homeostasis:
   M_target: 0.8
   k_sigmoid: 5.0
+
+sensory:
+  spatial_lambda: 0.25
+  temporal_lambda: 0.35
+  contrast_gain: 0.6
+  keys:
+    - dd
+    - liq
+    - reg
+    - vol
+
+predictive:
+  decay: 0.8
+  error_gain: 0.9
+  keys:
+    - dd
+    - liq
+    - reg
+    - vol
 
 tacl_bridge:
   sync_threshold: 0.3

@@ -19,6 +19,7 @@ class Params:
     eps: float = 0.7
     eta: float = 0.2
     M0: float = 0.8
+    prediction_gain: float = 0.08
 
 
 @dataclass(frozen=True)
@@ -54,3 +55,24 @@ class MarketAdapterConfig:
     hist_max_vol: float = 1.0
     risk_free: float = 0.02
     eps: float = 1e-6
+
+
+@dataclass(frozen=True)
+class SensoryConfig:
+    spatial_lambda: float = 0.25
+    temporal_lambda: float = 0.35
+    contrast_gain: float = 0.6
+    keys: tuple[str, ...] = ("dd", "liq", "reg", "vol")
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "keys", tuple(self.keys))
+
+
+@dataclass(frozen=True)
+class PredictiveConfig:
+    decay: float = 0.8
+    error_gain: float = 0.9
+    keys: tuple[str, ...] = ("dd", "liq", "reg", "vol")
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "keys", tuple(self.keys))
