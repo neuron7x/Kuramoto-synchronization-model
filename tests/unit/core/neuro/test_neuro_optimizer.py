@@ -702,6 +702,41 @@ class TestNeuroOptimizer:
         assert 0 <= stability_2 <= 1
         assert abs(stability_2 - stability_1) < 0.2
 
+    def test_stability_decreases_with_higher_std_at_fixed_mean(self, sample_state):
+        """Stability should drop as variance grows when mean is fixed."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+            history_window=5,
+        )
+        optimizer = NeuroOptimizer(config)
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        optimizer._performance_history = [1.0, 1.0, 1.0, 1.0, 1.0]
+        stability_low_std = optimizer._calculate_objective(1.0, balance, sample_state)
+
+        optimizer._performance_history = [0.0, 2.0, 1.0, 1.0, 1.0]
+        stability_high_std = optimizer._calculate_objective(1.0, balance, sample_state)
+
+        assert stability_low_std > stability_high_std
+
+    def test_stability_bounds_with_negative_mean(self, sample_state):
+        """Stability should stay within [0, 1] even for negative means."""
+        config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+            history_window=5,
+        )
+        optimizer = NeuroOptimizer(config)
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        optimizer._performance_history = [-3.0, -0.1, -0.1, -0.1, -0.1]
+        stability = optimizer._calculate_objective(-0.1, balance, sample_state)
+
+        assert 0 <= stability <= 1
+
     def test_calculate_objective_stability_near_zero_mean(self, sample_state):
         """Ensure stability is bounded for near-zero mean performance."""
         config = OptimizationConfig(

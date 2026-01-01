@@ -118,6 +118,9 @@ performance_norm = clip(
   - `abs(mean)` makes negative and positive averages comparable in magnitude.
   - `ε` prevents division by zero or near-zero means from exploding the ratio.
   - Until enough history accumulates, stability defaults to **0.5**.
+  - For a fixed mean, higher standard deviation lowers the stability score.
+  - Negative mean values are still bounded because the denominator uses `abs(mean)` and the
+    final stability score is clipped to **[0, 1]**.
 
 **Mathematical note on normalization and bounds**
 
