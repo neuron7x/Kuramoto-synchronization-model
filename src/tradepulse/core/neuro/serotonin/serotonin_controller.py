@@ -56,6 +56,8 @@ import numpy as np
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
+
 try:  # Allow loading as a standalone module in tests
     from tradepulse.core.neuro.serotonin.receptors import ParamDeltas, ReceptorBank, ReceptorContext
 except ImportError:  # pragma: no cover - fallback for relative import
@@ -396,7 +398,7 @@ REASON_CODES_WHITELIST: tuple[str, ...] = (
     "RISK_BUDGET_CLAMPED",
 )
 STRESS_BUDGET_MULTIPLIER = 0.7
-BUDGET_TOLERANCE = 1e-9
+BUDGET_TOLERANCE = STABILITY_EPSILON
 
 
 @dataclass(slots=True)

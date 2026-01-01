@@ -11,10 +11,11 @@ from typing import Iterable, Mapping, Sequence
 
 import numpy as np
 
+from tradepulse.core.neuro.numeric_config import STABILITY_EPSILON
 from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
 from tradepulse.policy.basal_ganglia import BasalGangliaDecisionStack
 
-_EPS = 1e-9
+_EPS = STABILITY_EPSILON
 
 
 @dataclass
@@ -62,7 +63,7 @@ def _count_flips(flags: Sequence[bool]) -> int:
 def _hysteresis_violation(level: float, cfg: Mapping[str, float], hold_state: bool) -> bool:
     margin = cfg.get("hysteresis_margin", 0.05)
     threshold = cfg["cooldown_threshold"] * (1.0 - margin)
-    return (not hold_state) and level > threshold + 1e-6
+    return (not hold_state) and level > threshold + STABILITY_EPSILON
 
 
 def _check_persistence(ctrl: SerotoninController) -> list[str]:
@@ -89,7 +90,10 @@ def _check_persistence(ctrl: SerotoninController) -> list[str]:
             if bool(after[key]) != bool(val):
                 violations.append(f"state_mismatch:{key}")
         else:
-            if not math.isfinite(float(after[key])) or abs(float(after[key]) - float(val)) > 1e-6:
+            if (
+                not math.isfinite(float(after[key]))
+                or abs(float(after[key]) - float(val)) > STABILITY_EPSILON
+            ):
                 violations.append(f"state_mismatch:{key}")
 
     if path.with_suffix(path.suffix + ".tmp").exists():
@@ -133,7 +137,7 @@ def run_regime(
             violations.append("level_out_of_bounds")
         if not math.isfinite(res.cooldown):
             violations.append("cooldown_nonfinite")
-        if res.cooldown < -1e-9:
+        if res.cooldown < -STABILITY_EPSILON:
             violations.append("cooldown_negative")
         if res.hold and res.cooldown + _EPS < last_cooldown:
             violations.append("cooldown_nonmonotonic")
@@ -192,7 +196,7 @@ def run_basal_ganglia_integration(seed: int = 123) -> list[str]:
         violations.append("integration_hold_ignored")
     temperature = float(result.extras.get("temperature", 1.0))
     floor = float(serotonin_state["temperature_floor"])
-    if temperature < floor - 1e-6:
+    if temperature < floor - STABILITY_EPSILON:
         violations.append("temperature_floor_violated")
     return violations
 

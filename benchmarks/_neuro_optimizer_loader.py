@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Tuple, Type
 
@@ -34,12 +35,19 @@ def load_validation() -> Callable[..., None]:
     return module.validate_neuro_invariants
 
 
+@lru_cache(maxsize=1)
+def _stability_epsilon() -> float:
+    _, optimization_config = load_optimizer()
+    config = optimization_config()
+    return float(config.numeric.stability_epsilon)
+
+
 def compute_stability_score(history: list[float]) -> float:
     """Compute stability score using the optimizer's objective history."""
     if len(history) <= 10:
         return 0.5
     recent = np.asarray(history[-10:], dtype=float)
     mean_perf = np.mean(recent)
-    denom = max(abs(mean_perf), 1e-6)
+    denom = max(abs(mean_perf), _stability_epsilon())
     stability = 1.0 - (np.std(recent) / denom)
     return float(np.clip(stability, 0.0, 1.0))
