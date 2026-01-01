@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Mapping
 
 OBSERVATION_KEYS = ("dd", "liq", "reg", "vol")
 
@@ -48,9 +49,30 @@ class EKFConfig:
 
 
 @dataclass(frozen=True)
+class PolicyModeConfig:
+    temp: float = 1.0
+    gating: float = 0.0
+
+
+@dataclass(frozen=True)
 class PolicyConfig:
     temp: float = 1.0
     tau_E_amber: float = 0.3
+    policy_modes: Mapping[str, PolicyModeConfig] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        normalized: dict[str, PolicyModeConfig] = {}
+        for mode, raw in self.policy_modes.items():
+            key = str(mode).upper()
+            if isinstance(raw, PolicyModeConfig):
+                normalized[key] = raw
+            elif isinstance(raw, Mapping):
+                normalized[key] = PolicyModeConfig(**raw)
+            else:
+                raise TypeError(
+                    "policy_modes values must be PolicyModeConfig or mapping"
+                )
+        object.__setattr__(self, "policy_modes", normalized)
 
 
 @dataclass(frozen=True)

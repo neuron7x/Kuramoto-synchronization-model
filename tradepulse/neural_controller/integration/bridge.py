@@ -20,6 +20,7 @@ from ..core.params import (
     MarketAdapterConfig,
     Params,
     PolicyConfig,
+    PolicyModeConfig,
     PredictiveConfig,
     RiskConfig,
     SensoryConfig,
@@ -186,7 +187,11 @@ class NeuralMarketController:
         self.ekf = EMHEKF(params, ekf)
         self.belief = VolBelief()
         self.homeo = HomeostaticModule(homeo.M_target, homeo.k_sigmoid)
-        self.ctrl = BasalGangliaController(policy.temp, policy.tau_E_amber)
+        self.ctrl = BasalGangliaController(
+            policy.temp,
+            policy.tau_E_amber,
+            mode_configs=policy.policy_modes,
+        )
         self.cvar = CVARGate(risk.cvar_alpha, risk.cvar_limit, risk.lookback)
         self.sensory = SensoryFilter(sensory or SensoryConfig())
         self.sensory_schema = sensory_schema or SensorySchema.default()
@@ -228,7 +233,11 @@ class NeuralMarketController:
             )
         params = Params(**cfg["model"])
         ekf = EKFConfig(**cfg["ekf"])
-        policy = PolicyConfig(**cfg["policy"])
+        policy_modes = {
+            mode: PolicyModeConfig(**values)
+            for mode, values in (cfg.get("policy_modes", {}) or {}).items()
+        }
+        policy = PolicyConfig(**cfg["policy"], policy_modes=policy_modes)
         risk = RiskConfig(**cfg["risk"])
         homeo = HomeoConfig(**cfg["homeostasis"])
         sensory = SensoryConfig(**(cfg.get("sensory", {}) or {}))

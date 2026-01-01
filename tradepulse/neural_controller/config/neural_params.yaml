@@ -26,6 +26,17 @@ policy:
   temp: 1.0
   tau_E_amber: 0.3
 
+policy_modes:
+  GREEN:
+    temp: 1.0
+    gating: 0.0
+  AMBER:
+    temp: 0.9
+    gating: 0.3
+  RED:
+    temp: 0.7
+    gating: 1.0
+
 risk:
   cvar_alpha: 0.95
   cvar_limit: 0.03

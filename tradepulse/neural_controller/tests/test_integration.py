@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import os
@@ -10,6 +11,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import yaml
 
 os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
 os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
@@ -117,6 +119,25 @@ def test_go_no_go_amber_requires_energy() -> None:
         ]
         == 0.0
     )
+
+
+def test_policy_mode_config_changes_behavior(tmp_path: Path) -> None:
+    cfg = copy.deepcopy(load_default_config())
+    cfg["policy_modes"] = {
+        "GREEN": {"temp": 1.1, "gating": 0.0},
+        "AMBER": {"temp": 0.8, "gating": 0.6},
+        "RED": {"temp": 0.6, "gating": 1.0},
+    }
+    config_path = tmp_path / "neuro.yaml"
+    config_path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+    controller = NeuralMarketController.from_yaml(str(config_path))
+    state = {"H": 0.6, "M": 0.7, "E": 0.5, "S": 0.6}
+    green_probs = controller.ctrl.decide(state, "GREEN", 0.2)[1]["action_probs"]
+    amber_probs = controller.ctrl.decide(state, "AMBER", 0.2)[1]["action_probs"]
+
+    assert green_probs["increase_risk"] > 0.0
+    assert amber_probs["increase_risk"] == 0.0
 
 
 def test_cvar_monotonic() -> None:
