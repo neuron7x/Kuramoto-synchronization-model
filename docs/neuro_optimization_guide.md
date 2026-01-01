@@ -429,6 +429,25 @@ target ratios (reward/serotonin and excitation/inhibition). `balance_score`
 is a monotonic inverse transform that compresses large deviations while keeping
 small deviations near 1, making it a stable, interpretable objective term.
 
+### Health Status Rules
+
+The health status derives **only** from the balance score. Let
+`s = overall_balance_score`, with thresholds:
+
+```
+healthy_threshold   = 0.8
+acceptable_threshold = 0.6
+```
+
+The rule is piecewise:
+
+```
+status(s) =
+    healthy    if s > healthy_threshold
+    acceptable if acceptable_threshold < s <= healthy_threshold
+    warning    if s <= acceptable_threshold
+```
+
 ### Stability Objective
 
 Stability is computed from recent objective history (using the configured
@@ -498,6 +517,9 @@ class OptimizationConfig:
     enable_plasticity: bool = True     # Enable plasticity
     plasticity_window: int = 50        # Plasticity window
     regime_adaptation: bool = True     # Regime adaptation
+    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)  # DA/5-HT ratio limits
+    ei_balance_range: Tuple[float, float] = (1.0, 2.5)    # E/I balance limits
+    aa_coherence_min: float = 0.5      # Min arousal-attention coherence
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
 
