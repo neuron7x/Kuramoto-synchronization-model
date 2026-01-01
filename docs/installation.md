@@ -79,6 +79,32 @@ pip install ".[gpu]"
 
 You can combine extras: `pip install ".[connectors,gpu]"`.
 
+## Local TLS Development Certificates
+
+TradePulse expects development TLS material in `configs/tls/dev/`. Private keys (`*.key.pem`) are **never** committed and must be generated locally.
+
+Recommended workflow (from the repository root):
+
+```bash
+make generate-dev-certs
+```
+
+Manual workflow (OpenSSL wrapper script):
+
+```bash
+cd configs/tls/dev
+./generate_certs.sh
+```
+
+If you suspect a leak or need a fresh set, delete the dev artifacts and regenerate:
+
+```bash
+rm -f configs/tls/dev/*.key.pem configs/tls/dev/*.pem
+make generate-dev-certs
+```
+
+See `configs/tls/dev/README.md` for certificate details, expiration notes, and troubleshooting.
+
 ## Troubleshooting
 
 ### Native dependency build failures
