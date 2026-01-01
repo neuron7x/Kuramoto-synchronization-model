@@ -1,3 +1,5 @@
+__CANONICAL__ = True
+
 """Lightweight receptor-based safety modulators for SerotoninController.
 
 Each receptor implements two functions:
