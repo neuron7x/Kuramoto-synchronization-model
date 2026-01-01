@@ -694,6 +694,90 @@ class TestNeuroOptimizer:
 
         assert stability == pytest.approx(1.0)
 
+    def test_stability_epsilon_applies_to_core_calculations(self):
+        """Ensure stability_epsilon drives balance, stability, and gradient math."""
+        low_eps = 1e-6
+        high_eps = 1e-2
+        base_config = dict(
+            balance_weight=0.0,
+            performance_weight=0.0,
+            stability_weight=1.0,
+            history_window=5,
+        )
+        low_config = OptimizationConfig(**base_config, stability_epsilon=low_eps)
+        high_config = OptimizationConfig(**base_config, stability_epsilon=high_eps)
+
+        state = {
+            "dopamine_level": 0.5,
+            "serotonin_level": 0.0,
+            "gaba_inhibition": 0.0,
+            "na_arousal": 1.0,
+            "ach_attention": 1.0,
+        }
+        params = {
+            "dopamine": {"learning_rate": 0.1},
+            "serotonin": {"stress_threshold": 0.2},
+        }
+
+        low_optimizer = NeuroOptimizer(low_config)
+        high_optimizer = NeuroOptimizer(high_config)
+
+        low_balance = low_optimizer._calculate_balance_metrics(state)
+        high_balance = high_optimizer._calculate_balance_metrics(state)
+
+        expected_ratio_low = state["dopamine_level"] / (
+            state["serotonin_level"] + low_eps
+        )
+        expected_ratio_high = state["dopamine_level"] / (
+            state["serotonin_level"] + high_eps
+        )
+        assert low_balance.dopamine_serotonin_ratio == pytest.approx(expected_ratio_low)
+        assert high_balance.dopamine_serotonin_ratio == pytest.approx(expected_ratio_high)
+
+        history = [1e-4, -1e-4, 1e-4, -1e-4, 1e-4]
+        low_optimizer._performance_history = history.copy()
+        high_optimizer._performance_history = history.copy()
+        mean_perf = np.mean(history)
+        std_perf = np.std(history)
+        expected_stability_low = np.clip(
+            1 - std_perf / max(abs(mean_perf), low_eps), 0, 1
+        )
+        expected_stability_high = np.clip(
+            1 - std_perf / max(abs(mean_perf), high_eps), 0, 1
+        )
+
+        stability_low = low_optimizer._calculate_objective(0.0, low_balance, state)
+        stability_high = high_optimizer._calculate_objective(0.0, high_balance, state)
+
+        assert stability_low == pytest.approx(expected_stability_low)
+        assert stability_high == pytest.approx(expected_stability_high)
+
+        gradients_low = low_optimizer._estimate_gradients(params, state, performance=0.0)
+        gradients_high = high_optimizer._estimate_gradients(
+            params, state, performance=0.0
+        )
+        ratio_value_low = state["dopamine_level"] / (
+            state["serotonin_level"] + low_eps
+        )
+        ratio_value_high = state["dopamine_level"] / (
+            state["serotonin_level"] + high_eps
+        )
+        ratio_deviation_low = (
+            ratio_value_low - low_optimizer._setpoints["da_5ht_ratio"]
+        ) / (low_optimizer._setpoints["da_5ht_ratio"] + low_eps)
+        ratio_deviation_high = (
+            ratio_value_high - high_optimizer._setpoints["da_5ht_ratio"]
+        ) / (high_optimizer._setpoints["da_5ht_ratio"] + high_eps)
+        expected_grad_low = -ratio_deviation_low * low_optimizer._current_lr
+        expected_grad_high = -ratio_deviation_high * high_optimizer._current_lr
+
+        assert gradients_low["dopamine"]["learning_rate"] == pytest.approx(
+            expected_grad_low
+        )
+        assert gradients_high["dopamine"]["learning_rate"] == pytest.approx(
+            expected_grad_high
+        )
+
     def test_optimize_updates_state(self, opt_config, sample_params, sample_state):
         """Test that optimize() updates optimizer state."""
         optimizer = NeuroOptimizer(opt_config)

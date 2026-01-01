@@ -13,7 +13,8 @@ This guide covers TradePulse's adaptive neuromodulator calibration and cross-neu
 5. [Usage Examples](#usage-examples)
 6. [Best Practices](#best-practices)
 7. [Performance Tuning](#performance-tuning)
-8. [Troubleshooting](#troubleshooting)
+8. [Numerical Stability](#numerical-stability)
+9. [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
@@ -129,6 +130,21 @@ Changing weights shifts the optimizer's focus:
 - Increasing **performance_weight** prioritizes high Sharpe results (faster response to alpha).
 - Increasing **balance_weight** biases toward homeostatic stability (lower stress/overdrive).
 - Increasing **stability_weight** penalizes volatile objective trajectories (smoother learning).
+
+### Numerical Stability
+
+All numerically sensitive denominators share the same `OptimizationConfig.stability_epsilon`
+to ensure consistent behavior across balance, stability, and gradient calculations. The
+current uses are:
+
+- **Dopamine/serotonin ratio**: `dopamine_level / (serotonin_level + ε)`.
+- **Excitation/inhibition balance**: `(dopamine_level + na_arousal) / (gaba_inhibition + serotonin_level + ε)`.
+- **Homeostatic deviation normalization**:
+  - `|da_5ht_ratio - setpoint| / (setpoint + ε)`
+  - `|ei_balance - setpoint| / (setpoint + ε)`
+- **Stability objective**: `1 - std(recent) / max(abs(mean), ε)`.
+- **Proportional gradient heuristic**: `(value - setpoint) / (setpoint + ε)`,
+  including `dopamine_level / (serotonin_level + ε)` for the ratio deviation.
 
 ### Logged Metrics
 
