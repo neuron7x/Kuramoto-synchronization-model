@@ -20,6 +20,7 @@ validate_neuro_invariants : Validate neuromodulator metric bounds
 from __future__ import annotations
 
 import math
+import logging
 from dataclasses import dataclass
 from typing import Literal, Optional
 
@@ -32,6 +33,7 @@ __all__ = [
     "clamp",
     "validate_probability",
     "validate_positive",
+    "validate_neuro_metric_bounds",
     "validate_neuro_invariants",
 ]
 
@@ -247,30 +249,93 @@ def validate_neuro_invariants(
     ValueError
         If any invariant is violated.
     """
-    ratio = ensure_finite("dopamine_serotonin_ratio", dopamine_serotonin_ratio)
-    ei_balance = ensure_finite(
-        "excitation_inhibition_balance", excitation_inhibition_balance
-    )
-    coherence = ensure_finite("arousal_attention_coherence", arousal_attention_coherence)
-    stability_value = ensure_finite("stability", stability)
-
     da_min, da_max = da_5ht_ratio_range
-    if not da_min <= ratio <= da_max:
-        raise ValueError(
-            f"dopamine_serotonin_ratio must be in [{da_min}, {da_max}], got {ratio}"
-        )
-
     ei_min, ei_max = ei_balance_range
-    if not ei_min <= ei_balance <= ei_max:
+
+    validate_neuro_metric_bounds(
+        dopamine_serotonin_ratio=dopamine_serotonin_ratio,
+        excitation_inhibition_balance=excitation_inhibition_balance,
+        arousal_attention_coherence=arousal_attention_coherence,
+        stability=stability,
+        da_5ht_ratio_bounds=BoundsSpec(da_min, da_max, "raise"),
+        ei_balance_bounds=BoundsSpec(ei_min, ei_max, "raise"),
+        arousal_attention_bounds=BoundsSpec(0.0, 1.0, "raise"),
+        stability_bounds=BoundsSpec(0.0, 1.0, "raise"),
+        logger=None,
+    )
+
+
+def validate_neuro_metric_bounds(
+    *,
+    dopamine_serotonin_ratio: float,
+    excitation_inhibition_balance: float,
+    arousal_attention_coherence: float,
+    stability: float,
+    da_5ht_ratio_bounds: BoundsSpec = BoundsSpec(1.0, 3.0, "raise"),
+    ei_balance_bounds: BoundsSpec = BoundsSpec(1.0, 2.5, "raise"),
+    arousal_attention_bounds: BoundsSpec = BoundsSpec(0.0, 1.0, "raise"),
+    stability_bounds: BoundsSpec = BoundsSpec(0.0, 1.0, "raise"),
+    logger: Optional[logging.Logger] = None,
+) -> dict[str, float]:
+    """Validate (and optionally clip) neuro metrics against bounds.
+
+    Parameters
+    ----------
+    dopamine_serotonin_ratio : float
+        Dopamine to serotonin ratio (DA/5-HT).
+    excitation_inhibition_balance : float
+        Excitation to inhibition balance (E/I).
+    arousal_attention_coherence : float
+        Coherence between arousal and attention.
+    stability : float
+        Stability metric.
+    da_5ht_ratio_bounds : BoundsSpec
+        Bounds/behavior for dopamine-serotonin ratio.
+    ei_balance_bounds : BoundsSpec
+        Bounds/behavior for excitation-inhibition balance.
+    arousal_attention_bounds : BoundsSpec
+        Bounds/behavior for arousal-attention coherence.
+    stability_bounds : BoundsSpec
+        Bounds/behavior for stability.
+    logger : logging.Logger, optional
+        Logger to emit warnings/errors for out-of-bounds metrics.
+
+    Returns
+    -------
+    dict[str, float]
+        Validated (or clipped) metric values.
+    """
+    resolved_logger = logger or logging.getLogger(__name__)
+
+    def _apply_bounds(name: str, value: float, bounds: BoundsSpec) -> float:
+        checked_value = ensure_finite(name, value)
+        if bounds.min_value <= checked_value <= bounds.max_value:
+            return checked_value
+        message = (
+            f"{name} out of bounds [{bounds.min_value}, {bounds.max_value}]: {checked_value}"
+        )
+        if bounds.behavior == "clip":
+            clipped = clamp(checked_value, bounds.min_value, bounds.max_value)
+            resolved_logger.warning("%s; clipped to %s", message, clipped)
+            return clipped
+        resolved_logger.error(message)
         raise ValueError(
-            f"excitation_inhibition_balance must be in [{ei_min}, {ei_max}], got {ei_balance}"
+            f"{name} must be in [{bounds.min_value}, {bounds.max_value}], got {checked_value}"
         )
 
-    if not 0.0 <= coherence <= 1.0:
-        raise ValueError(
-            "arousal_attention_coherence must be in [0, 1], "
-            f"got {arousal_attention_coherence}"
-        )
-
-    if not 0.0 <= stability_value <= 1.0:
-        raise ValueError(f"stability must be in [0, 1], got {stability}")
+    return {
+        "dopamine_serotonin_ratio": _apply_bounds(
+            "dopamine_serotonin_ratio", dopamine_serotonin_ratio, da_5ht_ratio_bounds
+        ),
+        "excitation_inhibition_balance": _apply_bounds(
+            "excitation_inhibition_balance",
+            excitation_inhibition_balance,
+            ei_balance_bounds,
+        ),
+        "arousal_attention_coherence": _apply_bounds(
+            "arousal_attention_coherence",
+            arousal_attention_coherence,
+            arousal_attention_bounds,
+        ),
+        "stability": _apply_bounds("stability", stability, stability_bounds),
+    }
