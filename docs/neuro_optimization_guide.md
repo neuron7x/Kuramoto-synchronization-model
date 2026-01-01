@@ -695,6 +695,36 @@ class OptimizationConfig:
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
 
+| Поле | Формула / вплив | Допустимий діапазон |
+| --- | --- | --- |
+| `balance_weight` | Вага складової `balance_score` в об'єктиві: `objective += balance_weight * balance_score`. | **[0, 1]**, сума ваг = **1.0**. |
+| `performance_weight` | Вага нормалізованої продуктивності: `objective += performance_weight * performance_norm`. | **[0, 1]**, сума ваг = **1.0**. |
+| `stability_weight` | Вага стабільності: `objective += stability_weight * stability_score`. | **[0, 1]**, сума ваг = **1.0**. |
+| `performance_min` | Нижня межа нормалізації продуктивності: `performance_norm = clip((performance - min)/(max-min), 0, 1)`. | `< performance_max`. |
+| `performance_max` | Верхня межа нормалізації продуктивності. | `> performance_min`. |
+| `learning_rate` | Базова швидкість оновлення параметрів. | **(0, 1)**. |
+| `learning_rate_floor` | Мінімальний адаптивний LR під час плато: `lr = max(lr_floor, lr * adaptive_decay)`. | **(0, learning_rate]**. |
+| `adaptive_decay` | Множник зменшення LR після плато. | **(0, 1)**. |
+| `plateau_patience` | Кількість ітерацій без покращення до зниження LR. | Ціле **≥ 1**. |
+| `ema_alpha` | Коефіцієнт EMA: `ema_t = α * obj_t + (1-α) * ema_{t-1}`. | **(0, 1]**. |
+| `max_gradient_norm` | Обмеження відносної величини градієнта на крок. | **(0, 1]**. |
+| `momentum` | Моментум у кумуляції швидкості: `v = momentum * v + grad`. | **[0, 1)**. |
+| `max_iterations` | Ліміт ітерацій оптимізації. | Ціле **≥ 1**. |
+| `convergence_threshold` | Поріг ранньої зупинки за зміною об'єктива. | **> 0** (рекомендовано). |
+| `history_window` | Розмір вікна для стабільності/EMA історії. | Ціле **≥ 1**. |
+| `stability_epsilon` | ε для стабільності знаменників (баланс/стабільність/відхилення). | **> 0**. |
+| `gradient_dev_clip` | Кліп девіацій в пропорційному градієнті: `clip(dev, ±gradient_dev_clip)`. | **> 0**. |
+| `dtype` | Тип чисел для буферів (numpy dtype). | Валідний `np.dtype` (напр. `float32`). |
+| `use_gpu` | Спроба використати CuPy (за наявності). | `True/False`. |
+| `enable_plasticity` | Увімкнення пластичності. | `True/False`. |
+| `plasticity_window` | Вікно для оцінки пластичності. | Ціле **≥ 1** (рекомендовано). |
+| `regime_adaptation` | Увімкнення адаптації під режими ринку. | `True/False`. |
+| `da_5ht_ratio_range` | Межі клiпiнгу DA/5-HT: `clip(da_5ht_ratio, min, max)`. | `(low, high)` з **low > 0**, **high > 0**, **low < high**. |
+| `ei_balance_range` | Межі клiпiнгу E/I балансу. | `(low, high)` з **low > 0**, **high > 0**, **low < high**. |
+| `aa_coherence_min` | Мінімально допустима узгодженість arousal/attention. | **[0, 1]**. |
+| `bounds_spec` | Структуровані BoundsSpec: визначають `min_value`, `max_value`, `behavior`. | Кожен `min_value < max_value`, `behavior ∈ {clip, raise}`. |
+| `param_bounds` | Пер-параметрові межі `low/high`, застосовуються після оновлень. | Кожен `low < high`. |
+
 #### BalanceMetrics
 
 ```python

@@ -144,6 +144,28 @@ class TestOptimizationConfig:
         with pytest.raises(ValueError, match="gradient_dev_clip"):
             OptimizationConfig(gradient_dev_clip=0.0)
 
+    @pytest.mark.parametrize(
+        "kwargs, error_match",
+        [
+            (
+                {"performance_min": 1.0, "performance_max": 1.0},
+                "performance_min must be less than performance_max",
+            ),
+            (
+                {"performance_min": 2.0, "performance_max": 1.0},
+                "performance_min must be less than performance_max",
+            ),
+            ({"stability_epsilon": 0.0}, "stability_epsilon must be positive"),
+            ({"history_window": 0}, "History window must be a positive integer"),
+            ({"momentum": -0.1}, "Momentum must be in \\[0, 1\\)"),
+            ({"momentum": 1.0}, "Momentum must be in \\[0, 1\\)"),
+        ],
+    )
+    def test_critical_ranges(self, kwargs, error_match):
+        """Test critical ranges for key configuration values."""
+        with pytest.raises(ValueError, match=error_match):
+            OptimizationConfig(**kwargs)
+
 
 class TestBalanceMetrics:
     """Tests for BalanceMetrics dataclass."""
