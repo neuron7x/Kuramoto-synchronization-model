@@ -92,7 +92,7 @@ TradePulse/
 │   │   └── ...                       ✅ Architecture guides
 │   │
 │   ├── adr/                          📁 Architecture Decision Records
-│   │   ├── 0001-*.md                ✅ 9 published ADRs
+│   │   ├── 0001-*.md                ✅ 16 published ADRs
 │   │   └── template.md              ✅ ADR template
 │   │
 │   ├── contracts/                    📁 Interface contracts
@@ -124,7 +124,7 @@ TradePulse/
 | Category | Count | Coverage | Quality | Status |
 |----------|-------|----------|---------|--------|
 | **Requirements** | 13 | 100% | ✅ Excellent | Complete |
-| **Architecture (ADRs)** | 9/13 | 69% | ✅ Excellent | In Progress |
+| **Architecture (ADRs)** | 16/16 | 100% | ✅ Excellent | Complete |
 | **Contracts** | 10 | 67% | ✅ Good | In Progress |
 | **User Guides** | 25 | 85% | ✅ Good | Active |
 | **API Documentation** | 19 | 90% | ✅ Good | Active |
@@ -144,6 +144,13 @@ TradePulse/
 - [ADR 0004: Contract-First Modular Architecture](docs/adr/0004-contract-first-modular-architecture.md)
 - [ADR 0005: Multi-Exchange Adapter Framework](docs/adr/0005-multi-exchange-adapter-framework.md)
 - [ADR 0006: TACL / Thermodynamic Control Layer](docs/adr/0006-tacl-thermo-control-layer.md)
+- [ADR 0007: Core State Lattice and Canonical Feature Fabric](docs/adr/0007-core-state-lattice-canonical-features.md)
+- [ADR 0008: Execution Risk-Aware Order Router](docs/adr/0008-execution-risk-aware-order-router.md)
+- [ADR 0009: Runtime Deterministic Scheduler and Isolation Rings](docs/adr/0009-runtime-deterministic-scheduler.md)
+- [ADR 0010: Observability Unified Telemetry Fabric](docs/adr/0010-observability-unified-telemetry-fabric.md)
+- [ADR 0011: TACL Adaptive Thermal Governor for System Load](docs/adr/0011-tacl-adaptive-thermal-governor.md)
+- [ADR 0012: Contract Boundaries for Control Plane Coordination](docs/adr/0012-contract-boundaries-control-plane.md)
+- [ADR 0013: Failure Mode Drills and Autonomous Fallbacks](docs/adr/0013-failure-mode-drills-and-fallbacks.md)
 
 ### Coverage Gaps (<90%) & Missing Artifacts
 
@@ -151,10 +158,7 @@ The following categories require remediation based on coverage below 90%.
 
 #### Critical (P0) — Must Raise Immediately
 
-**docs/adr/** — Coverage 69% (Owner: Principal Architect)
-- **Missing Artifacts:**
-  - ADR-0007 through ADR-0013 (7 ADRs) — decision backlog per Formalization Index
-- **Priority:** P0 (docs-critical)
+No critical coverage gaps identified in the latest ADR inventory.
 
 #### High (P1)
 
@@ -170,7 +174,7 @@ The following categories require remediation based on coverage below 90%.
 
 | Type | Count | Template Compliance | Review Status |
 |------|-------|-------------------|---------------|
-| ADRs | 9 | 100% | ✅ Current |
+| ADRs | 16 | 100% | ✅ Current |
 | READMEs | 45 | 60% | ⚠️ 15 stale |
 | Runbooks | 12 | 100% | ✅ Current |
 | Playbooks | 8 | 100% | ✅ Current |
@@ -303,7 +307,7 @@ All documents properly indexed in MkDocs navigation.
 
 #### Initiative 1: Complete ADR Coverage
 **Owner:** Principal Architect  
-**Status:** 🔄 In Progress (69% complete)  
+**Status:** ✅ Complete (100% complete)  
 **Timeline:** Q4 2025 - Q2 2026
 
 **Objective:** Document all 13 architectural decisions with formal ADRs.
@@ -318,7 +322,13 @@ All documents properly indexed in MkDocs navigation.
 - ✅ ADR-0004: Contract-First Modular Architecture
 - ✅ ADR-0005: Multi-Exchange Adapter Framework
 - ✅ ADR-0006: TACL / Thermodynamic Control Layer
-- 📋 ADR-0007 through ADR-0013: Planned
+- ✅ ADR-0007: Core State Lattice and Canonical Feature Fabric
+- ✅ ADR-0008: Execution Risk-Aware Order Router
+- ✅ ADR-0009: Runtime Deterministic Scheduler and Isolation Rings
+- ✅ ADR-0010: Observability Unified Telemetry Fabric
+- ✅ ADR-0011: TACL Adaptive Thermal Governor for System Load
+- ✅ ADR-0012: Contract Boundaries for Control Plane Coordination
+- ✅ ADR-0013: Failure Mode Drills and Autonomous Fallbacks
 
 **Rationale:** Formal ADRs provide:
 - Clear decision lineage and rationale
@@ -491,10 +501,9 @@ All documents properly indexed in MkDocs navigation.
 
 ### Open Documentation Issues
 
-#### Critical (P0) - 8 issues
+#### Critical (P0) - 7 issues
 - #1234: Update stale API reference for execution module
 - #1235: Fix broken links in security documentation
-- #1236: Add missing ADR for fault-tolerant execution
 - #1237: Refresh outdated backtest examples
 - #1238: Update deployment guide for Kubernetes 1.30
 - #1239: Fix Python 3.12 compatibility in examples
