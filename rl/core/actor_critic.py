@@ -9,6 +9,9 @@ import torch.nn.functional as F
 
 from neuropro.multifractal_opt import fractional_update
 from rl.core.habit_head import HabitHead, ape_update
+from rl.core.interfaces import PolicyContract, ValueContract
+from rl.core.reward_prediction_error import RewardPredictionError
+from rl.core.safe_update import SafeUpdateGate
 from rl.explore.noise import ColoredNoiseAR1, OUProcess
 from runtime.model_registry import ModelMetadata, register_model
 
@@ -65,13 +68,20 @@ class ActorCriticFHMC:
     ) -> None:
         self.fhmc = fhmc
         self.device = torch.device(device)
-        self.policy = PolicyNet(state_dim, action_dim).to(self.device)
-        self.value = ValueNet(state_dim).to(self.device)
+        self.policy: PolicyContract = PolicyNet(state_dim, action_dim).to(self.device)
+        self.value: ValueContract = ValueNet(state_dim).to(self.device)
         self.habit = HabitHead(state_dim, action_dim).to(self.device)
 
         self.opt_policy = torch.optim.Adam(self.policy.parameters(), lr=lr)
         self.opt_value = torch.optim.Adam(self.value.parameters(), lr=lr)
         self.opt_habit = torch.optim.Adam(self.habit.parameters(), lr=lr)
+
+        safe_update_cfg = self.fhmc.cfg.get("safe_update", {})
+        self.rpe = RewardPredictionError(
+            gamma=float(safe_update_cfg.get("gamma", 0.99)),
+            clip_value=safe_update_cfg.get("rpe_clip"),
+        )
+        self.safe_update = SafeUpdateGate.from_mapping(safe_update_cfg)
 
         explore_cfg = self.fhmc.cfg["explore"]
         self.ou = OUProcess(
@@ -129,13 +139,25 @@ class ActorCriticFHMC:
 
         v = self.value(s)
         v_next = self.value(s_next).detach()
-        gamma = 0.0 if done else 0.99
-        delta_r = r + gamma * v_next - v
+        rpe_result = self.rpe.compute(r, v, v_next, done)
+        delta_r = rpe_result.delta
+        gate_decision = self.safe_update.evaluate(
+            rpe_result.metrics,
+            metadata={
+                "fhmc_state": self.fhmc.state,
+                "orexin": float(self.fhmc.orexin_value()),
+                "threat": float(self.fhmc.threat_value()),
+            },
+        )
 
         self.opt_value.zero_grad()
         (-delta_r.detach() * v).mean().backward()
         grads_value = [
-            param.grad.clone() if param.grad is not None else None
+            (
+                param.grad.clone() * gate_decision.scale
+                if param.grad is not None
+                else None
+            )
             for param in self.value.parameters()
         ]
         fractional_update(
@@ -171,7 +193,11 @@ class ActorCriticFHMC:
         self.opt_policy.zero_grad()
         loss_policy.backward()
         grads_policy = [
-            param.grad.clone() if param.grad is not None else None
+            (
+                param.grad.clone() * gate_decision.scale
+                if param.grad is not None
+                else None
+            )
             for param in self.policy.parameters()
         ]
         fractional_update(
@@ -236,6 +262,8 @@ ACTOR_CRITIC_METADATA = register_model(
             "policy_loss": "tracked",
             "value_loss": "tracked",
             "ape_loss": "tracked",
+            "reward_prediction_error": "tracked",
+            "safe_update_scale": "tracked",
         },
         model_type="actor_critic_agent",
         module="rl.core.actor_critic.ActorCriticFHMC",
