@@ -14,6 +14,7 @@ if HYPOTHESIS_AVAILABLE:  # pragma: no branch
 
 from tradepulse.core.neuro.neuro_optimizer import (
     BalanceMetrics,
+    HealthThresholds,
     NeuroOptimizer,
     OptimizationConfig,
 )
@@ -1151,6 +1152,38 @@ class TestNeuroOptimizer:
         assert 'balance_score' in health
         assert 'issues' in health
 
+    def test_assess_health_acceptable_system(self, opt_config):
+        """Test health assessment for acceptable system."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.6,
+            gaba_excitation_balance=1.4,
+            arousal_attention_coherence=0.8,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.25,
+        )
+
+        health = optimizer._assess_health(balance)
+
+        assert health['status'] == 'acceptable'
+
+    def test_assess_health_warning_system(self, opt_config):
+        """Test health assessment for warning system."""
+        optimizer = NeuroOptimizer(opt_config)
+
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.6,
+            gaba_excitation_balance=1.4,
+            arousal_attention_coherence=0.8,
+            overall_balance_score=0.5,
+            homeostatic_deviation=0.45,
+        )
+
+        health = optimizer._assess_health(balance)
+
+        assert health['status'] == 'warning'
+
     def test_assess_health_imbalanced_system(self, opt_config):
         """Test health assessment for imbalanced system."""
         optimizer = NeuroOptimizer(opt_config)
@@ -1193,6 +1226,27 @@ class TestNeuroOptimizer:
         assert any(
             'Excessive inhibition' in issue for issue in health['issues']
         )
+
+    def test_assess_health_uses_configured_thresholds(self):
+        """Ensure health status uses health threshold config."""
+        thresholds = HealthThresholds(
+            balance_score_healthy=0.9,
+            balance_score_acceptable=0.75,
+        )
+        config = OptimizationConfig(health_thresholds=thresholds)
+        optimizer = NeuroOptimizer(config)
+
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.8,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.9,
+            overall_balance_score=0.8,
+            homeostatic_deviation=0.2,
+        )
+
+        health = optimizer._assess_health(balance)
+
+        assert health['status'] == 'acceptable'
 
     def test_reset(self, opt_config, sample_params, sample_state):
         """Test optimizer reset."""

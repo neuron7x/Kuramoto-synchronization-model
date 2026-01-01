@@ -28,6 +28,54 @@ import numpy as np
 
 from tradepulse.core.neuro._validation import BoundsSpec
 
+
+def _validate_positive_range(value_range: Tuple[float, float], name: str) -> None:
+    if (
+        len(value_range) != 2
+        or not all(isinstance(value, (int, float)) for value in value_range)
+    ):
+        raise ValueError(f"{name} must be a tuple of two numbers")
+    low, high = value_range
+    if low <= 0 or high <= 0 or low >= high:
+        raise ValueError(f"{name} must be positive with low < high")
+
+
+@dataclass
+class HealthThresholds:
+    """Thresholds used to evaluate neuromodulator health."""
+
+    da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
+    ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    arousal_attention_min: float = 0.5
+    balance_score_healthy: float = 0.8
+    balance_score_acceptable: float = 0.6
+    drift_mean_threshold: float = 0.05
+    drift_median_threshold: float = 0.05
+
+    def __post_init__(self) -> None:
+        _validate_positive_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
+        _validate_positive_range(self.ei_balance_range, 'ei_balance_range')
+
+        if not 0 <= self.arousal_attention_min <= 1:
+            raise ValueError("arousal_attention_min must be in [0, 1]")
+
+        if not 0 < self.balance_score_acceptable <= 1:
+            raise ValueError("balance_score_acceptable must be in (0, 1]")
+
+        if not 0 < self.balance_score_healthy <= 1:
+            raise ValueError("balance_score_healthy must be in (0, 1]")
+
+        if self.balance_score_acceptable > self.balance_score_healthy:
+            raise ValueError(
+                "balance_score_acceptable must be <= balance_score_healthy"
+            )
+
+        if self.drift_mean_threshold <= 0:
+            raise ValueError("drift_mean_threshold must be positive")
+
+        if self.drift_median_threshold <= 0:
+            raise ValueError("drift_median_threshold must be positive")
+
 @dataclass
 class OptimizationConfig:
     """Configuration for neuromodulator optimization.
@@ -80,6 +128,8 @@ class OptimizationConfig:
         Acceptable dopamine/serotonin ratio range for health checks
     ei_balance_range : Tuple[float, float]
         Acceptable excitation/inhibition balance range for health checks
+    health_thresholds : Optional[HealthThresholds]
+        Threshold configuration for health assessments
     bounds_spec : Dict[str, Dict[str, BoundsSpec]]
         Structured parameter bounds with enforcement behavior
     param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
@@ -109,6 +159,7 @@ class OptimizationConfig:
     regime_adaptation: bool = True
     da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
     ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    health_thresholds: Optional[HealthThresholds] = None
     bounds_spec: Dict[str, Dict[str, BoundsSpec]] = field(default_factory=dict)
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
@@ -149,8 +200,16 @@ class OptimizationConfig:
         if self.stability_epsilon <= 0:
             raise ValueError("stability_epsilon must be positive")
 
-        self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
-        self._validate_range(self.ei_balance_range, 'ei_balance_range')
+        if self.health_thresholds is None:
+            self.health_thresholds = HealthThresholds(
+                da_5ht_ratio_range=self.da_5ht_ratio_range,
+                ei_balance_range=self.ei_balance_range,
+            )
+        elif not isinstance(self.health_thresholds, HealthThresholds):
+            raise ValueError("health_thresholds must be a HealthThresholds instance")
+
+        self.da_5ht_ratio_range = self.health_thresholds.da_5ht_ratio_range
+        self.ei_balance_range = self.health_thresholds.ei_balance_range
         self._validate_bounds_spec()
         self._validate_param_bounds()
 
@@ -158,17 +217,6 @@ class OptimizationConfig:
             np.dtype(self.dtype)
         except TypeError as exc:
             raise ValueError(f"Invalid dtype supplied: {self.dtype}") from exc
-
-    @staticmethod
-    def _validate_range(value_range: Tuple[float, float], name: str) -> None:
-        if (
-            len(value_range) != 2
-            or not all(isinstance(value, (int, float)) for value in value_range)
-        ):
-            raise ValueError(f"{name} must be a tuple of two numbers")
-        low, high = value_range
-        if low <= 0 or high <= 0 or low >= high:
-            raise ValueError(f"{name} must be positive with low < high")
 
     def _validate_param_bounds(self) -> None:
         if not isinstance(self.param_bounds, dict):
@@ -254,8 +302,6 @@ class NeuroOptimizer:
     """
 
     DRIFT_WINDOW = 10
-    DRIFT_MEAN_THRESHOLD = 0.05
-    DRIFT_MEDIAN_THRESHOLD = 0.05
 
     def __init__(
         self,
@@ -895,20 +941,22 @@ class NeuroOptimizer:
                 'message': 'No balance data available',
             }
 
+        thresholds = self.config.health_thresholds
+
         issues = []
         drift_risk = {
             'status': 'unknown',
             'thresholds': {
-                'mean_delta': self.DRIFT_MEAN_THRESHOLD,
-                'median_delta': self.DRIFT_MEDIAN_THRESHOLD,
+                'mean_delta': thresholds.drift_mean_threshold,
+                'median_delta': thresholds.drift_median_threshold,
             },
             'violations': [],
             'max_mean_delta': 0.0,
             'max_median_delta': 0.0,
         }
 
-        da_ratio_min, da_ratio_max = self.config.da_5ht_ratio_range
-        ei_min, ei_max = self.config.ei_balance_range
+        da_ratio_min, da_ratio_max = thresholds.da_5ht_ratio_range
+        ei_min, ei_max = thresholds.ei_balance_range
 
         # Check DA/5-HT ratio
         if balance.dopamine_serotonin_ratio < da_ratio_min:
@@ -923,7 +971,7 @@ class NeuroOptimizer:
             issues.append('Excessive excitation - impulsive behavior risk')
 
         # Check arousal-attention coherence
-        if balance.arousal_attention_coherence < 0.5:
+        if balance.arousal_attention_coherence < thresholds.arousal_attention_min:
             issues.append('Poor arousal-attention coherence - attention deficits')
 
         if drift_stats and drift_stats.get('stats'):
@@ -937,8 +985,8 @@ class NeuroOptimizer:
                     max_mean = max(max_mean, mean_delta)
                     max_median = max(max_median, median_delta)
                     if (
-                        mean_delta >= self.DRIFT_MEAN_THRESHOLD
-                        or median_delta >= self.DRIFT_MEDIAN_THRESHOLD
+                        mean_delta >= thresholds.drift_mean_threshold
+                        or median_delta >= thresholds.drift_median_threshold
                     ):
                         violations.append(f"{module}.{name}")
 
@@ -959,10 +1007,10 @@ class NeuroOptimizer:
             drift_risk['status'] = 'unknown'
 
         # Overall assessment
-        if balance.overall_balance_score > 0.8:
+        if balance.overall_balance_score > thresholds.balance_score_healthy:
             status = 'healthy'
             message = 'Neuromodulator system is well-balanced'
-        elif balance.overall_balance_score > 0.6:
+        elif balance.overall_balance_score > thresholds.balance_score_acceptable:
             status = 'acceptable'
             message = 'Minor imbalances detected but within acceptable range'
         else:

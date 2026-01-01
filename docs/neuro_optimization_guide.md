@@ -334,6 +334,24 @@ The `NeuroOptimizer` coordinates all neuromodulators to maintain homeostatic bal
 - **Health Monitoring**: Real-time assessment of system health
 - **Convergence Detection**: Automatic detection of optimization convergence
 
+### Health Status Rules
+
+Health status is computed from the latest balance metrics using the configured
+`OptimizationConfig.health_thresholds`:
+
+- **Status thresholds** (based on `overall_balance_score`):
+  - `healthy` if `overall_balance_score > balance_score_healthy`
+  - `acceptable` if `balance_score_acceptable < overall_balance_score <= balance_score_healthy`
+  - `warning` if `overall_balance_score <= balance_score_acceptable`
+- **Issue flags** (populate `health["issues"]`):
+  - DA/5-HT ratio outside `da_5ht_ratio_range`
+  - E/I balance outside `ei_balance_range`
+  - Arousal-attention coherence below `arousal_attention_min`
+  - Parameter drift exceeds `drift_mean_threshold` or `drift_median_threshold`
+
+Status is driven purely by the balance score thresholds, while the issues list
+identifies specific ratio, coherence, or drift violations to act on.
+
 ### Proportional Gradient Heuristic
 
 The optimizer uses proportional deviations from setpoints to estimate gradients.
@@ -466,6 +484,7 @@ class OptimizationConfig:
     enable_plasticity: bool = True     # Enable plasticity
     plasticity_window: int = 50        # Plasticity window
     regime_adaptation: bool = True     # Regime adaptation
+    health_thresholds: Optional[HealthThresholds] = None  # Health status thresholds
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
 
