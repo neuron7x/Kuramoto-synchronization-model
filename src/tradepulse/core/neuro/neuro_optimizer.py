@@ -26,6 +26,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from tradepulse.core.neuro._validation import BoundsSpec
 
 @dataclass
 class OptimizationConfig:
@@ -77,6 +78,8 @@ class OptimizationConfig:
         Acceptable dopamine/serotonin ratio range for health checks
     ei_balance_range : Tuple[float, float]
         Acceptable excitation/inhibition balance range for health checks
+    bounds_spec : Dict[str, Dict[str, BoundsSpec]]
+        Structured parameter bounds with enforcement behavior
     param_bounds : Dict[str, Dict[str, Tuple[float, float]]]
         Optional parameter bounds by module and parameter name
     """
@@ -103,6 +106,7 @@ class OptimizationConfig:
     regime_adaptation: bool = True
     da_5ht_ratio_range: Tuple[float, float] = (1.0, 3.0)
     ei_balance_range: Tuple[float, float] = (1.0, 2.5)
+    bounds_spec: Dict[str, Dict[str, BoundsSpec]] = field(default_factory=dict)
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -141,6 +145,7 @@ class OptimizationConfig:
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
+        self._validate_bounds_spec()
         self._validate_param_bounds()
 
         try:
@@ -178,6 +183,27 @@ class OptimizationConfig:
                 if low >= high:
                     raise ValueError(
                         f"param_bounds[{module!r}][{param_name!r}] must have low < high"
+                    )
+
+    def _validate_bounds_spec(self) -> None:
+        if not isinstance(self.bounds_spec, dict):
+            raise ValueError("bounds_spec must be a dict")
+        for module, module_bounds in self.bounds_spec.items():
+            if not isinstance(module_bounds, dict):
+                raise ValueError(f"bounds_spec[{module!r}] must be a dict")
+            for param_name, spec in module_bounds.items():
+                if not isinstance(spec, BoundsSpec):
+                    raise ValueError(
+                        f"bounds_spec[{module!r}][{param_name!r}] must be a BoundsSpec"
+                    )
+                if spec.min_value >= spec.max_value:
+                    raise ValueError(
+                        f"bounds_spec[{module!r}][{param_name!r}] must have min_value < max_value"
+                    )
+                if spec.behavior not in {"clip", "raise"}:
+                    raise ValueError(
+                        f"bounds_spec[{module!r}][{param_name!r}] must have behavior "
+                        "set to 'clip' or 'raise'"
                     )
 
 
@@ -645,10 +671,29 @@ class NeuroOptimizer:
                     self._xp.clip(new_value, param_value * 0.8, param_value * 1.2)
                 )
 
-                # Apply config bounds for safety (if provided)
-                bounds = self.config.param_bounds.get(module, {}).get(param_name)
-                if bounds is not None:
-                    new_value = float(self._xp.clip(new_value, bounds[0], bounds[1]))
+                bounds_spec = self.config.bounds_spec.get(module, {}).get(param_name)
+                if bounds_spec is not None:
+                    if bounds_spec.behavior == "clip":
+                        new_value = float(
+                            self._xp.clip(
+                                new_value, bounds_spec.min_value, bounds_spec.max_value
+                            )
+                        )
+                    elif (
+                        new_value < bounds_spec.min_value
+                        or new_value > bounds_spec.max_value
+                    ):
+                        raise ValueError(
+                            f"{module}.{param_name} must be between "
+                            f"{bounds_spec.min_value} and {bounds_spec.max_value}"
+                        )
+                else:
+                    # Apply config bounds for safety (legacy)
+                    bounds = self.config.param_bounds.get(module, {}).get(param_name)
+                    if bounds is not None:
+                        new_value = float(
+                            self._xp.clip(new_value, bounds[0], bounds[1])
+                        )
 
                 updated[module][param_name] = new_value
 

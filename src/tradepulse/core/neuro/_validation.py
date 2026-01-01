@@ -20,9 +20,11 @@ validate_neuro_invariants : Validate neuromodulator metric bounds
 from __future__ import annotations
 
 import math
-from typing import Optional
+from dataclasses import dataclass
+from typing import Literal, Optional
 
 __all__ = [
+    "BoundsSpec",
     "ensure_float",
     "ensure_int",
     "ensure_bool",
@@ -32,6 +34,25 @@ __all__ = [
     "validate_positive",
     "validate_neuro_invariants",
 ]
+
+
+@dataclass(frozen=True)
+class BoundsSpec:
+    """Structured bounds specification for parameter validation.
+
+    Attributes
+    ----------
+    min_value : float
+        Inclusive lower bound.
+    max_value : float
+        Inclusive upper bound.
+    behavior : Literal["clip", "raise"]
+        Behavior when a value falls outside bounds.
+    """
+
+    min_value: float
+    max_value: float
+    behavior: Literal["clip", "raise"] = "clip"
 
 
 def ensure_float(
