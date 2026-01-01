@@ -134,6 +134,11 @@ vlpo_filter:
   window_size: 64
   outlier_threshold: 3.0  # Standard deviations
   smoothing_alpha: 0.2
+  calibration_mode: ema_minmax
+  calibration_window: 256
+  calibration_alpha: 0.2
+  quantile_low: 0.05
+  quantile_high: 0.95
 
 # Dual approval system
 dual_approval:
