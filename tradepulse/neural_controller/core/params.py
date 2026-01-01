@@ -38,6 +38,7 @@ class Params:
     eta: float = 0.2
     M0: float = 0.8
     prediction_gain: float = 0.08
+    sensory_confidence_gain: float = 1.0
 
 
 @dataclass(frozen=True)

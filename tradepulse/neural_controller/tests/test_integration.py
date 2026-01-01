@@ -145,6 +145,31 @@ def test_bridge_flow(controller: NeuralMarketController) -> None:
     assert out["temperature"] > 0.0
 
 
+def test_sensory_confidence_modulates_decision() -> None:
+    params = Params(sensory_confidence_gain=1.0)
+    controller_full = NeuralMarketController(
+        params, EKFConfig(), PolicyConfig(), RiskConfig(), HomeoConfig()
+    )
+    controller_missing = NeuralMarketController(
+        params, EKFConfig(), PolicyConfig(), RiskConfig(), HomeoConfig()
+    )
+    baseline = dict(
+        dd=0.0, liq=0.0, reg=0.0, vol=0.0, reward=0.0, var_breach=False, m_proxy=0.6
+    )
+    controller_full.decide(dict(baseline))
+    controller_missing.decide(dict(baseline))
+
+    updated = dict(
+        dd=0.0, liq=0.6, reg=0.4, vol=0.2, reward=0.0, var_breach=False, m_proxy=0.6
+    )
+    decision_full = controller_full.decide(dict(updated))
+    updated.pop("dd")
+    decision_missing = controller_missing.decide(dict(updated))
+
+    assert decision_missing["sensory_confidence"] < decision_full["sensory_confidence"]
+    assert decision_missing["S"] < decision_full["S"]
+
+
 def test_bridge_emits_predictive_state_from_config() -> None:
     controller = NeuralMarketController(
         Params(),

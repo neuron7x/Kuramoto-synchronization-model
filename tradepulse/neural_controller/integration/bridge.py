@@ -249,6 +249,7 @@ class NeuralMarketController:
         sensory = self.sensory.transform(schema_output)
         timing_sensory_ms = (time.perf_counter() - start) * 1000.0
         obs.update(schema_output.normalized)
+        obs["sensory_confidence"] = schema_output.sensory_confidence
         obs.update(sensory.filtered)
 
         start = time.perf_counter()
@@ -288,6 +289,7 @@ class NeuralMarketController:
             "prediction_error": prediction_error,
             "action": action,
             "reward": float(obs.get("reward", 0.0)),
+            "sensory_confidence": float(obs.get("sensory_confidence", 1.0)),
             "timing_sensory_ms": timing_sensory_ms,
             "timing_predictive_ms": timing_predictive_ms,
             "timing_model_step_ms": timing_model_step_ms,

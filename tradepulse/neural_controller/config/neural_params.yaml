@@ -16,6 +16,7 @@ model:
   eta: 0.2
   M0: 0.8
   prediction_gain: 0.08
+  sensory_confidence_gain: 1.0
 
 ekf:
   q: 0.001

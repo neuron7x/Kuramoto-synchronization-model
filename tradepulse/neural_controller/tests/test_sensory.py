@@ -15,12 +15,14 @@ def test_sensory_schema_nan_inf_behavior() -> None:
     assert first.normalized["dd"] == 0.0
     assert first.normalized["liq"] == 0.4
     assert "nan" in first.quality_flags["dd"]
+    assert first.sensory_confidence < 1.0
 
     second = schema.validate({"dd": float("inf"), "liq": float("inf")})
     assert second.normalized["dd"] == 0.0
     assert second.normalized["liq"] == 0.4
     assert "nan" in second.quality_flags["dd"]
     assert "nan" in second.quality_flags["liq"]
+    assert second.sensory_confidence == 0.0
 
 
 def test_sensory_schema_out_of_range_clip() -> None:
