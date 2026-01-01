@@ -28,6 +28,7 @@ from ..core.params import (
     Params,
     PolicyConfig,
     RiskConfig,
+    SensoryConfig,
 )
 from ..core.state import EMHState
 from ..estimation.belief import VolBelief
@@ -165,6 +166,37 @@ def test_bridge_emits_predictive_state_from_config() -> None:
     assert "prediction_error_channels" in decision
     assert set(decision["prediction_mu"]) == {"dd", "liq", "reg", "vol"}
     assert set(decision["prediction_error_channels"]) == {"dd", "liq", "reg", "vol"}
+
+
+def test_predictive_error_reflects_sensory_filtering() -> None:
+    base_kwargs = dict(
+        params=Params(),
+        ekf=EKFConfig(),
+        policy=PolicyConfig(),
+        risk=RiskConfig(),
+        homeo=HomeoConfig(),
+    )
+    low_contrast = NeuralMarketController(
+        **base_kwargs,
+        sensory=SensoryConfig(contrast_gain=0.0),
+    )
+    high_contrast = NeuralMarketController(
+        **base_kwargs,
+        sensory=SensoryConfig(contrast_gain=1.0),
+    )
+    obs_a = dict(
+        dd=0.2, liq=0.8, reg=0.4, vol=0.6, reward=0.01, var_breach=False, m_proxy=0.6
+    )
+    obs_b = dict(
+        dd=0.3, liq=0.7, reg=0.2, vol=0.9, reward=0.02, var_breach=False, m_proxy=0.6
+    )
+
+    low_contrast.decide(obs_a)
+    high_contrast.decide(obs_a)
+    low_error = low_contrast.decide(obs_b)["prediction_error"]
+    high_error = high_contrast.decide(obs_b)["prediction_error"]
+
+    assert abs(low_error - high_error) > 1e-6
 
 
 def test_toy_stream_invariants(controller: NeuralMarketController) -> None:

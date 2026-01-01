@@ -237,7 +237,7 @@ class NeuralMarketController:
         sensory = self.sensory.transform(obs)
         obs.update(sensory.filtered)
 
-        prediction_error = float(self.predictive.error_energy(obs))
+        prediction_error = float(self.predictive.error_energy(sensory.filtered))
         obs["prediction_error"] = prediction_error
 
         belief = self.belief.step(float(obs.get("vol", 0.0)))

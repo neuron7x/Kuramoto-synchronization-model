@@ -17,7 +17,8 @@ class PredictiveCoder:
     """Predictive coding module that emits aggregated prediction error.
 
     Maintains stateful prediction means across steps; errors reflect the most
-    recent observation update cadence.
+    recent observation update cadence. Inputs must be filtered and normalized
+    to the [0, 1] range.
     """
 
     cfg: PredictiveConfig = field(default_factory=PredictiveConfig)
