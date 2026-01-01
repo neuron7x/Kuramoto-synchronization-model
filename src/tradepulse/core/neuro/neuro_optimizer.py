@@ -212,6 +212,16 @@ class OptimizationConfig:
         except TypeError as exc:
             raise ValueError(f"Invalid dtype supplied: {self.dtype}") from exc
 
+    @property
+    def da_5ht_ratio_range(self) -> Tuple[float, float]:
+        """Expose DA/5-HT ratio bounds from the numeric configuration."""
+        return self.numeric.da_5ht_ratio_range
+
+    @property
+    def ei_balance_range(self) -> Tuple[float, float]:
+        """Expose excitation/inhibition bounds from the numeric configuration."""
+        return self.numeric.ei_balance_range
+
     def _validate_param_bounds(self) -> None:
         if not isinstance(self.param_bounds, dict):
             raise ValueError("param_bounds must be a dict")
@@ -971,8 +981,8 @@ class NeuroOptimizer:
             'max_median_delta': 0.0,
         }
 
-        da_ratio_min, da_ratio_max = self.config.numeric.da_5ht_ratio_range
-        ei_min, ei_max = self.config.numeric.ei_balance_range
+        da_ratio_min, da_ratio_max = self.config.da_5ht_ratio_range
+        ei_min, ei_max = self.config.ei_balance_range
 
         # Check DA/5-HT ratio
         if balance.dopamine_serotonin_ratio < da_ratio_min:
