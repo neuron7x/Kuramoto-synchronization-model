@@ -1,3 +1,9 @@
+---
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # TradePulse Modules
 
 Колекція автономних модулів, які можна використовувати окремо або разом у пайплайнах TradePulse.

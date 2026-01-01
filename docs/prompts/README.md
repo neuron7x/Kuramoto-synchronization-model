@@ -1,3 +1,9 @@
+---
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # LLM Development Prompts
 
 This directory contains LLM system prompts and agent configurations that were used during the development of TradePulse. These files are **not part of the runtime system** and are retained for historical reference only.

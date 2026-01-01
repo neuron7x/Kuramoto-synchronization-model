@@ -1,3 +1,9 @@
+---
+owner: neuro@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Serotonin Controller v2.4.0 - Deployment Guide
 
 **Version**: v2.4.0

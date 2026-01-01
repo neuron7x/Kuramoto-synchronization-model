@@ -1,3 +1,9 @@
+---
+owner: integrations@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # TradePulse Interfaces
 
 This directory contains the interface layer for TradePulse, providing entry points for users and systems to interact with the trading framework.

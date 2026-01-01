@@ -1,3 +1,9 @@
+---
+owner: sre@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Observability as Code
 
 This directory captures the TradePulse observability stack as versioned code. All

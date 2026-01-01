@@ -1,3 +1,9 @@
+---
+owner: security@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Policy Decision Contract
 
 This document defines the formal decision contract for MLSdM policy governance.

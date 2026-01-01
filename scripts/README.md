@@ -1,3 +1,9 @@
+---
+owner: platform@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Scripts
 
 This directory hosts the consolidated command line tooling for TradePulse.

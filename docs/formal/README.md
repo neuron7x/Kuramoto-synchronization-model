@@ -1,3 +1,9 @@
+---
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Formal Specifications and Verification
 
 **Version:** 1.0.0

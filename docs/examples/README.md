@@ -1,3 +1,9 @@
+---
+owner: dx@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Usage Examples
 
 This directory contains practical examples for using TradePulse.

@@ -1,3 +1,9 @@
+---
+owner: quant-systems@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Calibration Parameter Reference
 
 Comprehensive reference for all calibration parameters across TradePulse controllers.

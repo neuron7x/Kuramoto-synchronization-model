@@ -1,3 +1,9 @@
+---
+owner: docs@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Enablement Artifacts Index
 
 This folder stores templates, ownership matrices, schedules, and assessments that support the engineering enablement program. Documents are version-controlled and follow the documentation governance workflow.

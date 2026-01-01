@@ -1,3 +1,9 @@
+---
+owner: security@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # Security Reports Guide — TradePulse
 
 > How to read and respond to security reports in CI.

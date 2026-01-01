@@ -1,3 +1,9 @@
+---
+owner: integrations@tradepulse
+review_cadence: quarterly
+last_reviewed: 2026-01-01
+---
+
 # TradePulse Interface Contracts Specification
 
 **Version:** 1.0.0
