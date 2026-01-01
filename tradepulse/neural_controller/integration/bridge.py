@@ -237,13 +237,61 @@ class NeuralMarketController:
         )
         return inst
 
+    def _validate_schema_metadata(
+        self,
+        schema_version: int | None,
+        expected_fields: object,
+    ) -> None:
+        if schema_version is not None and schema_version != SCHEMA_VERSION:
+            log.critical(
+                "Sensory schema version mismatch",  # noqa: TRY400 - structured logging
+                extra={
+                    "event": "neuro.schema_version_mismatch",
+                    "schema_version": schema_version,
+                    "expected": SCHEMA_VERSION,
+                },
+            )
+            raise ValueError(
+                "Unsupported sensory schema version "
+                f"{schema_version!r}; expected {SCHEMA_VERSION}."
+            )
+        if expected_fields is None:
+            return
+        if not isinstance(expected_fields, (list, tuple, set)):
+            log.critical(
+                "Sensory schema fields metadata is invalid",
+                extra={
+                    "event": "neuro.schema_fields_invalid",
+                    "expected_fields": expected_fields,
+                },
+            )
+            raise ValueError("Sensory schema expected_fields must be a collection.")
+        expected = tuple(expected_fields)
+        schema_fields = {channel.name for channel in self.sensory_schema.channels}
+        if set(expected) != schema_fields:
+            log.critical(
+                "Sensory schema fields mismatch",
+                extra={
+                    "event": "neuro.schema_fields_mismatch",
+                    "expected_fields": expected,
+                    "schema_fields": sorted(schema_fields),
+                },
+            )
+            raise ValueError(
+                "Sensory schema fields mismatch "
+                f"{expected!r}; expected {sorted(schema_fields)!r}."
+            )
+
     def decide(
         self,
-        obs: Dict[str, float | bool],
+        obs: Dict[str, Any],
         *,
         include_prediction_snapshot: bool = False,
     ) -> Dict[str, Any]:
         obs = dict(obs)
+        schema_version = obs.pop("schema_version", None)
+        expected_fields = obs.pop("expected_fields", None)
+        self._validate_schema_metadata(schema_version, expected_fields)
         start = time.perf_counter()
         schema_output = self.sensory_schema.validate(obs)
         sensory = self.sensory.transform(schema_output)
@@ -346,7 +394,7 @@ class NeuralTACLBridge:
 
     def step(
         self,
-        obs: Dict[str, float | bool],
+        obs: Dict[str, Any],
         *,
         include_prediction_snapshot: bool = False,
     ) -> Dict[str, Any]:

@@ -32,6 +32,7 @@ from ..core.params import (
 from ..core.state import EMHState
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
+from ..core.sensory_schema import SCHEMA_VERSION
 from ..integration.adapter import MarketDataAdapter
 from ..integration.bridge import (
     KuramotoSync,
@@ -224,6 +225,19 @@ def test_market_adapter_extremes() -> None:
     zero_obs = adapter.transform({}, {})
     assert zero_obs["dd"] == 0.0
     assert zero_obs["reward"] == 0.0
+
+
+def test_schema_version_mismatch_blocks_pipeline(controller: NeuralMarketController) -> None:
+    adapter = MarketDataAdapter(schema_version=SCHEMA_VERSION + 1)
+    obs = adapter.transform(
+        {"bid_ask_spread": 0.02, "regime_deviation": 0.1, "realized_vol_20": 0.2},
+        {"current_drawdown": 0.1, "return": 0.01, "loss": 0.02},
+    )
+    bridge = NeuralTACLBridge(
+        controller, DummyTACL(), DummyKuramoto(), sync_threshold=0.3
+    )
+    with pytest.raises(ValueError, match="schema version"):
+        bridge.step(obs)
 
 
 def test_metrics_exporter_tracks_tail() -> None:
