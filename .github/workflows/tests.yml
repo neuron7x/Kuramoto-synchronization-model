@@ -494,6 +494,11 @@ jobs:
                   handle.write(f"branch_rate={branch_rate:.2f}\n")
           PY
 
+      - name: Enforce coverage regression guard (fast)
+        run: |
+          python -m tools.coverage.drop_guard \
+            --baseline configs/quality/coverage_baseline.json \
+            --coverage coverage.xml
 
       - name: Summarize fast test results
         if: always()
