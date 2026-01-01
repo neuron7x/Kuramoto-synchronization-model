@@ -17,6 +17,8 @@ import torch.optim as optim
 from numpy.random import Generator, default_rng
 from scipy.stats import ks_2samp, zscore
 
+from runtime.model_registry import ModelMetadata, register_model
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -820,3 +822,45 @@ class MisanthropicAgent:
         """Public helper so external controllers can push telemetry."""
 
         self._emit_metrics(metrics)
+
+
+QRDQN_METADATA = register_model(
+    ModelMetadata(
+        model_id="misanthropic_qrdqn",
+        training_data_window={
+            "source": "streaming_lob_features",
+            "window_shape": "state_dim=6",
+            "reference_window": "200 states",
+            "replay_buffer": "100000 transitions",
+        },
+        eval_metrics={
+            "target_coverage": 0.90,
+            "cvar_floor": -0.05,
+            "ood_alert_threshold": 0.5,
+        },
+        model_type="qrdqn",
+        module="runtime.misanthropic_agent.QRDQN",
+        owners=("runtime", "risk-control"),
+        notes="Primary QR-DQN policy backbone for the misanthropic trading agent.",
+    )
+)
+
+MISANTHROPIC_AGENT_METADATA = register_model(
+    ModelMetadata(
+        model_id="misanthropic_agent_policy",
+        training_data_window={
+            "source": "online_policy_learning",
+            "window_shape": "per-step updates + PER buffer",
+            "reference_window": "200 state tracker",
+        },
+        eval_metrics={
+            "coverage_floor": 0.80,
+            "capital_guard": "min_capital_ratio",
+            "lambda_cvar_max": 10.0,
+        },
+        model_type="agent",
+        module="runtime.misanthropic_agent.MisanthropicAgent",
+        owners=("runtime", "risk-control"),
+        notes="Composite agent policy with CVaR, OOD, and conformal coverage gates.",
+    )
+)

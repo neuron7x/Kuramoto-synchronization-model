@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from neuropro.multifractal_opt import fractional_update
 from rl.core.habit_head import HabitHead, ape_update
 from rl.explore.noise import ColoredNoiseAR1, OUProcess
+from runtime.model_registry import ModelMetadata, register_model
 
 
 class PolicyNet(nn.Module):
@@ -182,3 +183,63 @@ class ActorCriticFHMC:
             mask_states=self.fhmc.cfg["fractional_update"].get("on_states"),
             current_state=self.fhmc.state,
         )
+
+
+POLICY_NET_METADATA = register_model(
+    ModelMetadata(
+        model_id="fhmc_policy_net",
+        training_data_window={
+            "source": "online_fhmc_transitions",
+            "window_shape": "state_dim/action_dim configurable",
+            "update_rule": "fractional_update",
+        },
+        eval_metrics={
+            "policy_loss": "tracked",
+            "entropy": "tracked",
+            "action_stability": "tracked",
+        },
+        model_type="gaussian_policy_mlp",
+        module="rl.core.actor_critic.PolicyNet",
+        owners=("rl", "fhmc"),
+        notes="Gaussian policy network used by FHMC actor-critic agent.",
+    )
+)
+
+VALUE_NET_METADATA = register_model(
+    ModelMetadata(
+        model_id="fhmc_value_net",
+        training_data_window={
+            "source": "online_fhmc_transitions",
+            "window_shape": "state_dim configurable",
+            "update_rule": "fractional_update",
+        },
+        eval_metrics={
+            "value_loss": "tracked",
+            "td_error": "tracked",
+        },
+        model_type="value_mlp",
+        module="rl.core.actor_critic.ValueNet",
+        owners=("rl", "fhmc"),
+        notes="State-value estimator for FHMC actor-critic learning loop.",
+    )
+)
+
+ACTOR_CRITIC_METADATA = register_model(
+    ModelMetadata(
+        model_id="fhmc_actor_critic_agent",
+        training_data_window={
+            "source": "online_fhmc_transitions",
+            "window_shape": "streaming episodes",
+            "update_rule": "actor_critic + habit head",
+        },
+        eval_metrics={
+            "policy_loss": "tracked",
+            "value_loss": "tracked",
+            "ape_loss": "tracked",
+        },
+        model_type="actor_critic_agent",
+        module="rl.core.actor_critic.ActorCriticFHMC",
+        owners=("rl", "fhmc"),
+        notes="Actor-critic agent integrating FHMC biomarkers and habit head.",
+    )
+)
