@@ -1,3 +1,11 @@
+---
+owner: data@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # DATA INVENTORY (draft)
 
 This inventory captures the datasets shipped under `data/` and the embedded fixtures referenced by tests. Row counts and sizes are approximate and derived from the current repository state.

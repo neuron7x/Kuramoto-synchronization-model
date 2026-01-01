@@ -1,3 +1,11 @@
+---
+owner: dx@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # TradePulse User Interaction Guide
 
 > **Comprehensive documentation for all TradePulse interaction methods**

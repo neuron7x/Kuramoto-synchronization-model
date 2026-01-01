@@ -1,3 +1,11 @@
+---
+owner: sre@tradepulse
+review_cadence: monthly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # TradePulse Incident Runbook
 
 > **Коли все йде по пизді — відкривай цей документ.**

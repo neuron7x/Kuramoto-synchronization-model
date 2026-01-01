@@ -1,3 +1,11 @@
+---
+owner: platform@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # Dependency Management Guide
 
 This document explains how TradePulse manages Python dependencies to ensure reproducible builds, security, and maintainability.

@@ -1,3 +1,11 @@
+---
+owner: data@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # TradePulse Data Model Documentation
 
 This document describes the unified data layer for TradePulse, providing a single source of truth for all market data, trading events, and strategy inputs.

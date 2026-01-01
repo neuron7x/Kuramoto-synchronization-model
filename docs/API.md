@@ -1,3 +1,11 @@
+---
+owner: integrations@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # TradePulse API Reference
 
 Comprehensive reference for TradePulse public APIs: Python library, CLI, and HTTP endpoints.

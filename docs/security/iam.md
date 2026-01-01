@@ -1,7 +1,14 @@
 ---
 title: Identity and Access Management
-description: Centralised identity architecture covering SSO, MFA, least-privilege policy automation, and RBAC enforcement for TradePulse.
+description: Centralised identity architecture covering SSO, MFA, least-privilege
+  policy automation, and RBAC enforcement for TradePulse.
+owner: security@tradepulse
+review_cadence: quarterly
+last_reviewed: '2025-12-08'
+status: active
+version: 1.0.0
 ---
+
 
 # Identity and Access Management
 

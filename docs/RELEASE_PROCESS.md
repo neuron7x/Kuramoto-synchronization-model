@@ -1,3 +1,11 @@
+---
+owner: release@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # Release Process — TradePulse
 
 > How to create releases — from merge to production.

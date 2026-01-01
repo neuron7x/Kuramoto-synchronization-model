@@ -1,7 +1,14 @@
 ---
 title: Production Security Architecture
-description: Segmentation, trust boundaries, and zero trust controls for the TradePulse production estate.
+description: Segmentation, trust boundaries, and zero trust controls for the TradePulse
+  production estate.
+owner: security@tradepulse
+review_cadence: quarterly
+last_reviewed: '2025-12-08'
+status: active
+version: 1.0.0
 ---
+
 
 # Production Security Architecture
 

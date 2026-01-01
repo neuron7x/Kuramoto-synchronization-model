@@ -1,7 +1,14 @@
 ---
 title: Data Loss Prevention and Retention Policies
-description: Classification, retention, deletion automation, leakage detection, and minimisation controls for TradePulse data assets.
+description: Classification, retention, deletion automation, leakage detection, and
+  minimisation controls for TradePulse data assets.
+owner: security@tradepulse
+review_cadence: quarterly
+last_reviewed: '2025-12-08'
+status: active
+version: 1.0.0
 ---
+
 
 # Data Loss Prevention and Retention Policies
 

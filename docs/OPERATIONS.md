@@ -1,3 +1,11 @@
+---
+owner: sre@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # Operations Guide: Thermodynamic Validation and Progressive Rollout
 
 This runbook explains how to triage failures in the thermodynamic validation

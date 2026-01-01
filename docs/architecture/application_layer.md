@@ -1,6 +1,12 @@
 ---
 title: Application Layer Orchestration Guide
+owner: platform@tradepulse
+review_cadence: quarterly
+last_reviewed: '2025-12-08'
+status: active
+version: 1.0.0
 ---
+
 
 # Application Layer Orchestration
 

@@ -1,3 +1,11 @@
+---
+owner: data@tradepulse
+review_cadence: quarterly
+last_reviewed: 2025-12-08
+status: active
+version: 1.0.0
+---
+
 # Data Governance Rules
 
 This repository ships a small set of governed datasets under `data/`. Every dataset must declare provenance, be fingerprinted, and pass schema/semantic validation. CI blocks changes that violate these rules.
