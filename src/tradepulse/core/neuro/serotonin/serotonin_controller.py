@@ -1856,6 +1856,11 @@ class SerotoninController:
             self._last_decision = None
             self._trace_events.clear()
             self._safety_monitor.reset()
+            self._receptor_prev_stress = None
+            self._last_receptor_trace = None
+            self._last_receptor_budget_cap = None
+            if self._receptor_bank and self._receptors_cfg.get("enabled"):
+                self._receptor_bank = ReceptorBank(self._receptors_cfg.get("enabled_list"))
             logging.getLogger(__name__).info("Controller state reset")
 
     def health_check(self) -> dict:
