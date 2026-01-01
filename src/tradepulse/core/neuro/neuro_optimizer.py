@@ -64,6 +64,8 @@ class OptimizationConfig:
         Convergence threshold for early stopping
     history_window : int
         Window length for performance history tracking
+    stability_epsilon : float
+        Numerical stability constant for ratio/stability denominators
     dtype : str
         Floating point dtype for numerical buffers (e.g., "float32")
     use_gpu : bool
@@ -99,6 +101,7 @@ class OptimizationConfig:
     max_iterations: int = 100
     convergence_threshold: float = 0.001
     history_window: int = 20
+    stability_epsilon: float = 1e-6
     dtype: str = "float32"
     use_gpu: bool = False
     enable_plasticity: bool = True
@@ -142,6 +145,9 @@ class OptimizationConfig:
 
         if self.history_window < 1:
             raise ValueError("History window must be a positive integer")
+
+        if self.stability_epsilon <= 0:
+            raise ValueError("stability_epsilon must be positive")
 
         self._validate_range(self.da_5ht_ratio_range, 'da_5ht_ratio_range')
         self._validate_range(self.ei_balance_range, 'ei_balance_range')
@@ -412,12 +418,13 @@ class NeuroOptimizer:
         )
 
         # Calculate ratios
-        da_5ht_ratio = da_level / (sero_level + self._dtype.type(1e-6))
+        epsilon = self._dtype.type(self.config.stability_epsilon)
+        da_5ht_ratio = da_level / (sero_level + epsilon)
 
         # Excitation-inhibition balance (higher dopamine = more excitation)
         excitation = da_level + arousal
         inhibition = gaba_inhib + sero_level
-        ei_balance = excitation / (inhibition + self._dtype.type(1e-6))
+        ei_balance = excitation / (inhibition + epsilon)
 
         # Arousal-attention coherence (should be correlated)
         aa_coherence = (
@@ -427,8 +434,14 @@ class NeuroOptimizer:
         aa_coherence = self._xp.clip(aa_coherence, 0.0, 1.0)
 
         # Calculate deviations from setpoints
-        da_5ht_dev = self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']) / self._setpoints['da_5ht_ratio']
-        ei_dev = self._xp.abs(ei_balance - self._setpoints['excitation_inhibition']) / self._setpoints['excitation_inhibition']
+        da_5ht_dev = (
+            self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio'])
+            / (self._setpoints['da_5ht_ratio'] + epsilon)
+        )
+        ei_dev = (
+            self._xp.abs(ei_balance - self._setpoints['excitation_inhibition'])
+            / (self._setpoints['excitation_inhibition'] + epsilon)
+        )
 
         # Overall homeostatic deviation.
         # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
@@ -506,7 +519,7 @@ class NeuroOptimizer:
             recent_array = self._xp.asarray(recent_perf, dtype=self._dtype)
             mean_perf = self._xp.mean(recent_array)
             std_perf = self._xp.std(recent_array)
-            epsilon = self._dtype.type(1e-6)
+            epsilon = self._dtype.type(self.config.stability_epsilon)
             denom = self._xp.maximum(self._xp.abs(mean_perf), epsilon)
             stability = self._dtype.type(1.0) - std_perf / denom
             stability = float(self._xp.clip(stability, 0, 1))
@@ -550,7 +563,7 @@ class NeuroOptimizer:
             Estimated gradients for each parameter
         """
         gradients = {}
-        epsilon = self._dtype.type(1e-6)
+        epsilon = self._dtype.type(self.config.stability_epsilon)
 
         # Proportional gradient heuristic.
         # Formula reference: docs/neuro_optimization_guide.md ("Proportional Gradient Heuristic").
