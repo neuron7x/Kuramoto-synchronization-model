@@ -15,6 +15,9 @@ jobs:
     name: Run Security Guards
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     
     steps:
       - name: Checkout code
@@ -25,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
       
       - name: Install dependencies
