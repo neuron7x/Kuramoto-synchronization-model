@@ -299,6 +299,10 @@ balance_score = clip(balance_score, 0, 1)
 Inverse transform of homeostatic deviation; compresses large deviations while
 keeping near-perfect balance close to 1.
 
+**Invariant**
+
+- Larger `homeostatic_dev` implies a smaller `balance_score` (monotonic inverse).
+
 **Allowed inputs**
 
 - `homeostatic_dev >= 0`
