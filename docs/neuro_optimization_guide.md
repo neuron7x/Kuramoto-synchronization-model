@@ -169,6 +169,178 @@ The optimizer logs the core metrics below (via `_log_metrics`) using the
 | `neuro_opt.ei_balance` | ratio | **[1.0, 2.5]** (default config) |
 | `neuro_opt.aa_coherence` | unitless | **[0, 1]** |
 
+## Math Spec
+
+Strict definitions for core neuro-optimization metrics, aligned with
+`src/tradepulse/core/neuro/neuro_optimizer.py`. All inputs must be finite real
+values. Unless otherwise noted, parameters are expected to be non-negative.
+
+### `da_5ht_ratio`
+
+**Formula**
+
+```
+da_5ht_ratio = dopamine_level / (serotonin_level + epsilon)
+```
+
+**Range**
+
+- **[da_min, da_max]** (default **[1.0, 3.0]**, configured via
+  `OptimizationConfig.da_5ht_ratio_range`)
+
+**Interpretation**
+
+Relative reward drive (dopamine) vs. stress/hold signaling (serotonin). Higher
+values indicate stronger reward-driven behavior.
+
+**Allowed inputs**
+
+- `dopamine_level >= 0`
+- `serotonin_level >= 0`
+- `epsilon = stability_epsilon > 0`
+
+### `ei_balance`
+
+**Formula**
+
+```
+excitation = dopamine_level + na_arousal
+inhibition = gaba_inhibition + serotonin_level
+ei_balance = excitation / (inhibition + epsilon)
+```
+
+**Range**
+
+- **[ei_min, ei_max]** (default **[1.0, 2.5]**, configured via
+  `OptimizationConfig.ei_balance_range`)
+
+**Interpretation**
+
+Excitation-to-inhibition balance. Higher values imply more excitable, risk-on
+behavior; lower values indicate stronger inhibitory control.
+
+**Allowed inputs**
+
+- `dopamine_level >= 0`
+- `na_arousal >= 0`
+- `gaba_inhibition >= 0`
+- `serotonin_level >= 0`
+- `epsilon = stability_epsilon > 0`
+
+### `aa_coherence`
+
+**Formula**
+
+```
+aa_coherence = 1 - |na_arousal - ach_attention| / 2
+aa_coherence = clip(aa_coherence, 0, 1)
+```
+
+**Range**
+
+- **[0, 1]**
+
+**Interpretation**
+
+Alignment between arousal (NA) and attention (ACh). Values near 1 indicate
+tightly coupled arousal/attention; values near 0 indicate decoupling.
+
+**Allowed inputs**
+
+- `na_arousal`, `ach_attention` finite real values
+- Recommended physiological band: **[0, 2]** to keep the pre-clip value within
+  **[0, 1]**
+
+### `homeostatic_dev`
+
+**Formula**
+
+```
+da_5ht_dev = |da_5ht_ratio - da_5ht_setpoint| / (da_5ht_setpoint + epsilon)
+ei_dev     = |ei_balance - ei_setpoint| / (ei_setpoint + epsilon)
+homeostatic_dev = (da_5ht_dev + ei_dev) / 2
+homeostatic_dev = clip(homeostatic_dev, 0, +∞)
+```
+
+**Range**
+
+- **[0, +∞)**
+
+**Interpretation**
+
+Average relative deviation from DA/5-HT and E/I setpoints. Zero is ideal
+homeostasis; larger values indicate increasing drift.
+
+**Allowed inputs**
+
+- `da_5ht_ratio`, `ei_balance` finite real values
+- `da_5ht_setpoint > 0`, `ei_setpoint > 0`
+- `epsilon = stability_epsilon > 0`
+
+### `balance_score`
+
+**Formula**
+
+```
+balance_score = 1 / (1 + homeostatic_dev)
+balance_score = clip(balance_score, 0, 1)
+```
+
+**Range**
+
+- **(0, 1]** (clipped to **[0, 1]** in implementation)
+
+**Interpretation**
+
+Inverse transform of homeostatic deviation; compresses large deviations while
+keeping near-perfect balance close to 1.
+
+**Allowed inputs**
+
+- `homeostatic_dev >= 0`
+
+### `stability`
+
+**Formula**
+
+```
+stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
+stability = clip(stability, 0, 1)
+```
+
+If insufficient history (`len(recent_perf) < history_window`), the value
+defaults to **0.5** (neutral).
+
+**Range**
+
+- **[0, 1]**
+
+**Interpretation**
+
+Consistency of recent objective values. High stability means low variance
+relative to mean magnitude.
+
+**Allowed inputs**
+
+- `recent_perf` list of finite floats
+- `history_window > 1`
+- `epsilon = stability_epsilon > 0`
+
+### Failure Modes
+
+Behavior when metrics or inputs exceed their intended bounds.
+
+| Metric | Out-of-range condition | Behavior |
+| --- | --- | --- |
+| `da_5ht_ratio` | Outside `da_5ht_ratio_range` | **ValueError** via `validate_neuro_invariants` |
+| `ei_balance` | Outside `ei_balance_range` | **ValueError** via `validate_neuro_invariants` |
+| `aa_coherence` | Raw value < 0 or > 1 | **Clip** to **[0, 1]** |
+| `aa_coherence` | < 0.5 (advisory threshold) | **Warning** in health assessment (`issues` list) |
+| `homeostatic_dev` | Negative due to numerical drift | **Clip** to **[0, +∞)** |
+| `balance_score` | Outside **[0, 1]** due to numeric error | **Clip** to **[0, 1]** |
+| `balance_score` | < 0.6 (advisory threshold) | **Warning** status in health assessment |
+| `stability` | Outside **[0, 1]** due to mean/variance extremes | **Clip** to **[0, 1]** |
+
 ## Architecture
 
 ```
