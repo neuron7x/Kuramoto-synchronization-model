@@ -66,6 +66,8 @@ class OptimizationConfig:
         Window length for performance history tracking
     stability_epsilon : float
         Numerical stability constant for ratio/stability denominators
+    numeric_stress_mode : bool
+        Enable safe math mode to strictly clamp denominators and ratios
     dtype : str
         Floating point dtype for numerical buffers (e.g., "float32")
     use_gpu : bool
@@ -102,6 +104,7 @@ class OptimizationConfig:
     convergence_threshold: float = 0.001
     history_window: int = 20
     stability_epsilon: float = 1e-6
+    numeric_stress_mode: bool = False
     dtype: str = "float32"
     use_gpu: bool = False
     enable_plasticity: bool = True
@@ -280,6 +283,9 @@ class NeuroOptimizer:
         self._setpoints = self._initialize_setpoints()
         self._dtype = np.dtype(self.config.dtype)
         self._xp = self._select_array_module()
+        self._stress_clip_value = self._dtype.type(
+            1.0 / self.config.stability_epsilon
+        )
 
         # Performance tracking
         self._performance_history: List[float] = []
@@ -300,6 +306,27 @@ class NeuroOptimizer:
     def _to_array(self, values: List[float]):
         """Create a contiguous buffer with the configured dtype."""
         return self._xp.asarray(values, dtype=self._dtype, order="C")
+
+    def _safe_denominator(self, value):
+        """Clamp denominators in safe math mode."""
+        if not self.config.numeric_stress_mode:
+            return value
+        epsilon = self._dtype.type(self.config.stability_epsilon)
+        clipped = self._xp.clip(value, -self._stress_clip_value, self._stress_clip_value)
+        abs_clipped = self._xp.abs(clipped)
+        sign = self._xp.sign(clipped)
+        sign = self._xp.where(sign == 0, self._dtype.type(1.0), sign)
+        return self._xp.where(abs_clipped < epsilon, sign * epsilon, clipped)
+
+    def _safe_ratio(self, value):
+        """Clamp ratios in safe math mode."""
+        if not self.config.numeric_stress_mode:
+            return value
+        return self._xp.clip(value, -self._stress_clip_value, self._stress_clip_value)
+
+    def _safe_divide(self, numerator, denominator):
+        """Divide with optional safe math clamp."""
+        return self._safe_ratio(numerator / self._safe_denominator(denominator))
 
     def _initialize_setpoints(self) -> Dict[str, float]:
         """Initialize homeostatic setpoints for each neuromodulator.
@@ -419,40 +446,59 @@ class NeuroOptimizer:
 
         # Calculate ratios
         epsilon = self._dtype.type(self.config.stability_epsilon)
-        da_5ht_ratio = da_level / (sero_level + epsilon)
+        da_5ht_ratio = self._safe_divide(da_level, sero_level + epsilon)
+        if self.config.numeric_stress_mode:
+            da_5ht_ratio = self._xp.clip(
+                da_5ht_ratio, *self.config.da_5ht_ratio_range
+            )
 
         # Excitation-inhibition balance (higher dopamine = more excitation)
         excitation = da_level + arousal
         inhibition = gaba_inhib + sero_level
-        ei_balance = excitation / (inhibition + epsilon)
+        ei_balance = self._safe_divide(excitation, inhibition + epsilon)
+        if self.config.numeric_stress_mode:
+            ei_balance = self._xp.clip(
+                ei_balance, *self.config.ei_balance_range
+            )
 
         # Arousal-attention coherence (should be correlated)
         aa_coherence = (
             self._dtype.type(1.0)
-            - self._xp.abs(arousal - attention) / self._dtype.type(2.0)
+            - self._safe_divide(
+                self._xp.abs(arousal - attention), self._dtype.type(2.0)
+            )
         )
         aa_coherence = self._xp.clip(aa_coherence, 0.0, 1.0)
 
         # Calculate deviations from setpoints
         da_5ht_dev = (
-            self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio'])
-            / (self._setpoints['da_5ht_ratio'] + epsilon)
+            self._safe_divide(
+                self._xp.abs(da_5ht_ratio - self._setpoints['da_5ht_ratio']),
+                self._setpoints['da_5ht_ratio'] + epsilon,
+            )
         )
         ei_dev = (
-            self._xp.abs(ei_balance - self._setpoints['excitation_inhibition'])
-            / (self._setpoints['excitation_inhibition'] + epsilon)
+            self._safe_divide(
+                self._xp.abs(ei_balance - self._setpoints['excitation_inhibition']),
+                self._setpoints['excitation_inhibition'] + epsilon,
+            )
         )
 
         # Overall homeostatic deviation.
         # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
-        homeostatic_dev = (da_5ht_dev + ei_dev) / self._dtype.type(2.0)
+        homeostatic_dev = self._safe_divide(
+            da_5ht_dev + ei_dev, self._dtype.type(2.0)
+        )
         homeostatic_dev = self._xp.clip(
             homeostatic_dev, self._dtype.type(0.0), self._xp.inf
         )
 
         # Overall balance score (inverse of deviation).
         # Formula reference: docs/neuro_optimization_guide.md ("Homeostatic Deviation & Balance Score").
-        balance_score = self._dtype.type(1.0) / (self._dtype.type(1.0) + homeostatic_dev)
+        balance_score = self._safe_divide(
+            self._dtype.type(1.0),
+            self._dtype.type(1.0) + homeostatic_dev,
+        )
         balance_score = self._xp.clip(
             balance_score, self._dtype.type(0.0), self._dtype.type(1.0)
         )
@@ -501,13 +547,10 @@ class NeuroOptimizer:
         # Normalize performance to [0, 1] with configurable Sharpe bounds.
         # Formula reference: docs/neuro_optimization_guide.md ("Metric Scales and Objective Influence").
         sharpe_min, sharpe_max = self.config.performance_min, self.config.performance_max
-        perf_normalized = float(
-            self._xp.clip(
-                (performance - sharpe_min) / (sharpe_max - sharpe_min),
-                0,
-                1,
-            )
+        perf_ratio = self._safe_divide(
+            performance - sharpe_min, sharpe_max - sharpe_min
         )
+        perf_normalized = float(self._xp.clip(perf_ratio, 0, 1))
 
         # Balance objective (already in [0, 1])
         balance_obj = balance.overall_balance_score
@@ -520,8 +563,10 @@ class NeuroOptimizer:
             mean_perf = self._xp.mean(recent_array)
             std_perf = self._xp.std(recent_array)
             epsilon = self._dtype.type(self.config.stability_epsilon)
-            denom = self._xp.maximum(self._xp.abs(mean_perf), epsilon)
-            stability = self._dtype.type(1.0) - std_perf / denom
+            denom = self._xp.maximum(
+                self._safe_denominator(self._xp.abs(mean_perf)), epsilon
+            )
+            stability = self._dtype.type(1.0) - self._safe_divide(std_perf, denom)
             stability = float(self._xp.clip(stability, 0, 1))
         else:
             stability = 0.5  # Neutral until we have history
@@ -568,7 +613,9 @@ class NeuroOptimizer:
         # Proportional gradient heuristic.
         # Formula reference: docs/neuro_optimization_guide.md ("Proportional Gradient Heuristic").
         def relative_deviation(value: float, setpoint: float) -> float:
-            return float((value - setpoint) / (setpoint + epsilon))
+            return float(
+                self._safe_divide(value - setpoint, setpoint + epsilon)
+            )
 
         dopamine_level = float(
             state.get('dopamine_level', self._setpoints['dopamine_level'])
@@ -576,7 +623,9 @@ class NeuroOptimizer:
         serotonin_level = float(
             state.get('serotonin_level', self._setpoints['serotonin_level'])
         )
-        ratio_value = dopamine_level / (serotonin_level + float(epsilon))
+        ratio_value = self._safe_divide(
+            dopamine_level, serotonin_level + float(epsilon)
+        )
         ratio_deviation = relative_deviation(ratio_value, self._setpoints['da_5ht_ratio'])
 
         gaba_value = float(

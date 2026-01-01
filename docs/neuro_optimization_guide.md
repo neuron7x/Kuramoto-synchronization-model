@@ -459,6 +459,7 @@ class OptimizationConfig:
     performance_min: float = -2.0      # Min performance for normalization
     performance_max: float = 3.0       # Max performance for normalization
     stability_epsilon: float = 1e-6    # Numerical stability constant
+    numeric_stress_mode: bool = False  # Safe math mode for extreme values
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations
@@ -468,6 +469,14 @@ class OptimizationConfig:
     regime_adaptation: bool = True     # Regime adaptation
     param_bounds: Dict[str, Dict[str, Tuple[float, float]]] = {}  # Per-parameter bounds
 ```
+
+##### Safe math mode (numeric_stress_mode)
+
+When `numeric_stress_mode=True`, the optimizer runs in **safe math mode**. This
+mode strictly clamps all denominators and ratio outputs using `stability_epsilon`
+to prevent overflow, division-by-zero, or runaway ratios when inputs are extreme
+(very small, very large, or negative values). Enable this mode when stress-testing
+with synthetic or adversarial numeric ranges.
 
 #### BalanceMetrics
 

@@ -244,9 +244,10 @@ class TestNeuroOptimizer:
             },
         ],
     )
-    def test_balance_metrics_extreme_states(self, opt_config, state):
+    def test_balance_metrics_extreme_states(self, state):
         """Ensure balance metrics stay within bounds for extreme states."""
-        optimizer = NeuroOptimizer(opt_config)
+        config = OptimizationConfig(numeric_stress_mode=True)
+        optimizer = NeuroOptimizer(config)
 
         balance = optimizer._calculate_balance_metrics(state)
 
@@ -491,6 +492,64 @@ class TestNeuroOptimizer:
 
         assert narrow_objective > wide_objective
 
+    def test_numeric_stress_mode_clips_ratios(self):
+        """Ensure safe math mode clamps extreme ratios to finite bounds."""
+        config = OptimizationConfig(numeric_stress_mode=True, stability_epsilon=1e-6)
+        optimizer = NeuroOptimizer(config)
+
+        extreme_state = {
+            "dopamine_level": 1e12,
+            "serotonin_level": 1e-12,
+            "gaba_inhibition": -1e12,
+            "na_arousal": 1e12,
+            "ach_attention": -1e12,
+        }
+
+        balance = optimizer._calculate_balance_metrics(extreme_state)
+
+        cap = 1.0 / config.stability_epsilon
+        assert np.isfinite(balance.dopamine_serotonin_ratio)
+        assert abs(balance.dopamine_serotonin_ratio) <= cap
+        assert np.isfinite(balance.gaba_excitation_balance)
+        assert abs(balance.gaba_excitation_balance) <= cap
+        assert np.isfinite(balance.homeostatic_deviation)
+        assert 0 <= balance.overall_balance_score <= 1
+
+    def test_numeric_stress_mode_keeps_objective_finite(self, sample_state):
+        """Ensure safe math mode prevents extreme objective overflow."""
+        config = OptimizationConfig(
+            numeric_stress_mode=True,
+            stability_epsilon=1e-6,
+            history_window=2,
+        )
+        optimizer = NeuroOptimizer(config)
+        optimizer._performance_history = [1e12, -1e12]
+        balance = optimizer._calculate_balance_metrics(sample_state)
+
+        objective = optimizer._calculate_objective(1e12, balance, sample_state)
+
+        assert np.isfinite(objective)
+        assert 0 <= objective <= 1
+
+    def test_numeric_stress_mode_clips_gradients(self, sample_params):
+        """Ensure gradients stay finite for extreme negative denominators."""
+        config = OptimizationConfig(numeric_stress_mode=True, stability_epsilon=1e-6)
+        optimizer = NeuroOptimizer(config)
+
+        extreme_state = {
+            "dopamine_level": -1e12,
+            "serotonin_level": -1e-12,
+            "gaba_inhibition": -1e9,
+            "na_arousal": 1e9,
+            "ach_attention": -1e9,
+        }
+
+        gradients = optimizer._estimate_gradients(sample_params, extreme_state, 0.0)
+
+        for module_params in gradients.values():
+            for grad in module_params.values():
+                assert np.isfinite(grad)
+
     def test_objective_monotonic_with_weight_increase_fixed_components(self, sample_state):
         """Objective should increase as weight shifts to higher-valued component."""
         balance = BalanceMetrics(
@@ -609,6 +668,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=0.0,
             stability_weight=1.0,
+            history_window=10,
         )
         optimizer = NeuroOptimizer(config)
         optimizer._performance_history = [
@@ -655,6 +715,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=0.0,
             stability_weight=1.0,
+            history_window=10,
         )
         optimizer = NeuroOptimizer(config)
         optimizer._performance_history = [
@@ -684,6 +745,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=0.0,
             stability_weight=1.0,
+            history_window=10,
         )
         optimizer = NeuroOptimizer(config)
         optimizer._performance_history = [0.05] * 11
