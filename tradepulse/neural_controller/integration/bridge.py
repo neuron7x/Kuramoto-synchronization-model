@@ -27,9 +27,7 @@ from ..core.params import (
     TemporalGatingConfig,
 )
 from ..core.state import EMHState
-from ..core.predictive import PredictiveCoder
-from ..core.sensory import SensoryFilter
-from ..core.sensory_schema import SCHEMA_VERSION, SensorySchema
+from ..core.sensory_schema import SCHEMA_VERSION
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
 from ..homeostasis.homeo import HomeostaticModule
@@ -37,7 +35,7 @@ from ..policy.controller import BasalGangliaController
 from ..risk.cvar import CVARGate
 from ..telemetry.metrics import DecisionMetricsExporter, MetricsEmitter
 from ..util.logging import log_decision
-from ..core.temporal_gater import TemporalGater
+from .sensory_pipeline import SensoryPipeline
 
 log = logging.getLogger(__name__)
 
@@ -193,20 +191,11 @@ class NeuralMarketController:
             mode_configs=policy.policy_modes,
         )
         self.cvar = CVARGate(risk.cvar_alpha, risk.cvar_limit, risk.lookback)
-        self.sensory = SensoryFilter(sensory or SensoryConfig())
-        self.sensory_schema = sensory_schema or SensorySchema.default()
-        self.predictive = PredictiveCoder(predictive or PredictiveConfig())
-        gating_cfg = temporal_gating or TemporalGatingConfig()
-        self.temporal_gating = gating_cfg
-        self.sensory_gater = TemporalGater(
-            frequency=gating_cfg.sensory_frequency,
-            cadence=gating_cfg.cadence,
-            ema_alpha=gating_cfg.ema_alpha,
-        )
-        self.predictive_gater = TemporalGater(
-            frequency=gating_cfg.predictive_frequency,
-            cadence=gating_cfg.cadence,
-            ema_alpha=gating_cfg.ema_alpha,
+        self.pipeline = SensoryPipeline(
+            sensory=sensory,
+            sensory_schema=sensory_schema,
+            predictive=predictive,
+            temporal_gating=temporal_gating,
         )
         self._last_prediction_error = 0.0
         self._last_predictive_state = None
@@ -265,59 +254,6 @@ class NeuralMarketController:
         )
         return inst
 
-    def _validate_schema_metadata(
-        self,
-        schema_version: int | None,
-        expected_fields: object,
-    ) -> None:
-        if schema_version is not None and schema_version != SCHEMA_VERSION:
-            log.critical(
-                "Sensory schema version mismatch",  # noqa: TRY400 - structured logging
-                extra={
-                    "event": "neuro.schema_version_mismatch",
-                    "schema_version": schema_version,
-                    "expected": SCHEMA_VERSION,
-                },
-            )
-            raise ValueError(
-                "Unsupported sensory schema version "
-                f"{schema_version!r}; expected {SCHEMA_VERSION}."
-            )
-        if expected_fields is None:
-            return
-        if not isinstance(expected_fields, (list, tuple, set)):
-            log.critical(
-                "Sensory schema fields metadata is invalid",
-                extra={
-                    "event": "neuro.schema_fields_invalid",
-                    "expected_fields": expected_fields,
-                },
-            )
-            raise ValueError("Sensory schema expected_fields must be a collection.")
-        expected = tuple(expected_fields)
-        schema_fields = {channel.name for channel in self.sensory_schema.channels}
-        if set(expected) != schema_fields:
-            log.critical(
-                "Sensory schema fields mismatch",
-                extra={
-                    "event": "neuro.schema_fields_mismatch",
-                    "expected_fields": expected,
-                    "schema_fields": sorted(schema_fields),
-                },
-            )
-            raise ValueError(
-                "Sensory schema fields mismatch "
-                f"{expected!r}; expected {sorted(schema_fields)!r}."
-            )
-
-    def _compute_prediction_error(self, obs: Dict[str, float]) -> float:
-        state = self.predictive.step(obs)
-        self._last_predictive_state = state
-        if not state.error:
-            return 0.0
-        magnitude = sum(abs(v) for v in state.error.values()) / len(state.error)
-        return self.predictive.cfg.error_gain * magnitude
-
     def decide(
         self,
         obs: Dict[str, Any],
@@ -327,24 +263,16 @@ class NeuralMarketController:
         obs = dict(obs)
         schema_version = obs.pop("schema_version", None)
         expected_fields = obs.pop("expected_fields", None)
-        self._validate_schema_metadata(schema_version, expected_fields)
-        start = time.perf_counter()
-        schema_output = self.sensory_schema.validate(obs)
-        sensory_filtered, _ = self.sensory_gater.step(
-            lambda: self.sensory.transform(schema_output).filtered
+        pipeline_result = self.pipeline.apply(
+            obs,
+            schema_version=schema_version,
+            expected_fields=expected_fields,
         )
-        timing_sensory_ms = (time.perf_counter() - start) * 1000.0
-        obs.update(schema_output.normalized)
-        obs["sensory_confidence"] = schema_output.sensory_confidence
-        obs.update(sensory_filtered)
-
-        start = time.perf_counter()
-        prediction_error, _ = self.predictive_gater.step(
-            lambda: self._compute_prediction_error(obs)
-        )
-        self._last_prediction_error = float(prediction_error)
-        timing_predictive_ms = (time.perf_counter() - start) * 1000.0
-        obs["prediction_error"] = float(prediction_error)
+        prediction_error = pipeline_result.prediction_error
+        self._last_prediction_error = prediction_error
+        self._last_predictive_state = pipeline_result.predictive_state
+        timing_sensory_ms = pipeline_result.timing_sensory_ms
+        timing_predictive_ms = pipeline_result.timing_predictive_ms
 
         belief = self.belief.step(float(obs.get("vol", 0.0)))
         obs["belief_term"] = belief - 0.5
@@ -385,7 +313,7 @@ class NeuralMarketController:
             "timing_ctrl_decide_ms": timing_ctrl_decide_ms,
         }
         if include_prediction_snapshot or self.emit_predictive_state:
-            pred_snapshot = self._last_predictive_state or self.predictive.snapshot()
+            pred_snapshot = self._last_predictive_state or self.pipeline.snapshot()
             decision.update(
                 {
                     "prediction_mu": pred_snapshot.mu,
