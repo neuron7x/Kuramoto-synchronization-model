@@ -35,7 +35,17 @@ def _load_packaged_yaml(name: str) -> Mapping[str, Any]:
 def load_default_config() -> Mapping[str, Any]:
     """Return the packaged YAML configuration for the neural controller."""
 
-    return _load_packaged_yaml(_DEFAULT_CONFIG_NAME)
+    cfg = dict(_load_packaged_yaml(_DEFAULT_CONFIG_NAME))
+    include_name = cfg.get("include") or cfg.get("ref")
+    if include_name:
+        try:
+            include_cfg = _load_packaged_yaml(str(include_name))
+        except FileNotFoundError:
+            return cfg
+        merged = dict(cfg)
+        merged.update(include_cfg)
+        return merged
+    return cfg
 
 
 __all__ = ["load_default_config"]
