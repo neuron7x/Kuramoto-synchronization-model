@@ -15,6 +15,7 @@ from .energy_model import (
     EnergyValidationResult,
     EnergyValidator,
 )
+from .degradation import DegradationPolicy, DegradationReport, apply_degradation
 from .risk_gating import (
     PreActionContext,
     PreActionDecision,
@@ -32,6 +33,9 @@ __all__ = [
     "EnergyValidationError",
     "EnergyValidationResult",
     "EnergyValidator",
+    "DegradationPolicy",
+    "DegradationReport",
+    "apply_degradation",
     "BehavioralContract",
     "BehavioralContractReport",
     "BehavioralContractViolation",

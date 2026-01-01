@@ -35,6 +35,34 @@ TradePulse is feature-rich for research and backtesting workflows, but several c
    - Build a UI dashboard that visualises strategy state, P&L, execution metrics, and alerts.
    - Integrate dashboards with historical drill-downs and anomaly detection overlays.
 
+## Module Production Contracts (TACL + HydroBrain v2)
+
+This section defines the minimum production contracts for the `tacl/` and
+`hydrobrain_v2/` modules. These contracts establish deterministic behavior,
+bounded latency, and fail-safe behavior for degradation scenarios.
+
+### Experimental Flags Review
+
+- **`tacl/`**: No `experimental` labels or feature flags detected in the module.
+- **`hydrobrain_v2/`**: No `experimental` labels or feature flags detected in the module.
+
+### Minimum Production Contracts
+
+| Contract | TACL (Thermodynamic Autonomic Control Layer) | HydroBrain v2 |
+| --- | --- | --- |
+| Deterministic outputs | Energy scoring and risk gating are deterministic for identical inputs. | `RealTimeMonitor` executes in `eval()` mode; inference should be deterministic for identical inputs and weights. |
+| Bounded latency | Pre-action gating must complete within policy timeout; on breach, fallback returns fail-safe decision. | Window inference must complete within policy timeout; on breach, fallback emits fail-safe payload and alerts. |
+| Fail-safe | Degradation policy enforces conservative action (block + rollback + safe policy). | Degradation policy emits conservative payload (high-risk flood class + degraded alert) and marks compliance false. |
+
+### Standard Degradation Handling
+
+- **Timeouts**: `tacl.degradation.DegradationPolicy.timeout_s` and
+  `hydrobrain_v2.degradation.DegradationPolicy.timeout_s` provide bounded latency
+  for pre-action checks and inference.
+- **Fallback policy**: `tacl.degradation.apply_degradation` and
+  `hydrobrain_v2.degradation.apply_degradation` return conservative defaults and
+  structured degradation reports to keep pipelines fail-safe.
+
 ## Recommended Next Steps
 
 1. **Hardening Sprint**

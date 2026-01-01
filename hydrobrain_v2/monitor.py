@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from .degradation import DegradationPolicy, apply_degradation
 from .model import HydroBrainV2
 from .utils import AnomalyDetector, DataImputer, preprocess_window
 from .validator import GBStandardValidator
@@ -78,3 +79,11 @@ class RealTimeMonitor:
             )
         resp["alerts"] = alerts
         return resp
+
+    def infer_window_with_degradation(
+        self,
+        window_np: np.ndarray,
+        *,
+        policy: DegradationPolicy | None = None,
+    ) -> tuple[dict[str, Any], "DegradationReport"]:
+        """Run inference with timeout + fallback handling."""\n\n        return apply_degradation(self.infer_window, window_np, policy=policy)

@@ -4,7 +4,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Mapping, Protocol, Sequence
+from typing import TYPE_CHECKING, Mapping, Protocol, Sequence
+
+if TYPE_CHECKING:
+    from .degradation import DegradationPolicy, DegradationReport
 
 
 @dataclass(slots=True)
@@ -137,6 +140,18 @@ class RiskGatingEngine:
             rollback=rollback,
             policy_override=policy_override,
         )
+
+    def check_with_degradation(
+        self,
+        context: PreActionContext | Mapping[str, object],
+        *,
+        policy: "DegradationPolicy" | None = None,
+    ) -> tuple[PreActionDecision, "DegradationReport"]:
+        """Run the risk gate with standard timeout and fallback handling."""
+
+        from .degradation import apply_degradation
+
+        return apply_degradation(self, context, policy=policy)
 
 
 __all__ = [
