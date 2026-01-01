@@ -16,6 +16,7 @@ if HYPOTHESIS_AVAILABLE:  # pragma: no branch
 from tradepulse.core.neuro.neuro_optimizer import (
     BalanceMetrics,
     NeuroOptimizer,
+    NumericConfig,
     OptimizationConfig,
 )
 from tradepulse.core.neuro._validation import (
@@ -137,12 +138,12 @@ class TestOptimizationConfig:
     def test_stability_epsilon_positive(self):
         """Test stability_epsilon must be positive."""
         with pytest.raises(ValueError, match="stability_epsilon"):
-            OptimizationConfig(stability_epsilon=0.0)
+            NumericConfig(stability_epsilon=0.0)
 
     def test_gradient_dev_clip_positive(self):
         """Test gradient_dev_clip must be positive."""
         with pytest.raises(ValueError, match="gradient_dev_clip"):
-            OptimizationConfig(gradient_dev_clip=0.0)
+            NumericConfig(gradient_dev_clip=0.0)
 
     @pytest.mark.parametrize(
         "kwargs, error_match",
@@ -475,8 +476,7 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=1.0,
             stability_weight=0.0,
-            performance_min=-1.0,
-            performance_max=1.0,
+            numeric=NumericConfig(performance_min=-1.0, performance_max=1.0),
         )
         optimizer = NeuroOptimizer(config)
         balance = optimizer._calculate_balance_metrics(sample_state)
@@ -495,8 +495,7 @@ class TestNeuroOptimizer:
             balance_weight=0.3,
             performance_weight=0.5,
             stability_weight=0.2,
-            performance_min=-2.0,
-            performance_max=2.0,
+            numeric=NumericConfig(performance_min=-2.0, performance_max=2.0),
         )
         optimizer = NeuroOptimizer(config)
         balance = BalanceMetrics(
@@ -508,10 +507,10 @@ class TestNeuroOptimizer:
         )
 
         objective_min = optimizer._calculate_objective(
-            config.performance_min, balance, sample_state
+            config.numeric.performance_min, balance, sample_state
         )
         objective_max = optimizer._calculate_objective(
-            config.performance_max, balance, sample_state
+            config.numeric.performance_max, balance, sample_state
         )
 
         expected_stability = 0.5
@@ -535,15 +534,13 @@ class TestNeuroOptimizer:
             balance_weight=0.0,
             performance_weight=1.0,
             stability_weight=0.0,
-            performance_min=0.0,
-            performance_max=2.0,
+            numeric=NumericConfig(performance_min=0.0, performance_max=2.0),
         )
         wide_config = OptimizationConfig(
             balance_weight=0.0,
             performance_weight=1.0,
             stability_weight=0.0,
-            performance_min=-2.0,
-            performance_max=4.0,
+            numeric=NumericConfig(performance_min=-2.0, performance_max=4.0),
         )
         balance = BalanceMetrics(
             dopamine_serotonin_ratio=1.7,
@@ -565,6 +562,62 @@ class TestNeuroOptimizer:
         )
 
         assert narrow_objective > wide_objective
+
+    def test_numeric_config_changes_objective_and_health(self, sample_state):
+        """NumericConfig changes should influence objective and health outcomes."""
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=1.5,
+            gaba_excitation_balance=1.5,
+            arousal_attention_coherence=0.7,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.2,
+        )
+        baseline_numeric = NumericConfig(
+            performance_min=-2.0,
+            performance_max=2.0,
+            aa_coherence_min=0.6,
+        )
+        stricter_numeric = NumericConfig(
+            performance_min=0.0,
+            performance_max=2.0,
+            aa_coherence_min=0.8,
+        )
+        baseline_config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=1.0,
+            stability_weight=0.0,
+            numeric=baseline_numeric,
+        )
+        stricter_config = OptimizationConfig(
+            balance_weight=0.0,
+            performance_weight=1.0,
+            stability_weight=0.0,
+            numeric=stricter_numeric,
+        )
+
+        baseline_optimizer = NeuroOptimizer(baseline_config)
+        stricter_optimizer = NeuroOptimizer(stricter_config)
+
+        objective_baseline = baseline_optimizer._calculate_objective(
+            1.0, balance, sample_state
+        )
+        objective_stricter = stricter_optimizer._calculate_objective(
+            1.0, balance, sample_state
+        )
+
+        assert objective_baseline > objective_stricter
+
+        baseline_health = baseline_optimizer._assess_health(balance)
+        stricter_health = stricter_optimizer._assess_health(balance)
+
+        assert all(
+            'Poor arousal-attention coherence' not in issue
+            for issue in baseline_health['issues']
+        )
+        assert any(
+            'Poor arousal-attention coherence' in issue
+            for issue in stricter_health['issues']
+        )
 
     def test_objective_monotonic_with_weight_increase_fixed_components(self, sample_state):
         """Objective should increase as weight shifts to higher-valued component."""
@@ -779,8 +832,24 @@ class TestNeuroOptimizer:
             stability_weight=1.0,
             history_window=5,
         )
-        low_config = OptimizationConfig(**base_config, stability_epsilon=low_eps)
-        high_config = OptimizationConfig(**base_config, stability_epsilon=high_eps)
+        low_config = OptimizationConfig(
+            **base_config,
+            numeric=NumericConfig(
+                stability_epsilon=low_eps,
+                da_5ht_ratio_range=(0.1, 1e7),
+                ei_balance_range=(0.1, 1e7),
+                gradient_dev_clip=1e7,
+            ),
+        )
+        high_config = OptimizationConfig(
+            **base_config,
+            numeric=NumericConfig(
+                stability_epsilon=high_eps,
+                da_5ht_ratio_range=(0.1, 1e7),
+                ei_balance_range=(0.1, 1e7),
+                gradient_dev_clip=1e7,
+            ),
+        )
 
         state = {
             "dopamine_level": 0.5,
@@ -1118,7 +1187,7 @@ class TestNeuroOptimizer:
         config = OptimizationConfig(
             learning_rate=0.2,
             momentum=0.0,
-            gradient_dev_clip=0.5,
+            numeric=NumericConfig(gradient_dev_clip=0.5),
         )
         optimizer = NeuroOptimizer(config)
 
@@ -1137,7 +1206,7 @@ class TestNeuroOptimizer:
             performance=5.0,
         )
 
-        max_grad = config.learning_rate * config.gradient_dev_clip
+        max_grad = config.learning_rate * config.numeric.gradient_dev_clip
 
         assert abs(gradients['dopamine']['learning_rate']) <= max_grad
         assert abs(gradients['serotonin']['stress_threshold']) <= max_grad
@@ -1168,7 +1237,7 @@ class TestNeuroOptimizer:
             learning_rate_floor=0.001,
             adaptive_decay=0.5,
             plateau_patience=2,
-            max_gradient_norm=0.01,
+            numeric=NumericConfig(max_gradient_norm=0.01),
             momentum=0.0,
         )
         optimizer = NeuroOptimizer(config)
@@ -1206,7 +1275,7 @@ class TestNeuroOptimizer:
     def test_apply_updates_respects_bounds_spec_clip(self):
         """Ensure bounds_spec with clip clamps updated values."""
         config = OptimizationConfig(
-            max_gradient_norm=1.0,
+            numeric=NumericConfig(max_gradient_norm=1.0),
             momentum=0.0,
             bounds_spec={
                 'dopamine': {
@@ -1232,7 +1301,7 @@ class TestNeuroOptimizer:
     def test_apply_updates_respects_bounds_spec_raise(self):
         """Ensure bounds_spec with raise triggers error when out of bounds."""
         config = OptimizationConfig(
-            max_gradient_norm=1.0,
+            numeric=NumericConfig(max_gradient_norm=1.0),
             momentum=0.0,
             bounds_spec={
                 'dopamine': {
@@ -1379,9 +1448,11 @@ class TestNeuroOptimizer:
     def test_assess_health_respects_configured_ranges(self):
         """Ensure health checks use configured ratio ranges."""
         config = OptimizationConfig(
-            da_5ht_ratio_range=(1.2, 2.2),
-            ei_balance_range=(0.8, 1.4),
-            aa_coherence_min=0.95,
+            numeric=NumericConfig(
+                da_5ht_ratio_range=(1.2, 2.2),
+                ei_balance_range=(0.8, 1.4),
+                aa_coherence_min=0.95,
+            ),
         )
         optimizer = NeuroOptimizer(config)
 
