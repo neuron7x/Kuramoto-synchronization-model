@@ -214,10 +214,13 @@ def test_metrics_exporter_tracks_tail() -> None:
                 "action": "hold",
                 "alloc_scale": 1.0,
                 "RPE": 0.0,
+                "prediction_error": 0.1,
             }
         )
     assert "tail_ES95" in metrics
     assert metrics["tail_ES95"] >= 0.0
+    assert "prediction_error" in metrics
+    assert isinstance(metrics["prediction_error"], float)
 
 
 def test_controller_performance(controller: NeuralMarketController) -> None:
