@@ -11,7 +11,7 @@ from concurrent.futures import TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Deque, Dict, Iterable, Mapping, MutableMapping
+from typing import Any, Callable, Deque, Dict, Iterable, Mapping, MutableMapping
 
 from core.utils.metrics import get_metrics_collector
 from domain import Order, OrderSide, OrderStatus
@@ -46,6 +46,7 @@ class OMSConfig:
     backoff_seconds: float = 0.0
     ledger_path: Path | None = DEFAULT_LEDGER_PATH
     request_timeout: float | None = None
+    pre_trade_timeout: float | None = 0.25
 
     def __post_init__(self) -> None:
         if not isinstance(self.state_path, Path):
@@ -56,6 +57,8 @@ class OMSConfig:
             object.__setattr__(self, "backoff_seconds", 0.0)
         if self.request_timeout is not None and self.request_timeout <= 0:
             object.__setattr__(self, "request_timeout", None)
+        if self.pre_trade_timeout is not None and self.pre_trade_timeout <= 0:
+            object.__setattr__(self, "pre_trade_timeout", None)
         ledger_path = self.ledger_path
         if ledger_path is not None and not isinstance(ledger_path, Path):
             ledger_path = Path(ledger_path)
@@ -392,8 +395,12 @@ class OrderManagementSystem:
             if self._compliance is not None:
                 report = None
                 try:
-                    report = self._compliance.check(
-                        order.symbol, order.quantity, order.price
+                    report = self._run_pre_trade_check(
+                        "compliance",
+                        self._compliance.check,
+                        order.symbol,
+                        order.quantity,
+                        order.price,
                     )
                 except ComplianceViolation as exc:
                     report = exc.report
@@ -413,6 +420,19 @@ class OrderManagementSystem:
                         },
                     )
                     raise
+                except TimeoutError as exc:
+                    order.reject("PRE_TRADE_TIMEOUT:compliance")
+                    self._metrics.record_compliance_check(
+                        order.symbol, "timeout", ()
+                    )
+                    self._emit_compliance_audit(order, correlation_id, None, str(exc))
+                    self._record_ledger_event(
+                        "compliance_timeout",
+                        order=order,
+                        correlation_id=correlation_id,
+                        metadata={"error": str(exc)},
+                    )
+                    raise ComplianceViolation("Compliance check timed out") from exc
                 status = "passed" if report is None or report.is_clean() else "warning"
                 if report is not None:
                     self._metrics.record_compliance_check(
@@ -500,9 +520,29 @@ class OrderManagementSystem:
                 }
                 market_data = {"price": reference_price}
 
-                risk_decision = self._risk_compliance.check_order(
-                    order, market_data, portfolio_state
-                )
+                try:
+                    risk_decision = self._run_pre_trade_check(
+                        "risk_compliance",
+                        self._risk_compliance.check_order,
+                        order,
+                        market_data,
+                        portfolio_state,
+                    )
+                except TimeoutError as exc:
+                    order.reject("PRE_TRADE_TIMEOUT:risk_compliance")
+                    self._record_ledger_event(
+                        "risk_blocked",
+                        order=order,
+                        correlation_id=correlation_id,
+                        metadata={
+                            "reason": str(exc),
+                            "timeout": True,
+                        },
+                    )
+                    self._emit_risk_audit(
+                        order, correlation_id, str(exc), {"timeout": True}
+                    )
+                    raise ComplianceViolation("Risk compliance timed out") from exc
 
                 if not risk_decision.allowed:
                     order.reject("RISK_LIMIT_BREACH")
@@ -535,9 +575,27 @@ class OrderManagementSystem:
                 if order.price is not None
                 else max(order.average_price or 0.0, 1.0)
             )
-            self.risk.validate_order(
-                order.symbol, order.side.value, order.quantity, reference_price
-            )
+            try:
+                self._run_pre_trade_check(
+                    "risk_validation",
+                    self.risk.validate_order,
+                    order.symbol,
+                    order.side.value,
+                    order.quantity,
+                    reference_price,
+                )
+            except TimeoutError as exc:
+                order.reject("PRE_TRADE_TIMEOUT:risk_validation")
+                self._record_ledger_event(
+                    "risk_blocked",
+                    order=order,
+                    correlation_id=correlation_id,
+                    metadata={"reason": str(exc), "timeout": True},
+                )
+                self._emit_risk_audit(
+                    order, correlation_id, str(exc), {"timeout": True}
+                )
+                raise ComplianceViolation("Risk validation timed out") from exc
         except Exception:
             self._fingerprints.pop(correlation_id, None)
             raise
@@ -605,6 +663,22 @@ class OrderManagementSystem:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         self._audit.emit(payload)
+
+    def _run_pre_trade_check(
+        self, label: str, func: Callable[..., object], *args: object, **kwargs: object
+    ) -> object:
+        timeout = self.config.pre_trade_timeout
+        if not timeout:
+            return func(*args, **kwargs)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(func, *args, **kwargs)
+            try:
+                return future.result(timeout=timeout)
+            except FuturesTimeoutError as exc:
+                future.cancel()
+                raise TimeoutError(
+                    f"{label} check exceeded {timeout:.3f}s timeout"
+                ) from exc
 
     def _place_order_with_timeout(self, order: Order, correlation_id: str) -> Order:
         timeout = self.config.request_timeout

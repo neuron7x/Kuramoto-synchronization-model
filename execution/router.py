@@ -10,6 +10,7 @@ behaviour in sandbox environments.
 
 from __future__ import annotations
 
+import concurrent.futures
 from dataclasses import dataclass, field, replace
 from time import perf_counter
 from typing import Callable, Dict, Iterable, Mapping, MutableMapping
@@ -99,6 +100,7 @@ class ExecutionRoute:
     normalizer: OrderStateNormalizer = field(default_factory=OrderStateNormalizer)
     slippage_model: SlippageModel | None = None
     error_mapper: ErrorMapper = field(default_factory=ErrorMapper)
+    operation_timeout: float | None = 0.75
 
     def apply_slippage(self, order: Order) -> Order:
         if self.slippage_model is None:
@@ -163,6 +165,25 @@ class ResilientExecutionRouter:
             return self._routes[route_key].translate_error(error)
         return None
 
+    def _execute_with_timeout(
+        self,
+        route: ExecutionRoute,
+        connector: ExecutionConnector,
+        func: Callable[[ExecutionRoute, ExecutionConnector], Order],
+    ) -> Order:
+        timeout = route.operation_timeout
+        if not timeout:
+            return func(route, connector)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(func, route, connector)
+            try:
+                return future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError as exc:
+                future.cancel()
+                raise TimeoutError(
+                    f"Route '{route.name}' {timeout:.3f}s timeout"
+                ) from exc
+
     def _execute(
         self,
         route_name: str,
@@ -186,9 +207,10 @@ class ResilientExecutionRouter:
             order = resilience.execute_with_fallback(
                 route.name,
                 operation,
-                func,
+                self._execute_with_timeout,
                 route,
                 connector,
+                func,
             )
         except Exception as exc:  # noqa: BLE001
             translated = self._record_result(
@@ -209,9 +231,10 @@ class ResilientExecutionRouter:
                 order = backup.resilience.execute_with_fallback(
                     backup.name,
                     operation,
-                    func,
+                    self._execute_with_timeout,
                     backup,
                     backup.connector,
+                    func,
                 )
             except Exception as secondary_exc:  # noqa: BLE001
                 secondary_translated = self._record_result(
