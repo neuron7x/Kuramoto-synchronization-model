@@ -3,6 +3,9 @@
 - [ ] Link related issues, follow-up tasks, or design docs.
 - [ ] Indicate if this PR contains **breaking changes**
 
+## Central File Justification
+<!-- Required if touching core/params.py, bridge.py, or neural_params.yaml -->
+
 ## Change Type
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)

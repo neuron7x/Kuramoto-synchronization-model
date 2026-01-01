@@ -47,6 +47,11 @@ repos:
         entry: npm run lint --prefix ui/dashboard
         language: system
         pass_filenames: false
+      - id: central-config-hint
+        name: central config sprawl hint
+        entry: python scripts/ci/check_config_sprawl.py --staged
+        language: python
+        pass_filenames: false
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
