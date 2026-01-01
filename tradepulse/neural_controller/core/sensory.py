@@ -54,7 +54,10 @@ class SensoryFilter:
             return 0.0
         return value
 
-    def transform(self, obs: Dict[str, float]) -> SensorySnapshot:
+    def transform(
+        self, obs: Dict[str, float], *, gain: float | None = None
+    ) -> SensorySnapshot:
+        applied_gain = 1.0 if gain is None else float(gain)
         values = {
             k: self._sanitize_value(k, obs.get(k, 0.0)) for k in self.cfg.keys
         }
@@ -73,17 +76,19 @@ class SensoryFilter:
                 + self.cfg.contrast_gain * self.cfg.temporal_lambda * temporal_delta
                 + self.cfg.contrast_gain * self.cfg.spatial_lambda * spatial_delta
             )
-            filtered[key] = clamp(signal)
+            filtered[key] = clamp(signal * applied_gain)
             temporal[key] = temporal_delta
             spatial[key] = spatial_delta
 
         self._prev.update(values)
         return SensorySnapshot(filtered=filtered, temporal=temporal, spatial=spatial)
 
-    def apply(self, obs: Dict[str, float]) -> Dict[str, float]:
+    def apply(
+        self, obs: Dict[str, float], *, gain: float | None = None
+    ) -> Dict[str, float]:
         """Return filtered observation values merged with original obs."""
 
-        snapshot = self.transform(obs)
+        snapshot = self.transform(obs, gain=gain)
         merged = dict(obs)
         merged.update(snapshot.filtered)
         return merged

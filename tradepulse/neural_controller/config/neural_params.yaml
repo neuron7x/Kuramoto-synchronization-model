@@ -42,6 +42,10 @@ sensory:
     - reg
     - vol
 
+threat_gains:
+  sensory_amber: 0.8
+  sensory_red: 0.6
+
 predictive:
   decay: 0.8
   error_gain: 0.9

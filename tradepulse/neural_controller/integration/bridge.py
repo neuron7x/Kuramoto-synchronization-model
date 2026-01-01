@@ -22,6 +22,7 @@ from ..core.params import (
     PredictiveConfig,
     RiskConfig,
     SensoryConfig,
+    ThreatGainConfig,
 )
 from ..core.state import EMHState
 from ..core.predictive import PredictiveCoder
@@ -173,6 +174,7 @@ class NeuralMarketController:
         sensory: SensoryConfig | None = None,
         predictive: PredictiveConfig | None = None,
         adapter: MarketAdapterConfig | None = None,
+        threat_gains: ThreatGainConfig | None = None,
         *,
         emit_predictive_state: bool = False,
     ) -> None:
@@ -184,6 +186,7 @@ class NeuralMarketController:
         self.cvar = CVARGate(risk.cvar_alpha, risk.cvar_limit, risk.lookback)
         self.sensory = SensoryFilter(sensory or SensoryConfig())
         self.predictive = PredictiveCoder(predictive or PredictiveConfig())
+        self.threat_gains = threat_gains or ThreatGainConfig()
         self.sync_threshold = 0.30
         self.generations = 10
         self.metrics = MetricsEmitter()
@@ -207,6 +210,7 @@ class NeuralMarketController:
         sensory = SensoryConfig(**(cfg.get("sensory", {}) or {}))
         predictive = PredictiveConfig(**(cfg.get("predictive", {}) or {}))
         adapter_cfg = MarketAdapterConfig(**(cfg.get("market_adapter", {}) or {}))
+        threat_gains = ThreatGainConfig(**(cfg.get("threat_gains", {}) or {}))
         inst = cls(
             params,
             ekf,
@@ -216,6 +220,7 @@ class NeuralMarketController:
             sensory=sensory,
             predictive=predictive,
             adapter=adapter_cfg,
+            threat_gains=threat_gains,
         )
         bridge_cfg = cfg.get("tacl_bridge", {}) or {}
         inst.sync_threshold = float(
@@ -227,6 +232,13 @@ class NeuralMarketController:
         )
         return inst
 
+    def _sensory_gain_for_mode(self, mode: str) -> float:
+        if mode == "AMBER":
+            return float(self.threat_gains.sensory_amber)
+        if mode == "RED":
+            return float(self.threat_gains.sensory_red)
+        return 1.0
+
     def decide(
         self,
         obs: Dict[str, float | bool],
@@ -234,7 +246,8 @@ class NeuralMarketController:
         include_prediction_snapshot: bool = False,
     ) -> Dict[str, Any]:
         obs = dict(obs)
-        sensory = self.sensory.transform(obs)
+        gain = self._sensory_gain_for_mode(self.model.s.mode)
+        sensory = self.sensory.transform(obs, gain=gain)
         obs.update(sensory.filtered)
 
         prediction_error = float(self.predictive.error_energy(obs))

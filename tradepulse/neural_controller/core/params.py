@@ -89,6 +89,12 @@ class SensoryConfig:
 
 
 @dataclass(frozen=True)
+class ThreatGainConfig:
+    sensory_amber: float = 0.8
+    sensory_red: float = 0.6
+
+
+@dataclass(frozen=True)
 class PredictiveConfig:
     decay: float = 0.8
     error_gain: float = 0.9

@@ -29,6 +29,7 @@ from ..core.params import (
     PolicyConfig,
     RiskConfig,
 )
+from ..core.sensory import SensoryFilter
 from ..core.state import EMHState
 from ..estimation.belief import VolBelief
 from ..estimation.ekf import EMHEKF
@@ -167,6 +168,27 @@ def test_bridge_emits_predictive_state_from_config() -> None:
     assert set(decision["prediction_error_channels"]) == {"dd", "liq", "reg", "vol"}
 
 
+def test_sensory_gain_scales_in_threat_modes(
+    controller: NeuralMarketController,
+) -> None:
+    obs = dict(dd=0.2, liq=0.2, reg=0.2, vol=0.2)
+    base_filter = SensoryFilter(controller.sensory.cfg)
+    amber_filter = SensoryFilter(controller.sensory.cfg)
+    red_filter = SensoryFilter(controller.sensory.cfg)
+
+    green_gain = controller._sensory_gain_for_mode("GREEN")
+    amber_gain = controller._sensory_gain_for_mode("AMBER")
+    red_gain = controller._sensory_gain_for_mode("RED")
+
+    base_snapshot = base_filter.transform(obs, gain=green_gain)
+    amber_snapshot = amber_filter.transform(obs, gain=amber_gain)
+    red_snapshot = red_filter.transform(obs, gain=red_gain)
+
+    for key in ("dd", "liq", "reg", "vol"):
+        assert amber_snapshot.filtered[key] < base_snapshot.filtered[key]
+        assert red_snapshot.filtered[key] < amber_snapshot.filtered[key]
+
+
 def test_toy_stream_invariants(controller: NeuralMarketController) -> None:
     bridge = NeuralTACLBridge(
         controller, DummyTACL(), DummyKuramoto(), sync_threshold=0.3
@@ -184,6 +206,8 @@ def test_yaml_loader_defaults(tmp_path: Path) -> None:
     config_path = Path("tradepulse/neural_controller/config/neural_params.yaml")
     neural = NeuralMarketController.from_yaml(str(config_path))
     assert pytest.approx(neural.ctrl.tau_E_amber, rel=1e-6) == 0.3
+    assert pytest.approx(neural.threat_gains.sensory_amber, rel=1e-6) == 0.8
+    assert pytest.approx(neural.threat_gains.sensory_red, rel=1e-6) == 0.6
     assert neural.sync_threshold == pytest.approx(0.3, rel=1e-6)
     assert neural.generations == 12
     assert neural.adapter_config == MarketAdapterConfig()
