@@ -1512,6 +1512,41 @@ class TestNeuroOptimizer:
             for issue in health['issues']
         )
 
+    def test_assess_health_thresholds_from_config(self):
+        """Ensure health thresholds are derived from configuration values."""
+        config = OptimizationConfig(
+            numeric=NumericConfig(
+                da_5ht_ratio_range=(1.1, 2.1),
+                ei_balance_range=(0.9, 1.5),
+                aa_coherence_min=0.85,
+                stability_epsilon=1e-4,
+            ),
+        )
+        optimizer = NeuroOptimizer(config)
+
+        da_ratio_min, da_ratio_max = config.da_5ht_ratio_range
+        ei_min, _ = config.ei_balance_range
+        epsilon = config.numeric.stability_epsilon
+
+        balance = BalanceMetrics(
+            dopamine_serotonin_ratio=da_ratio_max + epsilon,
+            gaba_excitation_balance=ei_min - epsilon,
+            arousal_attention_coherence=config.numeric.aa_coherence_min - epsilon,
+            overall_balance_score=0.7,
+            homeostatic_deviation=0.2,
+        )
+
+        health = optimizer._assess_health(balance)
+
+        assert any(
+            'High dopamine/serotonin ratio' in issue for issue in health['issues']
+        )
+        assert any('Excessive inhibition' in issue for issue in health['issues'])
+        assert any(
+            'Poor arousal-attention coherence' in issue
+            for issue in health['issues']
+        )
+
     def test_reset(self, opt_config, sample_params, sample_state):
         """Test optimizer reset."""
         optimizer = NeuroOptimizer(opt_config)

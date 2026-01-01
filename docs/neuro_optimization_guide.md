@@ -330,6 +330,18 @@ relative to mean magnitude.
 - `history_window > 1`
 - `epsilon = numeric.stability_epsilon > 0`
 
+### Metric Ranges
+
+Homeostatic ratio bounds are configured via `OptimizationConfig` (proxied from
+`numeric`) and used for clipping plus health diagnostics:
+
+- **DA/5-HT ratio**: `da_5ht_ratio_range = (low, high)` with `low > 0`, `high > 0`,
+  and `low < high`. The health assessment flags values below/above these bounds.
+- **E/I balance**: `ei_balance_range = (low, high)` with `low > 0`, `high > 0`,
+  and `low < high`. The health assessment flags values outside these limits.
+- **Arousal-attention coherence**: `aa_coherence_min` in **[0, 1]**; values below
+  this threshold produce a warning in the health assessment.
+
 ### Failure Modes
 
 Behavior when metrics or inputs exceed their intended bounds.
