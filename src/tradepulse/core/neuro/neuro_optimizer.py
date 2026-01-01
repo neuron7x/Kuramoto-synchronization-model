@@ -100,7 +100,7 @@ class OptimizationConfig:
     momentum: float = 0.9
     max_iterations: int = 100
     convergence_threshold: float = 0.001
-    history_window: int = 20
+    history_window: int = 10
     stability_epsilon: float = 1e-6
     dtype: str = "float32"
     use_gpu: bool = False
@@ -425,6 +425,12 @@ class NeuroOptimizer:
         excitation = da_level + arousal
         inhibition = gaba_inhib + sero_level
         ei_balance = excitation / (inhibition + epsilon)
+
+        da_min, da_max = self.config.da_5ht_ratio_range
+        da_5ht_ratio = self._xp.clip(da_5ht_ratio, da_min, da_max)
+
+        ei_min, ei_max = self.config.ei_balance_range
+        ei_balance = self._xp.clip(ei_balance, ei_min, ei_max)
 
         # Arousal-attention coherence (should be correlated)
         aa_coherence = (

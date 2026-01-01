@@ -60,6 +60,15 @@ All neuro-optimization runs enforce bounds on the core invariants via
 These checks are called from unit tests and benchmark runs to provide
 continuous guardrails during optimization and profiling.
 
+##### Core Invariant Bounds
+
+| Метрика | Допустимий діапазон | Фізичний сенс | Формула |
+| --- | --- | --- | --- |
+| **DA/5-HT ratio** | **[1.0, 3.0]** | Баланс системи винагороди (DA) та стресового гальмування (5-HT). | `dopamine_level / (serotonin_level + ε)` |
+| **E/I balance** | **[1.0, 2.5]** | Співвідношення збудження (DA + arousal) до гальмування (GABA + 5-HT). | `(dopamine_level + na_arousal) / (gaba_inhibition + serotonin_level + ε)` |
+| **Arousal-attention coherence** | **[0, 1]** | Узгодженість активації та фокусу уваги (1 — ідеальне узгодження). | `clip(1 - |na_arousal - ach_attention| / 2, 0, 1)` |
+| **Stability score** | **[0, 1]** | Стабільність цільової функції у часі (менша дисперсія = вища стабільність). | `clip(1 - std(recent) / max(|mean|, ε), 0, 1)` |
+
 #### Multi-Objective Optimization
 
 Optimization balances three objectives:

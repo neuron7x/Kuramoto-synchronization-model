@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import logging
 
 import numpy as np
 import pytest
@@ -17,7 +18,11 @@ from tradepulse.core.neuro.neuro_optimizer import (
     NeuroOptimizer,
     OptimizationConfig,
 )
-from tradepulse.core.neuro._validation import BoundsSpec, validate_neuro_invariants
+from tradepulse.core.neuro._validation import (
+    BoundsSpec,
+    validate_neuro_invariants,
+    validate_neuro_metric_bounds,
+)
 
 
 @pytest.fixture
@@ -150,6 +155,49 @@ class TestBalanceMetrics:
 
         assert metrics.dopamine_serotonin_ratio == 2.0
         assert metrics.overall_balance_score == 0.8
+
+
+class TestNeuroMetricBounds:
+    """Tests for neuro metric bound enforcement."""
+
+    def test_validate_neuro_metric_bounds_clips_and_logs(self, caplog):
+        """Out-of-bounds metrics should clip and log warnings."""
+        caplog.set_level(logging.WARNING)
+
+        result = validate_neuro_metric_bounds(
+            dopamine_serotonin_ratio=10.0,
+            excitation_inhibition_balance=0.1,
+            arousal_attention_coherence=1.5,
+            stability=-0.2,
+            da_5ht_ratio_bounds=BoundsSpec(1.0, 3.0, "clip"),
+            ei_balance_bounds=BoundsSpec(1.0, 2.5, "clip"),
+            arousal_attention_bounds=BoundsSpec(0.0, 1.0, "clip"),
+            stability_bounds=BoundsSpec(0.0, 1.0, "clip"),
+        )
+
+        assert result["dopamine_serotonin_ratio"] == 3.0
+        assert result["excitation_inhibition_balance"] == 1.0
+        assert result["arousal_attention_coherence"] == 1.0
+        assert result["stability"] == 0.0
+        assert any("clipped to" in record.message for record in caplog.records)
+
+    def test_validate_neuro_metric_bounds_raises_and_logs(self, caplog):
+        """Out-of-bounds metrics should raise and log errors."""
+        caplog.set_level(logging.ERROR)
+
+        with pytest.raises(ValueError, match="dopamine_serotonin_ratio"):
+            validate_neuro_metric_bounds(
+                dopamine_serotonin_ratio=0.5,
+                excitation_inhibition_balance=1.5,
+                arousal_attention_coherence=0.5,
+                stability=0.5,
+                da_5ht_ratio_bounds=BoundsSpec(1.0, 3.0, "raise"),
+                ei_balance_bounds=BoundsSpec(1.0, 2.5, "raise"),
+                arousal_attention_bounds=BoundsSpec(0.0, 1.0, "raise"),
+                stability_bounds=BoundsSpec(0.0, 1.0, "raise"),
+            )
+
+        assert any("out of bounds" in record.message for record in caplog.records)
 
 
 class TestNeuroOptimizer:
