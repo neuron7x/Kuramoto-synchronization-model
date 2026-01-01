@@ -170,3 +170,23 @@ examples:
     dependencies:
       - networkx==3.5
       - numpy==2.3.3
+
+  - path: docs/examples/quickstart_signal_fetch.md
+    description: Quickstart for fetching market signals via public API.
+    seed: n/a
+    dependencies: []
+
+  - path: docs/examples/prediction_submission.md
+    description: Async prediction submission with idempotency handling.
+    seed: n/a
+    dependencies: []
+
+  - path: docs/examples/webhook_consumer.md
+    description: Webhook consumer flow for signal and prediction events.
+    seed: n/a
+    dependencies: []
+
+  - path: docs/examples/sdk_integration.md
+    description: SDK wrapper patterns for TradePulse API integration.
+    seed: n/a
+    dependencies: []
