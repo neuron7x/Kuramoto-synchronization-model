@@ -45,6 +45,7 @@ sensory:
 predictive:
   decay: 0.8
   error_gain: 0.9
+  prediction_error_scale: 0.5
   keys:
     - dd
     - liq

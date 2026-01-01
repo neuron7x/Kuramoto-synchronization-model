@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Dict
 
 from .params import Params
@@ -46,6 +47,7 @@ class EMHSSM:
         reward = float(obs.get("reward", 0.0))
         belief_term = float(obs.get("belief_term", 0.0))
         prediction_error = float(obs.get("prediction_error", 0.0))
+        bounded_prediction_error = math.tanh(prediction_error)
 
         self.s.mode = _threat_mode(dd, var_breach, vol)
         D = _demand(dd, liq, reg, self.p.psi)
@@ -59,7 +61,7 @@ class EMHSSM:
             + self.p.omega * (1.0 - self.s.M / self.p.M0)
             + self.p.kappa * delta_rpe
             + self.belief_term_gain * belief_term
-            + self.p.prediction_gain * prediction_error
+            + self.p.prediction_gain * bounded_prediction_error
         )
 
         dH = self.p.alpha * self.s.S - self.p.beta * self.s.H + self.p.gamma * self.s.M

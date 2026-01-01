@@ -92,6 +92,7 @@ class SensoryConfig:
 class PredictiveConfig:
     decay: float = 0.8
     error_gain: float = 0.9
+    prediction_error_scale: float = 0.5
     keys: tuple[str, ...] = ("dd", "liq", "reg", "vol")
 
     def __post_init__(self) -> None:

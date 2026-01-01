@@ -73,6 +73,36 @@ def test_emh_state_bounds() -> None:
         assert 0.0 <= out["S"] <= 1.0
 
 
+def test_prediction_error_bounded(controller: NeuralMarketController) -> None:
+    obs = dict(
+        dd=10.0,
+        liq=-5.0,
+        reg=7.5,
+        vol=3.0,
+        reward=5.0,
+        var_breach=True,
+    )
+    decision = controller.decide(obs)
+    assert 0.0 <= decision["prediction_error"] <= controller.predictive.cfg.error_gain
+    assert 0.0 <= decision["S"] <= 1.0
+
+
+def test_emh_saturation_extreme_inputs() -> None:
+    model = EMHSSM(Params(), EMHState())
+    out = model.step(
+        dict(
+            dd=1.0,
+            liq=1.0,
+            reg=1.0,
+            vol=1.0,
+            reward=100.0,
+            prediction_error=50.0,
+            var_breach=True,
+        )
+    )
+    assert 0.0 <= out["S"] <= 1.0
+
+
 def test_ekf_side_effect_free(controller: NeuralMarketController) -> None:
     ekf = EMHEKF(Params(), EKFConfig())
     state_before = ekf.st.x.copy()

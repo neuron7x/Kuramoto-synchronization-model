@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
@@ -22,11 +23,30 @@ class PredictiveCoder:
 
     cfg: PredictiveConfig = field(default_factory=PredictiveConfig)
     _mu: Dict[str, float] = field(default_factory=dict, init=False)
+    _error_scale: Dict[str, float] = field(default_factory=dict, init=False)
     _last_error: Optional[Dict[str, float]] = field(default=None, init=False)
 
     def _ensure_mu(self, values: Dict[str, float]) -> None:
         for key in self.cfg.keys:
             self._mu.setdefault(key, float(values.get(key, 0.0)))
+
+    def _update_error_scale(self, errors: Dict[str, float]) -> None:
+        for key, error in errors.items():
+            abs_error = abs(error)
+            previous = self._error_scale.get(key, abs_error)
+            scale = self.cfg.decay * previous + (1.0 - self.cfg.decay) * abs_error
+            self._error_scale[key] = scale
+
+    def normalize_errors(self, errors: Dict[str, float]) -> Dict[str, float]:
+        normalized: Dict[str, float] = {}
+        for key, error in errors.items():
+            scale = max(
+                self._error_scale.get(key, 0.0),
+                self.cfg.prediction_error_scale,
+                1e-6,
+            )
+            normalized[key] = math.tanh(error / scale)
+        return normalized
 
     def step(self, obs: Dict[str, float]) -> PredictiveState:
         values = {k: float(obs.get(k, 0.0)) for k in self.cfg.keys}
@@ -39,6 +59,7 @@ class PredictiveCoder:
             self._mu[key] = mu
             errors[key] = value - mu
 
+        self._update_error_scale(errors)
         self._last_error = dict(errors)
         return PredictiveState(mu=dict(self._mu), error=errors)
 
@@ -51,5 +72,6 @@ class PredictiveCoder:
         state = self.step(obs)
         if not state.error:
             return 0.0
-        magnitude = sum(abs(v) for v in state.error.values()) / len(state.error)
+        normalized = self.normalize_errors(state.error)
+        magnitude = sum(abs(v) for v in normalized.values()) / len(normalized)
         return self.cfg.error_gain * magnitude
