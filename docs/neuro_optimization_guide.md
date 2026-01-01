@@ -407,6 +407,8 @@ Stability is computed from recent objective history (using the configured
 stability = 1 - std(recent_perf) / max(abs(mean(recent_perf)), epsilon)
 ```
 
+Here, `epsilon` is `OptimizationConfig.stability_epsilon`.
+
 `abs` normalizes negative/positive means by magnitude, while `epsilon` prevents division by
 zero when the mean collapses toward zero. The value is clipped to `[0, 1]` to avoid spikes
 when the mean is negative or near zero.
@@ -456,6 +458,7 @@ class OptimizationConfig:
     stability_weight: float = 0.20     # Weight for stability
     performance_min: float = -2.0      # Min performance for normalization
     performance_max: float = 3.0       # Max performance for normalization
+    stability_epsilon: float = 1e-6    # Numerical stability constant
     learning_rate: float = 0.01        # Base learning rate
     momentum: float = 0.9              # Momentum factor
     max_iterations: int = 100          # Max iterations

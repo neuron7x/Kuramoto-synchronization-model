@@ -129,6 +129,11 @@ class TestOptimizationConfig:
         with pytest.raises(ValueError, match="Momentum"):
             OptimizationConfig(momentum=1.0)
 
+    def test_stability_epsilon_positive(self):
+        """Test stability_epsilon must be positive."""
+        with pytest.raises(ValueError, match="stability_epsilon"):
+            OptimizationConfig(stability_epsilon=0.0)
+
 
 class TestBalanceMetrics:
     """Tests for BalanceMetrics dataclass."""
