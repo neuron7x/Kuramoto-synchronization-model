@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import hashlib
 import json
 import logging
@@ -98,6 +99,8 @@ class LiveLoopConfig:
     heartbeat_interval: float = 10.0
     max_backoff: float = 60.0
     snapshot_interval: float = 30.0
+    pre_action_timeout: float | None = 0.2
+    pre_action_fallback_mode: str = "conservative"
     credentials: Mapping[str, Mapping[str, str]] | None = None
     ledger_dir: Path | str | None = None
 
@@ -130,6 +133,8 @@ class LiveLoopConfig:
             "snapshot_interval",
             max(1.0, float(self.snapshot_interval)),
         )
+        if self.pre_action_timeout is not None and self.pre_action_timeout <= 0:
+            object.__setattr__(self, "pre_action_timeout", None)
         ledger_dir = self.ledger_dir
         if ledger_dir is None:
             ledger_dir = self.state_dir
@@ -428,13 +433,49 @@ class LiveExecutionLoop:
                     "event": "live_loop.strategy_mode_rollback",
                     "restored": restored,
                     "reason": reason,
-                },
+            },
+        )
+
+    def _call_pre_action_filter(self, context: dict[str, object]) -> object:
+        if self._pre_action_filter is None:
+            raise RuntimeError("Pre-action filter not configured")
+        timeout = self._config.pre_action_timeout
+        if not timeout:
+            return self._pre_action_filter.check(context)  # type: ignore[attr-defined]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                self._pre_action_filter.check, context  # type: ignore[attr-defined]
             )
+            try:
+                return future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError as exc:
+                future.cancel()
+                raise TimeoutError(
+                    f"pre_action_filter exceeded {timeout:.3f}s timeout"
+                ) from exc
 
     def _evaluate_pre_action(self, venue: str, order: Order) -> dict[str, object]:
         context = self._build_pre_action_context(venue, order)
         try:
-            decision = self._pre_action_filter.check(context)  # type: ignore[attr-defined]
+            decision = self._call_pre_action_filter(context)
+        except TimeoutError as exc:
+            self._logger.warning(
+                "Pre-action filter timed out; entering safe mode",
+                extra={
+                    "event": "live_loop.pre_action_timeout",
+                    "venue": venue,
+                    "symbol": order.symbol,
+                    "timeout": self._config.pre_action_timeout,
+                    "error": str(exc),
+                },
+            )
+            return {
+                "allowed": False,
+                "reasons": ("pre_action_timeout",),
+                "safe_mode": True,
+                "rollback": False,
+                "policy_override": self._config.pre_action_fallback_mode,
+            }
         except Exception as exc:  # pragma: no cover - defensive
             self._logger.exception(
                 "Pre-action filter failed",

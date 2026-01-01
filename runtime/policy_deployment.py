@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import random
 import time
 from dataclasses import dataclass, field
@@ -64,11 +65,20 @@ class RollbackPlan:
 class PolicyDeploymentManager:
     """Manage policy activation, shadow deployment, and rollback."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, safe_mode_handler: PolicyHandler | None = None) -> None:
         self._versions: Dict[str, Dict[str, PolicyVersion]] = {}
         self._active: Dict[str, PolicyVersion] = {}
         self._shadow: Dict[str, ShadowDeployment] = {}
         self.rollback_history: List[RollbackPlan] = []
+        self._safe_mode_handler = safe_mode_handler or self._default_safe_mode_handler
+
+    @staticmethod
+    def _default_safe_mode_handler(*args: Any, **kwargs: Any) -> Dict[str, object]:
+        return {
+            "action": "hold",
+            "safe_mode": True,
+            "reason": "policy_fallback",
+        }
 
     def register_policy(
         self,
@@ -122,9 +132,34 @@ class PolicyDeploymentManager:
         if policy_id in self._shadow:
             self._shadow[policy_id].active = False
 
-    def shadow_infer(self, policy_id: str, *args: Any, **kwargs: Any) -> Any:
+    def shadow_infer(
+        self,
+        policy_id: str,
+        *args: Any,
+        timeout: float | None = 0.3,
+        fallback_handler: PolicyHandler | None = None,
+        **kwargs: Any,
+    ) -> Any:
         primary = self._active[policy_id]
-        result = primary.handler(*args, **kwargs)
+        handler = primary.handler
+        if timeout is None or timeout <= 0:
+            timeout = None
+        try:
+            if timeout is None:
+                result = handler(*args, **kwargs)
+            else:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(handler, *args, **kwargs)
+                    try:
+                        result = future.result(timeout=timeout)
+                    except concurrent.futures.TimeoutError as exc:
+                        future.cancel()
+                        raise TimeoutError(
+                            f"policy_infer exceeded {timeout:.3f}s timeout"
+                        ) from exc
+        except Exception:
+            safe_handler = fallback_handler or self._safe_mode_handler
+            return safe_handler(*args, **kwargs)
         shadow = self._shadow.get(policy_id)
         if shadow and shadow.active and random.random() <= shadow.traffic_ratio:
             shadow.handler(*args, **kwargs)
