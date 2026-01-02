@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -158,3 +158,8 @@ class NeuroTradePulseStrategy:
             self._prev_state_vec = state_vec
 
         return pd.Series(actions, index=bars.index, name="neuro_action")
+
+
+def get_strategy(config: Optional[Dict[str, Any]] = None) -> NeuroTradePulseStrategy:
+    cfg = NeuroTradePulseConfig(**(config or {}))
+    return NeuroTradePulseStrategy(cfg)

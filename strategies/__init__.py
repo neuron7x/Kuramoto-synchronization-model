@@ -9,6 +9,15 @@ from .registry import (
     StrategyRegistry,
     StrategySpec,
     UnknownStrategyError,
+    StrategyRoutingPolicy,
+    StrategyRouter,
+    StrategyStateInput,
+    MarketRegime,
+    RiskLevel,
+    SystemStress,
+    default_routing_policy,
+    route_strategy,
+    global_router,
     register_strategy,
     resolve_strategy,
 )
@@ -42,6 +51,11 @@ register_strategy(
     "strategies.quantum_neural:get_strategy",
     description="Hybrid LSTM/Transformer model with risk-managed backtesting.",
 )
+register_strategy(
+    "neuro_trade",
+    "strategies.neuro_trade_pulse:get_strategy",
+    description="Composite signal + motivation engine for cautious regimes.",
+)
 
 
 __all__ = [
@@ -50,7 +64,16 @@ __all__ = [
     "StrategyRegistry",
     "StrategySpec",
     "UnknownStrategyError",
+    "StrategyRoutingPolicy",
+    "StrategyRouter",
+    "StrategyStateInput",
+    "MarketRegime",
+    "RiskLevel",
+    "SystemStress",
+    "default_routing_policy",
+    "global_router",
     "get_strategy",
     "list_strategies",
     "register_strategy",
+    "route_strategy",
 ]
