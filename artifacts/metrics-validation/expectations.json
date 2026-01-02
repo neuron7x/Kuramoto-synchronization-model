@@ -1,3 +1,10 @@
 {
-  "api_requests_total_delta": null
+  "issues": [
+    {
+      "code": "missing",
+      "message": "metric missing from scrape",
+      "metric": "tradepulse_process_cpu_percent"
+    }
+  ],
+  "regression_baseline_errors": []
 }

@@ -86,4 +86,6 @@ class RealTimeMonitor:
         *,
         policy: DegradationPolicy | None = None,
     ) -> tuple[dict[str, Any], "DegradationReport"]:
-        """Run inference with timeout + fallback handling."""\n\n        return apply_degradation(self.infer_window, window_np, policy=policy)
+        """Run inference with timeout + fallback handling."""
+
+        return apply_degradation(self.infer_window, window_np, policy=policy)

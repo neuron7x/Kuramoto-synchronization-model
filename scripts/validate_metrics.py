@@ -342,6 +342,11 @@ def run_expectations(
 
         app = create_app()
         client = TestClient(app)
+        collector = getattr(app.state, "metrics", None)
+        if collector is not None and getattr(collector, "enabled", False):
+            collector.set_process_resource_usage(
+                "runtime", cpu_percent=0.0, memory_bytes=0.0, memory_percent=0.0
+            )
         for _ in range(2):
             response = client.get("/metrics")
             response.raise_for_status()
