@@ -14,8 +14,6 @@ import shutil
 import tarfile
 from typing import TYPE_CHECKING
 
-import pandas as _pd
-
 os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
 # Ensure local and CI test environments have a benign default for the
 # administrative two-factor secret so that importing ``tradepulse.sdk`` (which
@@ -26,8 +24,13 @@ os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
 # Some pandas wheels omit the ``_pandas_datetime_CAPI`` shim that older ujson
 # codepaths expect. Provide a harmless placeholder to avoid AttributeErrors when
 # pandas JSON serializers reference it.
-if not hasattr(_pd, "_pandas_datetime_CAPI"):  # pragma: no cover - import-time guard
-    _pd._pandas_datetime_CAPI = None
+# Conditionally import pandas to avoid breaking environments without it (e.g., semgrep Docker)
+try:
+    import pandas as _pd
+    if not hasattr(_pd, "_pandas_datetime_CAPI"):  # pragma: no cover - import-time guard
+        _pd._pandas_datetime_CAPI = None
+except ImportError:  # pragma: no cover - defensive guard; pandas may be absent
+    pass
 
 
 def _patch_pip_symlink_extraction() -> None:
