@@ -41,6 +41,11 @@ This document defines the key failure modes for TradePulse's core workflows and 
 | REL_CONFIG_INVALID_003 | Invalid value types (string where number expected) | `pytest tests/reliability/test_invalid_config.py::test_type_validation -v` | Type error with field name and expected type, actual value shown | proven | Schema validation catches type mismatches |
 | REL_CONFIG_INVALID_004 | Incompatible parameter combinations | `pytest tests/reliability/test_invalid_config.py::test_incompatible_parameters -v` | Semantic validation error explaining incompatibility, suggests valid combinations | proven | Cross-field validation prevents contradictory configs |
 | REL_PROCESS_INT_001 | Graceful shutdown on SIGTERM | `pytest tests/reliability/test_process_interruption.py::test_sigterm_graceful_shutdown -v` | Process cleans up resources, writes checkpoint, exits with code 0 within timeout | partial | Basic signal handling tested, checkpoint logic simplified |
+| REL_THREAT_LIQUIDITY_SHOCK_001 | Liquidity shock triggers blocked action | `pytest tests/reliability/test_threat_scenarios.py::test_liquidity_shock_blocks_action -v` | Risk gate blocks action, logs liquidity dry-up reason, rollbacks enabled | proven | Threat-model hard breach |
+| REL_THREAT_VOLATILITY_SPIKE_001 | Volatility spike triggers safe mode | `pytest tests/reliability/test_threat_scenarios.py::test_volatility_spike_triggers_safe_mode -v` | Risk gate allows action under safe-mode policy override | proven | Threat-model soft breach |
+| REL_THREAT_DATA_SPOOF_001 | Price spoofing (large jump) detected | `pytest tests/reliability/test_threat_scenarios.py::test_data_spoofing_price_jump_detected -v` | Validation flags large price jump for review | proven | Data integrity check |
+| REL_POLICY_BLOCKED_ACTION_001 | Policy deviation blocks action | `pytest tests/reliability/test_threat_scenarios.py::test_policy_deviation_blocks_action -v` | Action blocked with policy deviation hard breach reason | proven | Policy-level check |
+| REL_POLICY_SAFE_MODE_001 | Policy deviation triggers safe mode | `pytest tests/reliability/test_threat_scenarios.py::test_policy_safe_mode_transition -v` | Safe-mode transition with policy override | proven | Policy-level check |
 
 ---
 
@@ -133,6 +138,112 @@ pytest tests/reliability/test_invalid_config.py::test_yaml_parse_error -v
 - Generic "config error" without location
 - Attempt to partially parse and guess intent
 - Start with default config silently
+
+---
+
+### REL_THREAT_LIQUIDITY_SHOCK_001: Liquidity Shock
+
+**Description**: Market liquidity drops below safe operating thresholds during execution.
+
+**Reproduction**:
+```bash
+pytest tests/reliability/test_threat_scenarios.py::test_liquidity_shock_blocks_action -v
+```
+
+**Expected Behavior**:
+- Action is blocked immediately
+- Decision reports `liquidity_dryup` hard breach
+- Rollback flag enabled to prevent partial exposure
+- Audit trail captures the liquidity threshold breach
+
+**What NOT to do**:
+- Proceed with execution when liquidity is below minimum
+- Retry endlessly without waiting for recovery
+- Hide the breach reason from operator logs
+
+---
+
+### REL_THREAT_VOLATILITY_SPIKE_001: Volatility Spike
+
+**Description**: Volatility rises above soft risk limits but remains below hard stop.
+
+**Reproduction**:
+```bash
+pytest tests/reliability/test_threat_scenarios.py::test_volatility_spike_triggers_safe_mode -v
+```
+
+**Expected Behavior**:
+- Action remains allowed
+- Safe mode activates with conservative policy override
+- Decision reasons include `volatility_soft_breach`
+
+**What NOT to do**:
+- Ignore soft volatility breaches
+- Fail to downgrade policy controls in safe mode
+- Block action without logging the rationale
+
+---
+
+### REL_THREAT_DATA_SPOOF_001: Data Spoofing (Large Price Jump)
+
+**Description**: Price data shows a sudden, unrealistic jump consistent with spoofing.
+
+**Reproduction**:
+```bash
+pytest tests/reliability/test_threat_scenarios.py::test_data_spoofing_price_jump_detected -v
+```
+
+**Expected Behavior**:
+- Validation flags `LARGE_PRICE_JUMP` issue
+- Issue metadata contains jump threshold and sample indices
+- Pipeline can route the batch for review or quarantining
+
+**What NOT to do**:
+- Accept spoofed data without any alert
+- Overwrite good data with spoofed bars
+- Hide the jump threshold in error output
+
+---
+
+### REL_POLICY_BLOCKED_ACTION_001: Blocked Action on Policy Deviation
+
+**Description**: Policy deviation exceeds hard limit and must block the action.
+
+**Reproduction**:
+```bash
+pytest tests/reliability/test_threat_scenarios.py::test_policy_deviation_blocks_action -v
+```
+
+**Expected Behavior**:
+- Action blocked and rollback flagged
+- Decision reason includes `policy_deviation_hard`
+- Operator receives actionable policy violation detail
+
+**What NOT to do**:
+- Allow action to proceed despite hard breach
+- Hide policy deviation values from logs
+- Convert hard breach into soft warning
+
+---
+
+### REL_POLICY_SAFE_MODE_001: Safe-Mode Transition on Policy Drift
+
+**Description**: Policy deviation exceeds soft limit, requiring safe-mode transition.
+
+**Reproduction**:
+```bash
+pytest tests/reliability/test_threat_scenarios.py::test_policy_safe_mode_transition -v
+```
+
+**Expected Behavior**:
+- Safe mode becomes active
+- Policy override applied (defensive stance)
+- Decision reason includes `policy_deviation_soft`
+
+**What NOT to do**:
+- Ignore early warning signals
+- Fail to switch policies on safe-mode
+- Leave safe mode unspecified in decision metadata
 
 ---
 
