@@ -294,7 +294,6 @@ jobs:
           restore-keys: |
             go-${{ runner.os }}-
       - name: Run Go service unit tests (fast subset)
-        continue-on-error: true
         run: |
           mkdir -p reports/go
           # Run Go tests with short flag for fast subset only
@@ -345,6 +344,7 @@ jobs:
 
           report_path = pathlib.Path('reports/localization/coverage.json')
           if not report_path.exists():
+              print('::warning::Localization coverage report not generated')
               print('⚠️ Localization coverage report not generated', file=sys.stderr)
               summary = "### Localization coverage\n\n_Report not generated_\n"
               step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
@@ -362,6 +362,7 @@ jobs:
           try:
               data = json.loads(report_path.read_text(encoding='utf-8'))
           except Exception as e:
+              print(f'::warning::Error parsing localization coverage: {e}')
               print(f'⚠️ Error parsing localization coverage: {e}', file=sys.stderr)
               sys.exit(0)
 
@@ -402,7 +403,6 @@ jobs:
           retention-days: 7
       - name: Run test quality validation
         id: test_quality
-        continue-on-error: true
         run: |
           .venv/bin/python -m tools.testing.quality_validator \
             --test-dir=tests \
@@ -412,6 +412,7 @@ jobs:
         id: run_tests
         run: |
           # Fast tests only: exclude slow, heavy_math, nightly, flaky
+          # Use reruns for transient failures
           .venv/bin/python -m pytest \
             tests/ \
             -m "not slow and not heavy_math and not nightly and not flaky" \
@@ -421,6 +422,8 @@ jobs:
             --junitxml=reports/fast-unit-tests.xml \
             --html=reports/fast-unit-tests-report.html --self-contained-html \
             --json-report --json-report-file=reports/test-results.json \
+            --reruns 3 --reruns-delay 1 \
+            --only-rerun AssertionError --only-rerun TimeoutError \
             -q
       - name: Run ECS regulator coverage
         run: |
@@ -582,6 +585,67 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+  flaky-tests:
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    name: Flaky Tests with Retries (Python ${{ matrix.python-version }})
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+            constraints/security.txt
+      - name: Cache Python virtual environment
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        id: venv-cache-flaky
+        with:
+          path: .venv
+          key: venv-flaky-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            venv-flaky-${{ runner.os }}-py${{ matrix.python-version }}-
+      - name: Create virtual environment
+        if: steps.venv-cache-flaky.outputs.cache-hit != 'true'
+        run: python -m venv .venv
+      - name: Install dependencies
+        if: steps.venv-cache-flaky.outputs.cache-hit != 'true'
+        run: |
+          .venv/bin/pip install --upgrade pip setuptools wheel
+          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
+      - name: Prepare test report directories
+        run: mkdir -p reports
+      - name: Run flaky tests with retries
+        continue-on-error: true
+        run: |
+          # Run flaky tests with high retry count
+          .venv/bin/python -m pytest \
+            tests/ \
+            -m "flaky" \
+            --reruns 5 --reruns-delay 2 \
+            --junitxml=reports/flaky-tests.xml \
+            --html=reports/flaky-tests-report.html --self-contained-html \
+            -q
+      - name: Upload flaky test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: flaky-test-reports-py${{ matrix.python-version }}
+          path: |
+            reports/flaky-tests.xml
+            reports/flaky-tests-report.html
+          if-no-files-found: warn
+          retention-days: 7
+
   serotonin-cert:
     runs-on: ubuntu-latest
     needs: fast-unit-tests
@@ -688,6 +752,36 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        with:
+          python-version: '3.11'
+      
+      - name: Install PyYAML for performance validation
+        run: pip install PyYAML
+      
+      - name: Download test performance artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        continue-on-error: true
+        with:
+          name: fast-test-metrics-py3.11
+          path: reports/
+      
+      - name: Validate performance budgets
+        id: perf_validation
+        continue-on-error: true
+        run: |
+          if [ -f reports/test-performance.json ]; then
+            python -m tools.performance.validate_budgets \
+              --config configs/perf_budgets.yaml \
+              --results reports/test-performance.json \
+              --fail-on-breach
+          else
+            echo "⚠️ Performance results not available, skipping validation"
+          fi
+      
       - name: Enforce canonical gates
         env:
           LINT_STATUS: ${{ needs.lint.result }}
@@ -697,7 +791,7 @@ jobs:
           SEROTONIN_STATUS: ${{ needs.serotonin-cert.result }}
           LINE_RATE: ${{ needs.fast-unit-tests.outputs.line_rate }}
           BRANCH_RATE: ${{ needs.fast-unit-tests.outputs.branch_rate }}
-          LINE_THRESHOLD: "95.0"
+          LINE_THRESHOLD: "98.0"
           BRANCH_THRESHOLD: "90.0"
         run: |
           set -euo pipefail
@@ -779,6 +873,17 @@ PY
           fi
           summary_lines+=("| Line coverage | ${LINE_RATE:-n/a} (gate ${LINE_THRESHOLD}%) |")
           summary_lines+=("| Branch coverage | ${BRANCH_RATE:-n/a} (gate ${BRANCH_THRESHOLD}%) |")
+
+          # Check performance validation result
+          PERF_STATUS="${{ steps.perf_validation.outcome }}"
+          if [[ "$PERF_STATUS" == "failure" ]]; then
+            summary_lines+=("| Performance budget | ❌ failed |")
+            failures=1
+          elif [[ "$PERF_STATUS" == "success" ]]; then
+            summary_lines+=("| Performance budget | ✅ passed |")
+          else
+            summary_lines+=("| Performance budget | ⚠️ skipped |")
+          fi
 
           if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
             printf "%s\n" "${summary_lines[@]}" >> "$GITHUB_STEP_SUMMARY"

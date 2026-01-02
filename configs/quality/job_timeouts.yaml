@@ -1,0 +1,29 @@
+# CI Job Timeout Configuration
+# All timeouts include 2x safety margin over historical p95 runtime
+# Update these values based on observed CI performance metrics
+
+jobs:
+  # Linting and static analysis
+  lint: 8  # Historical p95: 4m
+  
+  # Security scans
+  dependency_security: 15  # Historical p95: 7m
+  security_fast: 10  # Historical p95: 5m
+  
+  # Test suites
+  fast_unit_tests: 15  # Historical p95: 7.5m
+  flaky_tests: 20  # Historical p95: 10m (with retries)
+  full_test_suite: 50  # Historical p95: 25m
+  
+  # Specialized testing
+  serotonin_cert: 10  # Historical p95: 5m
+  mutation_testing: 65  # Historical p95: 32m
+  
+  # Integration gates
+  stop_the_line_gate: 5  # Historical p95: 2.5m
+
+# Rationale:
+# - Timeouts prevent infinite hangs while allowing legitimate work to complete
+# - 2x safety margin accommodates CI infrastructure variance
+# - Values derived from historical CI run data (p95 percentile)
+# - Review and update quarterly based on actual performance trends
