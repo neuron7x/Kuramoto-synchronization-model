@@ -1,0 +1,61 @@
+name: 'Setup TradePulse Development Environment'
+description: 'Sets up Python with cached dependencies for TradePulse development'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+  install-dev:
+    description: 'Whether to install dev dependencies'
+    required: false
+    default: 'true'
+  cache-prefix:
+    description: 'Cache key prefix for venv'
+    required: false
+    default: 'venv'
+
+outputs:
+  cache-hit:
+    description: 'Whether venv cache was hit'
+    value: ${{ steps.venv-cache.outputs.cache-hit }}
+  python-version:
+    description: 'Python version used'
+    value: ${{ steps.setup-python.outputs.python-version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      id: setup-python
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.lock
+          requirements-dev.lock
+          constraints/security.txt
+          
+    - name: Cache Python virtual environment
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      id: venv-cache
+      with:
+        path: .venv
+        key: ${{ inputs.cache-prefix }}-${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles('requirements*.lock', 'constraints/security.txt') }}
+        restore-keys: |
+          ${{ inputs.cache-prefix }}-${{ runner.os }}-py${{ inputs.python-version }}-
+          
+    - name: Create virtual environment
+      if: steps.venv-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: python -m venv .venv
+      
+    - name: Install dependencies
+      if: steps.venv-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        .venv/bin/pip install --upgrade pip setuptools wheel
+        .venv/bin/pip install -c constraints/security.txt -r requirements.lock
+        if [ "${{ inputs.install-dev }}" = "true" ]; then
+          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
+        fi
