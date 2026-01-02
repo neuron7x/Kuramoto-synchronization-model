@@ -92,6 +92,16 @@ runbooks, and compliance reports found in [`docs/operational_handbook.md`](opera
 Sequence and data flow diagrams backing this narrative are maintained in
 [`docs/architecture/system_overview.md`](architecture/system_overview.md).
 
+## Neuro-primitive Catalog
+
+TradePulse exposes a small set of neuro-inspired primitives that are treated as reusable control blocks across
+learning and decision loops. Each primitive is defined by a narrow contract, strict observability, and minimal
+cross-module dependencies.
+
+| Primitive | Core Role | Integration Surface |
+| --- | --- | --- |
+| **Modulation-signal controller** | Computes a risk-weighted learning-rate modulation signal (e.g., lowering policy/value update scale under high RPE or threat while allowing arousal to boost learning). | `rl/core/modulation_signal.py` applies modulation to the policy/value update loop and emits modulation telemetry via the RL metrics gauges. |
+
 ## Quality Attributes and Guardrails
 
 - **Scalability:** Horizontal pod autoscaling (HPA/KEDA) limits defined per service with SLO-backed alerts
