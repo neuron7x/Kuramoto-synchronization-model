@@ -14,6 +14,7 @@ from core.utils.metrics import get_metrics_collector
 from neuropro.multifractal_opt import fractional_update
 from rl.core.habit_head import HabitHead, ape_update
 from rl.core.interfaces import PolicyContract, ValueContract
+from rl.core.modulation_signal import ModulationSignalController
 from rl.core.reward_prediction_error import RewardPredictionError
 from rl.core.safe_update import SafeUpdateGate
 from rl.explore.noise import ColoredNoiseAR1, OUProcess
@@ -88,6 +89,8 @@ class ActorCriticFHMC:
             clip_value=safe_update_cfg.get("rpe_clip"),
         )
         self.safe_update = SafeUpdateGate.from_mapping(safe_update_cfg)
+        modulation_cfg = self.fhmc.cfg.get("modulation_signal", {})
+        self.modulation = ModulationSignalController.from_mapping(modulation_cfg)
         self.grad_clip_norm = float(safe_update_cfg.get("grad_clip_norm", 1.0))
         self.trust_region_kl = float(safe_update_cfg.get("trust_region_kl", 0.1))
         self.drift_threshold = float(safe_update_cfg.get("drift_threshold", 0.2))
@@ -222,7 +225,13 @@ class ActorCriticFHMC:
                 "threat": float(self.fhmc.threat_value()),
             },
         )
+        modulation_decision = self.modulation.compute(
+            rpe_result.metrics,
+            orexin=float(self.fhmc.orexin_value()),
+            threat=float(self.fhmc.threat_value()),
+        )
         policy_snapshot = self._snapshot_params(self.policy)
+        modulation_scale = gate_decision.scale * modulation_decision.scale
 
         self.opt_value.zero_grad()
         (-delta_r.detach() * v).mean().backward()
@@ -232,7 +241,7 @@ class ActorCriticFHMC:
         ]
         grads_value, value_grad_norm, _ = self._clip_grads(grads_value)
         grads_value = [
-            grad * gate_decision.scale if grad is not None else None
+            grad * modulation_scale if grad is not None else None
             for grad in grads_value
         ]
         fractional_update(
@@ -275,7 +284,7 @@ class ActorCriticFHMC:
         ]
         grads_policy, policy_grad_norm, _ = self._clip_grads(grads_policy)
         grads_policy = [
-            grad * gate_decision.scale if grad is not None else None
+            grad * modulation_scale if grad is not None else None
             for grad in grads_policy
         ]
         fractional_update(
@@ -356,6 +365,18 @@ class ActorCriticFHMC:
             self._metrics.rl_update_scale.labels(
                 agent=agent_label, component="policy"
             ).set(gate_decision.scale)
+            self._metrics.rl_modulation_scale.labels(
+                agent=agent_label, component="value", signal="risk_weighted_lr"
+            ).set(modulation_scale)
+            self._metrics.rl_modulation_scale.labels(
+                agent=agent_label, component="policy", signal="risk_weighted_lr"
+            ).set(modulation_scale)
+            self._metrics.rl_modulation_risk.labels(
+                agent=agent_label, signal="risk_weighted_lr"
+            ).set(modulation_decision.risk_score)
+            self._metrics.rl_modulation_arousal.labels(
+                agent=agent_label, signal="risk_weighted_lr"
+            ).set(modulation_decision.arousal_boost)
             self._metrics.rl_grad_norm.labels(
                 agent=agent_label, component="value"
             ).set(value_grad_norm)

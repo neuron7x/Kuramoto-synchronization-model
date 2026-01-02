@@ -36,6 +36,13 @@ fhmc:
     eta_f: 0.5
     levy_alpha: 1.5
     on_states: null
+  modulation_signal:
+    base_scale: 1.0
+    rpe_weight: 0.6
+    threat_weight: 0.8
+    orexin_weight: 0.3
+    min_scale: 0.1
+    max_scale: 1.5
 
 agent:
   state_dim: 8

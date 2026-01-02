@@ -57,6 +57,16 @@ def _default_fractional_params() -> dict[str, Any]:
     return {"eta_f": 0.5, "levy_alpha": 1.5, "on_states": None}
 
 
+def _default_modulation_signal_params() -> dict[str, Any]:
+    return {
+        "base_scale": 1.0,
+        "rpe_weight": 0.6,
+        "threat_weight": 0.8,
+        "orexin_weight": 0.3,
+        "min_scale": 0.1,
+        "max_scale": 1.5,
+    }
+
 @dataclass(slots=True)
 class FHMCConfig:
     """Configuration for the Fracto-Hypothalamic Meta-Controller.
@@ -71,6 +81,7 @@ class FHMCConfig:
         sleep: Sleep replay engine parameters.
         explore: Exploration noise parameters for RL agent.
         fractional_update: Fractional gradient update parameters.
+        modulation_signal: Risk-weighted learning-rate modulation parameters.
     """
 
     alpha_target: tuple[float, float] = (0.5, 1.5)
@@ -83,6 +94,9 @@ class FHMCConfig:
     explore: dict[str, Any] = field(default_factory=_default_explore_params)
     fractional_update: dict[str, Any] = field(
         default_factory=_default_fractional_params
+    )
+    modulation_signal: dict[str, Any] = field(
+        default_factory=_default_modulation_signal_params
     )
 
     def to_dict(self) -> dict[str, Any]:
@@ -97,6 +111,7 @@ class FHMCConfig:
             "sleep": dict(self.sleep),
             "explore": dict(self.explore),
             "fractional_update": dict(self.fractional_update),
+            "modulation_signal": dict(self.modulation_signal),
         }
 
     @classmethod
@@ -113,6 +128,9 @@ class FHMCConfig:
             explore=dict(data.get("explore", _default_explore_params())),
             fractional_update=dict(
                 data.get("fractional_update", _default_fractional_params())
+            ),
+            modulation_signal=dict(
+                data.get("modulation_signal", _default_modulation_signal_params())
             ),
         )
 

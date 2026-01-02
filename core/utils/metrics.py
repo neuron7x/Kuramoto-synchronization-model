@@ -454,6 +454,27 @@ class MetricsCollector:
             registry=registry,
         )
 
+        self.rl_modulation_scale = Gauge(
+            "tradepulse_rl_modulation_scale",
+            "Effective modulation scale applied to RL updates",
+            ["agent", "component", "signal"],
+            registry=registry,
+        )
+
+        self.rl_modulation_risk = Gauge(
+            "tradepulse_rl_modulation_risk",
+            "Risk score derived for RL modulation controllers",
+            ["agent", "signal"],
+            registry=registry,
+        )
+
+        self.rl_modulation_arousal = Gauge(
+            "tradepulse_rl_modulation_arousal",
+            "Arousal boost component for RL modulation controllers",
+            ["agent", "signal"],
+            registry=registry,
+        )
+
         self.model_cpu_percent = Gauge(
             "tradepulse_model_cpu_percent",
             "Process CPU utilisation percent for model serving",
