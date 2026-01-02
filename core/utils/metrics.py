@@ -418,6 +418,42 @@ class MetricsCollector:
             registry=registry,
         )
 
+        # RL stability metrics
+        self.rl_update_scale = Gauge(
+            "tradepulse_rl_update_scale",
+            "Applied scaling factor for RL parameter updates",
+            ["agent", "component"],
+            registry=registry,
+        )
+
+        self.rl_grad_norm = Gauge(
+            "tradepulse_rl_grad_norm",
+            "Gradient norm observed during RL updates",
+            ["agent", "component"],
+            registry=registry,
+        )
+
+        self.rl_policy_kl = Gauge(
+            "tradepulse_rl_policy_kl",
+            "Observed KL divergence between successive policy updates",
+            ["agent"],
+            registry=registry,
+        )
+
+        self.rl_policy_drift = Gauge(
+            "tradepulse_rl_policy_drift",
+            "Relative parameter drift from the last stable checkpoint",
+            ["agent"],
+            registry=registry,
+        )
+
+        self.rl_rollback_total = Counter(
+            "tradepulse_rl_rollback_total",
+            "Total number of RL policy rollbacks",
+            ["agent", "reason"],
+            registry=registry,
+        )
+
         self.model_cpu_percent = Gauge(
             "tradepulse_model_cpu_percent",
             "Process CPU utilisation percent for model serving",
