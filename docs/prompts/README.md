@@ -12,6 +12,7 @@ This directory contains LLM system prompts and agent configurations that were us
 
 - **system_prompt_principal_architect.md** - System prompt defining architectural methodology and frameworks used during TradePulse design
 - **doc_pr_copilot_guide.md** - Configuration guide for documentation automation agents
+- **llm_mathematical_reasoning_agent.md** - Engineering specification for the mathematical reasoning agent (state, metrics, tactics)
 
 ## Purpose
 
