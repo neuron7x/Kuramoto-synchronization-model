@@ -46,6 +46,27 @@ This composite action provides a consistent way to set up Python and install Tra
 | `install-dev` | Whether to install dev dependencies | No | `true` |
 | `cache-prefix` | Prefix for venv cache key | No | `venv` |
 
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| `cache-hit` | Whether the venv cache was hit (`'true'` or `'false'`) |
+| `python-version` | The actual Python version that was set up |
+
+### Using Outputs
+
+```yaml
+- uses: ./.github/actions/setup-tradepulse
+  id: setup
+  with:
+    python-version: '3.11'
+
+- name: Check cache status
+  run: |
+    echo "Cache hit: ${{ steps.setup.outputs.cache-hit }}"
+    echo "Python version: ${{ steps.setup.outputs.python-version }}"
+```
+
 ## Cache Strategy
 
 The action uses a deterministic cache key pattern:
