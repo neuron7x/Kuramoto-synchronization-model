@@ -4,7 +4,7 @@
 # Stage 1: Lightweight scan stage (for security scanning only)
 # This stage excludes heavy GPU dependencies to reduce image size
 # =============================================================================
-FROM python:3.12-slim AS scan
+FROM python:3.12.8-slim-bookworm AS scan
 
 WORKDIR /app
 
@@ -18,8 +18,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    libexpat1=2.5.0-1+deb12u2 \
+    libxml2=2.9.14+dfsg-1.3~deb12u1 \
+    libkrb5-3=1.20.1-2+deb12u2 \
+    openssl=3.0.15-1~deb12u1 && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
@@ -52,7 +56,7 @@ CMD ["python", "-m", "application.runtime.server"]
 # =============================================================================
 # Stage 2: Full runtime stage with GPU support (for production)
 # =============================================================================
-FROM python:3.11-slim AS runtime
+FROM python:3.12.8-slim-bookworm AS runtime
 
 WORKDIR /app
 
@@ -62,10 +66,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies if needed (none currently required)
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     <package-name> \
-#     && rm -rf /var/lib/apt/lists/*
+# Install patched system dependencies
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libexpat1=2.5.0-1+deb12u2 \
+    libxml2=2.9.14+dfsg-1.3~deb12u1 \
+    libkrb5-3=1.20.1-2+deb12u2 \
+    openssl=3.0.15-1~deb12u1 && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Copy and install ALL dependencies including GPU libraries
 COPY requirements.lock ./

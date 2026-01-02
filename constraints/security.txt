@@ -25,6 +25,8 @@ urllib3==2.6.0
 # cryptography: Core crypto library, has critical CVEs in versions < 42.0.0
 # CVE-2023-50782, CVE-2024-26130, CVE-2024-0727 in older versions
 cryptography==46.0.3
+# pyOpenSSL: Bindings for OpenSSL, align with patched OpenSSL releases
+pyOpenSSL>=24.3.0
 
 # PyJWT: Authentication token handling, critical for API security
 # CVE-2022-29217 (key confusion) fixed in 2.4.0
@@ -36,6 +38,9 @@ PyJWT==2.10.1
 # Jinja2: Template engine, XSS vulnerabilities in older versions
 # CVE-2024-34064 (XSS) fixed in 3.1.4
 Jinja2==3.1.6
+# XML processing: ensure patched parsers to mitigate XXE/overflow issues
+lxml>=5.2.0
+defusedxml>=0.8.0
 
 # PyYAML: YAML parser, arbitrary code execution risks in older versions
 # CVE-2020-14343 (arbitrary code execution) fixed in 5.4
