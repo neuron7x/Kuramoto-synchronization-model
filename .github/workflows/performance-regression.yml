@@ -116,10 +116,14 @@ jobs:
           set -xuo pipefail
           echo "List reports/performance:"
           ls -lah reports/performance || true
-          for f in reports/performance/*.json; do
-            echo "=== $f (size=$(stat -c%s "$f" 2>/dev/null || echo 0)) ==="
-            python -m json.tool "$f" || { echo "INVALID JSON: $f"; cat "$f"; exit 2; }
-          done
+          if compgen -G "reports/performance/*.json" > /dev/null; then
+            for f in reports/performance/*.json; do
+              echo "=== $f (size=$(stat -c%s "$f" 2>/dev/null || echo 0)) ==="
+              python -m json.tool "$f" || { echo "INVALID JSON: $f"; cat "$f"; exit 2; }
+            done
+          else
+            echo "⚠️ No JSON files found in reports/performance/"
+          fi
 
       - name: Verify python environment
         run: |
