@@ -49,7 +49,7 @@ MANDATES: Dict[str, ModuleMandate] = {
             ActionClass.A1_LOCAL_CORRECTION,
             ActionClass.A2_SYSTEMIC,
         ),
-        allowed_states=(SystemState.NORMAL, SystemState.DEGRADED),
+        allowed_states=(SystemState.NORMAL, SystemState.DEGRADED, SystemState.CRISIS),
         allowed_scope=("topology", "metrics", "system_state"),
         escalation_policy={"A2": "dual_approval", "CRISIS": "downgrade_to_A1"},
     ),

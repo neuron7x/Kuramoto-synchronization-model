@@ -14,7 +14,7 @@ Features:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -282,18 +282,40 @@ class MarketRegimeAnalyzer:
 
         return trend_value, strength
 
-    def classify_regime(self, market_state: MarketState) -> RegimeMetrics:
+    def classify_regime(
+        self,
+        market_state_or_prices: Union[MarketState, np.ndarray],
+        returns: Optional[np.ndarray] = None,
+    ) -> RegimeMetrics:
         """
         Класифікація поточного режиму
 
         Args:
-            market_state: Стандартизований стан ринку
+            market_state_or_prices: Стандартизований стан ринку або масив цін
+            returns: (опціонально) масив доходностей
 
         Returns:
             Об'єкт RegimeMetrics
         """
-        prices = self._validate_market_state_prices(market_state)
-        returns = self._validate_market_state_returns(market_state, prices)
+        if isinstance(market_state_or_prices, dict):
+            prices = self._validate_market_state_prices(market_state_or_prices)
+            returns = self._validate_market_state_returns(
+                market_state_or_prices, prices
+            )
+        else:
+            prices = np.asarray(market_state_or_prices, dtype=float)
+            if prices.ndim != 1:
+                raise ValueError("prices must be a 1D array")
+
+            if returns is not None:
+                returns = np.asarray(returns, dtype=float)
+                if returns.ndim != 1:
+                    raise ValueError("returns must be a 1D array")
+            else:
+                returns = np.diff(prices) / prices[:-1] if len(prices) > 1 else np.array(
+                    [], dtype=float
+                )
+
         if len(prices) < self.min_regime_duration:
             return RegimeMetrics(
                 regime_type=RegimeType.UNKNOWN,
