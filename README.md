@@ -54,7 +54,7 @@
 ### For Infrastructure Engineers
 - **Enterprise-Grade**: Security controls aligned with NIST SP 800-53 and ISO 27001 (design aligned, no external audit)
 - **Scalable Architecture**: Event-driven design, Kubernetes-ready (GPU acceleration planned)
-- **Comprehensive Testing**: CI gates enforce unit, integration, property-based, fuzz suites, and 98% coverage on `core/`, `execution/`, `runtime/`, and `tacl/`
+- **Comprehensive Testing**: CI pipeline spans unit, integration, property-based, and fuzz suites; coverage expansion is in progress (~71% overall) toward a 98% target on `core/`, `execution`, `runtime`, and `tacl`
 
 ---
 
@@ -486,7 +486,7 @@ Both approvals must be recorded in the release ticket with telemetry snapshots.
 
 > 📊 **Claims Registry**: All high-level quality, performance, and security claims are tracked in [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md).
 
-TradePulse maintains comprehensive test coverage with multiple testing strategies:
+TradePulse maintains multi-layer testing. Current coverage is ~71% (see [docs/project-status.md](docs/project-status.md)); CI is configured for a 98% critical-surface target that is still being activated while coverage expands. The testing strategies include:
 
 ### Test Types
 
@@ -521,13 +521,13 @@ cd ui/dashboard && npm test
 
 ### CI/CD Merge Gates
 
-- **Test coverage**: PRs run `pytest -m "not flaky"` across unit, integration, property-based, fuzz, contracts, reliability, and e2e smoke suites. Merges are blocked if any gate fails or coverage drops below the critical-surface threshold.  
+- **Test coverage**: CI configurations run `pytest -m "not flaky"` across unit, integration, property-based, fuzz, contracts, reliability, and e2e smoke suites. The critical-surface coverage target is 98%, but the enforcement gate is not yet active (current overall coverage ~71%).  
 - **Security & Quality**: Required workflows execute SAST (ruff, mypy, bandit, golangci-lint), dependency checks (`pip-audit` with `constraints/security.txt`), and SBOM generation/verification (CycloneDX) before merge.  
 - **Artifacts**: Coverage XML, mutation reports, and SBOMs are uploaded per run to document evidence for internal audits.
 
 ### Coverage Status
 
-**Gate**: CI enforces 98% line coverage on `core/`, `execution/`, `runtime/`, and `tacl/` using the critical-surface guardrail (`configs/quality/critical_surface.coveragerc` + `configs/quality/critical_surface.toml`).  
+**Target Gate**: CI configuration sets a 98% line coverage goal on `core/`, `execution/`, `runtime/`, and `tacl/` using the critical-surface guardrail (`configs/quality/critical_surface.coveragerc` + `configs/quality/critical_surface.toml`), but enforcement is pending while coverage expands. Current snapshot: ~71% overall coverage (backtest ~74%, execution ~44%, core ~32%).  
 **Module Goals**: backtest (100%), execution (100%), core modules (90-95%) with branch coverage parity.
 
 To verify current coverage:
