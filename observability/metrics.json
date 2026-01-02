@@ -765,6 +765,54 @@
       "subsystem": "observability"
     },
     {
+      "name": "tradepulse_rl_grad_norm",
+      "type": "gauge",
+      "description": "Gradient norm observed during RL updates",
+      "labels": [
+        "agent",
+        "component"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "tradepulse_rl_policy_drift",
+      "type": "gauge",
+      "description": "Relative parameter drift from the last stable checkpoint",
+      "labels": [
+        "agent"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "tradepulse_rl_policy_kl",
+      "type": "gauge",
+      "description": "Observed KL divergence between successive policy updates",
+      "labels": [
+        "agent"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "tradepulse_rl_rollback_total",
+      "type": "counter",
+      "description": "Total number of RL policy rollbacks",
+      "labels": [
+        "agent",
+        "reason"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "tradepulse_rl_update_scale",
+      "type": "gauge",
+      "description": "Applied scaling factor for RL parameter updates",
+      "labels": [
+        "agent",
+        "component"
+      ],
+      "subsystem": "rl"
+    },
+    {
       "name": "tradepulse_model_triage_total",
       "type": "counter",
       "description": "Number of automated triage workflows launched for model incidents",
