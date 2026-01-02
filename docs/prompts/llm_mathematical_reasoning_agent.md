@@ -453,3 +453,91 @@ DEFAULT_CONFIG = {
   rigor_level: 2  // 0=exploratory, 1=standard, 2=rigorous, 3=formal
 }
 ```
+
+## Production Specification v1.0
+
+### SECTION 1: CORE TYPE SYSTEM
+
+```javascript
+// #1, #10: Canonical AST with unambiguous semantics
+Type =
+  | Real
+  | Integer
+  | Boolean
+  | Function(input: Type, output: Type)
+  | Product(types: List[Type])
+
+Domain =
+  | Reals
+  | PositiveReals
+  | Integers
+  | Naturals
+  | Interval(lower: Bound, upper: Bound)
+  | Finite(elements: Set[Value])
+
+Bound = Open(Value) | Closed(Value) | Unbounded
+
+Term =
+  | Var(name: String, type: Type)
+  | Const(value: Value, type: Type)
+  | App(function: Term, argument: Term)
+  | Lambda(param: Variable, body: Term)
+
+Formula =
+  | Atom(relation: Relation, terms: List[Term])
+  | Not(formula: Formula)
+  | And(left: Formula, right: Formula)
+  | Or(left: Formula, right: Formula)
+  | Implies(premise: Formula, conclusion: Formula)
+  | Forall(variable: Variable, body: Formula)
+  | Exists(variable: Variable, body: Formula)
+
+Relation =
+  | Eq | Neq | Lt | Leq | Gt | Geq
+  | Custom(name: String, arity: Int)
+
+AST =
+  | TermNode(term: Term)
+  | FormulaNode(formula: Formula)
+
+// Canonical form rules
+normalize(ast: AST) -> AST:
+  MATCH ast:
+    | FormulaNode(Not(Not(phi))): normalize(FormulaNode(phi))
+    | FormulaNode(And(phi, psi)): And(normalize(phi), normalize(psi))
+    | FormulaNode(Or(phi, psi)): Or(normalize(phi), normalize(psi))
+    | TermNode(App(Lambda(x, body), arg)): substitute(body, x, arg)
+    | _: ast
+
+// #1: No implicit shortcuts allowed
+INVARIANT: for all ast: AST. is_canonical(ast)
+  where is_canonical checks:
+    - No nested double negations
+    - Variables renamed to canonical form (x0, x1, ...)
+    - Terms in normal form (no unevaluated beta-redexes)
+```
+
+### SECTION 2: BINDING & SUBSTITUTION
+
+```javascript
+// #2: apply_bindings as total function
+Substitution = Map[Variable, Term]
+
+apply_bindings(formula: Formula, sigma: Substitution) -> Formula:
+  MATCH formula:
+    | Atom(rel, terms):
+        Atom(rel, [substitute_term(t, sigma) for t in terms])
+    
+    | Not(phi):
+        Not(apply_bindings(phi, sigma))
+    | And(phi, psi):
+        And(apply_bindings(phi, sigma), apply_bindings(psi, sigma))
+    | Or(phi, psi):
+        Or(apply_bindings(phi, sigma), apply_bindings(psi, sigma))
+    | Implies(phi, psi):
+        Implies(apply_bindings(phi, sigma), apply_bindings(psi, sigma))
+    | Forall(x, body):
+        Forall(x, apply_bindings(body, sigma.remove(x)))
+    | Exists(x, body):
+        Exists(x, apply_bindings(body, sigma.remove(x)))
+```
