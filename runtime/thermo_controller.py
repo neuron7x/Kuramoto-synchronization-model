@@ -27,7 +27,6 @@ from typing import (
 import networkx as nx
 import numpy as np
 import pandas as pd
-import torch
 import yaml
 
 from core.energy import (
@@ -57,6 +56,11 @@ from runtime.link_activator import LinkActivator
 from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
 from utils.change_point import cusum_score, vol_shock
 from utils.fractal_cascade import DyadicPMCascade, pink_noise
+
+try:
+    import torch
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
@@ -1122,7 +1126,7 @@ class ThermoController:
         baseline_scale = max(abs(self.baseline_ema), abs(F_reference))
         epsilon_from_baseline = 0.01 * baseline_scale
         epsilon_from_dynamics = 0.5 * abs(self.epsilon_adaptive)
-        return max(1e-9, epsilon_from_baseline, epsilon_from_dynamics)
+        return max(1e-4, epsilon_from_baseline, epsilon_from_dynamics)
 
     def _check_monotonic_with_tolerance(
         self, F_old: float, F_new: float, window_size: int = 3
@@ -1264,6 +1268,14 @@ class ThermoController:
             action_dim: Number of actions (Hold=0, Buy=1, Sell=2)
             learning_rate: Learning rate for optimizer
         """
+        if torch is None:
+            warnings.warn(
+                "PyTorch is not available; HPC-AI features disabled.",
+                RuntimeWarning,
+            )
+            self._hpc_ai_enabled = False
+            return
+
         try:
             from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 
@@ -1297,6 +1309,14 @@ class ThermoController:
         Returns:
             Dictionary with action, td_error, pwpe, and state info
         """
+        if torch is None:
+            return {
+                "action": 0,
+                "td_error": 0.0,
+                "pwpe": 0.0,
+                "error": "PyTorch not available",
+            }
+
         if not getattr(self, "_hpc_ai_enabled", False):
             return {
                 "action": 0,
