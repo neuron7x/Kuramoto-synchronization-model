@@ -254,6 +254,7 @@ jobs:
         set -euo pipefail
 
         BASE_IMAGE="python:3.12.8-slim"
+        # Docker Hub library images on GHCR are served from the docker/library namespace
         GHCR_MIRROR="ghcr.io/docker/library/python:3.12.8-slim"
         AWS_MIRROR="public.ecr.aws/docker/library/python:3.12.8-slim"
         MAX_RETRIES=5
@@ -388,6 +389,7 @@ jobs:
       run: |
         fail=false
 
+        # *_RESULTS flags indicate whether the corresponding scanner produced a SARIF report
         if [ "$TRIVY_OUTCOME" = "failure" ] && [ "$TRIVY_RESULTS" != "true" ]; then
           echo "ERROR: Trivy scan failed to complete and did not produce a SARIF report."
           fail=true

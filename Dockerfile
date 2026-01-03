@@ -35,7 +35,6 @@ COPY constraints/security.txt ./constraints/
 # Install minimal dependencies for security scanning
 # This excludes torch and therefore avoids pulling heavy NVIDIA CUDA libraries (~2GB)
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir Brotli>=1.2.0 && \
     pip install --no-cache-dir -c constraints/security.txt -r requirements-scan.lock
 
 # Copy application code for scanning
@@ -76,7 +75,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Copy and install ALL dependencies including GPU libraries
 COPY requirements.lock ./
 COPY constraints/security.txt ./constraints/
-RUN pip install --no-cache-dir -c constraints/security.txt -r requirements.lock
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -c constraints/security.txt -r requirements.lock
 
 # Copy FastAPI application sources and supporting packages.
 COPY application ./application
