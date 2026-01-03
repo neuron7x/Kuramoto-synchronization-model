@@ -4,7 +4,7 @@
 # Stage 1: Lightweight scan stage (for security scanning only)
 # This stage excludes heavy GPU dependencies to reduce image size
 # =============================================================================
-FROM python:3.12-slim AS scan
+FROM python:3.12.8-slim AS scan
 
 WORKDIR /app
 
@@ -18,8 +18,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    libexpat1 \
+    libssl3 \
+    libkrb5-3 && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
@@ -30,7 +34,8 @@ COPY constraints/security.txt ./constraints/
 
 # Install minimal dependencies for security scanning
 # This excludes torch and therefore avoids pulling heavy NVIDIA CUDA libraries (~2GB)
-RUN pip install --no-cache-dir -c constraints/security.txt -r requirements-scan.lock
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -c constraints/security.txt -r requirements-scan.lock
 
 # Copy application code for scanning
 COPY application ./application
@@ -70,7 +75,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Copy and install ALL dependencies including GPU libraries
 COPY requirements.lock ./
 COPY constraints/security.txt ./constraints/
-RUN pip install --no-cache-dir -c constraints/security.txt -r requirements.lock
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -c constraints/security.txt -r requirements.lock
 
 # Copy FastAPI application sources and supporting packages.
 COPY application ./application
