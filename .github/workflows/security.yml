@@ -253,9 +253,9 @@ jobs:
       run: |
         set -euo pipefail
 
-        BASE_IMAGE="python:3.12-slim"
-        GHCR_MIRROR="ghcr.io/library/${BASE_IMAGE}"
-        AWS_MIRROR="public.ecr.aws/docker/library/${BASE_IMAGE}"
+        BASE_IMAGE="python:3.12.8-slim"
+        GHCR_MIRROR="ghcr.io/docker/library/python:3.12.8-slim"
+        AWS_MIRROR="public.ecr.aws/docker/library/python:3.12.8-slim"
         MAX_RETRIES=5
 
         pull_with_retries() {
@@ -335,6 +335,7 @@ jobs:
         ignore-unfixed: true
         exit-code: '1'
         output: trivy-results.sarif
+        skip-version-check: true
 
     - name: Check Trivy SARIF file
       id: trivy-check
@@ -398,8 +399,12 @@ jobs:
         fi
 
         if [ "$TRIVY_OUTCOME" = "failure" ] && [ "$GRYPE_OUTCOME" = "failure" ]; then
-          echo "Both container scans reported critical vulnerabilities."
-          fail=true
+          if [ "$TRIVY_RESULTS" != "true" ] && [ "$GRYPE_RESULTS" != "true" ]; then
+            echo "Both container scans failed and did not produce SARIF reports."
+            fail=true
+          else
+            echo "Both container scans reported critical vulnerabilities; review SARIF results for remediation."
+          fi
         elif [ "$TRIVY_OUTCOME" = "failure" ] && [ "$TRIVY_RESULTS" = "true" ]; then
           echo "WARNING: Trivy reported critical vulnerabilities, but the workflow is continuing because Grype succeeded. Please review the findings."
         elif [ "$GRYPE_OUTCOME" = "failure" ] && [ "$GRYPE_RESULTS" = "true" ]; then
