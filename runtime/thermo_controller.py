@@ -11,9 +11,11 @@ import warnings
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import (
     Any,
     Callable,
+    cast,
     Deque,
     Dict,
     Iterable,
@@ -57,10 +59,13 @@ from runtime.recovery_agent import AdaptiveRecoveryAgent, RecoveryState
 from utils.change_point import cusum_score, vol_shock
 from utils.fractal_cascade import DyadicPMCascade, pink_noise
 
+torch: ModuleType | None = None
 try:
-    import torch
-except ModuleNotFoundError:  # pragma: no cover - optional dependency
-    torch = None  # type: ignore[assignment]
+    import torch as _torch
+except ImportError:  # pragma: no cover - optional dependency
+    pass
+else:
+    torch = cast(ModuleType, _torch)
 
 try:  # pragma: no cover - optional dependency wrapper retained for compatibility
     from evolution.bond_evolver import MetricsSnapshot as _BondMetricsSnapshot
@@ -1310,10 +1315,13 @@ class ThermoController:
             Dictionary with action, td_error, pwpe, and state info
         """
         if torch is None:
+            self._hpc_ai_enabled = False
             return {
                 "action": 0,
                 "td_error": 0.0,
                 "pwpe": 0.0,
+                "reward": 0.0,
+                "state_norm": 0.0,
                 "error": "PyTorch not available",
             }
 
@@ -1322,6 +1330,8 @@ class ThermoController:
                 "action": 0,
                 "td_error": 0.0,
                 "pwpe": 0.0,
+                "reward": 0.0,
+                "state_norm": 0.0,
                 "error": "HPC-AI not initialized",
             }
 
@@ -1372,6 +1382,7 @@ class ThermoController:
             "pwpe": pwpe.item(),
             "reward": reward,
             "state_norm": torch.norm(state).item(),
+            "error": None,
         }
 
 
