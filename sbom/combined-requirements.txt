@@ -30,7 +30,7 @@ click==8.3.0
 colorlog==6.10.1
 cryptography==46.0.3
 deap==1.4.3
-exchange-calendars==4.11.1
+exchange-calendars==4.12
 extra-streamlit-components==0.1.81
 fastapi==0.124.2
 filelock==3.20.1
