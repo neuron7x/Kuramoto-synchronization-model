@@ -20,7 +20,7 @@ async-timeout==5.0.1
 attrs==25.4.0
 bcrypt==5.0.0
 blinker==1.9.0
-cachetools==6.2.1
+cachetools==6.2.6
 captcha==0.7.1
 ccxt==4.5.12
 certifi==2025.11.12
