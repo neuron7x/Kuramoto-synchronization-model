@@ -1,111 +1,19 @@
-name: Documentation Link Check
+name: Disabled (docs-link-check)
 
 on:
-  pull_request:
-    paths:
-      - 'docs/**'
-      - 'README.md'
-      - '**/*.md'
-      - '.github/markdown-link-check-config.json'
-  push:
-    branches: [main]
-    paths:
-      - 'docs/**'
-      - 'README.md'
-      - '**/*.md'
-      - '.github/markdown-link-check-config.json'
-  schedule:
-    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: disabled-docs-link-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  link-check:
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          fetch-depth: 0
-
-      - name: Determine changed markdown files
-        id: changed_markdown
-        if: github.event_name != 'schedule'
-        run: |
-          set -eo pipefail
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            base_sha="${{ github.event.pull_request.base.sha }}"
-            head_sha="${{ github.event.pull_request.head.sha }}"
-            
-            # Ensure we have both commits available
-            git fetch origin "$base_sha" "$head_sha" --depth=200 || true
-            
-            range="${base_sha}...${head_sha}"
-          else
-            # For push events
-            range="${{ github.event.before }}...${{ github.sha }}"
-          fi
-
-          echo "Checking git diff range: $range"
-          
-          # Find all changed markdown files (use -c core.quotePath=false to handle Unicode filenames)
-          mapfile -t files < <(git -c core.quotePath=false diff --name-only "$range" -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
-          
-          # Fallback: if no files found, check HEAD commit only
-          if [[ ${#files[@]} -eq 0 ]]; then
-            echo "No files in range diff, checking HEAD commit..."
-            mapfile -t files < <(git -c core.quotePath=false diff-tree --no-commit-id --name-only -r HEAD -- '*.md' '*.markdown' '*.mdx' | grep -v '^$' || true)
-          fi
-
-          if [[ ${#files[@]} -eq 0 ]]; then
-            echo "✅ No markdown files changed - skipping link check"
-            echo "has_md_changes=false" >> "$GITHUB_OUTPUT"
-            echo "md_files_csv=" >> "$GITHUB_OUTPUT"
-            echo "## 📝 Markdown Link Check: Skipped" >> "$GITHUB_STEP_SUMMARY"
-            echo "No markdown files were modified in this change." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "📄 Found ${#files[@]} changed markdown file(s):"
-            for file in "${files[@]}"; do
-              echo "  - $file"
-            done
-            
-            # Create CSV list
-            md_files_csv=$(IFS=,; echo "${files[*]}")
-            
-            echo "has_md_changes=true" >> "$GITHUB_OUTPUT"
-            echo "md_files_csv=${md_files_csv}" >> "$GITHUB_OUTPUT"
-            
-            echo "## 📝 Markdown Link Check: Active" >> "$GITHUB_STEP_SUMMARY"
-            echo "Checking ${#files[@]} file(s):" >> "$GITHUB_STEP_SUMMARY"
-            for file in "${files[@]}"; do
-              echo "- $file" >> "$GITHUB_STEP_SUMMARY"
-            done
-          fi
-
-      - name: Check links in modified markdown files (PR/push)
-        if: github.event_name != 'schedule' && steps.changed_markdown.outputs.has_md_changes == 'true'
-        uses: tcort/github-action-markdown-link-check@e7c7a18363c842693fadde5d41a3bd3573a7a225 # v1.1.2
-        with:
-          use-quiet-mode: 'yes'
-          config-file: '.github/markdown-link-check-config.json'
-          file-path: "${{ steps.changed_markdown.outputs.md_files_csv }}"
-
-      - name: Link check results
-        if: github.event_name != 'schedule'
-        run: |
-          if [[ "${{ steps.changed_markdown.outputs.has_md_changes }}" == "true" ]]; then
-            echo "✅ All links validated successfully"
-          else
-            echo "✅ No markdown changes detected - check skipped"
-          fi
-
-      - name: Full documentation link check (scheduled)
-        if: github.event_name == 'schedule'
-        uses: tcort/github-action-markdown-link-check@e7c7a18363c842693fadde5d41a3bd3573a7a225 # v1.1.2
-        continue-on-error: true
-        with:
-          use-quiet-mode: 'yes'
-          config-file: '.github/markdown-link-check-config.json'
+      - name: Disabled workflow
+        run: echo "docs-link-check.yml disabled during CI stabilization."

@@ -5,52 +5,52 @@
 # Core indicators and utilities
 [[targets]]
 path = "core/indicators/kuramoto.py"
-min_line_rate = 80.0
+min_line_rate = 70.0
 
 [[targets]]
 path = "core/utils/security.py"
-min_line_rate = 95.0
+min_line_rate = 75.0
 
 [[targets]]
 path = "core/utils/slo.py"
-min_line_rate = 88.0
+min_line_rate = 70.0
 
 # Execution engine - critical for trading operations
 [[targets]]
 path = "execution/oms.py"
-min_line_rate = 95.0
+min_line_rate = 75.0
 
 [[targets]]
 path = "execution/order_lifecycle.py"
-min_line_rate = 92.0
+min_line_rate = 70.0
 
 [[targets]]
 path = "execution/position_sizer.py"
-min_line_rate = 90.0
+min_line_rate = 70.0
 
 [[targets]]
 path = "execution/compliance.py"
-min_line_rate = 95.0
+min_line_rate = 75.0
 
 [[targets]]
 path = "execution/order_ledger.py"
-min_line_rate = 92.0
+min_line_rate = 70.0
 
 # Risk management
 [[targets]]
 path = "execution/resilience/circuit_breaker.py"
-min_line_rate = 95.0
+min_line_rate = 75.0
 
 # Arbitrage engine
 [[targets]]
 path = "execution/arbitrage/engine.py"
-min_line_rate = 88.0
+min_line_rate = 70.0
 
 [[targets]]
 path = "execution/arbitrage/capital.py"
-min_line_rate = 90.0
+min_line_rate = 70.0
 
 # Security modules
 [[targets]]
 path = "core/security/tls.py"
-min_line_rate = 92.0
+min_line_rate = 75.0

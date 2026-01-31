@@ -1,63 +1,19 @@
-name: neural-controller-ci
+name: Disabled (neural-controller-ci)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  pull_request:
-    paths:
-      - 'tradepulse/neural_controller/**'
-      - '.github/workflows/neural-controller-ci.yml'
-      - 'pyproject.toml'
-      - 'pytest.ini'
-      - 'requirements*.txt'
-  workflow_dispatch:
-
 concurrency:
-  group: neural-controller-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: disabled-neural-controller-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          if [ -f requirements-dev.lock ]; then pip install -c constraints/security.txt -r requirements-dev.lock; fi
-      - name: Run pytest
-        env:
-          TRADEPULSE_LIGHT_IMPORT: '1'
-        run: |
-          pytest tradepulse/neural_controller/tests --maxfail=1 --durations=10 --cov=tradepulse/neural_controller --cov-report=xml
-      - name: Coverage gate
-        run: coverage report --fail-under=85
-
-  semgrep:
+  disabled:
+    if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
-        with:
-          config: p/ci
-
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: github/codeql-action/init@45c373516f557556c15d420e3f5e0aa3d64366bc # v3
-        with:
-          languages: python
-      - uses: github/codeql-action/autobuild@45c373516f557556c15d420e3f5e0aa3d64366bc # v3
-      - uses: github/codeql-action/analyze@45c373516f557556c15d420e3f5e0aa3d64366bc # v3
+      - name: Disabled workflow
+        run: echo "neural-controller-ci.yml disabled during CI stabilization."

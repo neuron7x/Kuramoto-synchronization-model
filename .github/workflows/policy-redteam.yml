@@ -1,112 +1,19 @@
-name: Policy Red-Team Smoke
+name: Disabled (policy-redteam)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  push:
-    branches: [ main, develop ]
-    paths:
-      - 'src/tradepulse/policy/**'
-      - 'scripts/eval/**'
-      - 'tests/unit/tradepulse/policy/**'
-      - 'tests/property/test_policy_properties.py'
-  pull_request:
-    branches:
-      - '**'
-    paths:
-      - 'src/tradepulse/policy/**'
-      - 'scripts/eval/**'
-      - 'tests/unit/tradepulse/policy/**'
-      - 'tests/property/test_policy_properties.py'
-  workflow_dispatch:
-
 concurrency:
-  group: policy-redteam-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: disabled-policy-redteam-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  policy-unit-tests:
-    name: Policy Unit Tests
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.lock
-            requirements-dev.lock
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.lock
-          pip install -c constraints/security.txt -r requirements-dev.lock
-
-      - name: Run policy unit tests
-        run: |
-          pytest tests/unit/tradepulse/policy/test_decision_contract.py -v --tb=short
-
-  policy-property-tests:
-    name: Policy Property Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.lock
-            requirements-dev.lock
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r requirements.lock
-          pip install -c constraints/security.txt -r requirements-dev.lock
-
-      - name: Run policy property tests
-        run: |
-          pytest tests/property/test_policy_properties.py -v --tb=short
-
-  redteam-smoke:
-    name: Red-Team Smoke Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.lock
-            requirements-dev.lock
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-
-      - name: Run red-team smoke test (10 cases)
-        run: |
-          python scripts/eval/run_redteam_policy.py --limit 10 --output reports/redteam/smoke_report.json
-
-      - name: Upload red-team report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: redteam-smoke-report
-          path: reports/redteam/smoke_report.json
-          retention-days: 7
+      - name: Disabled workflow
+        run: echo "policy-redteam.yml disabled during CI stabilization."

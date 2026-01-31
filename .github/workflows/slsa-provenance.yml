@@ -1,119 +1,19 @@
-name: SLSA Provenance Generation
+name: Disabled (slsa-provenance)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
-  actions: read
-  packages: write
-
-on:
-  workflow_run:
-    workflows: ["CI - Test Coverage"]
-    types:
-      - completed
-    branches: [main]
-  release:
-    types: [published]
 
 concurrency:
-  group: slsa-${{ github.workflow }}-${{ github.event.workflow_run.id || github.ref }}
+  group: disabled-slsa-provenance-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  provenance:
-    name: Generate SLSA Provenance
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'release'
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-
-      - name: Install SLSA tooling
-        run: |
-          # Install slsa-verifier and cosign
-          curl -sSL https://github.com/slsa-framework/slsa-verifier/releases/download/v2.5.1/slsa-verifier-linux-amd64 -o slsa-verifier
-          chmod +x slsa-verifier
-          sudo mv slsa-verifier /usr/local/bin/
-
-          # Install cosign for artifact signing
-          curl -sSL https://github.com/sigstore/cosign/releases/download/v2.2.2/cosign-linux-amd64 -o cosign
-          chmod +x cosign
-          sudo mv cosign /usr/local/bin/
-
-      - name: Generate provenance metadata
-        id: provenance
-        run: |
-          cat > provenance.json <<EOF
-          {
-            "buildType": "https://github.com/neuron7x/TradePulse/slsa-build@v1",
-            "builder": {
-              "id": "https://github.com/slsa-framework/github-actions-buildtypes/delegator-generic@v1"
-            },
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}@refs/heads/${{ github.ref_name }}",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                },
-                "entryPoint": ".github/workflows/ci.yml"
-              },
-              "parameters": {},
-              "environment": {
-                "github_actor": "${{ github.actor }}",
-                "github_event_name": "${{ github.event_name }}",
-                "github_ref": "${{ github.ref }}",
-                "github_repository": "${{ github.repository }}",
-                "github_run_id": "${{ github.run_id }}",
-                "github_run_number": "${{ github.run_number }}",
-                "github_sha": "${{ github.sha }}"
-              }
-            },
-            "metadata": {
-              "buildInvocationId": "${{ github.run_id }}-${{ github.run_attempt }}",
-              "buildStartedOn": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-              "completeness": {
-                "parameters": true,
-                "environment": true,
-                "materials": true
-              },
-              "reproducible": false
-            }
-          }
-          EOF
-
-          echo "Generated SLSA provenance metadata"
-          cat provenance.json
-
-      - name: Sign provenance with Sigstore
-        env:
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          # Sign the provenance using keyless signing
-          cosign sign-blob --yes provenance.json \
-            --output-signature provenance.json.sig \
-            --output-certificate provenance.json.cert
-
-          echo "✓ Provenance signed with Sigstore"
-
-      - name: Upload provenance artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: slsa-provenance
-          path: |
-            provenance.json
-            provenance.json.sig
-            provenance.json.cert
-          if-no-files-found: error
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd # v2
-        with:
-          subject-path: 'provenance.json'
+      - name: Disabled workflow
+        run: echo "slsa-provenance.yml disabled during CI stabilization."

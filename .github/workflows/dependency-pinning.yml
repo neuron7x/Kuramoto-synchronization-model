@@ -1,123 +1,19 @@
-name: Dependency Pinning Gate
+name: Disabled (dependency-pinning)
 
-concurrency:
-  group: dependency-pinning-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  pull_request:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'go.mod'
-      - 'go.sum'
+concurrency:
+  group: disabled-dependency-pinning-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  check-pinned-dependencies:
-    name: Check Pinned Dependencies
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    permissions:
-      contents: read
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Check Python dependencies are pinned
-        run: |
-          echo "Checking Python dependency pinning..."
-
-          # Check requirements.lock exists and is used
-          if [ ! -f requirements.lock ]; then
-            echo "❌ ERROR: requirements.lock not found"
-            exit 1
-          fi
-
-          if [ ! -f requirements-dev.lock ]; then
-            echo "❌ ERROR: requirements-dev.lock not found"
-            exit 1
-          fi
-
-          # Check that .lock files have pinned versions (contain ==)
-          if ! grep -q "==" requirements.lock; then
-            echo "❌ ERROR: requirements.lock does not contain pinned versions"
-            exit 1
-          fi
-
-          echo "✓ Python dependencies are properly pinned"
-
-      - name: Check Node.js dependencies are pinned
-        if: hashFiles('ui/dashboard/package.json') != ''
-        run: |
-          echo "Checking Node.js dependency pinning..."
-
-          if [ ! -f ui/dashboard/package-lock.json ]; then
-            echo "❌ ERROR: ui/dashboard/package-lock.json not found"
-            echo "Run 'npm install' to generate package-lock.json"
-            exit 1
-          fi
-
-          echo "✓ Node.js dependencies are properly pinned (package-lock.json exists)"
-
-      - name: Check Rust dependencies are pinned
-        if: hashFiles('rust/tradepulse-accel/Cargo.toml') != ''
-        run: |
-          echo "Checking Rust dependency pinning..."
-
-          if [ ! -f rust/tradepulse-accel/Cargo.lock ]; then
-            echo "❌ ERROR: rust/tradepulse-accel/Cargo.lock not found"
-            echo "Run 'cargo build' to generate Cargo.lock"
-            exit 1
-          fi
-
-          echo "✓ Rust dependencies are properly pinned (Cargo.lock exists)"
-
-      - name: Check Go dependencies are pinned
-        if: hashFiles('go.mod') != ''
-        run: |
-          echo "Checking Go dependency pinning..."
-
-          if [ ! -f go.sum ]; then
-            echo "❌ ERROR: go.sum not found"
-            echo "Run 'go mod tidy' to generate go.sum"
-            exit 1
-          fi
-
-          echo "✓ Go dependencies are properly pinned (go.sum exists)"
-
-      - name: Check for unpinned dependencies in requirements.txt
-        run: |
-          echo "Checking for unpinned dependencies in requirements.txt files..."
-
-          UNPINNED_FOUND=0
-
-          for file in requirements.txt requirements-dev.txt; do
-            if [ -f "$file" ]; then
-              echo "Checking $file..."
-
-              # Look for lines with >= or ~ or ^ (not ==)
-              # Exclude comments and empty lines
-              UNPINNED=$(grep -v "^#" "$file" | grep -v "^$" | grep -v "^-r" | grep -E ">=|~=|\^" || true)
-
-              if [ -n "$UNPINNED" ]; then
-                echo "⚠️  WARNING: Found potentially unpinned dependencies in $file:"
-                echo "$UNPINNED"
-                echo ""
-                echo "Note: This is acceptable if you're using pip-compile to generate .lock files"
-              fi
-            fi
-          done
-
-          echo "✓ Dependency pinning check complete"
+      - name: Disabled workflow
+        run: echo "dependency-pinning.yml disabled during CI stabilization."

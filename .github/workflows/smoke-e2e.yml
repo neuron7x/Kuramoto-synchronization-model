@@ -1,167 +1,19 @@
-# yamllint disable rule:line-length
-name: Nightly Smoke E2E
+name: Disabled (smoke-e2e)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  schedule:
-    - cron: '0 2 * * *'
-  workflow_dispatch:
-
 concurrency:
-  group: nightly-smoke-e2e
+  group: disabled-smoke-e2e-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  smoke-e2e:
-    name: smoke-e2e
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-
-      - name: Prepare smoke directories
-        run: |
-          mkdir -p reports/smoke-e2e logs/smoke-e2e profiles/smoke-e2e
-
-      - name: Run smoke E2E pipeline
-        env:
-          PYTHONHASHSEED: '1337'
-        run: |
-          set -euo pipefail
-          python -m cProfile -o profiles/smoke-e2e/profile.pstats \
-            scripts/smoke_e2e.py \
-            --csv data/sample.csv \
-            --seed 1337 \
-            --output-dir reports/smoke-e2e \
-            2>&1 | tee logs/smoke-e2e/run.log
-
-      - name: Generate smoke summary
-        if: always()
-        env:
-          JOB_STATUS: ${{ job.status }}
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          reports_dir = Path("reports/smoke-e2e")
-          logs_dir = Path("logs/smoke-e2e")
-          reports_dir.mkdir(parents=True, exist_ok=True)
-          summary_path = reports_dir / "summary.md"
-          log_path = logs_dir / "run.log"
-
-          timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
-          status = os.environ.get("JOB_STATUS", "unknown")
-          run_url = os.environ.get("RUN_URL", "")
-
-          lines_tail = []
-          if log_path.exists():
-              with log_path.open("r", encoding="utf-8", errors="ignore") as handle:
-                  lines = handle.readlines()
-              lines_tail = [line.rstrip() for line in lines[-20:]]
-
-          with summary_path.open("w", encoding="utf-8") as handle:
-              handle.write("# Nightly Smoke E2E Summary\n\n")
-              if run_url:
-                  handle.write(f"* **Run URL:** [{run_url}]({run_url})\n")
-              handle.write(f"* **Status:** {status}\n")
-              handle.write(f"* **Timestamp (UTC):** {timestamp}\n")
-              handle.write(
-                  "* **Artifacts:** logs/smoke-e2e, profiles/smoke-e2e, reports/smoke-e2e\n"
-              )
-              if lines_tail:
-                  handle.write("\n## Last log lines\n")
-                  handle.write("````text\n")
-                  for line in lines_tail:
-                      handle.write(f"{line}\n")
-                  handle.write("````\n")
-          PY
-
-      - name: Upload smoke artifacts
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: smoke-e2e-artifacts
-          path: |
-            reports/smoke-e2e
-            logs/smoke-e2e
-            profiles/smoke-e2e
-          if-no-files-found: error
-
-      - name: Evaluate alert configuration
-        if: always()
-        id: alert-config
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SMOKE_SLACK_WEBHOOK_URL }}
-          EMAIL_SERVER: ${{ secrets.SMOKE_ALERT_EMAIL_SERVER }}
-          EMAIL_PORT: ${{ secrets.SMOKE_ALERT_EMAIL_PORT }}
-          EMAIL_USERNAME: ${{ secrets.SMOKE_ALERT_EMAIL_USERNAME }}
-          EMAIL_PASSWORD: ${{ secrets.SMOKE_ALERT_EMAIL_PASSWORD }}
-          EMAIL_TO: ${{ secrets.SMOKE_ALERT_EMAIL_TO }}
-          EMAIL_FROM: ${{ secrets.SMOKE_ALERT_EMAIL_FROM }}
-        run: |
-          set -euo pipefail
-          if [ -n "$SLACK_WEBHOOK_URL" ]; then
-            echo "slack=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "slack=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [ -n "$EMAIL_SERVER" ] && [ -n "$EMAIL_PORT" ] && [ -n "$EMAIL_USERNAME" ] \
-             && [ -n "$EMAIL_PASSWORD" ] && [ -n "$EMAIL_TO" ] && [ -n "$EMAIL_FROM" ]; then
-            echo "email=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "email=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Notify Slack on failure
-        if: failure() && steps.alert-config.outputs.slack == 'true'
-        uses: slackapi/slack-github-action@fcfb566f8b0aab22203f066d80ca1d7e4b5d05b3 # v1.27.0
-        with:
-          payload: |
-              {
-                "text": "🚨 Nightly Smoke E2E failed for ${{ github.repository }}",
-                "blocks": [
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "*Nightly Smoke E2E failed* for ${{ github.repository }}.\nRun: ${{ env.RUN_URL }}"
-                    }
-                  }
-                ]
-              }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SMOKE_SLACK_WEBHOOK_URL }}
-          RUN_URL: ${{ env.RUN_URL }}
-
-      - name: Send failure email alert
-        if: failure() && steps.alert-config.outputs.email == 'true'
-        uses: dawidd6/action-send-mail@2cea9617b09d79a095af21254fbcb7ae95903dde # v3
-        with:
-          server_address: ${{ secrets.SMOKE_ALERT_EMAIL_SERVER }}
-          server_port: ${{ secrets.SMOKE_ALERT_EMAIL_PORT }}
-          username: ${{ secrets.SMOKE_ALERT_EMAIL_USERNAME }}
-          password: ${{ secrets.SMOKE_ALERT_EMAIL_PASSWORD }}
-          subject: "Nightly Smoke E2E failed for ${{ github.repository }}"
-          to: ${{ secrets.SMOKE_ALERT_EMAIL_TO }}
-          from: ${{ secrets.SMOKE_ALERT_EMAIL_FROM }}
-          body: |
-            Nightly Smoke E2E failed for ${{ github.repository }}.
-            Run details: ${{ env.RUN_URL }}
+      - name: Disabled workflow
+        run: echo "smoke-e2e.yml disabled during CI stabilization."

@@ -1,67 +1,19 @@
-name: Release Drafter
+name: Disabled (release-drafter)
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-    inputs:
-      force-refresh:
-        description: 'Rebuild the draft release even if nothing changed'
-        required: false
-        default: 'false'
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
-  group: release-drafter-${{ github.ref }}
-  cancel-in-progress: true
+  group: disabled-release-drafter-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  update:
-    name: Update release draft
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    # Release Drafter may need additional time to traverse the commit graph of
-    # larger histories (especially after force-refresh runs). Five minutes was
-    # occasionally insufficient and caused GitHub to cancel the job mid-flight,
-    # so we grant a roomier budget here.
-    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        with:
-          fetch-depth: 0
-
-      - name: Capture workflow start time
-        id: started
-        shell: bash
-        run: echo "started-at=$(date --iso-8601=seconds)" >> "$GITHUB_OUTPUT"
-
-      - name: Update draft release notes
-        id: release_drafter
-        uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6
-        with:
-          config-name: release-drafter.yml
-          disable-autolabeler: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Summarize Release Drafter run
-        if: always()
-        shell: bash
-        run: |
-          finish_ts="$(date --iso-8601=seconds)"
-          {
-            echo "### Release Drafter Summary"
-            echo "- Event: ${{ github.event_name }}"
-            echo "- Ref: ${{ github.ref }}"
-            echo "- Outcome: ${{ job.status }}"
-            echo "- Started: ${{ steps.started.outputs.started-at }}"
-            echo "- Finished: ${finish_ts}"
-            echo "- Draft URL: ${{ steps.release_drafter.outputs.html_url || 'n/a' }}"
-            echo "- Metrics:"
-            echo "  - Run duration (s): ${{ steps.release_drafter.outputs.run_duration_seconds || 'n/a' }}"
-            echo "  - Total changes processed: ${{ steps.release_drafter.outputs.prs_total || 'n/a' }}"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Disabled workflow
+        run: echo "release-drafter.yml disabled during CI stabilization."

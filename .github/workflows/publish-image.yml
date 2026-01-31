@@ -1,142 +1,19 @@
-# yamllint disable rule:line-length
-name: Publish signed container image
+name: Disabled (publish-image)
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
-  id-token: write
+
+concurrency:
+  group: disabled-publish-image-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  enforce-policy:
-    name: Verify release branch policy
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Ensure release targets protected branch
-        env:
-          TARGET: ${{ github.event.release.target_commitish }}
-          REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y jq
-          fi
-          if [ -z "${TARGET}" ]; then
-            echo "::error::Release target branch is not specified."
-            exit 1
-          fi
-          response=$(curl -fsSL -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${REPO}/branches/${TARGET}" || true)
-          if [ -z "${response}" ]; then
-            echo "::error::Unable to retrieve branch metadata for '${TARGET}'."
-            exit 1
-          fi
-          protected=$(echo "${response}" | jq -r '.protected // false')
-          if [ "${protected}" != "true" ]; then
-            echo "::error::Releases must originate from a protected branch. Target '${TARGET}' is not protected."
-            exit 1
-          fi
-          echo "Target branch '${TARGET}' is protected."
-
-  build-and-sign:
-    needs: enforce-policy
-    name: Build, push, and sign container image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
-      image-name: ${{ steps.image-metadata.outputs.image-name }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        with:
-          fetch-depth: 0
-
-      - name: Validate release metadata
-        id: release
-        run: |
-          tag="${{ github.event.release.tag_name }}"
-          version="${tag#v}"
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::Release tag '$tag' must follow SemVer (with optional leading 'v')."
-            exit 1
-          fi
-          file_version="$(tr -d "\n" < VERSION)"
-          if [ "$file_version" != "$version" ]; then
-            echo "::error::VERSION file ($file_version) does not match release tag ($version)."
-            exit 1
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=${{ steps.release.outputs.version }}
-            type=raw,value=latest
-
-      - name: Build and push multi-arch image
-        id: build
-        uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d # v5
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Record image metadata
-        id: image-metadata
-        run: |
-          echo "image-name=ghcr.io/${{ github.repository }}" >> "$GITHUB_OUTPUT"
-
-      - name: Install cosign
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.5.0
-
-      - name: Sign container image (keyless)
-        env:
-          COSIGN_YES: true
-        run: |
-          cosign sign ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
-
-  provenance:
-    name: Generate SLSA provenance
-    needs: build-and-sign
-    permissions:
-      contents: read
-      id-token: write
-      actions: read
-      packages: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563 # v2.0.0
-    with:
-      image: ${{ needs.build-and-sign.outputs.image-name }}
-      digest: ${{ needs.build-and-sign.outputs.image-digest }}
-      registry-username: ${{ github.actor }}
-    secrets:
-      registry-password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Disabled workflow
+        run: echo "publish-image.yml disabled during CI stabilization."

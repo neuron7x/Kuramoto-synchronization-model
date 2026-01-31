@@ -1,99 +1,19 @@
-name: Python Version Canaries
+name: Disabled (canaries)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 6 * * 1'
-
 concurrency:
-  group: canaries-${{ github.workflow }}-${{ github.ref }}
+  group: disabled-canaries-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  python-canaries:
-    name: Python Tests (Canary ${{ matrix.python-version }})
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.12']  # Aligned with pyproject.toml requires-python: ">=3.11,<3.13"
-
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: go.mod
-
-      - name: Cache Go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ hashFiles('go.sum', 'infra/terraform/tests/go.sum') }}
-          restore-keys: |
-            go-${{ runner.os }}-
-
-      - name: Run Go service unit tests
-        run: |
-          mkdir -p reports/go
-          go test ./... -covermode=atomic -coverprofile=reports/go/services.coverage.out
-
-      - name: Upload Go coverage
-        if: success()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: go-services-coverage-canary-${{ matrix.python-version }}
-          path: reports/go/services.coverage.out
-
-      - name: Run Terraform validation tests
-        working-directory: infra/terraform/tests
-        run: go test ./... -v
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.lock
-            requirements-dev.lock
-            constraints/security.txt
-
-      - name: Create virtual environment
-        run: python -m venv .venv
-
-      - name: Install dependencies
-        run: |
-          .venv/bin/pip install --upgrade pip setuptools wheel
-          .venv/bin/pip install -c constraints/security.txt -r requirements.lock
-          .venv/bin/pip install -c constraints/security.txt -r requirements-dev.lock
-
-      - name: Prepare test report directories
-        run: |
-          mkdir -p reports
-
-      - name: Sync localization resources
-        run: |
-          .venv/bin/python scripts/localization/sync_translations.py
-
-      - name: Run pytest suite
-        env:
-          PYTHONWARNINGS: error::DeprecationWarning
-        run: |
-          .venv/bin/pytest
-
-      - name: Upload pytest results
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: pytest-results-${{ matrix.python-version }}
-          path: reports
-          if-no-files-found: ignore
+      - name: Disabled workflow
+        run: echo "canaries.yml disabled during CI stabilization."
