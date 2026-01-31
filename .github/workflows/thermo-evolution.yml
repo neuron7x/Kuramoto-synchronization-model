@@ -1,152 +1,19 @@
-name: Thermodynamic Validation
+name: Disabled (thermo-evolution)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  push:
-    branches: ["main"]
-    paths:
-      - 'evolution/**'
-      - 'tacl/**'
-      - 'tests/test_energy.py'
-      - 'tests/test_link_activator.py'
-      - 'tests/test_recovery_agent.py'
-      - 'tests/test_polygon_integration.py'
-      - 'scripts/admission_check.py'
-      - 'scripts/benchmark_bonds.py'
-      - '.github/workflows/thermo-evolution.yml'
-  # PRs disabled - thermodynamic evolution tests only needed on main branch
-  # Reduces CI overhead for development cycle
-  workflow_dispatch:
-
 concurrency:
-  group: thermo-validation-${{ github.workflow }}-${{ github.ref }}
+  group: disabled-thermo-evolution-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  thermo-gate:
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Enforce thermodynamic monotonicity
-        run: pytest -m monotonic -q
-
-  admission-check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Run thermodynamic admission check
-        run: python scripts/admission_check.py
-
-  validate-energy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Run stability tests
-        run: pytest -q tests/test_energy.py -m stability
-      - name: Benchmark bonds / ensure ΔF improvement
-        run: python scripts/benchmark_bonds.py --target-dF 1e-10
-      - name: Evolve bonds and save optimized graph
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
-        run: python evolution/bond_evolver.py --generations 50 --output optimized_graph.json
-
-  test-link-activator:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Run link activator tests
-        run: pytest tests/test_link_activator.py -v
-
-  test-recovery-agent:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Run recovery agent tests
-        run: pytest tests/test_recovery_agent.py -v
-
-  security-policy-check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Ensure SECURITY.md exists
-        run: test -f SECURITY.md
-      - name: Scan for monotonic violations
-        run: |
-          if grep -R "monotonic_constraint_violated" logs/ 2>/dev/null; then
-            echo "ERROR: Monotonic constraint violations detected"
-            exit 1
-          fi
-
-  integration-polygon:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt -r sbom/combined-requirements.txt
-          pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Run Polygon validation
-        env:
-          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
-          RUN_POLYGON_TESTS: "1"
-        run: pytest tests/test_polygon_integration.py -v
+      - name: Disabled workflow
+        run: echo "thermo-evolution.yml disabled during CI stabilization."

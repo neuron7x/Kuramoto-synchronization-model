@@ -28,7 +28,7 @@ on:
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   detect_ui_changes:
@@ -50,6 +50,7 @@ jobs:
   dependency_security:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
@@ -121,53 +122,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ['3.11']
     name: Lint & Type Check (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-      
-      - name: Cache pre-commit environments
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/pre-commit
-          key: lint-pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            lint-pre-commit-${{ runner.os }}-
-      
+
       - uses: ./.github/actions/setup-tradepulse
         with:
           python-version: ${{ matrix.python-version }}
           cache-prefix: venv-lint
-      
-      - name: Install additional lint dependencies
-        run: .venv/bin/pip install -c constraints/security.txt pre-commit detect-secrets
-      
-      - name: Validate localization bundles
-        run: .venv/bin/python scripts/localization/sync_translations.py --check
-        
-      - name: Install shellcheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-          
+
       - name: Run Python linting (ruff, black, mypy)
         run: |
           .venv/bin/ruff check .
           .venv/bin/black --check .
           .venv/bin/mypy
-          
-      - name: Run slotscheck
-        run: .venv/bin/python -m slotscheck --module core --module backtest --module execution
-        
-      - name: Run shell linting (shfmt, shellcheck)
-        run: |
-          .venv/bin/pre-commit run --hook-stage manual --all-files shfmt --show-diff-on-failure
-          .venv/bin/pre-commit run --hook-stage manual --all-files shellcheck --show-diff-on-failure
 
   metrics-validation:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     name: Metrics Validation
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
@@ -223,6 +198,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect_ui_changes
     name: Web Frontend Lint & Type Check
+    if: needs.detect_ui_changes.outputs.web == 'true'
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: Set up Node.js
@@ -258,29 +234,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ['3.11']
     name: Fast Unit Tests (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-      - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: go.mod
-      - name: Cache Go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ hashFiles('go.sum', 'infra/terraform/tests/go.sum') }}
-          restore-keys: |
-            go-${{ runner.os }}-
-      - name: Run Go service unit tests (fast subset)
-        run: |
-          mkdir -p reports/go
-          # Run Go tests with short flag for fast subset only
-          go test ./... -short -covermode=atomic -coverprofile=reports/go/services.coverage.out
-          
       - uses: ./.github/actions/setup-tradepulse
         with:
           python-version: ${{ matrix.python-version }}

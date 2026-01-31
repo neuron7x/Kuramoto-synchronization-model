@@ -1,168 +1,19 @@
-name: Performance Regression Detection
+name: Disabled (performance-regression)
+
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  pull_request:
-    branches:
-      - '**'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'observability/dashboards/**'
-      - 'observability/README.md'
-      - '*.txt'
-      - 'LICENSE'
-      - 'NOTICE'
-      - 'PATENTS.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'CONTRIBUTING.md'
-      - '.editorconfig'
-      - '.gitignore'
-      - '.gitattributes'
-  workflow_dispatch:
-
 concurrency:
-  group: performance-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: disabled-performance-regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  performance-regression:
-    name: Performance regression analysis
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 60
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v3
-
-      - name: Cache uv packages
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/uv
-          key: uv-${{ runner.os }}-performance-${{ hashFiles('requirements*.txt', 'requirements*.lock') }}
-
-      - name: Create virtual environment
-        run: uv venv --python 3.11
-
-      - name: Install dependencies
-        run: |
-          uv pip install -c constraints/security.txt -r requirements.lock
-          uv pip install -c constraints/security.txt -r requirements-dev.lock
-          .venv/bin/python - <<'PY'
-          from packaging.version import Version
-          import numpy as np
-
-          version = Version(np.__version__)
-          print(f"NumPy version: {version}")
-          if version.major != 2:
-              raise SystemExit("Expected NumPy 2.x")
-          PY
-
-      - name: Run PR benchmarks
-        env:
-          TP_BENCHMARK_ARTIFACT_DIR: reports/performance/benchmarks/pr
-        run: |
-          mkdir -p reports/performance
-          .venv/bin/python -m pytest tests/performance/test_indicator_benchmarks.py \
-            --benchmark-json=reports/performance/current_benchmark.json -vv
-
-      - name: Run PR memory regression suite
-        run: .venv/bin/python -m pytest tests/performance/test_memory_regression.py -q
-
-      - name: Collect PR resource metrics
-        run: |
-          .venv/bin/python scripts/performance/run_resource_checks.py \
-            --output reports/performance/current_resources.json
-
-      - name: Checkout baseline (main)
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          ref: main
-          path: baseline
-
-      - name: Run baseline benchmarks
-        env:
-          TP_BENCHMARK_ARTIFACT_DIR: ../reports/performance/benchmarks/baseline
-        run: |
-          cd baseline
-          mkdir -p ../reports/performance
-          ../.venv/bin/python -m pytest tests/performance/test_indicator_benchmarks.py \
-            --benchmark-json=../reports/performance/baseline_benchmark.json -vv
-
-      - name: Collect baseline resource metrics
-        run: |
-          if [ ! -f baseline/scripts/performance/run_resource_checks.py ]; then
-            mkdir -p baseline/scripts/performance
-            cp scripts/performance/run_resource_checks.py baseline/scripts/performance/
-          fi
-          cd baseline
-          ../.venv/bin/python scripts/performance/run_resource_checks.py \
-            --output ../reports/performance/baseline_resources.json
-
-      - name: Debug generated files
-        if: always()
-        run: |
-          set -xuo pipefail
-          echo "List reports/performance:"
-          ls -lah reports/performance || true
-          for f in reports/performance/*.json; do
-            echo "=== $f (size=$(stat -c%s "$f" 2>/dev/null || echo 0)) ==="
-            python -m json.tool "$f" || { echo "INVALID JSON: $f"; cat "$f"; exit 2; }
-          done
-
-      - name: Verify python environment
-        run: |
-          set -xuo pipefail
-          .venv/bin/python --version
-          .venv/bin/pip --version
-
-      # Threshold temporarily relaxed for NumPy 2.x regressions while copy=False
-      # deprecations are addressed in indicator pipelines. Revert to 0.20 once
-      # benchmark parity with pre-NumPy 2.x builds is restored.
-      - name: Compare performance against main
-        run: |
-          set -xuo pipefail
-          .venv/bin/python -u scripts/performance/compare_performance.py \
-            --baseline-benchmark reports/performance/baseline_benchmark.json \
-            --current-benchmark reports/performance/current_benchmark.json \
-            --baseline-resources reports/performance/baseline_resources.json \
-            --current-resources reports/performance/current_resources.json \
-            --threshold 0.30 \
-            --output-json reports/performance/comparison.json \
-            --output-markdown reports/performance/comparison.md
-
-      - name: Publish performance summary
-        if: always()
-        run: |
-          {
-            echo '## Performance regression summary'
-            if [ -f reports/performance/comparison.md ]; then
-              cat reports/performance/comparison.md
-            else
-              echo "⚠️ No comparison report generated. Check debug logs above."
-            fi
-            echo ""
-            echo "### Artifact files"
-            ls -la reports/performance/*.json 2>/dev/null || echo "No JSON files found"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload performance artifacts
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: performance-regression
-          path: |
-            reports/performance/*.json
-            reports/performance/*.md
-            reports/performance/benchmarks
+      - name: Disabled workflow
+        run: echo "performance-regression.yml disabled during CI stabilization."

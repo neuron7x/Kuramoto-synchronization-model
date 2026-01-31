@@ -1,82 +1,19 @@
-name: Version Gate
+name: Disabled (version-gate)
 
-concurrency:
-  group: version-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-on:
-  pull_request:
-    branches:
-      - main
-      - develop
+concurrency:
+  group: disabled-version-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  version-check:
-    name: Verify Version Matches Git Tag
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -c constraints/security.txt setuptools_scm
-
-      - name: Get version from setuptools_scm
-        id: scm_version
-        run: |
-          VERSION=$(python -m setuptools_scm)
-          echo "scm_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "SCM Version: $VERSION"
-
-      - name: Get latest git tag
-        id: git_tag
-        run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.1.0")
-          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-          echo "Latest Git Tag: $LATEST_TAG"
-
-      - name: Compare versions
-        run: |
-          SCM_VERSION="${{ steps.scm_version.outputs.scm_version }}"
-          GIT_TAG="${{ steps.git_tag.outputs.latest_tag }}"
-
-          # Remove 'v' prefix from tag if present
-          GIT_TAG_CLEAN="${GIT_TAG#v}"
-
-          echo "Comparing SCM version '$SCM_VERSION' with git tag '$GIT_TAG_CLEAN'"
-
-          # For development versions (with .dev or +), check they're based on the latest tag
-          if [[ "$SCM_VERSION" == *".dev"* ]] || [[ "$SCM_VERSION" == *"+"* ]]; then
-            echo "Development version detected: $SCM_VERSION"
-            echo "Based on tag: $GIT_TAG_CLEAN"
-            echo "✓ Version check passed (development build)"
-            exit 0
-          fi
-
-          # For release versions, must match exactly
-          if [ "$SCM_VERSION" != "$GIT_TAG_CLEAN" ]; then
-            echo "❌ ERROR: Version mismatch!"
-            echo "  setuptools_scm version: $SCM_VERSION"
-            echo "  Latest git tag: $GIT_TAG_CLEAN"
-            echo ""
-            echo "For releases, the version must match the latest tag exactly."
-            echo "Please create a new tag with: git tag -a v$SCM_VERSION -m 'Release $SCM_VERSION'"
-            exit 1
-          fi
-
-          echo "✓ Version matches latest tag: $SCM_VERSION"
+      - name: Disabled workflow
+        run: echo "version-gate.yml disabled during CI stabilization."

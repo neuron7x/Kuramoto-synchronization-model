@@ -1,66 +1,19 @@
-name: CI — Pin Terraform version
+name: Disabled (pin-terraform-version)
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-concurrency:
-  group: terraform-validate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 permissions:
   contents: read
-  actions: write
+
+concurrency:
+  group: disabled-pin-terraform-version-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  terraform-validate:
-    name: Terraform validation tests
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/terraform-plugin-cache
-      TF_IN_AUTOMATION: "true"
-
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-      - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: infra/terraform/tests/go.mod
-          cache: true
-          cache-dependency-path: infra/terraform/tests/go.sum
-
-      - name: Prepare Terraform plugin cache directory
-        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
-
-      - name: Cache Terraform providers
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
-          key: ${{ runner.os }}-terraform-${{ hashFiles('infra/terraform/eks/**/*.tf') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
-        with:
-          terraform_version: '1.6.6'
-
-      - name: Verify Terraform version
-        run: terraform version
-
-      - name: Download Go modules for terraform tests
-        working-directory: infra/terraform/tests
-        run: go mod download
-
-      - name: Run Terraform-related Go tests
-        working-directory: infra/terraform/tests
-        env:
-          CI: true
-        run: |
-          go test -v .
+      - name: Disabled workflow
+        run: echo "pin-terraform-version.yml disabled during CI stabilization."

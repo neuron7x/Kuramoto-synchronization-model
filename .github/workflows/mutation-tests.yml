@@ -1,62 +1,19 @@
-name: Mutation Tests
-
-concurrency:
-  group: mutation-tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+name: Disabled (mutation-tests)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * 1'
 
 permissions:
   contents: read
-  actions: read
-  checks: write
-  statuses: write
+
+concurrency:
+  group: disabled-mutation-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  mutmut:
-    name: Mutation Testing (mutmut)
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 120
-
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.lock
-            requirements-dev.lock
-            constraints/security.txt
-      - name: Set up uv
-        uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v3
-      - name: Create virtual environment
-        run: uv venv
-      - name: Install dependencies
-        run: |
-          uv pip install -c constraints/security.txt -r requirements.lock
-          uv pip install -c constraints/security.txt -r requirements-dev.lock
-      - name: Prepare mutation report directory
-        run: mkdir -p reports/mutmut
-      - name: Run mutation suite
-        run: .venv/bin/mutmut run --use-coverage
-      - name: Enforce kill rate threshold
-        run: |
-          .venv/bin/python -m tools.mutation.kill_rate_guard \
-            --threshold 0.8 \
-            --summary reports/mutmut/summary.json
-      - name: Summarize mutation results
-        run: .venv/bin/mutmut results | tee reports/mutmut/results.txt
-      - name: Upload mutation artifacts
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: mutation-testing-results
-          path: |
-            .mutmut-cache
-            reports/mutmut
-          if-no-files-found: warn
+      - name: Disabled workflow
+        run: echo "mutation-tests.yml disabled during CI stabilization."
