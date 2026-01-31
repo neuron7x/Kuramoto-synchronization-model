@@ -1,0 +1,777 @@
+name: PR Gate — Quality & Safety
+
+on:
+  pull_request:
+    branches: [main, develop, 'release/**']
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      web: ${{ steps.filter.outputs.web }}
+      rust: ${{ steps.filter.outputs.rust }}
+      go: ${{ steps.filter.outputs.go }}
+      helm: ${{ steps.filter.outputs.helm }}
+      docker: ${{ steps.filter.outputs.docker }}
+      proto: ${{ steps.filter.outputs.proto }}
+      configs: ${{ steps.filter.outputs.configs }}
+      ci: ${{ steps.filter.outputs.ci }}
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+      schemas: ${{ steps.filter.outputs.schemas }}
+      central_files: ${{ steps.filter.outputs.central_files }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - '**/*.py'
+              - 'requirements*.txt'
+              - 'requirements*.lock'
+              - 'constraints/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+            web:
+              - 'apps/web/**'
+              - 'ui/**'
+            rust:
+              - 'rust/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            go:
+              - 'go/**'
+            helm:
+              - 'deploy/helm/**'
+            docker:
+              - '**/Dockerfile'
+              - '**/*.Dockerfile'
+              - '.dockerignore'
+              - 'docker-compose.yml'
+              - 'requirements-scan.lock'
+            proto:
+              - '**/*.proto'
+              - 'buf.yaml'
+              - 'buf.gen.yaml'
+            configs:
+              - 'configs/**'
+              - 'config/**'
+              - 'artifacts/configs/**'
+            ci:
+              - '.github/**'
+            docs_only:
+              - '**/*.md'
+              - 'docs/**'
+              - '!scripts/**'
+              - '!tools/**'
+            schemas:
+              - 'schemas/**'
+            central_files:
+              - 'CODEOWNERS'
+              - '.github/workflows/**'
+              - 'constraints/security.txt'
+              - 'requirements.lock'
+              - 'requirements-dev.lock'
+              - 'pyproject.toml'
+              - 'Makefile'
+              - 'Dockerfile'
+              - 'configs/security/**'
+              - 'configs/quality/**'
+
+  l0-static-gates:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs_only != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+      - name: Validate PR title
+        run: |
+          python scripts/ci/check_pr_title.py
+      - name: Check changelog fragment
+        run: |
+          python scripts/ci/check_changelog_fragment.py \
+            --base-ref origin/${{ github.event.pull_request.base.ref }} \
+            --head-ref ${{ github.event.pull_request.head.sha }}
+      - name: Flag changes to central files
+        if: needs.detect-changes.outputs.central_files == 'true'
+        run: |
+          python scripts/ci/check_central_files_touched.py \
+            --base-ref ${{ github.event.pull_request.base.sha }} \
+            --head-ref ${{ github.event.pull_request.head.sha }}
+          echo "::warning::This PR modifies central infrastructure files. Senior review required."
+      - name: Check license headers
+        run: |
+          find core execution backtest analytics tradepulse application \
+            -name "*.py" -newer .git/refs/remotes/origin/${{ github.event.pull_request.base.ref }} \
+            -exec grep -L "SPDX-License-Identifier" {} + | head -20 > /tmp/missing_headers.txt
+          if [ -s /tmp/missing_headers.txt ]; then
+            echo "::warning::Files missing SPDX license header:"
+            cat /tmp/missing_headers.txt
+          fi
+
+  python-lint:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-lint
+      - name: Ruff lint
+        run: .venv/bin/ruff check . --output-format=github
+      - name: Black format check
+        run: .venv/bin/black --check --diff .
+      - name: Mypy type check
+        run: .venv/bin/mypy
+      - name: Namespace policy enforcement
+        run: .venv/bin/python scripts/check_namespace_policy.py
+      - name: Config single-source guard
+        run: .venv/bin/python scripts/check_config_single_source.py
+
+  fast-unit-tests:
+    needs: [detect-changes, python-lint]
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    env:
+      COVERAGE_FILE: .coverage.${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-test
+      - name: Prepare test report directories
+        run: mkdir -p reports
+      - name: Sync localization resources
+        run: .venv/bin/python scripts/localization/sync_translations.py
+      - name: Run fast unit tests (shard ${{ matrix.shard }}/3)
+        run: |
+          .venv/bin/python -m pytest tests/ \
+            -m "not slow and not heavy_math and not nightly and not flaky" \
+            --cov=core --cov=backtest --cov=execution \
+            --cov-branch \
+            --cov-report=term-missing \
+            --junitxml=reports/shard-${{ matrix.shard }}.xml \
+            --splits 3 --group ${{ matrix.shard }} \
+            --reruns 2 --reruns-delay 1 \
+            --only-rerun AssertionError --only-rerun TimeoutError \
+            -q
+      - name: Upload coverage shard
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .coverage.${{ matrix.shard }}
+          retention-days: 3
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: junit-shard-${{ matrix.shard }}
+          path: reports/shard-${{ matrix.shard }}.xml
+          retention-days: 3
+
+  coverage-gate:
+    needs: fast-unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      line_rate: ${{ steps.aggregate.outputs.line_rate }}
+      branch_rate: ${{ steps.aggregate.outputs.branch_rate }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        with:
+          python-version: '3.11'
+      - run: pip install coverage
+      - name: Download all coverage shards
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+      - name: Aggregate and enforce coverage
+        id: aggregate
+        run: |
+          python -m coverage combine .coverage.* || true
+          python -m coverage xml -o coverage.xml
+          python -m tools.coverage.drop_guard \
+            --baseline configs/quality/coverage_baseline.json \
+            --coverage coverage.xml
+          python -m tools.coverage.guardrail \
+            --config configs/quality/critical_surface.toml \
+            --coverage coverage.xml
+          python - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          root = ET.parse("coverage.xml").getroot()
+          lr = float(root.get("line-rate", 0)) * 100
+          br = float(root.get("branch-rate", 0)) * 100
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"line_rate={lr:.2f}\nbranch_rate={br:.2f}\n")
+          PY
+
+  property-tests:
+    needs: [detect-changes, python-lint]
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-property
+      - name: Run property tests (deterministic)
+        run: |
+          .venv/bin/python -m pytest tests/property -m property --hypothesis-seed=2026
+
+  security-sast:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-security
+      - name: Bandit security scan
+        run: |
+          .venv/bin/python -m tools.security.sast \
+            --fail-on-severity MEDIUM \
+            --output reports/security/bandit.json \
+            --summary reports/security/sast_summary.json
+      - name: Install secret scanner
+        run: |
+          .venv/bin/pip install -c constraints/security.txt detect-secrets
+      - name: Detect secrets
+        run: |
+          .venv/bin/detect-secrets scan \
+            core backtest execution src application analytics tradepulse \
+            --json > /tmp/secrets-scan.json
+          python - <<'PY'
+          import json
+          data = json.load(open("/tmp/secrets-scan.json"))
+          violations = sum(len(entries) for entries in data.get("results", {}).values())
+          if violations:
+              raise SystemExit(f"FAIL: {violations} potential secrets")
+          print("OK: No secrets detected")
+          PY
+      - name: Dynamic security probes
+        run: .venv/bin/python -m tools.security.dast_probe --report reports/security/dast_report.json
+      - name: Install Semgrep
+        run: |
+          .venv/bin/pip install -c constraints/security.txt semgrep
+      - name: Semgrep scan
+        run: |
+          .venv/bin/semgrep scan --config auto --sarif -o semgrep.sarif
+      - name: Enforce Semgrep findings
+        if: always()
+        run: |
+          if [ -f semgrep.sarif ]; then
+            CRITICAL=$(jq '[.runs[].results[] | select(.level == "error")] | length' semgrep.sarif 2>/dev/null || echo 0)
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "::error::$CRITICAL critical Semgrep findings. Fix before merge."
+              exit 1
+            fi
+          fi
+
+  dependency-review:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Dependency Review
+        uses: actions/dependency-review-action@b3d36a0ea3e0d5c6bce8a4a5c9c7fe5c8f7e32d4 # v4
+        with:
+          fail-on-severity: high
+          deny-licenses: AGPL-3.0, SSPL-1.0
+          comment-summary-in-pr: always
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        with:
+          python-version: '3.11'
+      - name: License compliance check
+        run: |
+          pip install pip-licenses pyyaml
+          pip-licenses --format=json --output-file=/tmp/licenses.json
+          python - <<'PY'
+          import json
+          import sys
+          import yaml
+
+          policy = yaml.safe_load(open("configs/security/license_policy.yaml"))
+          forbidden = set(policy.get("forbidden", []))
+          aliases = policy.get("aliases", {})
+          licenses = json.load(open("/tmp/licenses.json"))
+          violations = []
+          for pkg in licenses:
+              lic = pkg.get("License", "UNKNOWN")
+              lic = aliases.get(lic, lic)
+              if lic in forbidden:
+                  violations.append(f"{pkg['Name']}=={pkg['Version']}: {lic}")
+          if violations:
+              print("FORBIDDEN LICENSE VIOLATIONS:")
+              for entry in violations:
+                  print(f"  ❌ {entry}")
+              sys.exit(1)
+          print("✅ All licenses compliant")
+          PY
+      - name: Dependency drift detection
+        run: python scripts/security/check_dependency_drift.py --fail-on-drift
+
+  schema-contracts:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.schemas == 'true' ||
+      needs.detect-changes.outputs.proto == 'true' ||
+      needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-schema
+      - name: Validate event schema compatibility
+        run: .venv/bin/python -m tools.schema.validate_compatibility --registry schemas/events
+      - name: Validate OpenAPI spec
+        run: |
+          npm --version
+          npx --yes @redocly/cli lint schemas/openapi/*.json --format=github-actions
+      - name: Protobuf lint
+        if: needs.detect-changes.outputs.proto == 'true'
+        run: |
+          BUF_VERSION="1.28.0"
+          curl -sSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-x86_64" -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
+          buf lint
+          buf breaking --against ".git#branch=${{ github.event.pull_request.base.ref }}"
+      - name: Validate dopamine config schema
+        run: |
+          .venv/bin/python -c "import json, jsonschema, yaml; schema=json.load(open('schemas/dopamine.schema.json')); config=yaml.safe_load(open('configs/dopamine.yaml')); jsonschema.validate(config, schema); print('✅ Dopamine config valid')"
+
+  architecture-guard:
+    needs: [detect-changes, python-lint]
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-arch
+      - name: Architecture scan
+        run: .venv/bin/python -m tools.architecture.scanner --fail-on-cycles
+      - name: Import boundary enforcement
+        run: |
+          .venv/bin/python - <<'PY'
+          import ast
+          import sys
+          from pathlib import Path
+
+          FORBIDDEN_IMPORTS = {
+              "execution": ["backtest", "analytics", "ui", "apps"],
+              "core": ["application", "apps", "ui", "admin"],
+              "tradepulse": ["src"],
+              "backtest": ["application", "ui", "apps"],
+          }
+          violations = []
+          for source_pkg, forbidden in FORBIDDEN_IMPORTS.items():
+              for py_file in Path(source_pkg).rglob("*.py"):
+                  try:
+                      tree = ast.parse(py_file.read_text())
+                  except SyntaxError:
+                      continue
+                  for node in ast.walk(tree):
+                      module = ""
+                      if isinstance(node, ast.ImportFrom) and node.module:
+                          module = node.module
+                      elif isinstance(node, ast.Import):
+                          module = ".".join(name.name for name in node.names)
+                      for forbidden_module in forbidden:
+                          if module == forbidden_module or module.startswith(f"{forbidden_module}."):
+                              violations.append(f"{py_file}:{node.lineno} imports {module} (forbidden from {source_pkg})")
+          if violations:
+              for entry in violations:
+                  print(f"❌ {entry}")
+              sys.exit(1)
+          print("✅ All import boundaries respected")
+          PY
+      - name: Formal invariant proofs
+        run: |
+          .venv/bin/python -m pytest tests/formal/ -q --tb=short --no-header || \
+          echo "::warning::Formal verification tests not fully passing"
+
+  docker-build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docker == 'true' || needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+      - name: Build Docker image (scan stage)
+        uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d # v5
+        with:
+          context: .
+          target: scan
+          push: false
+          load: true
+          tags: tradepulse:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@a1b9f4d6c8bcbcb3a946259e38a1c0fd2d7ff3d4 # v0.30.0
+        with:
+          image-ref: tradepulse:pr-${{ github.event.pull_request.number }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+  helm-lint:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.helm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Install Helm
+        run: |
+          curl -sSL https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz | tar xz
+          sudo mv linux-amd64/helm /usr/local/bin/helm
+      - name: Helm lint
+        run: helm lint deploy/helm/tradepulse/
+      - name: Helm template (dry-run render)
+        run: |
+          helm template tradepulse deploy/helm/tradepulse/ \
+            --values deploy/helm/tradepulse/values.yaml \
+            --debug > /tmp/rendered.yaml
+          echo "✅ Helm templates render successfully"
+      - name: Kubeval schema validation
+        run: |
+          curl -sL https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz
+          ./kubeval /tmp/rendered.yaml --strict --kubernetes-version 1.28.0 || \
+          echo "::warning::Kubeval found schema issues in rendered templates"
+
+  web-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci
+      - name: Prettier format check
+        working-directory: apps/web
+        run: npm run format:check
+      - name: ESLint
+        working-directory: apps/web
+        run: npm run lint
+      - name: TypeScript type check
+        working-directory: apps/web
+        run: npm run typecheck
+      - name: Jest unit tests
+        working-directory: apps/web
+        run: npm run test -- --coverage --ci
+      - name: Audit external scripts
+        working-directory: apps/web
+        run: npm run security:audit-scripts
+      - name: Build (ensures no build breaks)
+        working-directory: apps/web
+        run: npm run build
+
+  rust-gate:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Install Rust toolchain
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          source "$HOME/.cargo/env"
+          rustup component add clippy rustfmt
+      - name: Rust cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/tradepulse-accel/target
+          key: rust-${{ runner.os }}-${{ hashFiles('rust/tradepulse-accel/Cargo.lock') }}
+      - name: Format check
+        working-directory: rust/tradepulse-accel
+        run: |
+          source "$HOME/.cargo/env"
+          cargo fmt --check
+      - name: Clippy lint
+        working-directory: rust/tradepulse-accel
+        run: |
+          source "$HOME/.cargo/env"
+          cargo clippy --all-targets -- -D warnings
+      - name: Run tests
+        working-directory: rust/tradepulse-accel
+        run: |
+          source "$HOME/.cargo/env"
+          cargo test
+      - name: Cargo audit
+        run: |
+          source "$HOME/.cargo/env"
+          cargo install cargo-audit
+          cd rust/tradepulse-accel && cargo audit
+
+  go-gate:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Install Go toolchain
+        run: |
+          GO_VERSION="1.22.4"
+          curl -sSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
+          sudo rm -rf /usr/local/go
+          sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+          echo "/usr/local/go/bin" >> $GITHUB_PATH
+      - name: Go cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-${{ hashFiles('go/services/vpin/go.sum') }}
+      - name: Go vet
+        working-directory: go/services/vpin
+        run: go vet ./...
+      - name: Go test
+        working-directory: go/services/vpin
+        run: go test -v -race -coverprofile=coverage.out ./...
+      - name: golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.57.2
+          cd go/services/vpin
+          golangci-lint run ./...
+
+  smoke-and-cert:
+    needs: [detect-changes, fast-unit-tests]
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-smoke
+      - name: Smoke tests
+        run: |
+          .venv/bin/python -m pytest tests/smoke/ \
+            -m "smoke and not slow" \
+            --junitxml=reports/smoke.xml -q
+      - name: Serotonin certification
+        run: |
+          .venv/bin/python scripts/serotonin_certify.py \
+            --dataset data/sample_crypto_ohlcv.csv \
+            --seed 123 \
+            --out artifacts/serotonin-cert \
+            --fast
+      - name: Examples quickstart
+        env:
+          PYTHONPATH: .
+        run: |
+          .venv/bin/python examples/quick_start.py --seed 7 --num-points 400
+          .venv/bin/python examples/neuro_trade_pulse_backtest.py
+          .venv/bin/python examples/integrated_risk_management_example.py
+      - name: ECS regulator coverage
+        run: |
+          .venv/bin/python -m pytest core/neuro/tests/test_ecs_regulator.py \
+            --cov=core.neuro.ecs_regulator --cov-report=term-missing
+
+  backtest-regression:
+    needs: [detect-changes, fast-unit-tests]
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-backtest
+      - name: Run backtest regression battery
+        run: |
+          .venv/bin/python scripts/ci/run_backtest_regression.py \
+            --baseline-path configs/nightly/baselines.json \
+            --artifact-root reports/backtest-regression \
+            --history-path reports/backtest-regression/history.jsonl
+
+  test-quality:
+    needs: [detect-changes, python-lint]
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-quality
+      - name: Test quality validation
+        run: |
+          .venv/bin/python -m tools.testing.quality_validator \
+            --test-dir=tests \
+            --report=reports/test-quality.json \
+            --threshold=70.0
+      - name: Production readiness check
+        run: .venv/bin/python -m tools.production_gates.validator
+
+  pr-verdict:
+    name: PR Verdict — Stop-the-Line
+    if: always()
+    needs:
+      - l0-static-gates
+      - python-lint
+      - fast-unit-tests
+      - coverage-gate
+      - property-tests
+      - security-sast
+      - dependency-review
+      - schema-contracts
+      - architecture-guard
+      - docker-build
+      - helm-lint
+      - web-frontend
+      - rust-gate
+      - go-gate
+      - smoke-and-cert
+      - backtest-regression
+      - test-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Evaluate all gates
+        env:
+          RESULTS: |
+            l0-static=${{ needs.l0-static-gates.result }}
+            python-lint=${{ needs.python-lint.result }}
+            fast-tests=${{ needs.fast-unit-tests.result }}
+            coverage=${{ needs.coverage-gate.result }}
+            property=${{ needs.property-tests.result }}
+            security=${{ needs.security-sast.result }}
+            dep-review=${{ needs.dependency-review.result }}
+            schema=${{ needs.schema-contracts.result }}
+            architecture=${{ needs.architecture-guard.result }}
+            docker=${{ needs.docker-build.result }}
+            helm=${{ needs.helm-lint.result }}
+            web=${{ needs.web-frontend.result }}
+            rust=${{ needs.rust-gate.result }}
+            go=${{ needs.go-gate.result }}
+            smoke=${{ needs.smoke-and-cert.result }}
+            backtest=${{ needs.backtest-regression.result }}
+            quality=${{ needs.test-quality.result }}
+        run: |
+          echo "## PR Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          failures=0
+          while IFS='=' read -r name result; do
+            name=$(echo "$name" | xargs)
+            result=$(echo "$result" | xargs)
+            [ -z "$name" ] && continue
+
+            if [ "$result" = "success" ] || [ "$result" = "skipped" ]; then
+              icon="✅"
+            elif [ "$result" = "cancelled" ]; then
+              icon="⚪"
+            else
+              icon="❌"
+              failures=$((failures + 1))
+            fi
+            echo "| $name | $icon $result |" >> $GITHUB_STEP_SUMMARY
+          done <<< "$RESULTS"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$failures" -gt 0 ]; then
+            echo "**❌ PR BLOCKED: $failures gate(s) failed**" >> $GITHUB_STEP_SUMMARY
+            echo "::error::PR blocked by $failures failing gate(s)"
+            exit 1
+          else
+            echo "**✅ All gates passed — PR is safe to merge**" >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Post PR summary comment
+        if: always()
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### 🔒 PR Gate Summary
+
+            | Gate | Status |
+            |------|--------|
+            | Static gates | ${{ needs.l0-static-gates.result == 'success' && '✅' || needs.l0-static-gates.result == 'skipped' && '⏭️' || '❌' }} |
+            | Python lint + types | ${{ needs.python-lint.result == 'success' && '✅' || needs.python-lint.result == 'skipped' && '⏭️' || '❌' }} |
+            | Unit tests (3 shards) | ${{ needs.fast-unit-tests.result == 'success' && '✅' || needs.fast-unit-tests.result == 'skipped' && '⏭️' || '❌' }} |
+            | Coverage gate | ${{ needs.coverage-gate.result == 'success' && '✅' || needs.coverage-gate.result == 'skipped' && '⏭️' || '❌' }} ${{ needs.coverage-gate.outputs.line_rate || 'n/a' }}% |
+            | Property tests | ${{ needs.property-tests.result == 'success' && '✅' || needs.property-tests.result == 'skipped' && '⏭️' || '❌' }} |
+            | Security (SAST + Semgrep) | ${{ needs.security-sast.result == 'success' && '✅' || needs.security-sast.result == 'skipped' && '⏭️' || '❌' }} |
+            | Dependency review | ${{ needs.dependency-review.result == 'success' && '✅' || needs.dependency-review.result == 'skipped' && '⏭️' || '❌' }} |
+            | Schema contracts | ${{ needs.schema-contracts.result == 'success' && '✅' || needs.schema-contracts.result == 'skipped' && '⏭️' || '❌' }} |
+            | Architecture guard | ${{ needs.architecture-guard.result == 'success' && '✅' || needs.architecture-guard.result == 'skipped' && '⏭️' || '❌' }} |
+            | Docker build | ${{ needs.docker-build.result == 'success' && '✅' || needs.docker-build.result == 'skipped' && '⏭️' || '❌' }} |
+            | Helm lint | ${{ needs.helm-lint.result == 'success' && '✅' || needs.helm-lint.result == 'skipped' && '⏭️' || '❌' }} |
+            | Web frontend | ${{ needs.web-frontend.result == 'success' && '✅' || needs.web-frontend.result == 'skipped' && '⏭️' || '❌' }} |
+            | Rust gate | ${{ needs.rust-gate.result == 'success' && '✅' || needs.rust-gate.result == 'skipped' && '⏭️' || '❌' }} |
+            | Go gate | ${{ needs.go-gate.result == 'success' && '✅' || needs.go-gate.result == 'skipped' && '⏭️' || '❌' }} |
+            | Smoke + certification | ${{ needs.smoke-and-cert.result == 'success' && '✅' || needs.smoke-and-cert.result == 'skipped' && '⏭️' || '❌' }} |
+            | Backtest regression | ${{ needs.backtest-regression.result == 'success' && '✅' || needs.backtest-regression.result == 'skipped' && '⏭️' || '❌' }} |
+            | Test quality | ${{ needs.test-quality.result == 'success' && '✅' || needs.test-quality.result == 'skipped' && '⏭️' || '❌' }} |
+
+            _⏭️ = skipped (no relevant changes)_

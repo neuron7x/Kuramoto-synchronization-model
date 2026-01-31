@@ -12,15 +12,6 @@ on:
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/*.md'
-  pull_request:
-    branches:
-      # Ensure linting, typing, and tests run for every PR.
-      - '**'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/*.md'
   # Heavy jobs run on schedule (nightly) or manual trigger
   schedule:
     - cron: '0 2 * * *'  # 2 AM UTC daily for heavy test suites
@@ -132,11 +123,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache-prefix: venv-lint
 
-      - name: Run Python linting (ruff, black, mypy)
+      - name: Run Python linting (ruff, black, isort, mypy)
         run: |
-          .venv/bin/ruff check .
+          .venv/bin/ruff check . --output-format=github
           .venv/bin/black --check .
-          .venv/bin/mypy
+          .venv/bin/isort --check-only .
+          .venv/bin/mypy tradepulse
 
   metrics-validation:
     runs-on: ubuntu-latest
@@ -333,9 +325,10 @@ jobs:
           .venv/bin/python -m pytest \
             tests/ \
             -m "not slow and not heavy_math and not nightly and not flaky" \
-            --cov=core --cov=backtest --cov=execution \
+            --cov=tradepulse \
             --cov-branch \
             --cov-report=xml --cov-report=term-missing \
+            --cov-fail-under=90 \
             --junitxml=reports/fast-unit-tests.xml \
             --html=reports/fast-unit-tests-report.html --self-contained-html \
             --json-report --json-report-file=reports/test-results.json \

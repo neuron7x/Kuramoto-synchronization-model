@@ -19,3 +19,9 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         except ValueError:
             # Option already registered by another plugin; ignore redefinition.
             pass
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Ensure property-based suites are discoverable via the property marker."""
+    for item in items:
+        item.add_marker("property")

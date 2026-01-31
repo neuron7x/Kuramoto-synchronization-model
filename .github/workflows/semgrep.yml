@@ -5,14 +5,6 @@ permissions:
   security-events: write
 
 on:
-  push:
-    branches: [ main, develop ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-  # PRs disabled - security-policy-enforcement.yml provides comprehensive security scanning
-  # This reduces CI overhead while maintaining security standards
   schedule:
     - cron: '0 0 * * 1'  # Weekly on Monday
 

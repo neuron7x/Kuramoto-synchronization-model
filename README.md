@@ -8,6 +8,7 @@
 
 [![Tests](https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml/badge.svg)](https://github.com/neuron7x/TradePulse/actions/workflows/tests.yml)
 [![CI](https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml/badge.svg)](https://github.com/neuron7x/TradePulse/actions/workflows/ci.yml)
+[![Security](https://github.com/neuron7x/TradePulse/actions/workflows/security.yml/badge.svg)](https://github.com/neuron7x/TradePulse/actions/workflows/security.yml)
 [![License: TPLA](https://img.shields.io/badge/License-TPLA-0066CC?style=flat)](LICENSE)
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 

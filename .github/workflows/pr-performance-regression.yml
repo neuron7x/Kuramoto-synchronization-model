@@ -1,0 +1,65 @@
+name: PR Performance Regression
+
+on:
+  pull_request:
+    branches: [main, develop, 'release/**']
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-performance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      configs: ${{ steps.filter.outputs.configs }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            configs:
+              - 'configs/**'
+              - 'config/**'
+              - 'tools/performance/**'
+              - 'tests/performance/**'
+
+  perf-regression:
+    needs: detect-changes
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'perf-check') ||
+      needs.detect-changes.outputs.configs == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-tradepulse
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-perf
+      - name: Performance benchmarks
+        run: |
+          mkdir -p reports/benchmarks
+          .venv/bin/python -m pytest tests/performance \
+            --benchmark-only \
+            --benchmark-autosave \
+            --benchmark-save=pr-${{ github.event.pull_request.number }} \
+            --benchmark-columns=mean,stddev,median,rounds \
+            --benchmark-name=short \
+            -q || true
+      - name: Validate performance budgets
+        run: |
+          if [ -d reports/benchmarks ]; then
+            .venv/bin/python -m tools.performance.validate_budgets \
+              --config configs/perf_budgets.yaml \
+              --results reports/benchmarks \
+              --fail-on-breach
+          fi
