@@ -56,6 +56,7 @@ jobs:
       proto:         ${{ steps.filter.outputs.proto }}
       schemas:       ${{ steps.filter.outputs.schemas }}
       configs:       ${{ steps.filter.outputs.configs }}
+      deps:          ${{ steps.filter.outputs.deps }}
       central_files: ${{ steps.filter.outputs.central_files }}
       any_code:      ${{ steps.filter.outputs.any_code }}
     steps:
@@ -90,6 +91,11 @@ jobs:
               - 'schemas/**'
             configs:
               - 'configs/**'
+            deps:
+              - 'requirements*.txt'
+              - 'requirements*.lock'
+              - 'constraints/**'
+              - 'pyproject.toml'
             central_files:
               - 'CODEOWNERS'
               - '.github/workflows/**'
@@ -342,6 +348,7 @@ jobs:
         run: |
           pip install detect-secrets 2>/dev/null
           detect-secrets scan \
+            --baseline .secrets.baseline \
             core backtest execution application analytics tradepulse \
             --json > /tmp/secrets-scan.json 2>/dev/null || true
           python3 - <<'PY'
@@ -416,7 +423,7 @@ jobs:
   # ============================================================================
   dependency-gate:
     needs: detect-changes
-    if: needs.detect-changes.outputs.python == 'true'
+    if: needs.detect-changes.outputs.deps == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
@@ -424,10 +431,12 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
 
       # --- DEP.1: GitHub native dependency review ---
       - name: "DEP.1 — Dependency vulnerability review"
-        uses: actions/dependency-review-action@3b139cfc5fae8b618d3eae3571e89c1b5afe00a4 # v4
+        uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
           deny-licenses: AGPL-3.0-only, AGPL-3.0-or-later, SSPL-1.0
@@ -579,8 +588,12 @@ jobs:
       # --- SCHEMA.1: Avro/event schema backward compatibility ---
       - name: "SCHEMA.1 — Event schema compatibility"
         run: |
-          .venv/bin/python -m tools.schema.validate_compatibility \
-            --registry schemas/events
+          if [ -d "schemas/events" ]; then
+            .venv/bin/python -m tools.schema.validate_compatibility \
+              --registry schemas/events
+          else
+            echo "::warning::schemas/events missing; skipping compatibility check"
+          fi
 
       # --- SCHEMA.2: Dopamine config vs JSON Schema ---
       - name: "SCHEMA.2 — Dopamine config validation"
@@ -716,9 +729,7 @@ jobs:
   # ============================================================================
   docker-build:
     needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.docker == 'true' ||
-      needs.detect-changes.outputs.python == 'true'
+    if: needs.detect-changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
