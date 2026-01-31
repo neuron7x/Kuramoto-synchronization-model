@@ -1,97 +1,83 @@
 #!/usr/bin/env python3
-"""Enforce towncrier changelog fragments for non-docs changes."""
+# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+"""Enforce towncrier changelog fragment exists for non-docs PRs.
 
+Usage:
+    python scripts/ci/check_changelog_fragment.py <PR_NUMBER>
+
+Fragment types (from pyproject.toml [tool.towncrier.type]):
+    feature, bugfix, performance, maintenance, docs, tests, ci, build, security, chore
+"""
 from __future__ import annotations
 
-import argparse
-import json
-import os
 import re
 import subprocess
+import sys
 from pathlib import Path
-from typing import Sequence
 
-VALID_TYPES = {
-    "feature",
-    "bugfix",
-    "performance",
-    "maintenance",
-    "docs",
-    "tests",
-    "ci",
-    "build",
-    "security",
-    "chore",
-}
+VALID_TYPES = frozenset(
+    {
+        "feature",
+        "bugfix",
+        "performance",
+        "maintenance",
+        "docs",
+        "tests",
+        "ci",
+        "build",
+        "security",
+        "chore",
+    }
+)
 
-
-def _load_pr_number(event_path: Path | None) -> str | None:
-    if event_path is None or not event_path.exists():
-        return None
-    payload = json.loads(event_path.read_text(encoding="utf-8"))
-    number = payload.get("pull_request", {}).get("number")
-    return str(number) if number else None
+FRAGMENTS_DIR = Path("newsfragments")
 
 
-def _git_diff_names(base_ref: str, head_ref: str) -> list[str]:
-    output = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{base_ref}...{head_ref}"],
-        text=True,
-    )
-    return [line.strip() for line in output.splitlines() if line.strip()]
+def main(pr_num: str) -> int:
+    # Check for existing fragment
+    if FRAGMENTS_DIR.exists():
+        found = [
+            f
+            for f in FRAGMENTS_DIR.iterdir()
+            if f.name.startswith(f"{pr_num}.") and f.suffix == ".md"
+        ]
+        if found:
+            for fragment in found:
+                parts = fragment.stem.split(".", 1)
+                fragment_type = parts[1] if len(parts) > 1 else ""
+                if fragment_type not in VALID_TYPES:
+                    print(f"::error::Invalid fragment type '{fragment_type}' in {fragment.name}")
+                    print(f"  Valid: {', '.join(sorted(VALID_TYPES))}")
+                    return 1
+            print(f"OK: found {[fragment.name for fragment in found]}")
+            return 0
 
+    # No fragment — exempt if only docs/md changed
+    try:
+        diff_output = subprocess.check_output(
+            ["git", "diff", "--name-only", "origin/main...HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        diff_output = subprocess.check_output(
+            ["git", "diff", "--name-only", "HEAD~1"],
+            text=True,
+        )
 
-def _is_docs_only(paths: Sequence[str]) -> bool:
-    for path in paths:
-        if not re.match(r".*\.md$|^docs/", path):
-            return False
-    return True
+    changed = [path for path in diff_output.strip().split("\n") if path]
+    non_doc = [path for path in changed if not re.match(r".*\.md$|^docs/", path)]
 
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base-ref", default="origin/main", help="Base ref for diff.")
-    parser.add_argument("--head-ref", default="HEAD", help="Head ref for diff.")
-    parser.add_argument(
-        "--pr-number",
-        default=None,
-        help="Explicit PR number override.",
-    )
-    parser.add_argument(
-        "--event-path",
-        type=Path,
-        default=None,
-        help="Path to GitHub event payload (defaults to GITHUB_EVENT_PATH).",
-    )
-    args = parser.parse_args()
-
-    event_path = args.event_path or Path(os.environ.get("GITHUB_EVENT_PATH", ""))
-    pr_number = args.pr_number or _load_pr_number(event_path)
-
-    if not pr_number:
-        print("PR number unavailable; cannot enforce changelog fragment.")
-        return 2
-
-    fragments = list(Path("newsfragments").glob(f"{pr_number}.*.md"))
-    if fragments:
-        for fragment in fragments:
-            fragment_type = fragment.stem.split(".", 1)[-1]
-            if fragment_type not in VALID_TYPES:
-                print(f"Invalid fragment type '{fragment_type}' in {fragment.name}")
-                print(f"Valid types: {', '.join(sorted(VALID_TYPES))}")
-                return 1
-        print("Changelog fragment present.")
+    if not non_doc:
+        print("Docs-only change — fragment not required")
         return 0
 
-    changed_files = _git_diff_names(args.base_ref, args.head_ref)
-    if _is_docs_only(changed_files):
-        print("Docs-only change; changelog fragment not required.")
-        return 0
-
-    print(f"Missing: newsfragments/{pr_number}.<type>.md")
-    print(f"Valid types: {', '.join(sorted(VALID_TYPES))}")
+    print(f"::error::Missing: newsfragments/{pr_num}.<type>.md")
+    print(f"  Valid types: {', '.join(sorted(VALID_TYPES))}")
+    print(f"  Non-doc files changed: {len(non_doc)}")
     return 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    number = sys.argv[1] if len(sys.argv) > 1 else "0"
+    sys.exit(main(number))
