@@ -182,24 +182,43 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup-tradepulse
         with:
           python-version: "3.11"
           cache-prefix: pr-lint
 
+      - name: "Collect changed Python files"
+        id: changed_py
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.sha }} \
+            | grep -E '\.py$' > /tmp/changed_py.txt || true
+          if [ ! -s /tmp/changed_py.txt ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: "LINT.1 — Ruff"
-        run: .venv/bin/ruff check . --output-format=github
+        if: steps.changed_py.outputs.changed == 'true'
+        run: xargs .venv/bin/ruff check --output-format=github < /tmp/changed_py.txt
 
       - name: "LINT.2 — Black"
-        run: .venv/bin/black --check --diff .
+        if: steps.changed_py.outputs.changed == 'true'
+        run: xargs .venv/bin/black --check --diff < /tmp/changed_py.txt
 
       - name: "LINT.3 — Mypy"
-        run: .venv/bin/mypy
+        if: steps.changed_py.outputs.changed == 'true'
+        run: xargs .venv/bin/mypy < /tmp/changed_py.txt
 
       - name: "LINT.4 — Namespace policy"
+        if: steps.changed_py.outputs.changed == 'true'
         run: .venv/bin/python scripts/check_namespace_policy.py
 
       - name: "LINT.5 — Config single-source guard"
+        if: steps.changed_py.outputs.changed == 'true'
         run: .venv/bin/python scripts/check_config_single_source.py
 
   # ============================================================================
@@ -330,13 +349,28 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup-tradepulse
         with:
           python-version: "3.11"
           cache-prefix: pr-security
 
+      - name: "Collect changed Python files"
+        id: changed_py
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.sha }} \
+            | grep -E '\.py$' > /tmp/changed_py.txt || true
+          if [ ! -s /tmp/changed_py.txt ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # --- SEC.1: Bandit SAST via existing tool (fail on MEDIUM+) ---
       - name: "SEC.1 — Bandit SAST"
+        if: steps.changed_py.outputs.changed == 'true'
         run: |
           .venv/bin/python -m tools.security.sast \
             --fail-on-severity MEDIUM \
@@ -345,6 +379,7 @@ jobs:
 
       # --- SEC.2: Detect-secrets (credential leak prevention) ---
       - name: "SEC.2 — Secret detection"
+        if: steps.changed_py.outputs.changed == 'true'
         run: |
           pip install detect-secrets 2>/dev/null
           detect-secrets scan \
@@ -367,12 +402,14 @@ jobs:
 
       # --- SEC.3: DAST probes (ASGI in-process, no server required) ---
       - name: "SEC.3 — DAST probes"
+        if: steps.changed_py.outputs.changed == 'true'
         run: |
           .venv/bin/python -m tools.security.dast_probe \
             --report reports/security/dast_report.json
 
       # --- SEC.4: Semgrep (CRITICAL GAP: currently NOT on PRs) ---
       - name: "SEC.4 — Semgrep"
+        if: steps.changed_py.outputs.changed == 'true'
         uses: docker://semgrep/semgrep:latest
         with:
           args: >-
