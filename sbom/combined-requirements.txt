@@ -89,7 +89,7 @@ opentelemetry-proto==1.38.0
 opentelemetry-sdk==1.38.0
 opentelemetry-semantic-conventions==0.59b0
 optuna==3.6.2
-packaging==25.0
+packaging==26.0
 pandas==2.3.3
 pandera==0.26.1
 pillow==11.3.0
