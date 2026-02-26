@@ -13,7 +13,7 @@
 # PYSEC-2024-230: Removed GLOBALTRUST root certificates due to compliance issues
 # Version 2025.11.12 is the current secure version
 # NOTE: Using exact pin (==) for security-critical package to ensure consistent behavior
-certifi==2025.11.12
+certifi==2026.2.25
 charset-normalizer==3.4.4
 idna==3.11
 requests==2.32.5
