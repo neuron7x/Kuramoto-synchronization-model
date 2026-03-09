@@ -1,15 +1,22 @@
-# CODEOWNERS
-
-# This is a CODEOWNERS file that requires at least one code owner to approve changes.
-
-# Default ownership ensures at least one reviewer is requested for every change.
+# Default owner
 * @neuron7x
 
-# Critical subsystems with explicit owners for faster routing.
-/core/ @neuron7x
-/execution/ @neuron7x
-/analytics/ @neuron7x
-/apps/ @neuron7x
-/ui/ @neuron7x
-/tests/ @neuron7x
-/docs/ @neuron7x
+# CI/CD and security control plane
+/.github/workflows/** @neuron7x
+/.github/instructions/** @neuron7x
+/.github/GITHUB_GOVERNANCE_SETUP.md @neuron7x
+/.github/copilot-instructions.md @neuron7x
+
+# Critical crypto execution paths
+/execution/** @neuron7x
+/application/security/** @neuron7x
+/application/runtime/** @neuron7x
+/application/api/** @neuron7x
+
+# Product surfaces
+/apps/web/** @neuron7x
+/ui/** @neuron7x
+
+# Infrastructure
+/terraform/** @neuron7x
+/infra/terraform/** @neuron7x

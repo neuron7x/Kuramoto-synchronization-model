@@ -1,0 +1,45 @@
+name: _reusable-crypto-validation
+on:
+  workflow_call:
+    inputs:
+      test_paths:
+        required: false
+        type: string
+        default: "tests/contracts tests/execution tests/adapters"
+
+permissions:
+  contents: read
+
+jobs:
+  crypto-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .[dev]
+      - name: Collect crypto test targets
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXISTING=()
+          for p in ${{ inputs.test_paths }}; do
+            if [ -d "$p" ] || [ -f "$p" ]; then
+              EXISTING+=("$p")
+            fi
+          done
+          if [ ${#EXISTING[@]} -eq 0 ]; then
+            echo "has_targets=false" >> "$GITHUB_OUTPUT"
+            echo "targets=" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_targets=true" >> "$GITHUB_OUTPUT"
+            echo "targets=${EXISTING[*]}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run crypto validation tests
+        if: steps.collect.outputs.has_targets == 'true'
+        run: pytest ${{ steps.collect.outputs.targets }} -q
+      - name: Skip when no crypto targets exist
+        if: steps.collect.outputs.has_targets != 'true'
+        run: echo "No crypto validation targets present; skipping."

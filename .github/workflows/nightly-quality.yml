@@ -1,0 +1,93 @@
+name: nightly-quality
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  core-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .[dev]
+      - name: Run core regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=()
+          for p in tests/unit tests/api tests/runtime tests/execution tests/security; do
+            [ -d "$p" ] && targets+=("$p")
+          done
+          if [ ${#targets[@]} -eq 0 ]; then
+            echo "No core regression targets found; skipping."
+            exit 0
+          fi
+          pytest "${targets[@]}" -q
+
+  replay-integration-performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .[dev]
+      - name: Run replay/integration/performance tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=()
+          for p in tests/regression tests/nightly tests/performance; do
+            [ -d "$p" ] && targets+=("$p")
+          done
+          if [ ${#targets[@]} -eq 0 ]; then
+            echo "No deep-lane targets found; skipping."
+            exit 0
+          fi
+          pytest "${targets[@]}" -q
+
+  security-extended:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install bandit semgrep
+      - name: Run security scanners on existing roots
+        shell: bash
+        run: |
+          set -euo pipefail
+          roots=()
+          for p in application execution core; do
+            [ -d "$p" ] && roots+=("$p")
+          done
+          if [ ${#roots[@]} -eq 0 ]; then
+            echo "No security scan roots found; skipping."
+            exit 0
+          fi
+          semgrep scan --config p/security-audit --error "${roots[@]}"
+          bandit -r "${roots[@]}" -q
+
+  fuzz-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .[dev]
+      - name: Run fuzz suite if present
+        run: |
+          if [ -d tests/fuzz ]; then
+            pytest tests/fuzz -q
+          else
+            echo "No tests/fuzz directory; skipping."
+          fi

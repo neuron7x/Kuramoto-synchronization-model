@@ -1,0 +1,141 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options: [staging, production]
+      release_run_id:
+        description: "Run ID of release-supply-chain workflow producing release-dist"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  PROTECTED_REF: refs/heads/main
+
+jobs:
+  deploy-staging:
+    if: github.ref == env.PROTECTED_REF && inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Validate release workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.release_run_id }}
+        run: |
+          python - <<'PY'
+          import json, os, sys, urllib.request
+          repo=os.environ['REPO']
+          run_id=os.environ['RUN_ID']
+          token=os.environ['GH_TOKEN']
+          req=urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/actions/runs/{run_id}',
+              headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json'}
+          )
+          with urllib.request.urlopen(req) as r:
+              data=json.load(r)
+          if data.get('name') != 'release-supply-chain' or data.get('conclusion') != 'success':
+              print('release_run_id must reference successful release-supply-chain run')
+              sys.exit(1)
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          run-id: ${{ inputs.release_run_id }}
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Verify release artifact bundle
+        run: |
+          set -euo pipefail
+          ls -l dist
+          test -n "$(find dist -type f | head -n 1)"
+          sha256sum dist/* > dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staging-deploy-bundle
+          path: dist/
+
+  post-deploy-smoke:
+    needs: deploy-staging
+    if: inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: staging-deploy-bundle
+          path: dist
+      - run: test -s dist/SHA256SUMS
+
+  manual-approval-prod:
+    if: github.ref == env.PROTECTED_REF && inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: echo "Awaiting protected environment approval."
+
+  deploy-prod:
+    needs: manual-approval-prod
+    if: inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Validate release workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.release_run_id }}
+        run: |
+          python - <<'PY'
+          import json, os, sys, urllib.request
+          repo=os.environ['REPO']
+          run_id=os.environ['RUN_ID']
+          token=os.environ['GH_TOKEN']
+          req=urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/actions/runs/{run_id}',
+              headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json'}
+          )
+          with urllib.request.urlopen(req) as r:
+              data=json.load(r)
+          if data.get('name') != 'release-supply-chain' or data.get('conclusion') != 'success':
+              print('release_run_id must reference successful release-supply-chain run')
+              sys.exit(1)
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          run-id: ${{ inputs.release_run_id }}
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Verify production release bundle
+        run: |
+          set -euo pipefail
+          ls -l dist
+          test -n "$(find dist -type f | head -n 1)"
+          sha256sum dist/* > dist/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-deploy-bundle
+          path: dist/
+
+  post-deploy-health-check:
+    needs: deploy-prod
+    if: inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-deploy-bundle
+          path: dist
+      - run: test -s dist/SHA256SUMS

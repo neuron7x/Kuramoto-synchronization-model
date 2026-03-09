@@ -1,0 +1,45 @@
+name: _reusable-python-test
+on:
+  workflow_call:
+    inputs:
+      test_paths:
+        required: false
+        type: string
+        default: "tests/unit tests/api tests/runtime tests/execution"
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .[dev]
+      - name: Collect existing test targets
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXISTING=()
+          for p in ${{ inputs.test_paths }}; do
+            if [ -d "$p" ] || [ -f "$p" ]; then
+              EXISTING+=("$p")
+            fi
+          done
+          if [ ${#EXISTING[@]} -eq 0 ]; then
+            echo "has_targets=false" >> "$GITHUB_OUTPUT"
+            echo "targets=" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_targets=true" >> "$GITHUB_OUTPUT"
+            echo "targets=${EXISTING[*]}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run pytest
+        if: steps.collect.outputs.has_targets == 'true'
+        run: pytest ${{ steps.collect.outputs.targets }} -q
+      - name: Skip when no targets exist
+        if: steps.collect.outputs.has_targets != 'true'
+        run: echo "No matching test paths in repository state; skipping."

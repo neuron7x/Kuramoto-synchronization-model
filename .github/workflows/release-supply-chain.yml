@@ -1,0 +1,71 @@
+name: release-supply-chain
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .[dev] build twine cyclonedx-bom
+      - name: Run release test subset (existing paths only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=()
+          for p in tests/unit tests/contracts tests/execution; do
+            [ -d "$p" ] && targets+=("$p")
+          done
+          if [ ${#targets[@]} -eq 0 ]; then
+            echo "No release test targets found; skipping test step."
+            exit 0
+          fi
+          pytest "${targets[@]}" -q
+      - name: Build package artifacts
+        run: python -m build
+      - name: Verify dist artifacts exist
+        run: |
+          set -euo pipefail
+          ls -l dist/
+          count=$(find dist -maxdepth 1 -type f | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "No build artifacts in dist/"
+            exit 1
+          fi
+      - name: Generate SBOM
+        run: cyclonedx-py environment --output-format JSON --output-file sbom.cdx.json
+      - name: Verify build and SBOM artifacts
+        run: |
+          set -euo pipefail
+          test -s sbom.cdx.json
+          twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-sbom
+          path: sbom.cdx.json
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'dist/*'
+      - uses: actions/attest-sbom@v1
+        with:
+          subject-path: 'dist/*'
+          sbom-path: 'sbom.cdx.json'
