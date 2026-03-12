@@ -23,7 +23,7 @@ blinker==1.9.0
 cachetools==6.2.1
 captcha==0.7.1
 ccxt==4.5.12
-certifi==2025.11.12
+certifi==2026.2.25
 cffi==2.0.0
 charset-normalizer==3.4.4
 click==8.3.0
