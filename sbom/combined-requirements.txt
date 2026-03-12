@@ -96,7 +96,7 @@ pillow==11.3.0
 prometheus-client==0.23.1
 propcache==0.4.1
 protobuf==6.32.1
-psycopg==3.2.11
+psycopg==3.3.3
 psycopg-binary==3.2.11
 pyarrow==21.0.0
 pycares==4.11.0
