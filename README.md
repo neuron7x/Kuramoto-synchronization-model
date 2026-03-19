@@ -163,6 +163,7 @@ graph TB
 | **TACL** | `tacl/` | Python | Thermodynamic control layer |
 
 📖 **Full Architecture**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+📦 **Independent Models Split**: [docs/architecture/independent_models.md](docs/architecture/independent_models.md)
 
 ---
 

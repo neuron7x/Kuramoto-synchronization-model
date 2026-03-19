@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tradepulse-regime"
+version = "0.1.0"
+description = "Standalone multidimensional market regime detector extracted from the TradePulse monorepo"
+authors = [{ name = "TradePulse Contributors" }]
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "networkx>=3.2",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tradepulse_regime", "tradepulse_regime.*", "src", "src.*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["."]
