@@ -28,7 +28,7 @@ cryptography==46.0.3
 
 # PyJWT: Authentication token handling, critical for API security
 # CVE-2022-29217 (key confusion) fixed in 2.4.0
-PyJWT==2.10.1
+PyJWT==2.12.1
 
 # ============================================================================
 # Template & Serialization - XSS and injection prevention
