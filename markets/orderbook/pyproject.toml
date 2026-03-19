@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tradepulse-orderbook"
+version = "0.1.0"
+description = "Standalone order-book simulation and ingestion model extracted from the TradePulse monorepo"
+authors = [{ name = "TradePulse Contributors" }]
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tradepulse_orderbook", "tradepulse_orderbook.*", "src", "src.*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["."]

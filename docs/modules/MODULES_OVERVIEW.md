@@ -67,4 +67,18 @@
 - **Рішення → Архітектура:** ADR-0001, ADR-0002 та планові ADR-0004/0005/0006 визначають інваріанти для відповідних модулів.
 - **Операції → Runbooks:** для кожного модуля зазначено основний плейбук; додаткові сценарії у docs/incident_playbooks.md та docs/operations.md.
 
+## Незалежні пакети моделей
+
+Для спрощення еволюції монорепозиторію частина моделей тепер формалізована як
+окремі installable-пакети з локальними `pyproject.toml`:
+
+- `analytics/fpma` → `tradepulse-fpma`
+- `analytics/regime` → `tradepulse-regime`
+- `markets/orderbook` → `tradepulse-orderbook`
+- `nak_controller` → `tradepulse-nak`
+- `neurotrade_pro` → `neurotrade-pro`
+
+Детальний план розділення та межі між моделями наведені в
+`docs/architecture/independent_models.md`.
+
 Цей огляд підтримує трасування від бізнес-вимог до реалізації та експлуатаційних артефактів, забезпечуючи спільне розуміння системи для всіх ролей.
