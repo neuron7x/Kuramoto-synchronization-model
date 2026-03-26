@@ -62,7 +62,7 @@ multidict==6.7.0
 mypy-extensions==1.1.0
 narwhals==2.9.0
 networkx==3.5
-numba==0.63.1
+numba==0.64.0
 numpy==2.3.3
 nvidia-cublas-cu12==12.8.4.1
 nvidia-cuda-cupti-cu12==12.8.90
