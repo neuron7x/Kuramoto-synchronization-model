@@ -14,7 +14,7 @@ numba>=0.60.0
 # Data validation
 pydantic>=2.12.4,<3.0.0
 pydantic-settings>=2.12.0,<3.0.0
-pandera>=0.20.4,<0.27
+pandera>=0.20.4,<0.31
 exchange-calendars>=4.11.1
 
 # Configuration & instrumentation
