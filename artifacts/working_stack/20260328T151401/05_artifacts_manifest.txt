@@ -1,0 +1,23 @@
+# Artifacts Manifest — 2026-03-28
+
+## Evidence Bundle
+artifacts/working_stack/20260328T151401/
+  00_reality_map.md            — repo structure and identity analysis
+  01_baseline_commands.txt     — exact commands run with results
+  02_baseline_failures.txt     — categorized test failures
+  03_changes_applied.md        — changes made and rationale
+  04_final_verification.txt    — final proof run
+  05_artifacts_manifest.txt    — this file
+
+## Runbook
+docs/WORKING_STACK.md          — canonical bootstrap/run/build/verify guide
+
+## Build Artifacts
+dist/tradepulse-0.1.0-py3-none-any.whl  — Python wheel (2.0MB)
+dist/tradepulse-0.1.0.tar.gz            — Source distribution (1.7MB)
+
+## Changed Files
+pytest.ini                     — maxfail=1→50, added --continue-on-collection-errors
+conftest.py                    — added _TORCH_AVAILABLE guard
+docs/WORKING_STACK.md          — new canonical runbook
+artifacts/working_stack/       — new evidence bundle

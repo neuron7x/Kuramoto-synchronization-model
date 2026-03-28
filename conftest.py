@@ -125,6 +125,21 @@ except ImportError:  # pragma: no cover - Python <3.9 fallback
 
 apply_thread_determinism(os.environ)
 
+# ---------------------------------------------------------------------------
+# Guard: detect whether PyTorch is actually importable (CUDA driver may be
+# missing on CPU-only dev machines even though the package is installed).
+# When torch cannot be loaded, we record the fact so that test-collection
+# hooks can skip modules that unconditionally import it.
+# ---------------------------------------------------------------------------
+_TORCH_AVAILABLE = False
+try:
+    import torch as _torch_probe  # noqa: F401
+
+    _TORCH_AVAILABLE = True
+    del _torch_probe
+except (ImportError, OSError, ValueError):
+    pass
+
 ROOT = pathlib.Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

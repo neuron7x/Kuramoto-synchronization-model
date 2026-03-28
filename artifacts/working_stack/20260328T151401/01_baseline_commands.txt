@@ -1,0 +1,38 @@
+# Baseline Reproduction Commands — 2026-03-28
+
+## Environment
+Python 3.12.3 on Linux 6.8.0-101-lowlatency (Ubuntu)
+
+## 1. Create venv
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+# Result: pip 26.0.1, setuptools 82.0.1, wheel 0.46.3
+
+## 2. Install runtime deps
+pip install -c constraints/security.txt -r requirements.lock
+# Result: SUCCESS — all packages installed
+
+## 3. Install dev deps
+pip install -c constraints/security.txt -r requirements-dev.lock
+# Result: SUCCESS — all packages installed
+
+## 4. Run quick start
+PYTHONPATH=. python examples/quick_start.py --seed 42 --num-points 500
+# Result: SUCCESS — Market Phase: transition, Confidence: 0.658
+
+## 5. Run golden path
+make golden-path
+# Result: SUCCESS — all 3 steps passed
+
+## 6. Run golden path integration tests
+pytest tests/integration/test_golden_path_backtest.py -v
+# Result: 21 passed in 0.21s
+
+## 7. Build artifact
+python -m build
+# Result: tradepulse-0.1.0-py3-none-any.whl (2.0MB), tradepulse-0.1.0.tar.gz (1.7MB)
+
+## 8. Full test suite
+pytest tests/ -m "not slow and not heavy_math and not nightly and not flaky" --tb=no --override-ini="addopts=-ra --continue-on-collection-errors --import-mode=importlib"
+# Result: 7868 passed, 111 failed, 56 skipped, 30 deselected, 0 errors
