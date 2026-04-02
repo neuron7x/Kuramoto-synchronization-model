@@ -3,7 +3,7 @@
 # Formatters & linters
 black==25.9.0
 flake8==7.1.1
-isort==5.13.2
+isort==8.0.1
 ruff==0.14.0
 slotscheck==0.19.1
 
