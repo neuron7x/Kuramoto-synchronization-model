@@ -14,7 +14,7 @@
 # Version 2025.11.12 is the current secure version
 # NOTE: Using exact pin (==) for security-critical package to ensure consistent behavior
 certifi==2025.11.12
-charset-normalizer==3.4.4
+charset-normalizer==3.4.7
 idna==3.11
 requests==2.32.5
 urllib3==2.6.0
