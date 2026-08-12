@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "repository": "neuron7xLab/GeoSync",
+  "repository": "neuron7x/Kuramoto-synchronization-model",
   "contract": "inference_readiness",
   "status": "canonical_control_surface",
   "purpose": "Convert repository meaning into bounded, replayable, falsifiable agent execution.",

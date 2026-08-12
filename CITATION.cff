@@ -26,10 +26,10 @@ type: software
 authors:
   - family-names: Vasylenko
     given-names: Yaroslav
-    affiliation: "neuron7xLab (independent researcher)"
+    affiliation: "neuron7x (independent researcher)"
     # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # add after registration
-repository-code: "https://gitlab.com/neuron7x/GeoSync"
-url: "https://gitlab.com/neuron7x/GeoSync"
+repository-code: "https://github.com/neuron7x/Kuramoto-synchronization-model"
+url: "https://github.com/neuron7x/Kuramoto-synchronization-model"
 license: MIT
 version: 1.1.0
 date-released: "2026-04-06"
@@ -62,7 +62,7 @@ preferred-citation:
       given-names: Yaroslav
   year: 2026
   version: "1.1.0"
-  url: "https://gitlab.com/neuron7x/GeoSync"
+  url: "https://github.com/neuron7x/Kuramoto-synchronization-model"
   license: MIT
 references:
   - type: article

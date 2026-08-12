@@ -14,8 +14,6 @@
 
 <br/>
 
-[<img src="https://gitlab.com/neuron7x/GeoSync/badges/main/pipeline.svg" />](https://gitlab.com/neuron7x/GeoSync/-/pipelines)
-
 <br/><br/>
 
 **GeoSync is not a trading bot.**  
@@ -78,8 +76,8 @@ GeoSync treats research as engineered infrastructure, not as a decorative chart 
 Python 3.11–3.12. All dependencies are installed from pinned locks — the same way CI does it.
 
 ```bash
-git clone https://gitlab.com/neuron7x/GeoSync.git
-cd GeoSync
+git clone https://github.com/neuron7x/Kuramoto-synchronization-model.git
+cd Kuramoto-synchronization-model
 make dev-install        # dev + runtime deps, from the lock files
 make golden-path        # demo workflow: data → analysis → backtest
 ```
