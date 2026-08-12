@@ -1,0 +1,205 @@
+# ARCHIVED: Workflow disabled and moved to archive/
+# DISABLED: This workflow checks for CI jobs that only run on push to main, not on PRs
+# The required checks (coverage guardrail, mutation testing gate) are from ci.yml which
+# only triggers on push to main. This makes the PR check meaningless.
+# Quality gates are already enforced by:
+# - tests.yml: coverage verification and test results
+# - pr-release-gate.yml: risk assessment and labeling
+name: Merge Guard - Block on Quality Gate Failure (DISABLED)
+
+# on: (triggers disabled)
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - quality gates enforced by tests.yml and pr-release-gate.yml'
+        required: false
+
+concurrency:
+  group: merge-guard-${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  merge-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Merge Guard Quality Check
+
+    steps:
+      - name: Check PR labels
+        id: check_labels
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+
+            const labelNames = labels.map(l => l.name);
+            const hasQualityGateFailed = labelNames.includes('quality-gate-failed');
+            const hasMissingCoverage = labelNames.includes('missing-coverage');
+            const hasHighRisk = labelNames.includes('risk: high');
+
+            console.log('Labels:', labelNames);
+            console.log('Quality gate failed:', hasQualityGateFailed);
+            console.log('Missing coverage:', hasMissingCoverage);
+            console.log('High risk:', hasHighRisk);
+
+            core.setOutput('quality_gate_failed', hasQualityGateFailed);
+            core.setOutput('missing_coverage', hasMissingCoverage);
+            core.setOutput('high_risk', hasHighRisk);
+
+            return {
+              blocked: hasQualityGateFailed,
+              warning: hasMissingCoverage || hasHighRisk,
+            };
+
+      - name: Check workflow status
+        id: check_workflows
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const ref = context.payload.pull_request.head.sha;
+
+            // Get all check runs for this commit
+            const { data: checkRuns } = await github.rest.checks.listForRef({
+              owner,
+              repo,
+              ref,
+            });
+
+            const requiredChecks = [
+              'Aggregate coverage & enforce guardrail',
+              'Mutation Testing Gate (90% kill rate)',
+            ];
+
+            const checkStatus = {};
+            let allPassed = true;
+            let anyFailed = false;
+
+            for (const checkName of requiredChecks) {
+              const check = checkRuns.check_runs.find(c => c.name === checkName);
+              if (check) {
+                checkStatus[checkName] = check.conclusion;
+                if (check.conclusion !== 'success') {
+                  allPassed = false;
+                }
+                if (check.conclusion === 'failure') {
+                  anyFailed = true;
+                }
+              } else {
+                checkStatus[checkName] = 'pending';
+                allPassed = false;
+              }
+            }
+
+            console.log('Check status:', checkStatus);
+            core.setOutput('all_passed', allPassed);
+            core.setOutput('any_failed', anyFailed);
+
+            return checkStatus;
+
+      - name: Block merge if quality gates failed
+        if: steps.check_labels.outputs.quality_gate_failed == 'true' || steps.check_workflows.outputs.any_failed == 'true'
+        run: |
+          echo "❌ Merge blocked: Quality gates have not been met."
+          echo ""
+          echo "Required checks:"
+          echo "  - Code coverage must be ≥ 98%"
+          echo "  - Mutation kill rate must be ≥ 90%"
+          echo "  - All tests must pass"
+          echo ""
+          echo "Please fix the failing checks and push again."
+          exit 1
+
+      - name: Post merge guard status
+        if: always()
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const qualityGateFailed = '${{ steps.check_labels.outputs.quality_gate_failed }}' === 'true';
+            const anyWorkflowFailed = '${{ steps.check_workflows.outputs.any_failed }}' === 'true';
+            const allPassed = '${{ steps.check_workflows.outputs.all_passed }}' === 'true';
+            const highRisk = '${{ steps.check_labels.outputs.high_risk }}' === 'true';
+
+            let statusEmoji = '⚠️';
+            let statusText = 'PENDING';
+            let message = 'Waiting for quality checks to complete...';
+
+            if (qualityGateFailed || anyWorkflowFailed) {
+              statusEmoji = '❌';
+              statusText = 'BLOCKED';
+              message = 'Merge is **BLOCKED** due to failing quality gates. Please fix the issues and push again.';
+            } else if (allPassed && !highRisk) {
+              statusEmoji = '✅';
+              statusText = 'APPROVED';
+              message = 'All quality gates passed! This PR is **ready to merge**.';
+            } else if (allPassed && highRisk) {
+              statusEmoji = '⚠️';
+              statusText = 'APPROVED WITH CAUTION';
+              message = 'Quality gates passed, but this is a **high-risk** change. Please ensure thorough review before merging.';
+            }
+
+            const highRiskLine = highRisk ? '- ⚠️ High-risk change detected - senior review recommended' : '';
+
+            const bodyLines = [
+              `## ${statusEmoji} Merge Guard Status: ${statusText}`,
+              '',
+              message,
+              '',
+              '### Requirements Checklist',
+              `- ${allPassed ? '✅' : '⏳'} Code coverage ≥ 98%`,
+              `- ${allPassed ? '✅' : '⏳'} Mutation kill rate ≥ 90%`,
+              `- ${!anyWorkflowFailed ? '✅' : '❌'} All quality checks passed`
+            ];
+
+            if (highRiskLine) {
+              bodyLines.push(highRiskLine);
+            }
+
+            bodyLines.push('');
+            bodyLines.push('---');
+            bodyLines.push('*This check is automatically updated when commits are pushed.*');
+
+            const body = bodyLines.join('\n');
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Merge Guard Status')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body
+              });
+            }

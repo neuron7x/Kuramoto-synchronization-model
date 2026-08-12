@@ -1,0 +1,172 @@
+# ARCHIVED: Redundant with test comments in tests.yml
+# This workflow provided duplicate information already shown in PR test comments
+# Archived on: 2025-12-08
+# Reason: Replaced by tests.yml workflow comments
+name: PR Quality Summary Report (ARCHIVED)
+
+# Triggers disabled to prevent accidental execution
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       dummy:
+#         description: 'Workflow archived - use tests.yml comments instead'
+#         required: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  post-summary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    if: github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      - name: Download artifacts
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+
+            const fs = require('fs');
+            const path = require('path');
+
+            for (const artifact of artifacts.data.artifacts) {
+              if (artifact.name === 'combined-coverage' || artifact.name === 'mutation-test-results') {
+                const download = await github.rest.actions.downloadArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                  archive_format: 'zip',
+                });
+
+                const filePath = path.join(process.env.GITHUB_WORKSPACE, `${artifact.name}.zip`);
+                fs.writeFileSync(filePath, Buffer.from(download.data));
+              }
+            }
+
+      - name: Extract artifacts
+        run: |
+          if [ -f combined-coverage.zip ]; then
+            unzip -o combined-coverage.zip -d coverage_data || true
+          fi
+          if [ -f mutation-test-results.zip ]; then
+            unzip -o mutation-test-results.zip -d mutation_data || true
+          fi
+
+      - name: Parse coverage data
+        id: coverage
+        run: |
+          if [ -f coverage_data/coverage.xml ]; then
+            COVERAGE=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage_data/coverage.xml'); print(f\"{float(tree.getroot().get('line-rate', 0)) * 100:.2f}\")" || echo "0.00")
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "coverage=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Parse mutation data
+        id: mutation
+        run: |
+          if [ -f mutation_data/mutation_summary.json ]; then
+            KILL_RATE=$(python3 -c "import json; data=json.load(open('mutation_data/mutation_summary.json')); print(f\"{data['kill_rate']*100:.2f}\")" || echo "0.00")
+            echo "kill_rate=$KILL_RATE" >> $GITHUB_OUTPUT
+          else
+            echo "kill_rate=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get PR number
+        id: pr
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          result-encoding: string
+          script: |
+            const pulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`,
+            });
+
+            if (pulls.data.length > 0) {
+              return pulls.data[0].number;
+            }
+            return '';
+
+      - name: Post quality summary comment
+        if: steps.pr.outputs.result != ''
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.pr.outputs.result }}');
+            const coverage = '${{ steps.coverage.outputs.coverage }}';
+            const killRate = '${{ steps.mutation.outputs.kill_rate }}';
+            const workflowName = context.payload.workflow_run.name;
+            const conclusion = context.payload.workflow_run.conclusion;
+
+            const conclusionEmoji = conclusion === 'success' ? '✅' : '❌';
+            const coverageEmoji = parseFloat(coverage) >= 98 ? '✅' : '❌';
+            const mutationEmoji = parseFloat(killRate) >= 90 ? '✅' : '❌';
+
+            const statusMessage = conclusion === 'success' ?
+              '✅ **All quality gates passed!** This PR is ready for review.' :
+              '❌ **Quality gates failed.** Please review the workflow logs and fix the issues.';
+
+            const body = [
+              `## ${conclusionEmoji} Quality Summary - ${workflowName}`,
+              '',
+              `**Workflow Status:** ${conclusion.toUpperCase()}`,
+              '',
+              '### Metrics',
+              '',
+              '| Metric | Value | Target | Status |',
+              '|--------|-------|--------|--------|',
+              `| Code Coverage | ${coverage}% | 98% | ${coverageEmoji} |`,
+              `| Mutation Kill Rate | ${killRate}% | 90% | ${mutationEmoji} |`,
+              '',
+              '### Details',
+              '',
+              `- **Workflow Run:** [#${context.payload.workflow_run.id}](${context.payload.workflow_run.html_url})`,
+              `- **Commit:** ${context.payload.workflow_run.head_sha.substring(0, 7)}`,
+              `- **Branch:** ${context.payload.workflow_run.head_branch}`,
+              '',
+              statusMessage,
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Quality Summary - ' + workflowName)
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body
+              });
+            }

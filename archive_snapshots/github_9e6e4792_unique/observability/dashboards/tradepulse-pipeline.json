@@ -1,0 +1,167 @@
+{
+  "uid": "tp-pipeline",
+  "title": "TradePulse Pipeline SLOs",
+  "tags": ["tradepulse", "observability"],
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "id": 1,
+      "title": "Pipeline Latency (p95)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 0},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 2},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi"}
+      },
+      "targets": [
+        {
+          "expr": "avg(tradepulse_data_ingestion_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "ingest",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(tradepulse_feature_transform_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "features",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(tradepulse_signal_generation_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "signals",
+          "refId": "C"
+        },
+        {
+          "expr": "avg(tradepulse_order_submission_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "orders",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 2,
+      "title": "Pipeline Throughput (ops/s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 9},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 2},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi"}
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tradepulse_data_ingestion_total{status=\"success\"}[$__rate_interval]))",
+          "legendFormat": "ingest",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(tradepulse_signal_generation_total{status=\"success\"}[$__rate_interval]))",
+          "legendFormat": "signals",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(tradepulse_orders_placed_total{status=\"success\"}[$__rate_interval]))",
+          "legendFormat": "orders",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 3,
+      "title": "Error Budget Burn (last 6h)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 18},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 2},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": ""},
+        "orientation": "auto"
+      },
+      "targets": [
+        {
+          "expr": "100 * sum(rate(tradepulse_data_ingestion_total{status!=\"success\"}[$__rate_interval])) / sum(rate(tradepulse_data_ingestion_total[$__rate_interval]))",
+          "legendFormat": "ingest",
+          "refId": "A"
+        },
+        {
+          "expr": "100 * sum(rate(tradepulse_signal_generation_total{status!=\"success\"}[$__rate_interval])) / sum(rate(tradepulse_signal_generation_total[$__rate_interval]))",
+          "legendFormat": "signals",
+          "refId": "B"
+        },
+        {
+          "expr": "100 * sum(rate(tradepulse_orders_placed_total{status!=\"success\"}[$__rate_interval])) / sum(rate(tradepulse_orders_placed_total[$__rate_interval]))",
+          "legendFormat": "orders",
+          "refId": "C"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,438 @@
+# ARCHIVED: Workflow disabled and moved to archive/
+# DISABLED: Complexity analysis is redundant with pr-release-gate.yml risk assessment
+# This reduces CI overhead for solo developer workflow
+name: PR Complexity & Size Analysis (DISABLED)
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+# on: (triggers disabled)
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - risk assessment in pr-release-gate.yml'
+        required: false
+
+concurrency:
+  group: pr-complexity-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-complexity:
+    name: Analyze PR Complexity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install analysis tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt radon lizard
+          sudo apt-get update && sudo apt-get install -y cloc
+
+      - name: Analyze PR size and complexity
+        id: analyze
+        run: |
+          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+
+          echo "Analyzing PR size and complexity..."
+
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF"..."$HEAD_REF" | grep -E '\.(py|js|ts|go|rs)$' || echo "")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No code files changed"
+            echo "total_lines=0" >> $GITHUB_OUTPUT
+            echo "files_changed=0" >> $GITHUB_OUTPUT
+            echo "complexity_score=0" >> $GITHUB_OUTPUT
+            echo "risk_level=low" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Count lines changed
+          TOTAL_LINES=$(git diff --stat "$BASE_REF"..."$HEAD_REF" | tail -1 | grep -o '[0-9]* insertion' | grep -o '[0-9]*' || echo "0")
+          TOTAL_DELETIONS=$(git diff --stat "$BASE_REF"..."$HEAD_REF" | tail -1 | grep -o '[0-9]* deletion' | grep -o '[0-9]*' || echo "0")
+          FILES_CHANGED=$(echo "$CHANGED_FILES" | wc -l)
+
+          echo "total_lines=$TOTAL_LINES" >> $GITHUB_OUTPUT
+          echo "total_deletions=$TOTAL_DELETIONS" >> $GITHUB_OUTPUT
+          echo "files_changed=$FILES_CHANGED" >> $GITHUB_OUTPUT
+
+          # Analyze cyclomatic complexity for Python files
+          PYTHON_FILES=$(echo "$CHANGED_FILES" | grep '\.py$' || echo "")
+          AVG_COMPLEXITY=0
+          MAX_COMPLEXITY=0
+
+          if [ -n "$PYTHON_FILES" ]; then
+            for file in $PYTHON_FILES; do
+              if [ -f "$file" ]; then
+                radon cc "$file" -s -j > /tmp/radon_${RANDOM}.json || true
+              fi
+            done
+
+            # Aggregate complexity metrics
+            if ls /tmp/radon_*.json 1> /dev/null 2>&1; then
+              AVG_COMPLEXITY=$(jq -s 'map(.[]) | map(select(.complexity != null) | .complexity) | add / length' /tmp/radon_*.json 2>/dev/null | awk '{printf "%.1f", $1}' || echo "0")
+              MAX_COMPLEXITY=$(jq -s 'map(.[]) | map(select(.complexity != null) | .complexity) | max' /tmp/radon_*.json 2>/dev/null | awk '{printf "%.0f", $1}' || echo "0")
+            fi
+          fi
+
+          echo "avg_complexity=$AVG_COMPLEXITY" >> $GITHUB_OUTPUT
+          echo "max_complexity=$MAX_COMPLEXITY" >> $GITHUB_OUTPUT
+
+          # Calculate risk score
+          RISK_SCORE=0
+
+          # Size risk (>500 lines is concerning)
+          if [ "$TOTAL_LINES" -gt 1000 ]; then
+            RISK_SCORE=$((RISK_SCORE + 40))
+          elif [ "$TOTAL_LINES" -gt 500 ]; then
+            RISK_SCORE=$((RISK_SCORE + 20))
+          elif [ "$TOTAL_LINES" -gt 250 ]; then
+            RISK_SCORE=$((RISK_SCORE + 10))
+          fi
+
+          # File count risk (>20 files is concerning)
+          if [ "$FILES_CHANGED" -gt 50 ]; then
+            RISK_SCORE=$((RISK_SCORE + 30))
+          elif [ "$FILES_CHANGED" -gt 20 ]; then
+            RISK_SCORE=$((RISK_SCORE + 15))
+          fi
+
+          # Complexity risk
+          MAX_COMPLEXITY_INT=$(echo "$MAX_COMPLEXITY" | awk '{printf "%.0f", $1}')
+          if [ "$MAX_COMPLEXITY_INT" -gt 15 ]; then
+            RISK_SCORE=$((RISK_SCORE + 20))
+          elif [ "$MAX_COMPLEXITY_INT" -gt 10 ]; then
+            RISK_SCORE=$((RISK_SCORE + 10))
+          fi
+
+          # Determine risk level
+          RISK_LEVEL="low"
+          if [ "$RISK_SCORE" -ge 50 ]; then
+            RISK_LEVEL="high"
+          elif [ "$RISK_SCORE" -ge 25 ]; then
+            RISK_LEVEL="medium"
+          fi
+
+          echo "risk_score=$RISK_SCORE" >> $GITHUB_OUTPUT
+          echo "risk_level=$RISK_LEVEL" >> $GITHUB_OUTPUT
+
+          echo "Analysis complete:"
+          echo "  Lines added: $TOTAL_LINES"
+          echo "  Lines deleted: $TOTAL_DELETIONS"
+          echo "  Files changed: $FILES_CHANGED"
+          echo "  Avg complexity: $AVG_COMPLEXITY"
+          echo "  Max complexity: $MAX_COMPLEXITY"
+          echo "  Risk score: $RISK_SCORE"
+          echo "  Risk level: $RISK_LEVEL"
+
+      - name: Check for breaking changes
+        id: breaking_changes
+        run: |
+          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+
+          echo "Checking for potential breaking changes..."
+
+          BREAKING_PATTERNS=(
+            "def.*__init__"       # Constructor changes
+            "class.*:"            # Class definition changes
+            "from.*import"        # Import changes
+            "async def"           # Async function changes
+            "@dataclass"          # Dataclass changes
+            "raise.*Exception"    # Exception changes
+          )
+
+          BREAKING_FOUND=false
+          BREAKING_FILES=""
+
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF"..."$HEAD_REF" | grep -E '\.(py)$' || echo "")
+
+          for file in $CHANGED_FILES; do
+            if [ -f "$file" ]; then
+              for pattern in "${BREAKING_PATTERNS[@]}"; do
+                if git diff "$BASE_REF"..."$HEAD_REF" -- "$file" | grep -E "^[-+].*$pattern" > /dev/null; then
+                  BREAKING_FOUND=true
+                  BREAKING_FILES="$BREAKING_FILES\n- $file (pattern: $pattern)"
+                fi
+              done
+            fi
+          done
+
+          if [ "$BREAKING_FOUND" = "true" ]; then
+            echo "breaking=true" >> $GITHUB_OUTPUT
+            echo -e "files<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$BREAKING_FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "⚠️  Potential breaking changes detected"
+          else
+            echo "breaking=false" >> $GITHUB_OUTPUT
+            echo "files=" >> $GITHUB_OUTPUT
+            echo "✅ No obvious breaking changes detected"
+          fi
+
+      - name: Check code ownership coverage
+        id: ownership_check
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            // Get changed files
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number,
+            });
+
+            // Check CODEOWNERS file
+            let codeownersContent = '';
+            try {
+              const { data } = await github.rest.repos.getContent({
+                owner,
+                repo,
+                path: 'CODEOWNERS',
+                ref: context.payload.pull_request.base.ref,
+              });
+              codeownersContent = Buffer.from(data.content, 'base64').toString();
+            } catch (error) {
+              console.log('CODEOWNERS file not found');
+              core.setOutput('has_owners', 'false');
+              return { covered: 0, uncovered: files.length };
+            }
+
+            // Parse CODEOWNERS
+            const ownersMap = {};
+            codeownersContent.split('\n').forEach(line => {
+              line = line.trim();
+              if (line && !line.startsWith('#')) {
+                const parts = line.split(/\s+/);
+                if (parts.length >= 2) {
+                  ownersMap[parts[0]] = parts.slice(1);
+                }
+              }
+            });
+
+            // Check coverage
+            let covered = 0;
+            let uncovered = 0;
+            const uncoveredFiles = [];
+
+            files.forEach(file => {
+              let hasCoverage = false;
+              for (const [pattern, owners] of Object.entries(ownersMap)) {
+                if (pattern === '*' || file.filename.includes(pattern.replace('*', ''))) {
+                  hasCoverage = true;
+                  break;
+                }
+              }
+
+              if (hasCoverage) {
+                covered++;
+              } else {
+                uncovered++;
+                uncoveredFiles.push(file.filename);
+              }
+            });
+
+            const totalFiles = files.length;
+            const coveragePercent = totalFiles > 0 ? ((covered / totalFiles) * 100).toFixed(1) : '100';
+
+            core.setOutput('has_owners', 'true');
+            core.setOutput('covered', covered);
+            core.setOutput('uncovered', uncovered);
+            core.setOutput('coverage_percent', coveragePercent);
+            core.setOutput('uncovered_files', uncoveredFiles.join(','));
+
+            console.log(`Code ownership coverage: ${coveragePercent}%`);
+            console.log(`Covered: ${covered}, Uncovered: ${uncovered}`);
+
+            return { covered, uncovered, coveragePercent };
+
+      - name: Post complexity analysis
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const totalLines = '${{ steps.analyze.outputs.total_lines }}' || '0';
+            const totalDeletions = '${{ steps.analyze.outputs.total_deletions }}' || '0';
+            const filesChanged = '${{ steps.analyze.outputs.files_changed }}' || '0';
+            const avgComplexity = '${{ steps.analyze.outputs.avg_complexity }}' || '0';
+            const maxComplexity = '${{ steps.analyze.outputs.max_complexity }}' || '0';
+            const riskScore = '${{ steps.analyze.outputs.risk_score }}' || '0';
+            const riskLevel = '${{ steps.analyze.outputs.risk_level }}' || 'low';
+            const breaking = '${{ steps.breaking_changes.outputs.breaking }}' === 'true';
+            const breakingFiles = '${{ steps.breaking_changes.outputs.files }}' || '';
+
+            const ownershipCovered = '${{ steps.ownership_check.outputs.covered }}' || '0';
+            const ownershipUncovered = '${{ steps.ownership_check.outputs.uncovered }}' || '0';
+            const ownershipPercent = '${{ steps.ownership_check.outputs.coverage_percent }}' || '100';
+
+            const riskEmoji = riskLevel === 'high' ? '🔴' : riskLevel === 'medium' ? '🟡' : '🟢';
+
+            let sizeWarning = '';
+            if (parseInt(totalLines) > 500) {
+              sizeWarning = '\n⚠️  **Large PR detected** - Consider breaking into smaller PRs for easier review';
+            }
+
+            let complexityWarning = '';
+            if (parseFloat(maxComplexity) > 15) {
+              complexityWarning = '\n⚠️  **High complexity detected** - Consider refactoring complex functions';
+            }
+
+            let breakingWarning = '';
+            if (breaking) {
+              breakingWarning = [
+                '\n### ⚠️  Potential Breaking Changes',
+                '',
+                'The following files may contain breaking changes:',
+                breakingFiles,
+                '',
+                '**Action Required:** Ensure backward compatibility or update version accordingly'
+              ].join('\n');
+            }
+
+            const ownershipStatus = parseInt(ownershipPercent) === 100
+              ? '✅ All changed files have designated owners'
+              : `⚠️  ${ownershipUncovered} file(s) lack designated code owners`;
+
+            const body = [
+              `## ${riskEmoji} PR Complexity Analysis`,
+              '',
+              '### Size Metrics',
+              '',
+              '| Metric | Value | Threshold | Status |',
+              '|--------|-------|-----------|--------|',
+              `| Lines Added | ${totalLines} | 500 | ${parseInt(totalLines) > 500 ? '⚠️' : '✅'} |`,
+              `| Lines Deleted | ${totalDeletions} | - | ℹ️ |`,
+              `| Files Changed | ${filesChanged} | 20 | ${parseInt(filesChanged) > 20 ? '⚠️' : '✅'} |`,
+              '',
+              '### Complexity Metrics',
+              '',
+              '| Metric | Value | Threshold | Status |',
+              '|--------|-------|-----------|--------|',
+              `| Avg Cyclomatic Complexity | ${avgComplexity} | 10 | ${parseFloat(avgComplexity) > 10 ? '⚠️' : '✅'} |`,
+              `| Max Cyclomatic Complexity | ${maxComplexity} | 15 | ${parseFloat(maxComplexity) > 15 ? '⚠️' : '✅'} |`,
+              '',
+              '### Risk Assessment',
+              `**Risk Level:** ${riskLevel.toUpperCase()} (Score: ${riskScore}/100)`,
+              '',
+              '### Code Ownership',
+              ownershipStatus,
+              `Coverage: ${ownershipPercent}% (${ownershipCovered}/${parseInt(ownershipCovered) + parseInt(ownershipUncovered)} files)`,
+              '',
+              sizeWarning,
+              complexityWarning,
+              breakingWarning,
+              '',
+              '---',
+              '',
+              '### Recommendations',
+              '- ✅ PRs under 500 lines are easier to review',
+              '- ✅ Keep cyclomatic complexity below 10',
+              '- ✅ Ensure all files have designated code owners',
+              '- ✅ Document breaking changes in PR description',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`
+            ].join('\n');
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('PR Complexity Analysis')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body
+              });
+            }
+
+      - name: Apply complexity labels
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const riskLevel = '${{ steps.analyze.outputs.risk_level }}';
+            const breaking = '${{ steps.breaking_changes.outputs.breaking }}' === 'true';
+
+            const labels = [];
+
+            // Add complexity label
+            if (riskLevel === 'high') {
+              labels.push('complexity: high');
+            } else if (riskLevel === 'medium') {
+              labels.push('complexity: medium');
+            }
+
+            // Add breaking change label
+            if (breaking) {
+              labels.push('breaking-change');
+            }
+
+            if (labels.length > 0) {
+              // Ensure labels exist
+              const labelDefs = [
+                { name: 'complexity: high', color: 'd93f0b', description: 'High complexity - requires careful review' },
+                { name: 'complexity: medium', color: 'fbca04', description: 'Medium complexity' },
+                { name: 'breaking-change', color: 'b60205', description: 'Contains breaking changes' },
+              ];
+
+              for (const labelDef of labelDefs) {
+                try {
+                  await github.rest.issues.getLabel({ owner, repo, name: labelDef.name });
+                } catch (error) {
+                  if (error.status === 404) {
+                    await github.rest.issues.createLabel({ owner, repo, ...labelDef });
+                  }
+                }
+              }
+
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pull_number,
+                labels
+              });
+            }

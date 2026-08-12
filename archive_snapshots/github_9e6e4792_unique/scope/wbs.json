@@ -1,0 +1,239 @@
+{
+  "metadata": {
+    "source_document": "docs/rlhf_rlaif_strategy.md",
+    "generated_on": "2025-05-08",
+    "numbering_rules": {
+      "root_prefix": "WBS",
+      "delimiter": ".",
+      "level_scheme": "<stage>.<workstream>.<task>",
+      "leaf_duration_weeks": 1
+    }
+  },
+  "wbs": [
+    {
+      "code": "WBS-1",
+      "name": "Stage 0 – Program Mobilization",
+      "owner": "Chief AI Officer",
+      "description": "Kick-off governance, assemble cross-functional team, and complete baseline compliance audit per stage 0 mandate.",
+      "deliverables": ["DEL-016"],
+      "children": [
+        {
+          "code": "WBS-1.1",
+          "name": "Convene RLHF/RLAIF core team and charter",
+          "owner": "Chief AI Officer",
+          "duration_weeks": 1,
+          "dependencies": [],
+          "deliverables": ["DEL-016"],
+          "test_refs": ["ProgramCharterSignoff"]
+        },
+        {
+          "code": "WBS-1.2",
+          "name": "Complete baseline process and compliance audit",
+          "owner": "Head of Compliance",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-1.1"],
+          "deliverables": ["DEL-016"],
+          "test_refs": ["AuditFindingsReview"]
+        }
+      ]
+    },
+    {
+      "code": "WBS-2",
+      "name": "Stage 1 – Annotation Infrastructure",
+      "owner": "Annotation Lead",
+      "description": "Deliver bilingual annotation guide, templating system, and QA controls for RLHF feedback loops.",
+      "deliverables": ["DEL-001", "DEL-002", "DEL-003"],
+      "children": [
+        {
+          "code": "WBS-2.1",
+          "name": "Draft bilingual RLHF Annotation Guide",
+          "owner": "Annotation Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-1.2"],
+          "deliverables": ["DEL-001"],
+          "test_refs": ["GuideVersionReview"]
+        },
+        {
+          "code": "WBS-2.2",
+          "name": "Implement annotation templates and validation schema",
+          "owner": "Annotation Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-2.1"],
+          "deliverables": ["DEL-002"],
+          "test_refs": ["SchemaValidationSuite"]
+        },
+        {
+          "code": "WBS-2.3",
+          "name": "Launch annotation QA sampling and agreement metrics",
+          "owner": "Annotation QA Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-2.2"],
+          "deliverables": ["DEL-003"],
+          "test_refs": ["KappaWeeklyReport"]
+        },
+        {
+          "code": "WBS-2.4",
+          "name": "Security and bilingual review cadence for guide",
+          "owner": "Security Liaison",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-2.1"],
+          "deliverables": ["DEL-001", "DEL-003"],
+          "test_refs": ["GuideSecurityChecklist"]
+        }
+      ]
+    },
+    {
+      "code": "WBS-3",
+      "name": "Stage 2 – Evaluators and Data Engines",
+      "owner": "ML Lead",
+      "description": "Implement multi-level evaluators, active learning, self-reflection, reward modelling, and simulators.",
+      "deliverables": ["DEL-004", "DEL-005", "DEL-006", "DEL-007", "DEL-009"],
+      "children": [
+        {
+          "code": "WBS-3.1",
+          "name": "Deploy multi-level evaluator stack",
+          "owner": "ML Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-2.3"],
+          "deliverables": ["DEL-004"],
+          "test_refs": ["EvaluatorTierSmoke"]
+        },
+        {
+          "code": "WBS-3.2",
+          "name": "Implement active selection strategies",
+          "owner": "Active Learning Engineer",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.1"],
+          "deliverables": ["DEL-005"],
+          "test_refs": ["SelectionDriftMonitor"]
+        },
+        {
+          "code": "WBS-3.3",
+          "name": "Route prioritized samples to annotators and RLAIF",
+          "owner": "Data Operations Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.2"],
+          "deliverables": ["DEL-005"],
+          "test_refs": ["BufferThroughputCheck"]
+        },
+        {
+          "code": "WBS-3.4",
+          "name": "Roll out self-reflection logging and knowledge graph",
+          "owner": "ML Research Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.1"],
+          "deliverables": ["DEL-006"],
+          "test_refs": ["SelfCritiqueDelta"]
+        },
+        {
+          "code": "WBS-3.5",
+          "name": "Finalize reward function weights and penalties",
+          "owner": "Reward Modelling Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.4"],
+          "deliverables": ["DEL-007"],
+          "test_refs": ["RewardCalibrationSuite"]
+        },
+        {
+          "code": "WBS-3.6",
+          "name": "Deliver user simulator modules",
+          "owner": "Simulation Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.2"],
+          "deliverables": ["DEL-009"],
+          "test_refs": ["SimulatorParityTest"]
+        }
+      ]
+    },
+    {
+      "code": "WBS-4",
+      "name": "Stage 3 – Learning and Safety Operations",
+      "owner": "MLOps Lead",
+      "description": "Operationalize safety constraints, scorecards, RLHF training, and RLAIF calibration loops.",
+      "deliverables": ["DEL-008", "DEL-010", "DEL-011", "DEL-012"],
+      "children": [
+        {
+          "code": "WBS-4.1",
+          "name": "Publish machine-readable policy constraints",
+          "owner": "Policy Engineering Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.5"],
+          "deliverables": ["DEL-008"],
+          "test_refs": ["PolicyStaticAnalysis"]
+        },
+        {
+          "code": "WBS-4.2",
+          "name": "Build alignment scorecards and alerts",
+          "owner": "Analytics Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-3.6"],
+          "deliverables": ["DEL-010"],
+          "test_refs": ["ScorecardAlertTest"]
+        },
+        {
+          "code": "WBS-4.3",
+          "name": "Run RLHF training pipeline end-to-end",
+          "owner": "MLOps Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-4.1", "WBS-4.2"],
+          "deliverables": ["DEL-011"],
+          "test_refs": ["PipelineDryRun"]
+        },
+        {
+          "code": "WBS-4.4",
+          "name": "Integrate RLAIF calibration loop",
+          "owner": "MLOps Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-4.3"],
+          "deliverables": ["DEL-012"],
+          "test_refs": ["RLAIFVarianceAudit"]
+        }
+      ]
+    },
+    {
+      "code": "WBS-5",
+      "name": "Stage 4 – Release Validation and Governance",
+      "owner": "QA Lead",
+      "description": "Automate pre-deployment validation, regression testing, and governance artefacts with compliance oversight.",
+      "deliverables": ["DEL-013", "DEL-014", "DEL-015"],
+      "children": [
+        {
+          "code": "WBS-5.1",
+          "name": "Automate pre-deployment checklist and rollback triggers",
+          "owner": "QA Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-4.4"],
+          "deliverables": ["DEL-013"],
+          "test_refs": ["PreDeployChecklistRun"]
+        },
+        {
+          "code": "WBS-5.2",
+          "name": "Implement regression suites across data, reward, policy",
+          "owner": "QA Automation Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-5.1"],
+          "deliverables": ["DEL-014"],
+          "test_refs": ["RegressionBaseline"]
+        },
+        {
+          "code": "WBS-5.3",
+          "name": "Stand up MLOps pipeline with audit logging",
+          "owner": "Compliance Automation Lead",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-5.1"],
+          "deliverables": ["DEL-015"],
+          "test_refs": ["PipelineAuditTrail"]
+        },
+        {
+          "code": "WBS-5.4",
+          "name": "Operationalize alignment changelog and quarterly audits",
+          "owner": "Compliance Officer",
+          "duration_weeks": 1,
+          "dependencies": ["WBS-5.3"],
+          "deliverables": ["DEL-015"],
+          "test_refs": ["ChangelogReviewCycle"]
+        }
+      ]
+    }
+  ]
+}

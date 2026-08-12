@@ -8,7 +8,7 @@ updates:
     labels:
       - dependencies
       - python
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     groups:
       # Development and testing tools (non-production)
       dev-tools:
@@ -47,7 +47,7 @@ updates:
       - dependencies
       - python
       - security
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
 
   # Go modules (terraform tests)
   - package-ecosystem: "gomod"
@@ -57,7 +57,7 @@ updates:
     labels:
       - dependencies
       - go
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
 
   # JavaScript/TypeScript (web frontend)
   - package-ecosystem: "npm"
@@ -68,7 +68,7 @@ updates:
       - dependencies
       - javascript
       - frontend
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     ignore:
       # eslint 10.x breaks transitive eslint-plugin-react@7.37.x bundled by
       # eslint-config-next (Linter#getFilename removal). Hold on 9.x until the
@@ -99,7 +99,7 @@ updates:
       - dependencies
       - javascript
       - ui
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     ignore:
       # See /apps/web rationale — eslint 10.x is incompatible with bundled
       # eslint-plugin-react until upstream releases a compat version.
@@ -123,7 +123,7 @@ updates:
     labels:
       - dependencies
       - rust
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
 
   # Terraform infrastructure
   - package-ecosystem: "terraform"
@@ -134,7 +134,7 @@ updates:
       - dependencies
       - terraform
       - infrastructure
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
 
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
@@ -145,7 +145,7 @@ updates:
       - dependencies
       - ci
       - security
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -167,7 +167,7 @@ updates:
       - dependencies
       - ci
       - security
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -187,7 +187,7 @@ updates:
     labels:
       - dependencies
       - docker
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "gomod"
     directory: "/examples/go-client"
@@ -196,5 +196,4 @@ updates:
     labels:
       - dependencies
       - go
-    open-pull-requests-limit: 5
-
+    open-pull-requests-limit: 0

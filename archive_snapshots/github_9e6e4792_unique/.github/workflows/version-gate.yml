@@ -1,0 +1,19 @@
+name: Disabled (version-gate)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disabled-version-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  disabled:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled workflow
+        run: echo "version-gate.yml disabled during CI stabilization."

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: observability
+description: TradePulse Observability Stack - Metrics, logs, and tracing
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: kube-prometheus-stack
+    version: "56.0.0"
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled

@@ -1,0 +1,19 @@
+name: Disabled (dependabot-auto-merge)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disabled-dependabot-auto-merge-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  disabled:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled workflow
+        run: echo "dependabot-auto-merge.yml disabled during CI stabilization."

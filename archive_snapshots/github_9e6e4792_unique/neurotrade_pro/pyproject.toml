@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurotrade-pro"
+version = "0.1.0"
+description = "Standalone EMH-inspired neuroeconomic controller extracted from the TradePulse monorepo"
+authors = [{ name = "TradePulse Contributors" }]
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+neurotrade-validate = "neurotrade_pro.cli.run_validate:main"
+neurotrade-backtest = "neurotrade_pro.cli.run_backtest:main"
+neurotrade-calibrate = "neurotrade_pro.cli.run_calibrate:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["neurotrade_pro", "neurotrade_pro.*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["."]

@@ -1,0 +1,19 @@
+name: Disabled (e2e-integration)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disabled-e2e-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  disabled:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled workflow
+        run: echo "e2e-integration.yml disabled during CI stabilization."

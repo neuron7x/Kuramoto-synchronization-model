@@ -1,0 +1,34 @@
+[package]
+name = "tradepulse-accel"
+version = "0.1.0"
+edition = "2021"
+description = "Rust accelerators for TradePulse numeric primitives"
+authors = ["TradePulse Contributors"]
+license = "LicenseRef-TradePulse-Proprietary"
+license-file = "../../LICENSE"
+readme = "README.md"
+
+[features]
+default = []
+python-tests = []
+
+[lib]
+name = "tradepulse_accel"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+numpy = "0.22"
+pyo3 = { version = "0.22", features = ["extension-module"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[build-dependencies]
+pyo3-build-config = "0.22"
+
+[[bench]]
+name = "numeric"
+harness = false
+
+[package.metadata.maturin]
+name = "tradepulse_accel"

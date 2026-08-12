@@ -1,0 +1,360 @@
+# ARCHIVED: Workflow disabled and moved to archive/
+# DISABLED: This workflow is redundant with performance-regression.yml
+# The general performance-regression.yml workflow runs on ALL PRs (all branches)
+# and already covers the paths that this workflow was targeting.
+# Having both workflows causes duplicate CI runs and wasted resources.
+# Alternative: Use performance-regression.yml for all performance regression detection
+name: Performance Regression Detection - PR Specific (DISABLED)
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+# on: (triggers disabled)
+on:
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - use performance-regression.yml instead'
+        required: false
+
+concurrency:
+  group: perf-regression-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark-pr:
+    name: Benchmark PR Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+            requirements-dev.txt
+            requirements-dev.lock
+            constraints/security.txt
+
+      - name: Cache Python packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/pip
+          key: pip-perf-${{ runner.os }}-py3.11-${{ hashFiles('requirements*.txt', 'requirements*.lock', 'constraints/security.txt') }}
+          restore-keys: |
+            pip-perf-${{ runner.os }}-py3.11-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints/security.txt -r requirements.lock
+          pip install -c constraints/security.txt -r requirements-dev.lock
+          pip install -c constraints/security.txt pytest-benchmark memory-profiler
+
+      - name: Run PR benchmarks
+        id: pr_bench
+        run: |
+          echo "Running performance benchmarks on PR code..."
+
+          # Run pytest benchmarks
+          pytest benchmarks/ \
+            --benchmark-only \
+            --benchmark-json=pr-benchmark.json \
+            --benchmark-min-rounds=5 || {
+            echo "⚠️  Some benchmarks failed, continuing..."
+          }
+
+          # Run memory profiling on critical paths
+          python -m memory_profiler tests/performance/test_memory_critical.py > pr-memory.txt 2>&1 || true
+
+          echo "✓ PR benchmarks complete"
+
+      - name: Checkout base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git checkout origin/${{ github.event.pull_request.base.ref }}
+
+      - name: Install base dependencies
+        run: |
+          pip install -c constraints/security.txt -r requirements.lock
+          pip install -c constraints/security.txt -r requirements-dev.lock
+          pip install -c constraints/security.txt pytest-benchmark memory-profiler
+
+      - name: Run base benchmarks
+        id: base_bench
+        run: |
+          echo "Running performance benchmarks on base branch..."
+
+          pytest benchmarks/ \
+            --benchmark-only \
+            --benchmark-json=base-benchmark.json \
+            --benchmark-min-rounds=5 || {
+            echo "⚠️  Some benchmarks failed, continuing..."
+          }
+
+          python -m memory_profiler tests/performance/test_memory_critical.py > base-memory.txt 2>&1 || true
+
+          echo "✓ Base benchmarks complete"
+
+      - name: Compare benchmark results
+        id: compare
+        run: |
+          cat > compare_benchmarks.py <<'EOF'
+          import json
+          import sys
+
+          try:
+              with open('pr-benchmark.json') as f:
+                  pr_data = json.load(f)
+              with open('base-benchmark.json') as f:
+                  base_data = json.load(f)
+          except FileNotFoundError as e:
+              print(f"Benchmark file not found: {e}")
+              sys.exit(0)
+
+          pr_benchmarks = {b['name']: b for b in pr_data.get('benchmarks', [])}
+          base_benchmarks = {b['name']: b for b in base_data.get('benchmarks', [])}
+
+          regressions = []
+          improvements = []
+          threshold = 1.10  # 10% threshold
+
+          for name, pr_bench in pr_benchmarks.items():
+              if name in base_benchmarks:
+                  base_bench = base_benchmarks[name]
+
+                  pr_mean = pr_bench['stats']['mean']
+                  base_mean = base_bench['stats']['mean']
+
+                  ratio = pr_mean / base_mean if base_mean > 0 else 1.0
+
+                  if ratio > threshold:
+                      regressions.append({
+                          'name': name,
+                          'base': base_mean,
+                          'pr': pr_mean,
+                          'ratio': ratio,
+                          'change': ((ratio - 1) * 100)
+                      })
+                  elif ratio < (1 / threshold):
+                      improvements.append({
+                          'name': name,
+                          'base': base_mean,
+                          'pr': pr_mean,
+                          'ratio': ratio,
+                          'change': ((1 - ratio) * 100)
+                      })
+
+          print(f"REGRESSIONS={len(regressions)}")
+          print(f"IMPROVEMENTS={len(improvements)}")
+
+          if regressions:
+              print("\n⚠️  Performance Regressions Detected:")
+              for r in regressions[:5]:  # Top 5
+                  print(f"  - {r['name']}: +{r['change']:.1f}% slower")
+
+          if improvements:
+              print("\n✅ Performance Improvements:")
+              for i in improvements[:5]:  # Top 5
+                  print(f"  - {i['name']}: +{i['change']:.1f}% faster")
+
+          # Write results
+          with open('comparison.json', 'w') as f:
+              json.dump({
+                  'regressions': regressions,
+                  'improvements': improvements
+              }, f, indent=2)
+
+          # Exit with error if significant regressions
+          if len(regressions) > 0:
+              max_regression = max(r['change'] for r in regressions)
+              if max_regression > 25:  # >25% regression
+                  print(f"\n❌ Critical regression detected: {max_regression:.1f}%")
+                  sys.exit(1)
+          EOF
+
+          python compare_benchmarks.py > comparison.txt 2>&1 || {
+            REGRESSION_EXIT=$?
+            cat comparison.txt
+            echo "regression_critical=$REGRESSION_EXIT" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          cat comparison.txt
+          echo "regression_critical=0" >> $GITHUB_OUTPUT
+
+      - name: Analyze memory usage changes
+        id: memory
+        run: |
+          if [ -f pr-memory.txt ] && [ -f base-memory.txt ]; then
+            # Simple memory comparison (this is a placeholder - enhance as needed)
+            PR_MEM=$(grep -o '[0-9.]\+ MiB' pr-memory.txt | head -1 | grep -o '[0-9.]\+' || echo "0")
+            BASE_MEM=$(grep -o '[0-9.]\+ MiB' base-memory.txt | head -1 | grep -o '[0-9.]\+' || echo "0")
+
+            if [ "$(echo "$PR_MEM > $BASE_MEM * 1.2" | bc)" -eq 1 ]; then
+              echo "memory_regression=true" >> $GITHUB_OUTPUT
+              echo "pr_memory=$PR_MEM" >> $GITHUB_OUTPUT
+              echo "base_memory=$BASE_MEM" >> $GITHUB_OUTPUT
+              echo "⚠️  Memory usage increased by more than 20%"
+            else
+              echo "memory_regression=false" >> $GITHUB_OUTPUT
+              echo "pr_memory=$PR_MEM" >> $GITHUB_OUTPUT
+              echo "base_memory=$BASE_MEM" >> $GITHUB_OUTPUT
+              echo "✅ Memory usage within acceptable range"
+            fi
+          else
+            echo "memory_regression=false" >> $GITHUB_OUTPUT
+            echo "pr_memory=N/A" >> $GITHUB_OUTPUT
+            echo "base_memory=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: performance-benchmarks
+          path: |
+            pr-benchmark.json
+            base-benchmark.json
+            comparison.json
+            comparison.txt
+            pr-memory.txt
+            base-memory.txt
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Post performance analysis to PR
+        if: always()
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const regressionCritical = '${{ steps.compare.outputs.regression_critical }}' !== '0';
+            const memoryRegression = '${{ steps.memory.outputs.memory_regression }}' === 'true';
+            const prMemory = '${{ steps.memory.outputs.pr_memory }}';
+            const baseMemory = '${{ steps.memory.outputs.base_memory }}';
+
+            let comparisonData = { regressions: [], improvements: [] };
+            try {
+              comparisonData = JSON.parse(fs.readFileSync('comparison.json', 'utf8'));
+            } catch (error) {
+              console.log('Could not read comparison data');
+            }
+
+            const emoji = regressionCritical ? '❌' : memoryRegression ? '⚠️' : '✅';
+
+            let regressionsTable = '';
+            if (comparisonData.regressions.length > 0) {
+              regressionsTable = [
+                '',
+                '### ⚠️  Performance Regressions',
+                '',
+                '| Benchmark | Base (ms) | PR (ms) | Change |',
+                '|-----------|-----------|---------|--------|',
+                ...comparisonData.regressions.slice(0, 10).map(r =>
+                  `| ${r.name} | ${(r.base * 1000).toFixed(2)} | ${(r.pr * 1000).toFixed(2)} | 🔴 +${r.change.toFixed(1)}% |`
+                ),
+                ''
+              ].join('\n');
+            }
+
+            let improvementsTable = '';
+            if (comparisonData.improvements.length > 0) {
+              improvementsTable = [
+                '',
+                '### ✅ Performance Improvements',
+                '',
+                '| Benchmark | Base (ms) | PR (ms) | Change |',
+                '|-----------|-----------|---------|--------|',
+                ...comparisonData.improvements.slice(0, 10).map(i =>
+                  `| ${i.name} | ${(i.base * 1000).toFixed(2)} | ${(i.pr * 1000).toFixed(2)} | 🟢 -${i.change.toFixed(1)}% |`
+                ),
+                ''
+              ].join('\n');
+            }
+
+            const memorySection = prMemory !== 'N/A' ? [
+              '',
+              '### Memory Usage',
+              `- **Base:** ${baseMemory} MiB`,
+              `- **PR:** ${prMemory} MiB`,
+              memoryRegression ? '- ⚠️  Memory usage increased by >20%' : '- ✅ Memory usage within acceptable range',
+              ''
+            ].join('\n') : '';
+
+            const body = [
+              `## ${emoji} Performance Regression Analysis`,
+              '',
+              '### Summary',
+              `- **Regressions:** ${comparisonData.regressions.length}`,
+              `- **Improvements:** ${comparisonData.improvements.length}`,
+              `- **Memory Status:** ${memoryRegression ? '⚠️  Increased' : '✅ OK'}`,
+              '',
+              regressionCritical
+                ? '❌ **Critical performance regression detected (>25% slowdown)**'
+                : comparisonData.regressions.length > 0
+                  ? '⚠️  **Minor performance regressions detected**'
+                  : '✅ **No significant performance regressions**',
+              regressionsTable,
+              improvementsTable,
+              memorySection,
+              '---',
+              '',
+              '### Guidelines',
+              '- 🟢 Changes within ±10% are acceptable',
+              '- 🟡 Changes between 10-25% require justification',
+              '- 🔴 Changes >25% are considered critical regressions',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`
+            ].join('\n');
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: pull_number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Performance Regression Analysis')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pull_number,
+                body
+              });
+            }
+
+      - name: Fail on critical regression
+        if: steps.compare.outputs.regression_critical != '0'
+        run: |
+          echo "❌ Critical performance regression detected"
+          echo "Performance degradation exceeds acceptable threshold (>25%)"
+          echo "Please investigate and optimize before merging"
+          exit 1

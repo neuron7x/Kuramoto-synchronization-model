@@ -1,0 +1,115 @@
+# ARCHIVED: Workflow disabled and moved to archive/
+# DISABLED: Label management consolidated in pr-release-gate.yml and tests.yml
+# This reduces redundancy and CI minutes usage
+name: PR Quality Labels (DISABLED)
+
+# on: (triggers disabled)
+  workflow_dispatch:  # Only manual trigger
+    inputs:
+      dummy:
+        description: 'Workflow disabled - labels managed by pr-release-gate.yml'
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ensure-labels:
+    # Only run for PRs from the same repository (not forks)
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const labelDefinitions = [
+              { name: 'test-needed', color: 'b60205', description: 'Tests must be added or updated before merge.' },
+              { name: 'missing-coverage', color: 'd93f0b', description: 'Coverage must meet repository thresholds.' },
+              { name: 'risk: low', color: '0e8a16', description: 'Low risk change - standard review process' },
+              { name: 'risk: medium', color: 'fbca04', description: 'Medium risk - requires careful review' },
+              { name: 'risk: high', color: 'd93f0b', description: 'High risk - requires senior review and extensive testing' },
+              { name: 'quality-gate-failed', color: 'b60205', description: 'Quality gates not met - blocking merge' },
+              { name: 'needs-mutation-testing', color: 'd93f0b', description: 'Mutation testing required' },
+            ];
+
+            const ensureLabelExists = async ({ name, color, description }) => {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, name, color, description });
+                  return;
+                }
+
+                throw error;
+              }
+            };
+
+            await Promise.all(labelDefinitions.map(ensureLabelExists));
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+
+            const testFileMatchers = [
+              (path) => /^tests?\//.test(path),
+              (path) => /\/tests?\//.test(path),
+              (path) => /(^|\/)__tests__\//.test(path),
+              (path) => /(^|\/)specs?\//.test(path),
+              (path) => /(^|\/)test[_-].*\.[^.]+$/.test(path),
+              (path) => /[._-](test|spec)\.[^.]+$/.test(path),
+            ];
+
+            const touchesTests = files.some(({ filename }) => {
+              const normalizedPath = filename.toLowerCase();
+              return testFileMatchers.some((matcher) => matcher(normalizedPath));
+            });
+
+            const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, {
+              owner,
+              repo,
+              issue_number: pull_number,
+              per_page: 100,
+            });
+
+            const labelNames = new Set(labels.map((label) => label.name));
+
+            const ensureLabelApplied = async (name) => {
+              if (labelNames.has(name)) {
+                return;
+              }
+
+              await github.rest.issues.addLabels({ owner, repo, issue_number: pull_number, labels: [name] });
+              labelNames.add(name);
+            };
+
+            const ensureLabelRemoved = async (name) => {
+              if (!labelNames.has(name)) {
+                return;
+              }
+
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: pull_number, name });
+                labelNames.delete(name);
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+            };
+
+            await ensureLabelApplied('missing-coverage');
+
+            if (touchesTests) {
+              await ensureLabelRemoved('test-needed');
+            } else {
+              await ensureLabelApplied('test-needed');
+            }

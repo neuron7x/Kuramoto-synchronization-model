@@ -1,0 +1,19 @@
+name: Disabled (mutation-tests)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disabled-mutation-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  disabled:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled workflow
+        run: echo "mutation-tests.yml disabled during CI stabilization."

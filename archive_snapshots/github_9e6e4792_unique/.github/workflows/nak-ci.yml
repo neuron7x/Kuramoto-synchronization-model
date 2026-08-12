@@ -1,0 +1,19 @@
+name: Disabled (nak-ci)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disabled-nak-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  disabled:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled workflow
+        run: echo "nak-ci.yml disabled during CI stabilization."

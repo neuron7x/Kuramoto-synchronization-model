@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tradepulse-api
+  labels:
+    app.kubernetes.io/name: tradepulse-api
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  selector:
+    app: tradepulse-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: metrics
+      port: 8001
+      targetPort: metrics
+  type: ClusterIP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tradepulse-api
+  labels:
+    app.kubernetes.io/name: tradepulse-api
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: tradepulse-api

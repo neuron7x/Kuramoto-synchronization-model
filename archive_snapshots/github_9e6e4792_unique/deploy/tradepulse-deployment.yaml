@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tradepulse-api
+  labels:
+    app.kubernetes.io/name: tradepulse-api
+    app.kubernetes.io/part-of: tradepulse
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: tradepulse-api
+  template:
+    metadata:
+      annotations:
+        seccomp.security.alpha.kubernetes.io/pod: runtime/default
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/module: tradepulse-api
+      labels:
+        app: tradepulse-api
+        app.kubernetes.io/name: tradepulse-api
+    spec:
+      serviceAccountName: tradepulse-api
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: tradepulse-api
+      containers:
+        - name: tradepulse-api
+          image: ghcr.io/neuron7x/tradepulse:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: TRADEPULSE_AUDIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tradepulse-secrets
+                  key: audit-secret
+            - name: TRADEPULSE_OAUTH2_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: tradepulse-secrets
+                  key: oauth2-issuer
+            - name: TRADEPULSE_OAUTH2_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: tradepulse-secrets
+                  key: oauth2-audience
+            - name: TRADEPULSE_OAUTH2_JWKS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: tradepulse-secrets
+                  key: oauth2-jwks-uri
+            - name: TRADEPULSE_MTLS_TRUSTED_CA_PATH
+              value: /etc/tradepulse/tls/client-ca.pem
+            - name: TRADEPULSE_MTLS_REVOCATION_LIST_PATH
+              value: /etc/tradepulse/tls/client.crl
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 8001
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          volumeMounts:
+            - name: tls-client-ca
+              mountPath: /etc/tradepulse/tls
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: state-data
+              mountPath: /app/state
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: tradepulse-api
+                topologyKey: kubernetes.io/hostname
+      volumes:
+        - name: tls-client-ca
+          secret:
+            secretName: tradepulse-mtls-client
+        - name: tmp
+          emptyDir: {}
+        - name: state-data
+          emptyDir: {}
+---
+# Secrets that provide OAuth credentials and mTLS trust bundles must be
+# provisioned outside of source control. The deployment references the
+# following secrets, which should be created via your preferred secret
+# management workflow (kubectl, ExternalSecrets, etc.):
+#   * tradepulse-secrets with keys: audit-secret, oauth2-issuer,
+#     oauth2-audience, oauth2-jwks-uri
+#   * tradepulse-mtls-client with keys: client-ca.pem, client.crl

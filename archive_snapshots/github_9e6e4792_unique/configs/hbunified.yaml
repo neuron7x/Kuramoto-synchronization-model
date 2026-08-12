@@ -1,0 +1,64 @@
+# HydroBrain Unified System v2 — базовий профіль
+model:
+  num_features: 5              # [level, flow, temp, turbidity, DO]
+  num_stations: 8
+  flood_classes: 3
+  quality_dims: 5
+  graph_backend: minimal       # minimal | (pyg опційно, якщо додаси PyG)
+  gnn_hidden: 128
+  gnn_layers: 2
+  lstm_hidden: 256
+  lstm_layers: 1
+  tfm_layers: 2
+  tfm_heads: 4
+  pool: mean
+training:
+  lr: 0.001
+  weight_decay: 0.01
+  t_max: 100
+  dropout: 0.1
+  batch_size: 16
+  epochs: 5
+  early_stopping: 8
+  save_dir: artifacts
+  save_name: hbunified_best.pt
+  ckpt_every: 1
+inference:
+  save_path: artifacts/infer_outputs.jsonl
+data:
+  T: 64
+  train_npz: data/train_yangtze.npz   # якщо файлу нема — буде згенеровано
+  val_npz:   data/val_yangtze.npz
+stations:
+  adjacency:
+    - [1, 1, 0, 0, 0, 0, 0, 0]
+    - [1, 1, 1, 0, 0, 0, 0, 0]
+    - [0, 1, 1, 1, 0, 0, 0, 0]
+    - [0, 0, 1, 1, 1, 0, 0, 0]
+    - [0, 0, 0, 1, 1, 1, 0, 0]
+    - [0, 0, 0, 0, 1, 1, 1, 0]
+    - [0, 0, 0, 0, 0, 1, 1, 1]
+    - [0, 0, 0, 0, 0, 0, 1, 1]
+physics:
+  enable: true
+  min_level: 0.0
+  min_flow: 10000.0
+  max_flow: 50000.0
+  w_level: 1.0
+  w_flow: 1.0
+loss_weights:
+  flood: 0.4
+  hydrology: 0.2
+  quality: 0.3
+  physics: 0.1
+monitoring:
+  flood_high_risk: 0.7
+  sensor_anomaly_z: 3.0
+  quality_profile: III  # цільовий клас GB 3838-2002
+logging:
+  dir: logs
+  file: hbunified.log
+api:
+  host: 0.0.0.0
+  port: 8080
+weights: ""   # шлях до готових ваг (за потреби)

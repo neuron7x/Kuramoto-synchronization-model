@@ -1,0 +1,41 @@
+# Default values for admin subchart
+replicaCount: 1
+
+# Global defaults (can be overridden by parent chart)
+global:
+  imagePullSecrets: []
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+image:
+  repository: tradepulse/admin
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+env: []
+
+serviceAccount:
+  create: true
+  name: ""
