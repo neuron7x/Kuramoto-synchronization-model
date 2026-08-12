@@ -181,7 +181,7 @@ multidict==6.7.0
     #   yarl
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==2.9.0
+narwhals==2.24.0
     # via altair
 networkx==3.6.1
     # via
