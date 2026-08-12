@@ -1,0 +1,49 @@
+{
+  "manifest_version": "dataset_manifest.v1",
+  "id": "sample-crypto-ohlcv-v1",
+  "source": {
+    "vendor": "neuron7xLab-generator",
+    "origin": "repository_generated",
+    "uri": null,
+    "retrieval_method": "scripts/generate_sample_ohlcv.py --symbols BTC ETH SOL --days 21 --timeframe 1h"
+  },
+  "retrieval_time": "SYNTHETIC_GENERATED",
+  "query": "python scripts/generate_sample_ohlcv.py --symbols BTC ETH SOL --days 21 --timeframe 1h --seed 42",
+  "license": "MIT",
+  "license_verified": true,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "05387a48380eb2709c67bc985db132b18e3513f5eebe41e8f1b21b610fe0d2da"
+  },
+  "bytes": 38788,
+  "schema": {
+    "format": "csv",
+    "columns": [
+      "timestamp",
+      "symbol",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "description": "Synthetic multi-asset crypto OHLCV (BTC, ETH, SOL). Symbols are synthetic labels, NOT real exchange data."
+  },
+  "coverage": {
+    "rows": 504,
+    "start": "2024-01-01T00:00:00+00:00",
+    "end": null,
+    "assets": 3,
+    "description": "504 hourly synthetic bars across 3 synthetic assets."
+  },
+  "revision_status": "FROZEN",
+  "access_restrictions": "none",
+  "evidence_class": "SIMULATION",
+  "files": [
+    {
+      "path": "data/sample_crypto_ohlcv.csv",
+      "checksum_sha256": "96653ee391f10ec8e2f092a0fd880c608a0765a1d78cbc9a614aa105bb598de8",
+      "bytes": 38788
+    }
+  ]
+}

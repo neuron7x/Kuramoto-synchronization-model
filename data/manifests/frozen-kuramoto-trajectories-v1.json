@@ -1,0 +1,41 @@
+{
+  "manifest_version": "dataset_manifest.v1",
+  "id": "frozen-kuramoto-trajectories-v1",
+  "source": {
+    "vendor": "neuron7xLab-generator",
+    "origin": "repository_generated",
+    "uri": null,
+    "retrieval_method": "frozen Kuramoto calibration-grid trajectories (simulation)"
+  },
+  "retrieval_time": "SYNTHETIC_GENERATED",
+  "query": "research/calibration frozen Sakaguchi-Kuramoto trajectory grid",
+  "license": "MIT",
+  "license_verified": true,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "1bcb94ff4aa091723776b0049caf163da4461c422b38a15f81ddcea456984a11"
+  },
+  "bytes": 2050558,
+  "schema": {
+    "format": "npz",
+    "columns": [],
+    "description": "Frozen simulated Kuramoto phase trajectories used as a calibration fixture. FROZEN per frozen-calibration policy (never recompute)."
+  },
+  "coverage": {
+    "rows": null,
+    "start": null,
+    "end": null,
+    "assets": null,
+    "description": "Frozen numpy archive of simulated trajectories."
+  },
+  "revision_status": "FROZEN",
+  "access_restrictions": "none",
+  "evidence_class": "SIMULATION",
+  "files": [
+    {
+      "path": "research/calibration/grid_kuramoto/frozen_trajectories.npz",
+      "checksum_sha256": "d0eda39a9468dc5bb49f8466dd4578d04411cc355b19aa6046894b6677292763",
+      "bytes": 2050558
+    }
+  ]
+}

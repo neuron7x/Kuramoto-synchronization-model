@@ -1,0 +1,46 @@
+{
+  "manifest_version": "dataset_manifest.v1",
+  "id": "sample-timeseries-v1",
+  "source": {
+    "vendor": "neuron7xLab-generator",
+    "origin": "repository_generated",
+    "uri": null,
+    "retrieval_method": "scripts/generate_sample_ohlcv.py (single-asset sample preset)"
+  },
+  "retrieval_time": "SYNTHETIC_GENERATED",
+  "query": "python scripts/generate_sample_ohlcv.py --output data/sample.csv --symbols ASSET --seed 42",
+  "license": "MIT",
+  "license_verified": true,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "87c660a893e81360af712832a392914a5d3c01953ed84cf120b79abda0be9fd7"
+  },
+  "bytes": 12093,
+  "schema": {
+    "format": "csv",
+    "columns": [
+      "ts",
+      "price",
+      "volume"
+    ],
+    "description": "Synthetic price/volume sequence for smoke tests and indicator validation."
+  },
+  "coverage": {
+    "rows": 500,
+    "start": "1",
+    "end": "500",
+    "assets": 1,
+    "description": "500 sequential synthetic steps."
+  },
+  "revision_status": "FROZEN",
+  "access_restrictions": "none",
+  "evidence_class": "SIMULATION",
+  "files": [
+    {
+      "path": "data/sample.csv",
+      "checksum_sha256": "b34be524de27a8923fd97ebcd3b3eebd8ebe85ad67e66a1e4356ff70a8dc5f3b",
+      "bytes": 12093
+    }
+  ],
+  "notes": "Synthetic. origin declared in data/sample.csv.meta.json (origin=synthetic)."
+}

@@ -1,0 +1,49 @@
+{
+  "manifest_version": "dataset_manifest.v1",
+  "id": "sample-stocks-daily-v1",
+  "source": {
+    "vendor": "neuron7xLab-generator",
+    "origin": "repository_generated",
+    "uri": null,
+    "retrieval_method": "scripts/generate_sample_ohlcv.py --symbols AAPL SPY --days 60 --timeframe 1d"
+  },
+  "retrieval_time": "SYNTHETIC_GENERATED",
+  "query": "python scripts/generate_sample_ohlcv.py --symbols AAPL SPY --days 60 --timeframe 1d --seed 42",
+  "license": "MIT",
+  "license_verified": true,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "846bc02cd4dd10822bd5618de89817dbb91d8df36e4198f8ea75ee2638274858"
+  },
+  "bytes": 4607,
+  "schema": {
+    "format": "csv",
+    "columns": [
+      "timestamp",
+      "symbol",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "description": "Synthetic daily OHLCV for equities. 'AAPL'/'SPY' are synthetic labels, NOT real market prices."
+  },
+  "coverage": {
+    "rows": 60,
+    "start": "2024-01-01",
+    "end": null,
+    "assets": 2,
+    "description": "60 daily synthetic bars starting 2024-01-01."
+  },
+  "revision_status": "FROZEN",
+  "access_restrictions": "none",
+  "evidence_class": "SIMULATION",
+  "files": [
+    {
+      "path": "data/sample_stocks_daily.csv",
+      "checksum_sha256": "66ab2808ae4a8aa030a79d17f52d10d93065dda4bd5cf5b4496ff54c971da61a",
+      "bytes": 4607
+    }
+  ]
+}

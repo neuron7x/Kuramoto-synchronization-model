@@ -1,0 +1,48 @@
+{
+  "manifest_version": "dataset_manifest.v1",
+  "id": "sample-ohlc-v1",
+  "source": {
+    "vendor": "neuron7xLab-generator",
+    "origin": "repository_generated",
+    "uri": null,
+    "retrieval_method": "scripts/generate_sample_ohlcv.py (OHLC sample preset)"
+  },
+  "retrieval_time": "SYNTHETIC_GENERATED",
+  "query": "python scripts/generate_sample_ohlcv.py (OHLC sample preset) --seed 42",
+  "license": "MIT",
+  "license_verified": true,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "971d9d480a61527cf2721ffc9e360f09e3f4ab51189f2e97d1ddfb0a2cf094a3"
+  },
+  "bytes": 13170,
+  "schema": {
+    "format": "csv",
+    "columns": [
+      "ts",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "description": "Synthetic OHLCV bars for indicator and strategy regression coverage."
+  },
+  "coverage": {
+    "rows": 300,
+    "start": null,
+    "end": null,
+    "assets": 1,
+    "description": "300 sequential synthetic bars."
+  },
+  "revision_status": "FROZEN",
+  "access_restrictions": "none",
+  "evidence_class": "SIMULATION",
+  "files": [
+    {
+      "path": "data/sample_ohlc.csv",
+      "checksum_sha256": "8abd15eacb86ad090bc0c43b197d87f5fa97f640e77226e0813e59a384befec0",
+      "bytes": 13170
+    }
+  ]
+}

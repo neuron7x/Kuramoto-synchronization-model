@@ -1,0 +1,210 @@
+{
+  "version": 2,
+  "description": "Continuously-verifiable assurance case for neuro/physics claims in GeoSync. Each contradiction is a Toulmin-structured, PROV-attributed, executably-falsifiable claim. Verified against real source on 2026-06-17 against the repo's own canon — most anticipated contradictions are already bounded; one was a true HIGH violation (C-ENERGY-001), now RESOLVED. Every falsifier exits 0 IFF the entry's stated position is still true against live source, so an invalidating code change FORCES a ledger update through CI.",
+  "methodology": {
+    "argument_model": "Toulmin (grounds -> warrant -> backing -> qualifier -> rebuttal)",
+    "provenance_model": "W3C-PROV (asserted_by / asserted_on / method)",
+    "verification": "executable falsifier per claim; CI runs every command and requires exit 0 (anti-staleness, no fake closure)",
+    "references": [
+      "Toulmin, S. (1958/2003) The Uses of Argument, Cambridge University Press",
+      "Kelly & Weaver (2004) The Goal Structuring Notation, a safety assurance-case standard",
+      "W3C PROV-O: The Provenance Ontology (2013)"
+    ]
+  },
+  "claim_status_vocab": ["VERIFIED", "PLAUSIBLE", "UNSUPPORTED", "CONTRADICTED"],
+  "severity_vocab": ["HIGH", "MEDIUM", "LOW"],
+  "resolution_vocab": ["OPEN", "IN_PROGRESS", "RESOLVED", "WONTFIX"],
+  "contradictions": [
+    {
+      "id": "C-ENERGY-001",
+      "title": "system_free_energy fused thermodynamic free energy with operational cost",
+      "source_path": "core/energy.py",
+      "source_lines": "3-44,75-89,121-205",
+      "contradiction": "system_free_energy() named an operational/DevOps cost functional (latency_cost + incoherence_cost + resource + entropy-as-penalty, Boltzmann-scaled) 'free energy', colliding with canon F=U-T*S (INV-FE2) where entropy LOWERS F. Two opposite-sign ontologies under one name, plus a 'dimensionless' docstring that multiplied by an effective kT.",
+      "severity": "HIGH",
+      "claim_status": "CONTRADICTED",
+      "owner_lane": "lane-2-energy-contract",
+      "evidence": "Pre-fix: core/energy.py:147 free_energy = internal_energy + resource_term + entropy_term. Canon: ThermodynamicState.gibbs_energy G=U-T*S, INV-FE2.",
+      "argument": {
+        "warrant": "If a symbol named 'free energy' adds entropy as a penalty while the repo's own P0 invariant (INV-FE2) and gibbs_energy define free energy as U-T*S (entropy lowers F), the name asserts physics that the body contradicts.",
+        "backing": "INV-FE2 (CLAUDE.md / .claude/physics/INVARIANTS.yaml); core/validation/physics_validator.py ThermodynamicState.gibbs_energy",
+        "rebuttal": "Overturned if the module separated the two energies under distinct names with a declared unit contract, which is exactly the resolution that landed."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "source read of core/energy.py vs INV-FE2 and physics_validator.gibbs_energy; local pytest + mypy --strict"
+      },
+      "falsifier": {
+        "command": "grep -q \"def thermo_free_energy\" core/energy.py && grep -q \"def operational_cost_energy\" core/energy.py && grep -q \"ENERGY_UNITS\" core/energy.py",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 proves the resolution is present on disk: the two energies are separated (operational_cost_energy vs thermo_free_energy) and the dimensionless unit contract is declared. If this regresses, the entry's RESOLVED state is false."
+      },
+      "resolution_state": "RESOLVED",
+      "resolution_ref": "#1146,#1149"
+    },
+    {
+      "id": "C-NEURO-003",
+      "title": "Declared dopamine/serotonin correlation invariant is never checked (dead invariant)",
+      "source_path": "core/validation/neuro_integrity.py",
+      "source_lines": "146,412,433",
+      "contradiction": "Config field dopamine_serotonin_correlation_min=-0.8 is documented as a 'Minimum inverse correlation expectation' invariant, but neither validate_state() nor validate_trajectory() references it. A declared integrity invariant with no enforcement is a silent claim with no witness, even though compute_pathway_correlation() already exists to evaluate it.",
+      "severity": "MEDIUM",
+      "claim_status": "CONTRADICTED",
+      "owner_lane": "lane-3-neuromodulator-semantics",
+      "evidence": "RESOLVED: the rebuttal condition is met on live source. compute_pathway_correlation is now wired into validation and the dopamine_serotonin_correlation_min threshold is enforced at core/validation/neuro_integrity.py:412,433 (a C-NEURO-003 VIOLATED guard); textual mentions of the field rose from 2 to 6. The declared invariant now has an executable witness, so it is no longer a dead invariant.",
+      "argument": {
+        "warrant": "A configuration threshold described as an 'invariant' that no validation path reads cannot constrain anything; the integrity guarantee it implies is unbacked.",
+        "backing": "core/validation/neuro_integrity.py:415 compute_pathway_correlation (the unused enforcement primitive); the validator's own contract that declared invariants are enforced.",
+        "rebuttal": "Overturned when validate_trajectory wires compute_pathway_correlation against the threshold (the field becomes read; mentions rise above 2)."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "grep occurrence count of the field across the module; read of validate_state/validate_trajectory bodies"
+      },
+      "falsifier": {
+        "command": "[ \"$(grep -c dopamine_serotonin_correlation_min core/validation/neuro_integrity.py)\" -ge 3 ]",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 confirms the field is now wired into enforcement (>=3 mentions: field declaration + docstring + at least one validate_* path). This is the anti-regression witness for the RESOLVED state: if the enforcement is later removed and mentions drop to <=2, the falsifier flips to non-zero and this entry must reopen."
+      },
+      "resolution_state": "RESOLVED",
+      "resolution_ref": "compute_pathway_correlation wired into validation with a C-NEURO-003 guard at core/validation/neuro_integrity.py:412,433; witness acceptor .claude/commit_acceptors/neuro-integrity-correlation-witness.yaml"
+    },
+    {
+      "id": "C-NEURO-001",
+      "title": "Scalar [0,1] clamp comment labelled 'biological plausibility'",
+      "source_path": "core/neuro/serotonin_ode.py",
+      "source_lines": "118",
+      "contradiction": "A clamp of the serotonin level to [0,1] is justified in-comment as 'biological plausibility'. A bounded scalar is a normalisation choice, not biophysical evidence (no receptor kinetics, concentration units, or physiological range). Comment-level overclaim of the model class; the dynamics are bio-inspired bounded heuristics.",
+      "severity": "LOW",
+      "claim_status": "CONTRADICTED",
+      "owner_lane": "lane-3-neuromodulator-semantics",
+      "evidence": "core/neuro/serotonin_ode.py:118 '# Clamp level to [0, 1] for biological plausibility'",
+      "argument": {
+        "warrant": "Calling a [0,1] normalisation 'biological plausibility' attributes biophysical grounding the code does not supply (no units, kinetics, or measured range), so the comment overstates the model class.",
+        "backing": "GeoSync identity boundary (CLAUDE.md: 'neuroscience-inspired', PRODUCT_CATEGORY.md); INV-5HT2 states s in [0,1] as a bound, not a biophysical claim.",
+        "rebuttal": "Overturned if the comment is reworded to a bounded bio-inspired heuristic OR the clamp is linked to a cited physiological range with units."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "source read of the clamp comment against the module's actual dynamics and units"
+      },
+      "falsifier": {
+        "command": "grep -q \"biological plausibility\" core/neuro/serotonin_ode.py",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 proves the overclaiming comment is still in source. Rewording removes the token and flips this entry to RESOLVED."
+      },
+      "resolution_state": "OPEN"
+    },
+    {
+      "id": "C-NEURO-002",
+      "title": "'STDP-like' label on RPE-gated weight in one metaphor module",
+      "source_path": "core/neuro/gaba_position_gate.py",
+      "source_lines": "13-16,102-112",
+      "contradiction": "gaba_position_gate calls RPE-sign weight adaptation 'STDP-like plasticity' with no spike-timing relation. This is a metaphor label in ONE module: real spike-timing STDP exists in modules/gaba_inhibition_gate.py (stdp_tau_plus_ms=16.8, a_plus, exp(-delta_t/tau)). Actionable scope is a rename of the metaphor, not a missing mechanism.",
+      "severity": "LOW",
+      "claim_status": "PLAUSIBLE",
+      "owner_lane": "lane-3-neuromodulator-semantics",
+      "evidence": "core/neuro/gaba_position_gate.py:102 'STDP-like plasticity' (RPE sign, no timing); modules/gaba_inhibition_gate.py:30-33 stdp_tau_plus_ms/a_plus (real timing).",
+      "argument": {
+        "warrant": "An STDP claim requires a spike-timing dependence (pre/post delta-t). RPE-sign weight nudging has none, so the label is metaphor; but a sibling module DOES implement timing, so the repo is not missing the mechanism, only the label is loose.",
+        "backing": "Bi & Poo (1998) STDP timing window; the real implementation in modules/gaba_inhibition_gate.py as counter-evidence.",
+        "rebuttal": "Overturned (to CONTRADICTED) only if the metaphor module were the sole STDP claim; overturned (to RESOLVED) when the metaphor label is renamed to 'loss-driven inhibitory sensitivity adaptation'."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "grep of STDP labels across modules; read of both gates' adaptation rules"
+      },
+      "falsifier": {
+        "command": "grep -q \"STDP-like\" core/neuro/gaba_position_gate.py && grep -q \"stdp_tau_plus_ms\" modules/gaba_inhibition_gate.py",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 proves BOTH facts the entry depends on: the metaphor label is still in the position gate AND real timing STDP still exists in the inhibition gate. Renaming the metaphor flips this entry to RESOLVED."
+      },
+      "resolution_state": "OPEN"
+    },
+    {
+      "id": "C-TACL-001",
+      "title": "Monotonic-descent / delta-F gate is ALREADY implemented (anticipated gap unsupported)",
+      "source_path": "core/neuro/ecs_regulator.py",
+      "source_lines": "380,611",
+      "contradiction": "The program anticipated 'monotonic descent asserted without an explicit delta-F transition gate'. Verification shows the gate already exists: ecs_regulator._enforce_strict_monotonic_descent(new_fe, previous_fe) (line 380, applied at 611) plus core.energy.delta_free_energy(F_prev, F_now, dt) plus INV-FE1/FE3 already enforce dF<=0. No remediation PR is warranted.",
+      "severity": "LOW",
+      "claim_status": "UNSUPPORTED",
+      "owner_lane": "lane-4-tacl-delta-f",
+      "evidence": "core/neuro/ecs_regulator.py:380 _enforce_strict_monotonic_descent; :611 application; core/energy.py:151 delta_free_energy; INV-FE1/FE3.",
+      "argument": {
+        "warrant": "An anticipated contradiction is only real if the missing mechanism is actually missing. The named delta-F gate is present and applied, so the anticipated gap has no grounds.",
+        "backing": "INV-FE1 (monotonic) and INV-FE3 (conditional descent) in the invariant registry; the live methods themselves.",
+        "rebuttal": "Overturned if the _enforce_strict_monotonic_descent method or delta_free_energy were removed, OR INV-FE1/FE3 deregistered, leaving descent merely asserted."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "grep for the named gate methods; cross-check against INV-FE1/FE3 registry entries"
+      },
+      "falsifier": {
+        "command": "grep -q \"_enforce_strict_monotonic_descent\" core/neuro/ecs_regulator.py && grep -q \"def delta_free_energy\" core/energy.py",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 proves the delta-F mechanism still exists, so the anticipated gap remains UNSUPPORTED. If the mechanism is later removed this flips, re-opening the lane."
+      },
+      "resolution_state": "WONTFIX"
+    },
+    {
+      "id": "C-KURAMOTO-001",
+      "title": "R / Ricci structure-vs-alpha boundary is bounded by product canon, not an enforced invariant",
+      "source_path": "core/kuramoto/capital_weighted.py",
+      "source_lines": "7,40,43",
+      "contradiction": "The no-alpha boundary lives in a module docstring and PRODUCT_CATEGORY.md ('research instrumentation, not a promise of live-venue trading'). It is bounded at the documentation layer, but no executable invariant asserts repo-wide that Kuramoto R / Ricci are structure and that any Kelly/alpha scaling requires an empirical IC/backtest gate. Optional hardening, not an open violation.",
+      "severity": "LOW",
+      "claim_status": "PLAUSIBLE",
+      "owner_lane": "lane-5-kuramoto-ricci-structure",
+      "evidence": "core/kuramoto/capital_weighted.py no-alpha disclaimer; PRODUCT_CATEGORY.md 'not a promise of live-venue trading'.",
+      "argument": {
+        "warrant": "A boundary enforced only by prose is real but weaker than one enforced by an executable test; absent such a test the claim is plausible-and-bounded, not violated.",
+        "backing": "PRODUCT_CATEGORY.md research-not-edge boundary; CLAUDE.md identity ('not asserted market edge').",
+        "rebuttal": "Overturned (to CONTRADICTED) if code scaled position size by R as alpha without an IC/backtest gate; overturned (to RESOLVED) if a repo-wide structure-not-alpha invariant test is added."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "read of capital_weighted docstring and PRODUCT_CATEGORY boundary; search for an enforcing test (none found)"
+      },
+      "falsifier": {
+        "command": "grep -q \"not a promise of live-venue\" PRODUCT_CATEGORY.md && test -f core/kuramoto/capital_weighted.py",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 proves the documentary boundary and the module both still exist, so the entry's bounded-by-doc position holds. Adding an enforcing test would let this move to RESOLVED."
+      },
+      "resolution_state": "OPEN"
+    },
+    {
+      "id": "C-ORCH-001",
+      "title": "Orchestrator-as-neural-controller claim not present in current code",
+      "source_path": "core/agent/orchestrator.py",
+      "source_lines": "1-40",
+      "contradiction": "The program anticipated an 'orchestrator is a neural controller / basal ganglia' overclaim. A grep across core/agent/orchestrator.py and core/orchestrator/ finds no 'basal ganglia' or 'neural controller' assertion. The contradiction is not evidenced in the current tree; the lane is preventive only.",
+      "severity": "LOW",
+      "claim_status": "UNSUPPORTED",
+      "owner_lane": "lane-6-orchestrator-boundary",
+      "evidence": "grep -niE 'basal ganglia|neural controller' core/agent/orchestrator.py core/orchestrator/ -> no matches.",
+      "argument": {
+        "warrant": "An overclaim that does not appear anywhere in the named code cannot be a live contradiction; the anticipated claim has no grounds in the tree.",
+        "backing": "Absence-of-token evidence over the orchestrator package; the lane stays as a preventive guard, not a fix.",
+        "rebuttal": "Overturned if a future commit introduces a 'basal ganglia' / 'neural controller' assertion into the orchestrator without an executor backing it."
+      },
+      "provenance": {
+        "asserted_by": "neuro-physics-audit (Claude Opus 4.8)",
+        "asserted_on": "2026-06-17",
+        "method": "recursive grep for the overclaim tokens across the orchestrator package"
+      },
+      "falsifier": {
+        "command": "! grep -rqiE \"basal ganglia|neural controller\" core/agent/orchestrator.py core/orchestrator/",
+        "expect_exit": 0,
+        "interpretation": "Exit 0 proves the overclaim tokens are absent, so the anticipated contradiction remains UNSUPPORTED. Introducing such a claim flips this and re-opens the lane as a real contradiction."
+      },
+      "resolution_state": "WONTFIX"
+    }
+  ]
+}

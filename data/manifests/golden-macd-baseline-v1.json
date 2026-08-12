@@ -1,0 +1,49 @@
+{
+  "manifest_version": "dataset_manifest.v1",
+  "id": "golden-macd-baseline-v1",
+  "source": {
+    "vendor": "neuron7xLab-generator",
+    "origin": "repository_generated",
+    "uri": null,
+    "retrieval_method": "golden regression baseline (committed)"
+  },
+  "retrieval_time": "SYNTHETIC_GENERATED",
+  "query": "deterministic MACD reference series for indicator regression",
+  "license": "MIT",
+  "license_verified": true,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "e05854b33965f4d8b745f112e8f6ad481eab863036bebd3594f299131c4b9b89"
+  },
+  "bytes": 430,
+  "schema": {
+    "format": "csv",
+    "columns": [
+      "ts",
+      "close",
+      "ema_12",
+      "ema_26",
+      "macd",
+      "signal",
+      "histogram"
+    ],
+    "description": "Golden MACD indicator validation baseline for regression testing."
+  },
+  "coverage": {
+    "rows": null,
+    "start": "2024-01-01T00:00:00Z",
+    "end": null,
+    "assets": 1,
+    "description": "Deterministic golden baseline; per data/golden/README.md."
+  },
+  "revision_status": "FROZEN",
+  "access_restrictions": "none",
+  "evidence_class": "SIMULATION",
+  "files": [
+    {
+      "path": "data/golden/indicator_macd_baseline.csv",
+      "checksum_sha256": "a9d58e45acb65bde917ecc8dbfe781676aeabfa321e113d1fc42d2854d357304",
+      "bytes": 430
+    }
+  ]
+}
