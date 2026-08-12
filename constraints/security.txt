@@ -79,7 +79,7 @@ pydantic==2.13.4
 pydantic-settings==2.14.2
 
 # pandera: DataFrame validation, data quality and security
-pandera==0.32.0
+pandera==0.32.1
 
 # ============================================================================
 # System packages - Known vulnerability fixes
