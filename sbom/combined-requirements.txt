@@ -109,7 +109,7 @@ fsspec==2025.12.0
     # via torch
 gitdb==4.0.12
     # via gitpython
-gitpython==3.1.50
+gitpython==3.1.58
     # via streamlit
 googleapis-common-protos==1.70.0
     # via

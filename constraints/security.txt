@@ -34,7 +34,7 @@ cryptography==49.0.0
 # path traversal arbitrary file write/delete (GHSA-7545-fcxq-7j24), command
 # injection (GHSA-rpm5-65cw-6hj4), unsafe option check (GHSA-x2qx-6953-8485).
 # All high severity. Transitive dependency; pinned here to enforce the fix.
-gitpython==3.1.50
+gitpython==3.1.58
 
 # PyJWT: Authentication token handling, critical for API security
 # CVE-2022-29217 (key confusion) fixed in 2.4.0
