@@ -1,4 +1,4 @@
-fastapi==0.139.0
+fastapi==0.141.1
 grpcio==1.80.0
 grpcio-health-checking==1.80.0
 kafka-python==2.2.15
@@ -7,4 +7,4 @@ prometheus-client==0.25.0
 pydantic==2.13.4
 python-dotenv==1.2.2
 questdb==4.1.0
-uvicorn==0.50.0
+uvicorn==0.52.1

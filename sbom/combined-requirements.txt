@@ -94,7 +94,7 @@ exchange-calendars==4.11.1
     # via geosync (pyproject.toml)
 extra-streamlit-components==0.1.81
     # via streamlit-authenticator
-fastapi==0.139.0
+fastapi==0.141.1
     # via
     #   -c constraints/security.txt
     #   geosync (pyproject.toml)
@@ -403,7 +403,7 @@ sqlalchemy==2.0.50
     #   alembic
     #   geosync (pyproject.toml)
     #   optuna
-starlette==1.3.1
+starlette==1.6.0
     # via
     #   -c constraints/security.txt
     #   fastapi
@@ -482,7 +482,7 @@ urllib3==2.7.0
     # via
     #   -c constraints/security.txt
     #   requests
-uvicorn==0.50.0
+uvicorn==0.52.1
     # via geosync (pyproject.toml)
 watchdog==6.0.0
     # via streamlit
