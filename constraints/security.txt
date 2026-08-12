@@ -24,7 +24,7 @@ urllib3==2.7.0
 # ============================================================================
 # cryptography: Core crypto library, has critical CVEs in versions < 42.0.0
 # CVE-2023-50782, CVE-2024-26130, CVE-2024-0727 in older versions
-cryptography==49.0.0
+cryptography==50.0.0
 
 # ============================================================================
 # VCS tooling - RCE / path-traversal critical
