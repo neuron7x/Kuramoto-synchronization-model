@@ -58,7 +58,7 @@ PyYAML==6.0.3
 # aiohttp < 3.14.0: GHSA-jg22-mg44-37j8, GHSA-hg6j-4rv6-33pg
 aiohttp==3.14.1
 # Mako < 1.3.12: GHSA-2h4p-vjrc-8xpq (ReDoS)
-Mako==1.3.12
+Mako==1.4.1
 # pyarrow < 23.0.1: PYSEC-2026-113
 pyarrow==24.0.0
 # python-multipart < 0.0.27: GHSA-pp6c-gr5w-3c5g (DoS)
