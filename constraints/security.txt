@@ -64,7 +64,7 @@ pyarrow==24.0.0
 # python-multipart < 0.0.27: GHSA-pp6c-gr5w-3c5g (DoS)
 python-multipart==0.0.32
 # strawberry-graphql < 0.315.7: GHSA-x97m-qp5c-w9xj, GHSA-fr49-mhgj-crfc, GHSA-qfwv-87qj-98xq
-strawberry-graphql==0.319.0
+strawberry-graphql==0.323.2
 
 # ============================================================================
 # Data Validation & ORM - SQL injection and data integrity
