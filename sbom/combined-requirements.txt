@@ -269,7 +269,7 @@ opentelemetry-proto==1.38.0
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.38.0
+opentelemetry-sdk==1.44.0
     # via
     #   geosync (pyproject.toml)
     #   opentelemetry-exporter-otlp-proto-grpc
